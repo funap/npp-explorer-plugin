@@ -1,0 +1,1 @@
+# npp-explorer-plugin
