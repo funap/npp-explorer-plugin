@@ -1,0 +1,334 @@
+// Microsoft Visual C++ generated resource script.
+//
+#include "resource.h"
+
+#define APSTUDIO_READONLY_SYMBOLS
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 2 resource.
+//
+#define APSTUDIO_HIDDEN_SYMBOLS
+#include "windows.h"
+#undef APSTUDIO_HIDDEN_SYMBOLS
+#include "explorerresource.h"
+
+/////////////////////////////////////////////////////////////////////////////
+#undef APSTUDIO_READONLY_SYMBOLS
+
+/////////////////////////////////////////////////////////////////////////////
+// ドイツ語 (ドイツ) resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_DEU)
+LANGUAGE LANG_GERMAN, SUBLANG_GERMAN
+#pragma code_page(1252)
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_HELP_DLG DIALOGEX 0, 0, 230, 192
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_BORDER | WS_SYSMENU
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    LTEXT           "Go to Path...\t\tLink to a given directory",IDC_STATIC_GOTO,17,121,197,8
+    DEFPUSHBUTTON   "&Ok",IDOK,89,171,50,14
+    LTEXT           "-",IDC_EMAIL_LINK,65,41,158,8
+    LTEXT           "Author:",IDC_STATIC_AUTHOR,12,31,51,9
+    GROUPBOX        "Menu entries",IDC_STATIC_MENU,7,95,216,72
+    LTEXT           "eMail:",IDC_STATIC_MAIL,12,41,51,8
+    CTEXT           "At first, I would like to thank Don for his great program and his support to create this plugin.",IDC_STATIC_THXTO,7,67,216,25
+    LTEXT           "Options...\t\tAllows you to personalize the\n\t\t\tsettings for explorers file list.",IDC_STATIC_OPT,17,137,197,16
+    CTEXT           "Explorer Plugin v2.0.0 for Notepad++",IDC_STATIC_VERSION,7,7,216,17,SS_CENTERIMAGE,WS_EX_DLGMODALFRAME | WS_EX_TRANSPARENT
+    LTEXT           "http://",IDC_NPP_PLUGINS_URL,65,52,158,8
+    LTEXT           "URL:",IDC_STATIC,12,52,51,8
+    LTEXT           "Jens Lorenz / funap",IDC_STATIC,65,31,158,8
+    LTEXT           "Explorer...\t\tViews the Explorer dialog.",IDC_STATIC_EXP,17,105,197,8
+    LTEXT           "Favorites...\t\tViews the Favorites dialog.",IDC_STATIC_FAV,17,113,197,8
+    LTEXT           "Help...\t\t\tShows this help dialog.",IDC_STATIC_HELP,17,153,197,8
+    LTEXT           "Clear Filter\t\tDeletes all filter elements",IDC_STATIC_CLEAR,17,129,197,8
+END
+
+IDD_EXPLORER_DLG DIALOGEX 64536, 0, 164, 267
+STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+EXSTYLE WS_EX_TOOLWINDOW
+CAPTION "Explorer"
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    CONTROL         "Tree2",IDC_TREE_FOLDER,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | TVS_INFOTIP | WS_BORDER | WS_TABSTOP,2,22,161,78,WS_EX_ACCEPTFILES
+    CONTROL         "List2",IDC_LIST_FILE,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDATA | WS_BORDER | WS_TABSTOP,2,119,161,118,WS_EX_ACCEPTFILES
+    COMBOBOX        IDC_COMBO_FILTER,28,251,135,69,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "",IDC_BUTTON_SPLITTER,"Button",BS_OWNERDRAW,2,103,161,14
+    PUSHBUTTON      "Filter",IDC_BUTTON_FILTER,3,251,24,13
+    LTEXT           "Filter:",IDC_STATIC_FILTER,7,239,18,8
+END
+
+IDD_NEW_DLG DIALOG 0, 0, 254, 62
+STYLE DS_SETFONT | DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Explorer"
+FONT 8, "MS Shell Dlg"
+BEGIN
+    EDITTEXT        IDC_EDIT_NEW,13,19,227,12,ES_AUTOHSCROLL
+    DEFPUSHBUTTON   "&Ok",IDOK,140,41,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,197,41,50,14
+    GROUPBOX        "New file:",IDC_STATIC_NEW_DESC,7,7,240,30
+END
+
+IDD_PROP_DLG DIALOGEX 0, 0, 254, 171
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Favorites"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    EDITTEXT        IDC_EDIT_NAME,42,20,199,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_LINK,42,35,183,12,ES_AUTOHSCROLL
+    PUSHBUTTON      "...",IDC_BTN_OPENDLG,227,35,14,12
+    PUSHBUTTON      "&Details <<",IDC_BUTTON_DETAILS,7,150,50,14
+    CONTROL         "Tree1",IDC_TREE_SELECT,"SysTreeView32",TVS_HASBUTTONS | TVS_HASLINES | TVS_DISABLEDRAGDROP | TVS_SHOWSELALWAYS | TVS_FULLROWSELECT | TVS_INFOTIP | WS_BORDER | WS_TABSTOP,13,65,228,74
+    DEFPUSHBUTTON   "&Ok",IDOK,139,150,50,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,197,150,50,14
+    LTEXT           "Name:",IDC_STATIC_NAME,13,20,20,12,SS_CENTERIMAGE
+    LTEXT           "Link:",IDC_STATIC_LINK,13,35,14,12,SS_CENTERIMAGE
+    GROUPBOX        "Properties of file:",IDC_STATIC_FAVES_DESC,7,7,240,138
+    LTEXT           "Select a group",IDC_STATIC_SELECT,13,55,228,8
+END
+
+IDD_OPTION_DLG DIALOGEX 0, 0, 347, 154
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Explorer Options"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    CONTROL         "&Folder With Braces",IDC_CHECK_BRACES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,19,126,10
+    CONTROL         "Separate &Extensions",IDC_CHECK_SEPEXT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,31,126,10
+    GROUPBOX        "      &View 'Long' List",IDC_STATIC_LONG,7,47,137,54
+    COMBOBOX        IDC_COMBO_SIZE_FORMAT,47,64,90,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_DATE_FORMAT,47,80,90,51,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    CONTROL         "Automatic &Update on Focus",IDC_CHECK_AUTO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,19,124,8
+    CONTROL         "Show &Hidden Files",IDC_CHECK_HIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,31,124,8
+    CONTROL         "Use Windows &Icons",IDC_CHECK_USEICON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,43,124,8
+    EDITTEXT        IDC_EDIT_TIMEOUT,157,68,40,12,ES_AUTOHSCROLL | ES_NUMBER
+    DEFPUSHBUTTON   "&Ok",IDOK,289,10,51,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,289,29,51,14
+    CONTROL         "&V",IDC_CHECK_LONG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,48,9,8
+    GROUPBOX        "File List",IDC_STATIC_FILELIST,7,7,137,94
+    LTEXT           "Size:",IDC_STATIC_SIZE,13,64,32,12,SS_CENTERIMAGE
+    LTEXT           "Date:",IDC_STATIC_DATE,13,80,32,12,SS_CENTERIMAGE
+    GROUPBOX        "General Options",IDC_STATIC_GENOPT,143,7,140,94
+    LTEXT           "Timeout Missed Drives (ms):",IDC_STATIC_TMO,157,57,124,8
+    GROUPBOX        "NppExec Interface",IDC_STATIC_NPPEXEC,7,96,276,51
+    EDITTEXT        IDC_EDIT_EXECNAME,87,112,113,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_SCRIPTPATH,87,127,168,12,ES_AUTOHSCROLL
+    LTEXT           "DLL Name:",IDC_STATIC_EXECNAME,15,112,69,12,SS_CENTERIMAGE
+    LTEXT           "Path of Scripts:",IDC_STATIC_SCRIPTPATH,15,126,69,12,SS_CENTERIMAGE
+    PUSHBUTTON      "...",IDC_BTN_OPENDLG,258,127,14,12
+    PUSHBUTTON      "Create Example",IDC_BTN_EXAMPLE_FILE,203,112,69,12
+END
+
+
+#ifdef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// TEXTINCLUDE
+//
+
+1 TEXTINCLUDE 
+BEGIN
+    "resource.h\0"
+END
+
+2 TEXTINCLUDE 
+BEGIN
+    "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""windows.h""\r\n"
+    "#undef APSTUDIO_HIDDEN_SYMBOLS\r\n"
+    "#include ""explorerresource.h""\r\n"
+    "\0"
+END
+
+3 TEXTINCLUDE 
+BEGIN
+    "\r\n"
+    "\0"
+END
+
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_HELP_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 223
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 185
+    END
+
+    IDD_EXPLORER_DLG, DIALOG
+    BEGIN
+        RIGHTMARGIN, 163
+    END
+
+    IDD_NEW_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 247
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 55
+    END
+
+    IDD_PROP_DLG, DIALOG
+    BEGIN
+        VERTGUIDE, 7
+        VERTGUIDE, 13
+        VERTGUIDE, 241
+        VERTGUIDE, 247
+        BOTTOMMARGIN, 164
+        HORZGUIDE, 7
+    END
+
+    IDD_OPTION_DLG, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 340
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 147
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_PARENTFOLDER        ICON                    "..\\res\\parent.ico"
+
+IDI_FOLDER              ICON                    "..\\res\\folder.ico"
+
+IDI_FILE                ICON                    "..\\res\\file.ico"
+
+IDI_WEB                 ICON                    "..\\res\\web.ico"
+
+IDI_SESSION             ICON                    "..\\res\\session.ico"
+
+IDI_GROUP               ICON                    "..\\res\\group.ico"
+
+IDI_EXPLORE             ICON                    "..\\res\\explore.ico"
+
+IDI_HEART               ICON                    "..\\res\\Heart.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Bitmap
+//
+
+IDB_EX_PREV             BITMAP                  "..\\res\\undo.bmp"
+
+IDB_EX_NEXT             BITMAP                  "..\\res\\redo.bmp"
+
+IDB_EX_FILENEW          BITMAP                  "..\\res\\newFile.bmp"
+
+IDB_EX_FOLDERNEW        BITMAP                  "..\\res\\newFolder.bmp"
+
+IDB_EX_FIND             BITMAP                  "..\\res\\findFile.bmp"
+
+IDB_EX_FOLDERGO         BITMAP                  "..\\res\\folderGo.bmp"
+
+IDB_EX_UPDATE           BITMAP                  "..\\res\\update.bmp"
+
+IDB_EX_LINKNEWFILE      BITMAP                  "..\\res\\linkNewFile.bmp"
+
+IDB_EX_LINKNEWFOLDER    BITMAP                  "..\\res\\linkNewFolder.bmp"
+
+IDB_EX_LINKNEW          BITMAP                  "..\\res\\linkNew.bmp"
+
+IDB_EX_LINKEDIT         BITMAP                  "..\\res\\linkEdit.bmp"
+
+IDB_EX_LINKDELETE       BITMAP                  "..\\res\\linkDelete.bmp"
+
+IDB_TB_FAVES            BITMAP                  "..\\res\\Heart.bmp"
+
+IDB_TB_EXPLORER         BITMAP                  "..\\res\\explore.bmp"
+
+IDB_EX_FOLDERUSER       BITMAP                  "..\\res\\folderUser.bmp"
+
+IDB_SORTUP              BITMAP                  "..\\res\\SortUp.bmp"
+
+IDB_SORTDOWN            BITMAP                  "..\\res\\SortDown.bmp"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Cursor
+//
+
+IDC_UPDOWN              CURSOR                  "..\\res\\updown.cur"
+
+IDC_LEFTRIGHT           CURSOR                  "..\\res\\leftright.cur"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 2,0,0,0
+ PRODUCTVERSION 2,0,0,0
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x21L
+#else
+ FILEFLAGS 0x20L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x2L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040704b0"
+        BEGIN
+            VALUE "Comments", "Visit https://sourceforge.net/projects/npp-plugins"
+            VALUE "CompanyName", "funap"
+            VALUE "FileDescription", "Notepad++ Explorer Plugin : a free (GNU) source code file explorer"
+            VALUE "FileVersion", "2, 0, 0, 0"
+            VALUE "InternalName", "Explorer"
+            VALUE "LegalCopyright", "Copyright ｩ 2018"
+            VALUE "OriginalFilename", "Explorer.dll"
+            VALUE "ProductName", "Explorer"
+            VALUE "ProductVersion", "2, 0, 0, 0"
+            VALUE "SpecialBuild", "UNICODE"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x407, 1200
+    END
+END
+
+#endif    // ドイツ語 (ドイツ) resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+
+#ifndef APSTUDIO_INVOKED
+/////////////////////////////////////////////////////////////////////////////
+//
+// Generated from the TEXTINCLUDE 3 resource.
+//
+
+
+/////////////////////////////////////////////////////////////////////////////
+#endif    // not APSTUDIO_INVOKED
+

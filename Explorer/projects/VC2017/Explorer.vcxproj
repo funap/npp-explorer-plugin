@@ -1,0 +1,312 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{BA345CAF-580B-4786-8699-717F831D10CF}</ProjectGuid>
+    <SccProjectName />
+    <SccLocalPath />
+    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v120_xp</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <PlatformToolset>v141</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <PlatformToolset>v141</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>12.0.30501.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental />
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\Toolbar\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;EXPLORER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>Comctl32.lib;Mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\DEBUG/Explorer.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\Toolbar\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;EXPLORER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>Comctl32.lib;Mpr.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TypeLibraryName>.\DEBUG/Explorer.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "..\..\..\..\Notepad++\plugins\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;EXPLORER_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;shlwapi.lib;Mpr.lib;comctl32.lib;Msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TargetEnvironment>Win32</TargetEnvironment>
+      <TypeLibraryName>.\Release/Explorer.tlb</TypeLibraryName>
+      <HeaderFileName />
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0407</Culture>
+    </ResourceCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;EXPLORER_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;shlwapi.lib;Mpr.lib;comctl32.lib;Msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+    <Midl>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MkTypLibCompatible>true</MkTypLibCompatible>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <TypeLibraryName>.\Release/Explorer.tlb</TypeLibraryName>
+      <HeaderFileName>
+      </HeaderFileName>
+    </Midl>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <Culture>0x0407</Culture>
+    </ResourceCompile>
+    <PostBuildEvent>
+      <Command>copy "$(TargetPath)" "..\..\..\..\Notepad++\plugins\"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Common\Ccpp\ImageListSet.cpp">
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Ccpp\StaticDialog.cpp" />
+    <ClCompile Include="..\..\..\Common\Ccpp\stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="..\..\..\Common\Ccpp\SysMsg.cpp" />
+    <ClCompile Include="..\..\..\Common\Ccpp\ToolBar.cpp" />
+    <ClCompile Include="..\..\src\Explorer.cpp" />
+    <ClCompile Include="..\..\src\ExplorerDialog.cpp" />
+    <ClCompile Include="..\..\src\FavesDialog.cpp" />
+    <ClCompile Include="..\..\src\FileDlg\FileDlg.cpp" />
+    <ClCompile Include="..\..\src\FileList\ComboOrgi.cpp" />
+    <ClCompile Include="..\..\src\FileList\FileList.cpp" />
+    <ClCompile Include="..\..\src\FileList\ToolTip.cpp" />
+    <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
+    <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
+    <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
+    <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
+    <ClCompile Include="..\..\src\NewDlg\NewDlg.cpp" />
+    <ClCompile Include="..\..\src\OptionDlg\OptionDialog.cpp" />
+    <ClCompile Include="..\..\src\PropDlg\PropDlg.cpp" />
+    <ClCompile Include="..\..\src\PureDnD\DragDropImpl.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="..\..\src\ExplorerDialog.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Common\Ccpp\Docking.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\DockingDlgInterface.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\ImageListSet.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\Notepad_plus_msgs.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\Notepad_plus_rc.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\PluginInterface.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\Scintilla.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\StaticDialog.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\stdafx.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\SysMsg.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\ToolBar.h" />
+    <ClInclude Include="..\..\..\Common\Ccpp\Window.h" />
+    <ClInclude Include="..\..\..\NativeLang\src\NativeLang_def.h" />
+    <ClInclude Include="..\..\src\Explorer.h" />
+    <ClInclude Include="..\..\src\ExplorerDialog.h" />
+    <ClInclude Include="..\..\src\ExplorerResource.h" />
+    <ClInclude Include="..\..\src\FavesDialog.h" />
+    <ClInclude Include="..\..\src\FileDlg\FileDlg.h" />
+    <ClInclude Include="..\..\src\FileList\ComboOrgi.h" />
+    <ClInclude Include="..\..\src\FileList\FileList.h" />
+    <ClInclude Include="..\..\src\FileList\ToolTip.h" />
+    <ClInclude Include="..\..\src\HelpDlg\HelpDialog.h" />
+    <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
+    <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
+    <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
+    <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
+    <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
+    <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />
+    <ClInclude Include="..\..\src\PropDlg\PropDlg.h" />
+    <ClInclude Include="..\..\src\PureDnD\DragDropImpl.h" />
+    <ClInclude Include="..\..\src\resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="..\..\res\bitmap1.bmp" />
+    <Image Include="..\..\res\bmp00001.bmp" />
+    <Image Include="..\..\res\explore.bmp" />
+    <Image Include="..\..\res\explore.ico" />
+    <Image Include="..\..\res\file.ico" />
+    <Image Include="..\..\res\findFile.bmp" />
+    <Image Include="..\..\res\folder.ico" />
+    <Image Include="..\..\res\folderGo.bmp" />
+    <Image Include="..\..\res\folderUser.bmp" />
+    <Image Include="..\..\res\group.ico" />
+    <Image Include="..\..\res\Heart.bmp" />
+    <Image Include="..\..\res\Heart.ico" />
+    <Image Include="..\..\res\linkDelete.bmp" />
+    <Image Include="..\..\res\linkEdit.bmp" />
+    <Image Include="..\..\res\linkNew.bmp" />
+    <Image Include="..\..\res\linkNewFile.bmp" />
+    <Image Include="..\..\res\linkNewFolder.bmp" />
+    <Image Include="..\..\res\newFile.bmp" />
+    <Image Include="..\..\res\newFolder.bmp" />
+    <Image Include="..\..\res\parent.ico" />
+    <Image Include="..\..\res\redo.bmp" />
+    <Image Include="..\..\res\session.ico" />
+    <Image Include="..\..\res\SortDown.bmp" />
+    <Image Include="..\..\res\SortUp.bmp" />
+    <Image Include="..\..\res\undo.bmp" />
+    <Image Include="..\..\res\update.bmp" />
+    <Image Include="..\..\res\web.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\res\leftright.cur" />
+    <None Include="..\..\res\updown.cur" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
