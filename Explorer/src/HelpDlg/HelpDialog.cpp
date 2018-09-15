@@ -37,10 +37,10 @@ BOOL CALLBACK HelpDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARA
         case WM_INITDIALOG :
 		{
             _emailLink.init(_hInst, _hSelf);
-            _emailLink.create(::GetDlgItem(_hSelf, IDC_EMAIL_LINK), _T("mailto:jens.plugin.npp@gmx.de"));
+            _emailLink.create(::GetDlgItem(_hSelf, IDC_EMAIL_LINK), _T("mailto:"));
 
             _urlNppPlugins.init(_hInst, _hSelf);
-            _urlNppPlugins.create(::GetDlgItem(_hSelf, IDC_NPP_PLUGINS_URL), _T("http://sourceforge.net/projects/npp-plugins/"));
+            _urlNppPlugins.create(::GetDlgItem(_hSelf, IDC_NPP_PLUGINS_URL), _T("https://github.com/funap/npp-explorer-plugin"));
 
 			/* change language */
 			NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Help"));
