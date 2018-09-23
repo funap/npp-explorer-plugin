@@ -1,5 +1,4 @@
-# npp-explorer-plugin
-x64 version
+# Explorer Plugin for Notepad++ x64
 
 ## Download
 https://github.com/funap/npp-explorer-plugin/releases
