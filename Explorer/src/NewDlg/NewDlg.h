@@ -38,7 +38,7 @@ public:
 		_pszWndName = pszWndName;
 	};
 
-   	UINT doDialog(LPTSTR pFileName, LPTSTR pDesc);
+	INT_PTR doDialog(LPTSTR pFileName, LPTSTR pDesc);
 
     virtual void destroy() {};
 

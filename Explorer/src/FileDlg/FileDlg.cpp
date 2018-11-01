@@ -94,11 +94,11 @@ void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
     
     LPTSTR pFileExt = _fileExt + _nbCharFileExt;
     memcpy(pFileExt, extFilter.c_str(), extFilter.length() + 1);
-    _nbCharFileExt += extFilter.length() + 1;
+    _nbCharFileExt += (int)extFilter.length() + 1;
     
     pFileExt = _fileExt + _nbCharFileExt;
     memcpy(pFileExt, exts.c_str(), exts.length() + 1);
-    _nbCharFileExt += exts.length() + 1;
+    _nbCharFileExt += (int)exts.length() + 1;
 }
 
 LPTSTR FileDlg::doOpenSingleFileDlg() 

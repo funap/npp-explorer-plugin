@@ -164,11 +164,11 @@ public :
 		return int(_tbiis.size());
 	};
 
-	int getStdIconAt(int i) const {
+	int getStdIconAt(SIZE_T i) const {
 		return _tbiis[i]._stdIcon;
 	};
 
-	UINT getIconStyle(int i) const {
+	BYTE getIconStyle(SIZE_T i) const {
 		return _tbiis[i]._uIconStyle;
 	};
 

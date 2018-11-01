@@ -19,7 +19,7 @@ class CEnumFormatEtc : public IEnumFORMATETC
    private:
      ULONG           m_cRefCount;
      vector<FORMATETC>  m_pFmtEtc;
-     size_t           m_iCur;
+     SIZE_T           m_iCur;
 
    public:
      CEnumFormatEtc(const vector<FORMATETC>& ArrFE);

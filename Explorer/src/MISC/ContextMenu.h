@@ -127,7 +127,7 @@ private:
 	HWND					_hWndNpp;
 	HWND					_hWndParent;
 
-	int						_nItems;
+	SIZE_T					_nItems;
 	BOOL					_bDelete;
 	HMENU					_hMenu;
 	IShellFolder*			_psfFolder;

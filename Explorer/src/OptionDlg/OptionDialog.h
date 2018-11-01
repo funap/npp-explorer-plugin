@@ -39,7 +39,7 @@ public:
 		Window::init(hInst, nppData._nppHandle);
 	};
 
-   	UINT doDialog(tExProp *prop);
+	INT_PTR doDialog(tExProp *prop);
 
     virtual void destroy() {};
 

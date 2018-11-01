@@ -486,7 +486,7 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 	return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
 }
 
-void FavesDialog::tb_cmd(WPARAM message)
+void FavesDialog::tb_cmd(UINT message)
 {
 	switch (message)
 	{
@@ -752,7 +752,7 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
 void FavesDialog::DuplicateRecursive(PELEM pTarget, PELEM pSource)
 {
 	/* dublicate the content */
-	for (size_t i = 0; i < pTarget->vElements.size(); i++)
+	for (SIZE_T i = 0; i < pTarget->vElements.size(); i++)
 	{
 		/* NOTE: Do not delete the old pointer! */
 		if (pTarget->vElements[i].pszName == pSource->vElements[i].pszName)
@@ -1193,7 +1193,7 @@ void FavesDialog::DeleteRecursive(PELEM pElem)
 		delete [] pElem->pszLink;
 
 	/* delete elements of child items */
-	for (size_t i = 0; i < pElem->vElements.size(); i++)
+	for (SIZE_T i = 0; i < pElem->vElements.size(); i++)
 	{
 		DeleteRecursive(&pElem->vElements[i]);
 	}
@@ -1493,7 +1493,7 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
 		SortElementList(parentElement->vElements);
 
 		/* update elements in parent tree */
-		for (size_t i = 0; i < parentElement->vElements.size(); i++)
+		for (SIZE_T i = 0; i < parentElement->vElements.size(); i++)
 		{
 			/* set parent pointer */
 			PELEM	pElem	= &parentElement->vElements[i];
@@ -1786,22 +1786,22 @@ void FavesDialog::SortElementList(vector<tItemElement> & elementList)
 	}
 
 	/* get size of both lists */
-	UINT	sizeOfGroup	= groupList.size();
-	UINT	sizeOfLink	= linkList.size();
+	SIZE_T		sizeOfGroup	= groupList.size();
+	SIZE_T		sizeOfLink	= linkList.size();
 
 	/* sort "sort list" */
-	SortElementsRecursive(groupList, 0, sizeOfGroup-1);
+	SortElementsRecursive(groupList, 0, (INT)sizeOfGroup-1);
 
 	/* sort "last list" */
-	SortElementsRecursive(linkList, 0, sizeOfLink-1);
+	SortElementsRecursive(linkList, 0, (INT)sizeOfLink-1);
 
 	/* overwrite the information in field */
 	itr	= elementList.begin();
-	for (UINT i = 0; i < sizeOfGroup; i++, itr++)
+	for (SIZE_T i = 0; i < sizeOfGroup; i++, itr++)
 	{
 		*itr = groupList[i];
 	}
-	for (UINT i = 0; i < sizeOfLink; i++, itr++)
+	for (SIZE_T i = 0; i < sizeOfLink; i++, itr++)
 	{
 		*itr = linkList[i];
 	}
@@ -2102,7 +2102,7 @@ void FavesDialog::SaveSettings(void)
 
 			/* store tree */
 			_stprintf(temp, _T("%s\nExpand=%i\n\n"), cFavesItemNames[i], (_vDB[i].uParam & FAVES_PARAM_EXPAND) == FAVES_PARAM_EXPAND);
-			::WriteFile(hFile, temp, _tcslen(temp) * sizeof(TCHAR), &hasWritten, NULL);
+			::WriteFile(hFile, temp, (DWORD)_tcslen(temp) * sizeof(TCHAR), &hasWritten, NULL);
 			SaveElementTreeRecursive(pElem, hFile);
 
 			/* delete tree */
@@ -2125,49 +2125,49 @@ void FavesDialog::SaveSettings(void)
 void FavesDialog::SaveElementTreeRecursive(PELEM pElem, HANDLE hFile)
 {
 	DWORD		hasWritten	= 0;
-	UINT		size		= 0;
+	SIZE_T		size		= 0;
 	LPTSTR		temp		= NULL;
 	PELEM		pElemItr	= NULL;
 
 	/* delete elements of child items */
-	for (size_t i = 0; i < pElem->vElements.size(); i++)
+	for (SIZE_T i = 0; i < pElem->vElements.size(); i++)
 	{
 		pElemItr = &pElem->vElements[i];
 
 		if (pElemItr->uParam & FAVES_PARAM_GROUP)
 		{
-			::WriteFile(hFile, _T("#GROUP\n"), _tcslen(_T("#GROUP\n")) * sizeof(TCHAR), &hasWritten, NULL);
+			::WriteFile(hFile, _T("#GROUP\n"), (DWORD)_tcslen(_T("#GROUP\n")) * sizeof(TCHAR), &hasWritten, NULL);
 
 			size = (_tcslen(pElemItr->pszName)+7) * sizeof(TCHAR);
 			temp = (LPTSTR)new TCHAR[size+1];
 			_stprintf(temp, _T("\tName=%s\n"), pElemItr->pszName);
-			::WriteFile(hFile, temp, size, &hasWritten, NULL);
+			::WriteFile(hFile, temp, (DWORD)size, &hasWritten, NULL);
 			delete [] temp;
 
 			size = _tcslen(_T("\tExpand=0\n\n")) * sizeof(TCHAR);
 			temp = (LPTSTR)new TCHAR[size+1];
 			_stprintf(temp, _T("\tExpand=%i\n\n"), (pElemItr->uParam & FAVES_PARAM_EXPAND) == FAVES_PARAM_EXPAND);
-			::WriteFile(hFile, temp, size, &hasWritten, NULL);
+			::WriteFile(hFile, temp, (DWORD)size, &hasWritten, NULL);
 			delete [] temp;
 
 			SaveElementTreeRecursive(pElemItr, hFile);
 
-			::WriteFile(hFile, _T("#END\n\n"), _tcslen(_T("#END\n\n")) * sizeof(TCHAR), &hasWritten, NULL);
+			::WriteFile(hFile, _T("#END\n\n"), (DWORD)_tcslen(_T("#END\n\n")) * sizeof(TCHAR), &hasWritten, NULL);
 		}
 		else if (pElemItr->uParam & FAVES_PARAM_LINK)
 		{
-			::WriteFile(hFile, _T("#LINK\n"), _tcslen(_T("#LINK\n")) * sizeof(TCHAR), &hasWritten, NULL);
+			::WriteFile(hFile, _T("#LINK\n"), (DWORD)_tcslen(_T("#LINK\n")) * sizeof(TCHAR), &hasWritten, NULL);
 
 			size = (_tcslen(pElemItr->pszName)+7) * sizeof(TCHAR);
 			temp = (LPTSTR)new TCHAR[size+1]; 
 			_stprintf(temp, _T("\tName=%s\n"), pElemItr->pszName);
-			::WriteFile(hFile, temp, size, &hasWritten, NULL);
+			::WriteFile(hFile, temp, (DWORD)size, &hasWritten, NULL);
 			delete [] temp;
 
 			size = (_tcslen(pElemItr->pszLink)+8) * sizeof(TCHAR);
 			temp = (LPTSTR)new TCHAR[size+1];
 			_stprintf(temp, _T("\tLink=%s\n\n"), pElemItr->pszLink);
-			::WriteFile(hFile, temp, size, &hasWritten, NULL);
+			::WriteFile(hFile, temp, (DWORD)size, &hasWritten, NULL);
 			delete [] temp;
 		}
 	}

@@ -73,7 +73,7 @@ LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 void ComboOrgi::addText(LPTSTR pszText)
 {
 	/* find item */
-	INT		count		= _comboItems.size();
+	INT		count		= (INT)_comboItems.size();
 	INT		i			= 0;
 	INT		hasFoundOn	= -1;
 
@@ -112,7 +112,7 @@ void ComboOrgi::getText(LPTSTR pszText, UINT size)
 
 bool ComboOrgi::getSelText(LPTSTR pszText)
 {
-	INT curSel = ::SendMessage(_hCombo, CB_GETCURSEL, 0, 0);
+	INT  curSel = (INT)::SendMessage(_hCombo, CB_GETCURSEL, 0, 0);
 
 	if (curSel != CB_ERR)
 	{
@@ -135,10 +135,10 @@ void ComboOrgi::selectComboText(LPTSTR pszText)
 
 void ComboOrgi::setComboList(vector<string> vStrList)
 {
-	size_t	iCnt	= vStrList.size();
+	SIZE_T	iCnt	= vStrList.size();
 
 	::SendMessage(_hCombo, CB_RESETCONTENT, 0, 0);
-	for (size_t i = 0; i < iCnt; i++)
+	for (SIZE_T i = 0; i < iCnt; i++)
 	{
 		addText((LPTSTR)vStrList[i].c_str());
 	}
@@ -147,11 +147,11 @@ void ComboOrgi::setComboList(vector<string> vStrList)
 void ComboOrgi::getComboList(vector<string> & vStrList)
 {
 	TCHAR	szTemp[MAX_PATH];
-	size_t	iCnt	= ::SendMessage(_hCombo, CB_GETCOUNT, 0, 0);
+	SIZE_T	iCnt	= ::SendMessage(_hCombo, CB_GETCOUNT, 0, 0);
 
 	vStrList.clear();
 
-	for (size_t i = 0; i < iCnt; i++)
+	for (SIZE_T i = 0; i < iCnt; i++)
 	{
 		if (MAX_PATH > ::SendMessage(_hCombo, CB_GETLBTEXTLEN, i, 0))
 		{

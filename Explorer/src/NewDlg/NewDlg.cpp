@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "stdio.h"
 
 
-UINT NewDlg::doDialog(LPTSTR pFileName, LPTSTR pDesc)
+INT_PTR NewDlg::doDialog(LPTSTR pFileName, LPTSTR pDesc)
 {
 	_pFileName = pFileName;
 	_pDesc = pDesc;
@@ -61,7 +61,7 @@ BOOL CALLBACK NewDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM
 					return TRUE;
 				case IDOK:
 				{
-					UINT	length	= ::SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXTLENGTH, 0, 0) + 1;
+					UINT	length	= (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXTLENGTH, 0, 0) + 1;
 
 					SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXT, length, (LPARAM)_pFileName);
 					::EndDialog(_hSelf, TRUE);

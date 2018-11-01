@@ -70,7 +70,7 @@ BOOL ContextMenu::GetContextMenu (void ** ppContextMenu, int & iMenuType)
 	LPCONTEXTMENU icm1 = NULL;
 	
 	// first we retrieve the normal IContextMenu interface (every object should have it)
-	_psfFolder->GetUIObjectOf (NULL, _nItems, (LPCITEMIDLIST *) _pidlArray, IID_IContextMenu, NULL, (void**) &icm1);
+	_psfFolder->GetUIObjectOf (NULL, (UINT)_nItems, (LPCITEMIDLIST *) _pidlArray, IID_IContextMenu, NULL, (void**) &icm1);
 
 	if (icm1)
 	{	// since we got an IContextMenu interface we can now obtain the higher version interfaces via that
@@ -503,8 +503,7 @@ void ContextMenu::SetObjects(vector<string> strArray)
 	psfDesktop->ParseDisplayName (NULL, 0, (LPOLESTR)strArray[0].c_str(), NULL, &pidl, NULL);
 #endif
 
-	if (pidl != NULL)
-	{
+	if (pidl != NULL) {
 		// now we need the parent IShellFolder interface of pidl, and the relative PIDL to that interface
 		LPITEMIDLIST pidlItem = NULL;	// relative pidl
 		SHBindToParentEx (pidl, IID_IShellFolder, (void **) &_psfFolder, NULL);
@@ -520,8 +519,7 @@ void ContextMenu::SetObjects(vector<string> strArray)
 		
 		IShellFolder * psfFolder = NULL;
 		_nItems = strArray.size();
-		for (int i = 0; i < _nItems; i++)
-		{
+		for (SIZE_T i = 0; i < _nItems; i++) {
 #ifndef _UNICODE
 			olePath = (OLECHAR *) calloc (strArray[i].size() + 1, sizeof (OLECHAR));
 			MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, strArray[i].c_str(), -1, olePath, strArray[i].size() + 1);	
@@ -550,25 +548,29 @@ void ContextMenu::SetObjects(vector<string> strArray)
 
 void ContextMenu::FreePIDLArray(LPITEMIDLIST *pidlArray)
 {
-	if (!pidlArray)
+	if (!pidlArray) {
 		return;
+	}
 
-	int iSize = _msize (pidlArray) / sizeof (LPITEMIDLIST);
+	SIZE_T iSize = _msize (pidlArray) / sizeof (LPITEMIDLIST);
 
-	for (int i = 0; i < iSize; i++)
-		free (pidlArray[i]);
+	for (SIZE_T i = 0; i < iSize; i++) {
+		free(pidlArray[i]);
+	}
 	free (pidlArray);
 }
 
 
 LPITEMIDLIST ContextMenu::CopyPIDL (LPCITEMIDLIST pidl, int cb)
 {
-	if (cb == -1)
+	if (cb == -1) {
 		cb = GetPIDLSize (pidl); // Calculate size of list.
+	}
 
     LPITEMIDLIST pidlRet = (LPITEMIDLIST) calloc (cb + sizeof (USHORT), sizeof (BYTE));
-    if (pidlRet)
+	if (pidlRet) {
 		CopyMemory(pidlRet, pidl, cb);
+	}
 
     return (pidlRet);
 }
@@ -576,12 +578,12 @@ LPITEMIDLIST ContextMenu::CopyPIDL (LPCITEMIDLIST pidl, int cb)
 
 UINT ContextMenu::GetPIDLSize (LPCITEMIDLIST pidl)
 {  
-	if (!pidl) 
+	if (!pidl) {
 		return 0;
+	}
 	int nSize = 0;
 	LPITEMIDLIST pidlTemp = (LPITEMIDLIST) pidl;
-	while (pidlTemp->mkid.cb)
-	{
+	while (pidlTemp->mkid.cb) {
 		nSize += pidlTemp->mkid.cb;
 		pidlTemp = (LPITEMIDLIST) (((LPBYTE) pidlTemp) + pidlTemp->mkid.cb);
 	}
@@ -590,8 +592,7 @@ UINT ContextMenu::GetPIDLSize (LPCITEMIDLIST pidl)
 
 HMENU ContextMenu::GetMenu()
 {
-	if (!_hMenu)
-	{
+	if (!_hMenu) {
 		_hMenu = ::CreatePopupMenu();	// create the popupmenu (its empty)
 	}
 	return (_hMenu);
@@ -603,21 +604,22 @@ HMENU ContextMenu::GetMenu()
 HRESULT ContextMenu::SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast)
 {
 	HRESULT hr = 0;
-	if (!pidl || !ppv)
+	if (!pidl || !ppv) {
 		return E_POINTER;
+	}
 	
 	int nCount = GetPIDLCount (pidl);
-	if (nCount == 0)	// desktop pidl of invalid pidl
+	if (nCount == 0) {	// desktop pidl of invalid pidl
 		return E_POINTER;
+	}
 
 	IShellFolder * psfDesktop = NULL;
 	SHGetDesktopFolder (&psfDesktop);
-	if (nCount == 1)	// desktop pidl
-	{
-		if ((hr = psfDesktop->QueryInterface(riid, ppv)) == S_OK)
-		{
-			if (ppidlLast) 
+	if (nCount == 1) {	// desktop pidl
+		if ((hr = psfDesktop->QueryInterface(riid, ppv)) == S_OK) {
+			if (ppidlLast) {
 				*ppidlLast = CopyPIDL (pidl);
+			}
 		}
 		psfDesktop->Release ();
 		return hr;
@@ -625,19 +627,18 @@ HRESULT ContextMenu::SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **p
 
 	LPBYTE pRel = GetPIDLPos (pidl, nCount - 1);
 	LPITEMIDLIST pidlParent = NULL;
-	pidlParent = CopyPIDL (pidl, pRel - (LPBYTE) pidl);
+	pidlParent = CopyPIDL (pidl, (int)(pRel - (LPBYTE) pidl));
 	IShellFolder * psfFolder = NULL;
 	
-	if ((hr = psfDesktop->BindToObject (pidlParent, NULL, __uuidof (psfFolder), (void **) &psfFolder)) != S_OK)
-	{
+	if ((hr = psfDesktop->BindToObject (pidlParent, NULL, __uuidof (psfFolder), (void **) &psfFolder)) != S_OK) {
 		free (pidlParent);
 		psfDesktop->Release ();
 		return hr;
 	}
-	if ((hr = psfFolder->QueryInterface (riid, ppv)) == S_OK)
-	{
-		if (ppidlLast)
+	if ((hr = psfFolder->QueryInterface (riid, ppv)) == S_OK) {
+		if (ppidlLast) {
 			*ppidlLast = CopyPIDL ((LPCITEMIDLIST) pRel);
+		}
 	}
 	free (pidlParent);
 	psfFolder->Release ();
@@ -653,15 +654,16 @@ LPBYTE ContextMenu::GetPIDLPos (LPCITEMIDLIST pidl, int nPos)
 	int nCount = 0;
 	
 	BYTE * pCur = (BYTE *) pidl;
-	while (((LPCITEMIDLIST) pCur)->mkid.cb)
-	{
-		if (nCount == nPos)
+	while (((LPCITEMIDLIST) pCur)->mkid.cb) {
+		if (nCount == nPos) {
 			return pCur;
+		}
 		nCount++;
 		pCur += ((LPCITEMIDLIST) pCur)->mkid.cb;	// + sizeof(pidl->mkid.cb);
 	}
-	if (nCount == nPos) 
+	if (nCount == nPos) {
 		return pCur;
+	}
 	return NULL;
 }
 
@@ -798,20 +800,19 @@ void ContextMenu::findInFiles(void)
 
 void ContextMenu::openFile(void)
 {
-	for (UINT i = 0; i < _strArray.size(); i++)
-	{
-		::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)_strArray[i].c_str());
+	for (const auto &path : _strArray) {
+		::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)path.c_str());
 	}
 }
 
 void ContextMenu::openFileInOtherView(void)
 {
-	for (UINT i = 0; i < _strArray.size(); i++)
-	{
-		::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)_strArray[i].c_str());
-		if (i == 0)
-		{
+	BOOL isFirstItem = TRUE;
+	for (const auto &path : _strArray) {
+		::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)path.c_str());
+		if (isFirstItem) {
 			::SendMessage(_hWndNpp, WM_COMMAND, IDM_VIEW_GOTO_ANOTHER_VIEW, 0);
+			isFirstItem = FALSE;
 		}
 	}
 }
@@ -846,15 +847,15 @@ void ContextMenu::openFileInNewInstance(void)
 
 void ContextMenu::openPrompt(void)
 {
-	for (UINT i = 0; i < _strArray.size(); i++)
-	{
+	for (auto &path : _strArray) {
 		/* is file */
-		if (_strArray[i][_strArray[i].size()-1] != '\\')
-		{
-			UINT	pos		= _strArray[i].rfind(_T("\\"), _strArray[i].size()-1);
-			_strArray[i].erase(pos, _strArray[i].size());
+		if (path.at(path.size() - 1) != '\\') {
+			SIZE_T pos = path.rfind(_T("\\"), path.size() - 1);
+			if (string::npos != pos) {
+				path.erase(pos, path.size());
+			}
 		}
-		::ShellExecute(_hWndNpp, _T("open"), _T("cmd.exe"), NULL, _strArray[i].c_str(), SW_SHOW);
+		::ShellExecute(_hWndNpp, _T("open"), _T("cmd.exe"), NULL, path.c_str(), SW_SHOW);
 	}
 }
 
@@ -876,9 +877,15 @@ void ContextMenu::addToFaves(bool isFolder)
 void ContextMenu::addFullPathsCB(void)
 {
 	string temp;
-	for (UINT i = 0; i < _strArray.size(); i++) {
-		if (i != 0) temp += _T("\n");
-		temp += _strArray[i];
+	BOOL isFirstItem = TRUE;
+	for (auto &path : _strArray) {
+		if (isFirstItem) {
+			isFirstItem = FALSE;
+		}
+		else {
+			temp += _T("\n");
+		}
+		temp += path;
 	}
 	Str2CB(temp.c_str());
 }
@@ -886,23 +893,29 @@ void ContextMenu::addFullPathsCB(void)
 void ContextMenu::addFileNamesCB(void)
 {
 	string	temp;
-	for (UINT i = 0; i < _strArray.size(); i++)
-	{
-		UINT	pos		= _strArray[i].rfind(_T("\\"), _strArray[i].size()-1);
-
-		if (pos != -1)
-		{
-			if (i != 0) temp += _T("\n");
+	BOOL isFirstItem = TRUE;
+	for (auto &path : _strArray) {
+		SIZE_T	pos = path.rfind(_T("\\"), path.size() - 1);
+		if (string::npos != pos) {
+			if (isFirstItem) {
+				isFirstItem = FALSE;
+			}
+			else {
+				temp += _T("\n");
+			}
 
 			/* is folder */
-			if (_strArray[i][_strArray[i].size()-1] == '\\') {
-				pos	= _strArray[i].rfind(_T("\\"), pos-1);
-				_strArray[i].erase(0, pos);
-				_strArray[i].erase(_strArray[i].size()-1);
-			} else {
-				_strArray[i].erase(0, pos + 1);
+			if (path.at(path.size() - 1) == '\\') {
+				pos = path.rfind(_T("\\"), pos - 1);
+				if (string::npos != pos) {
+					path.erase(0, pos);
+					path.erase(path.size() - 1);
+				}
 			}
-			temp += _strArray[i];
+			else {
+				path.erase(0, pos + 1);
+			}
+			temp += path;
 		}
 	}
 	Str2CB(temp.c_str());

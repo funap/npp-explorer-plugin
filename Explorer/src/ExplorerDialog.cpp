@@ -1408,8 +1408,8 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 	TCHAR				szLongPath[MAX_PATH];
 	TCHAR				szCurrPath[MAX_PATH];
 	TCHAR				szRemotePath[MAX_PATH];
-	UINT				iPathLen		= 0;
-	UINT				iTempLen		= 0;
+	SIZE_T				iPathLen		= 0;
+	SIZE_T				iTempLen		= 0;
 	BOOL				isRoot			= TRUE;
 	HTREEITEM			hItem			= TreeView_GetRoot(_hTreeCtrl);
 	HTREEITEM			hItemSel		= NULL;
@@ -1827,7 +1827,7 @@ BOOL ExplorerDialog::ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR p
 void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect)
 {
 	TCHAR		pszPath[MAX_PATH];
-	UINT		bufsz	= sizeof(DROPFILES) + sizeof(TCHAR);
+	SIZE_T		bufsz	= sizeof(DROPFILES) + sizeof(TCHAR);
 	HTREEITEM	hItem	= NULL;
 
 	/* get selected item */
@@ -1947,7 +1947,7 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 {
 	/* get files from and to, to fill struct */
 	UINT		headerSize				= sizeof(DROPFILES);
-	UINT		payloadSize				= ::GlobalSize(hData) - headerSize;
+	SIZE_T		payloadSize				= ::GlobalSize(hData) - headerSize;
 	LPVOID		pPld					= (LPBYTE)hData + headerSize;
 	LPTSTR		lpszFilesFrom			= NULL;
 
@@ -1956,7 +1956,7 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 		lpszFilesFrom = (LPWSTR)pPld;
 	} else {
 		lpszFilesFrom = new TCHAR[payloadSize];
-		::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pPld, payloadSize, lpszFilesFrom, payloadSize);
+		::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pPld, (int)payloadSize, lpszFilesFrom, (int)payloadSize);
 	}
 #else
 	if (((LPDROPFILES)hData)->fWide == TRUE) {
@@ -1970,11 +1970,11 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 	if (lpszFilesFrom != NULL)
 	{
 		UINT count = 0;
-		UINT length = payloadSize;
+		SIZE_T length = payloadSize;
 		if (((LPDROPFILES)hData)->fWide == TRUE) {
 			length = payloadSize / 2;
 		}
-		for (UINT i = 0; i < length-1; i++) {
+		for (SIZE_T i = 0; i < length-1; i++) {
 			if (lpszFilesFrom[i] == '\0') {
 				count++;
 			}

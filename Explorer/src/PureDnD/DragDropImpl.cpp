@@ -22,7 +22,7 @@ m_cRefCount(0), m_pDropSource(pDropSource)
 
 CIDataObject::~CIDataObject()
 {
-	for(size_t i = 0; i < m_StgMedium.size(); ++i)
+	for(SIZE_T i = 0; i < m_StgMedium.size(); ++i)
 		ReleaseStgMedium(m_StgMedium[i]);
 	m_StgMedium.clear();
 	m_ArrFormatEtc.clear();
@@ -68,7 +68,7 @@ STDMETHODIMP CIDataObject::GetData(
 	pmedium->hGlobal = NULL;
 
 	// ATLASSERT(m_StgMedium.size() == m_ArrFormatEtc.size());
-	for(size_t i=0; i < m_ArrFormatEtc.size(); ++i)
+	for(SIZE_T i=0; i < m_ArrFormatEtc.size(); ++i)
 	{
 		if(pformatetcIn->tymed & m_ArrFormatEtc[i]->tymed &&
 		   pformatetcIn->dwAspect == m_ArrFormatEtc[i]->dwAspect &&
@@ -101,7 +101,7 @@ STDMETHODIMP CIDataObject::QueryGetData(
 	if (!(DVASPECT_CONTENT & pformatetc->dwAspect))
 		return (DV_E_DVASPECT);
 	HRESULT  hr = DV_E_TYMED;
-	for(size_t i = 0; i < m_ArrFormatEtc.size(); ++i)
+	for(SIZE_T i = 0; i < m_ArrFormatEtc.size(); ++i)
 	{
 	   if(pformatetc->tymed & m_ArrFormatEtc[i]->tymed)
 	   {
@@ -316,14 +316,14 @@ CEnumFormatEtc::CEnumFormatEtc(const vector<FORMATETC>& ArrFE):
 m_cRefCount(0),m_iCur(0)
 {
    // ATLTRACE("CEnumFormatEtc::CEnumFormatEtc()\n");
-   for(size_t i = 0; i < ArrFE.size(); ++i)
+   for(SIZE_T i = 0; i < ArrFE.size(); ++i)
 		m_pFmtEtc.push_back(ArrFE[i]);
 }
 
 CEnumFormatEtc::CEnumFormatEtc(const vector<FORMATETC*>& ArrFE):
 m_cRefCount(0),m_iCur(0)
 {
-   for(size_t i = 0; i < ArrFE.size(); ++i)
+   for(SIZE_T i = 0; i < ArrFE.size(); ++i)
 		m_pFmtEtc.push_back(*ArrFE[i]);
 }
 
@@ -527,7 +527,7 @@ HRESULT STDMETHODCALLTYPE CIDropTarget::DragEnter(
 	//pEnum->Next(1,&ftm,0);
 	//pEnum->Release();
 	m_pSupportedFrmt = NULL;
-	for(size_t i =0; i<m_formatetc.size(); ++i)
+	for(SIZE_T i =0; i<m_formatetc.size(); ++i)
 	{
 		m_bAllowDrop = (pDataObj->QueryGetData(&m_formatetc[i]) == S_OK)?true:false;
 		if(m_bAllowDrop)

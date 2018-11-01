@@ -133,7 +133,7 @@ protected:
 	void SetOrder(void);
 	void SetFilter(LPCTSTR pszNewFilter);
 
-	BOOL FindNextItemInList(UINT maxFolder, UINT maxData, LPUINT puPos);
+	BOOL FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos);
 
 	void QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending);
 	void QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending);
@@ -154,13 +154,14 @@ protected:
 	void PushDir(LPCTSTR str);
 	void UpdateToolBarElements(void);
 
-	void SetFocusItem(INT item) {
+	void SetFocusItem(SIZE_T item) {
 		/* select first entry */
-		INT	dataSize	= _uMaxElements;
+		SIZE_T	dataSize	= _uMaxElements;
 
 		/* at first unselect all */
-		for (INT iItem = 0; iItem < dataSize; iItem++)
+		for (SIZE_T iItem = 0; iItem < dataSize; iItem++) {
 			ListView_SetItemState(_hSelf, iItem, 0, 0xFF);
+		}
 
 		ListView_SetItemState(_hSelf, item, LVIS_SELECTED|LVIS_FOCUSED, 0xFF);
 		ListView_EnsureVisible(_hSelf, item, TRUE);
@@ -223,9 +224,9 @@ private:
 
 	/* stores the path here for sorting		*/
 	/* Note: _vFolder will not be sorted    */
-	UINT						_uMaxFolders;
-	UINT						_uMaxElements;
-	UINT						_uMaxElementsOld;
+	SIZE_T						_uMaxFolders;
+	SIZE_T						_uMaxElements;
+	SIZE_T						_uMaxElementsOld;
 	vector<tFileListData>		_vFileList;
 
 	/* search in list by typing of characters */

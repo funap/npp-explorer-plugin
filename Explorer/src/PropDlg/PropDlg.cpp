@@ -265,8 +265,8 @@ BOOL CALLBACK PropDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARA
 				}
 				case IDOK:
 				{
-					UINT	lengthName	= ::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
-					UINT	lengthLink	= ::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
+					UINT	lengthName	= (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
+					UINT	lengthLink	= (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
 
 					SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
 					SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
@@ -435,7 +435,7 @@ void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
 	if (parentElement != NULL)
 	{
 		/* update elements in parent tree */
-		for (size_t i = 0; i < parentElement->vElements.size(); i++)
+		for (SIZE_T i = 0; i < parentElement->vElements.size(); i++)
 		{
 			PELEM	pElem	= &parentElement->vElements[i];
 

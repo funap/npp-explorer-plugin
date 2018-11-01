@@ -65,7 +65,7 @@ void TreeHelper::UpdateOverlayIcon(void)
 
 			debug_print("UpdateOverlayIcon() starts:\n");
 
-			for (size_t i = 0; i < _vIconUpdate.size() ; i++)
+			for (SIZE_T i = 0; i < _vIconUpdate.size() ; i++)
 			{
 				HTREEITEM	hItem = TreeView_GetNextItem(_hTreeCtrl, _vIconUpdate[i].hLastItem, TVGN_CHILD);
 
@@ -106,7 +106,7 @@ void TreeHelper::UpdateOverlayIcon(void)
 void TreeHelper::DrawChildren(HTREEITEM parentItem)
 {
 	TCHAR				parentFolderPathName[MAX_PATH];
-	size_t				iCnt			= 0;
+	SIZE_T				iCnt			= 0;
 	WIN32_FIND_DATA		Find			= {0};
 	HANDLE				hFind			= NULL;
 	tItemList			listElement;
@@ -142,7 +142,7 @@ void TreeHelper::DrawChildren(HTREEITEM parentItem)
 		::FindClose(hFind);
 
 		/* sort data */
-		QuickSortItems(&vFolderList, 0, vFolderList.size()-1);
+		QuickSortItems(&vFolderList, 0, (INT)vFolderList.size()-1);
 	 
 		for (iCnt = 0; iCnt < vFolderList.size(); iCnt++)
 		{
@@ -177,7 +177,7 @@ void TreeHelper::UseOverlayThreading(void)
 
 void TreeHelper::UpdateChildren(LPTSTR pszParentPath, HTREEITEM hParentItem, BOOL doRecursive)
 {
-	size_t				iCnt			= 0;
+	SIZE_T				iCnt			= 0;
 	WIN32_FIND_DATA		Find			= {0};
 	HANDLE				hFind			= NULL;
 	TVITEM				item			= {0};
@@ -226,7 +226,7 @@ void TreeHelper::UpdateChildren(LPTSTR pszParentPath, HTREEITEM hParentItem, BOO
 		::FindClose(hFind);
 
 		/* sort data */
-		QuickSortItems(&vFolderList, 0, vFolderList.size()-1);
+		QuickSortItems(&vFolderList, 0, (INT)vFolderList.size()-1);
 
 		/* update tree */
 		for (iCnt = 0; iCnt < vFolderList.size(); iCnt++)
