@@ -83,6 +83,12 @@ public:
 	void SaveSession(void);
 	void NotifyNewFile(void);
 
+	void initFinish(void) {
+		::SendMessage(_hSelf, WM_SIZE, 0, 0);
+		UpdateColors();
+	};
+	void UpdateColors();
+
 protected:
 
 	virtual BOOL CALLBACK run_dlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

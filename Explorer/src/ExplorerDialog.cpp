@@ -2019,8 +2019,8 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 
 void ExplorerDialog::UpdateColors()
 {
-	auto bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
-	auto fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
+	COLORREF bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
+	COLORREF fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
 
 	TreeView_SetBkColor(_hTreeCtrl, bgColor);
 	TreeView_SetTextColor(_hTreeCtrl, fgColor);

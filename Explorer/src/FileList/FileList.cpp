@@ -686,11 +686,12 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 					case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
 					{
 						if (((lpCD->iSubItem > 1) && (_pExProp->bAddExtToName == TRUE)) ||
-							((lpCD->iSubItem > 0) && (_pExProp->bAddExtToName == FALSE)))
+							((lpCD->iSubItem > 0) && (_pExProp->bAddExtToName == FALSE))) {
 							return FALSE;
+						}
 
-						auto bgColor = ListView_GetBkColor(_hSelf);
-						auto fgColor = ListView_GetTextColor(_hSelf);
+						COLORREF bgColor = ListView_GetBkColor(_hSelf);
+						COLORREF fgColor = ListView_GetTextColor(_hSelf);
 
 						UINT	iItem		= (UINT)lpCD->nmcd.dwItemSpec;
 						RECT	rc			= {0};
@@ -755,8 +756,9 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 						if (state & (LVIS_SELECTED | LVIS_DROPHILITED)) {
 							::SetTextColor(hMemDc, ::GetSysColor(isSel ? COLOR_HIGHLIGHTTEXT : COLOR_BTNTEXT));
 						}
-						else
+						else {
 							::SetTextColor(hMemDc, fgColor);
+						}
 
 						/* draw text to memory */
 						::DrawText(hMemDc, text, (int)_tcslen(text), &rcName, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
