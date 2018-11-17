@@ -58,8 +58,8 @@ public :
 	void getText(LPTSTR pszText, UINT size = MAX_PATH);
 	bool getSelText(LPTSTR pszText);
 
-	void setComboList(vector<string> vStrList);
-	void getComboList(vector<string> & vStrList);
+	void setComboList(vector<string> &vStrList);
+	void getComboList(vector<string> &vStrList);
 
 	void clearComboList(void)
 	{

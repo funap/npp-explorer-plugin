@@ -133,7 +133,7 @@ void ComboOrgi::selectComboText(LPTSTR pszText)
 	::SendMessage(_hCombo, CB_SETCURSEL, lResult, 0);
 }
 
-void ComboOrgi::setComboList(vector<string> vStrList)
+void ComboOrgi::setComboList(vector<string> &vStrList)
 {
 	SIZE_T	iCnt	= vStrList.size();
 
@@ -144,7 +144,7 @@ void ComboOrgi::setComboList(vector<string> vStrList)
 	}
 }
 
-void ComboOrgi::getComboList(vector<string> & vStrList)
+void ComboOrgi::getComboList(vector<string> &vStrList)
 {
 	TCHAR	szTemp[MAX_PATH];
 	SIZE_T	iCnt	= ::SendMessage(_hCombo, CB_GETCOUNT, 0, 0);
