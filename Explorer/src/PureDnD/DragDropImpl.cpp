@@ -424,10 +424,6 @@ CIDropTarget::CIDropTarget(void):
 	m_pDropTargetHelper(NULL), m_pSupportedFrmt(NULL)
 { 
 	// ATLASSERT(m_hTargetWnd != NULL);
-
-	if(FAILED(CoCreateInstance(CLSID_DragDropHelper,NULL,CLSCTX_INPROC_SERVER,
-                     IID_IDropTargetHelper,(LPVOID*)&m_pDropTargetHelper)))
-		m_pDropTargetHelper = NULL;
 }
 
 CIDropTarget::~CIDropTarget()
@@ -514,6 +510,13 @@ HRESULT STDMETHODCALLTYPE CIDropTarget::DragEnter(
     /* [in] */ POINTL pt,
     /* [out][in] */ DWORD __RPC_FAR *pdwEffect)
 {
+	if (nullptr == m_pDropTargetHelper) {
+		if (FAILED(CoCreateInstance(CLSID_DragDropHelper, NULL, CLSCTX_INPROC_SERVER,
+			IID_IDropTargetHelper, (LPVOID*)&m_pDropTargetHelper))) {
+			m_pDropTargetHelper = nullptr;
+		}
+	}
+
 	// ATLTRACE("CIDropTarget::DragEnter\n");
 	if(pDataObj == NULL)
 		return E_INVALIDARG;
