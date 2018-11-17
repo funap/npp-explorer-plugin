@@ -94,7 +94,7 @@ typedef struct
 	int _grayIcon;
 
 	int _stdIcon;
-	UINT _uIconStyle;
+	BYTE _uIconStyle;
 }ToolBarButtonUnit;
 
 typedef std::vector<ToolBarButtonUnit> ToolBarIconIDs;
