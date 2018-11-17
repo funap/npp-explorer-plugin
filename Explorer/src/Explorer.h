@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <zmouse.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <tchar.h>

@@ -36,9 +36,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <vector>
 #include <string>
 #include <commctrl.h>
-#include <shlobj.h>
-#include <shlwapi.h>
-#include <shellapi.h>
 
 using namespace std;
 
