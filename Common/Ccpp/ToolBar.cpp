@@ -47,12 +47,12 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 	BYTE style;
 	SIZE_T i = 0;
 
-	for (; i < _nrButtons ; i++)
+	for (; i < _nrButtons ; ++i)
 	{
 		cmd = buttonUnitArray[i]._cmdID;
 		if (cmd != 0)
 		{
-			bmpIndex++;
+			++bmpIndex;
 			style = BTNS_BUTTON | _toolBarIcons.getIconStyle(i);
 		}
 		else
@@ -76,12 +76,12 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 		_pTBB[i].fsStyle = BTNS_SEP;
 		_pTBB[i].dwData = 0; 
 		_pTBB[i].iString = 0;
-		i++;
+		++i;
 		//add plugin buttons
-		for (SIZE_T j = 0; j < _nrDynButtons ; j++, i++)
+		for (SIZE_T j = 0; j < _nrDynButtons ; ++j, ++i)
 		{
 			cmd = _vDynBtnReg[j].message;
-			bmpIndex++;
+			++bmpIndex;
 
 			_pTBB[i].iBitmap = bmpIndex;
 			_pTBB[i].idCommand = cmd;
@@ -97,7 +97,8 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 	return true;
 }
 
-void ToolBar::destroy() {
+void ToolBar::destroy()
+{
 	if (_pRebar) {
 		_pRebar->removeBand(_rbBand.wID);
 		_pRebar = NULL;
@@ -108,23 +109,26 @@ void ToolBar::destroy() {
 	_toolBarIcons.destroy();
 };
 
-int ToolBar::getWidth() const {
+int ToolBar::getWidth() const
+{
 	RECT btnRect;
 	int totalWidth = 0;
-	for(SIZE_T i = 0; i < _nrCurrentButtons; i++) {
+	for(SIZE_T i = 0; i < _nrCurrentButtons; ++i) {
 		::SendMessage(_hSelf, TB_GETITEMRECT, i, (LPARAM)&btnRect);
 		totalWidth += btnRect.right - btnRect.left;
 	}
 	return totalWidth;
 }
 
-int ToolBar::getHeight() const {
+int ToolBar::getHeight() const
+{
 	DWORD size = (DWORD)SendMessage(_hSelf, TB_GETBUTTONSIZE, 0, 0);
     DWORD padding = (DWORD)SendMessage(_hSelf, TB_GETPADDING, 0,0);
-	int totalHeight = HIWORD(size) + HIWORD(padding);
+	int totalHeight = HIWORD(size) + HIWORD(padding) - 3;
 
 	return totalHeight;
 }
+
 
 void ToolBar::reset(bool create) 
 {
@@ -223,7 +227,8 @@ void ToolBar::registerDynBtn(UINT messageID, toolbarIcons* tIcon)
 	}
 }
 
-UINT ToolBar::doPopop(POINT chevPoint) {
+UINT ToolBar::doPopop(POINT chevPoint)
+{
 	//first find hidden buttons
 	int width = Window::getWidth();
 
@@ -233,7 +238,7 @@ UINT ToolBar::doPopop(POINT chevPoint) {
 		::SendMessage(_hSelf, TB_GETITEMRECT, start, (LPARAM)&btnRect);
 		if(btnRect.right > width)
 			break;
-		start++;
+		++start;
 	}
 
 	if (start < _nrCurrentButtons) {	//some buttons are hidden
@@ -266,17 +271,17 @@ UINT ToolBar::doPopop(POINT chevPoint) {
 	return (UINT)-1;
 }
 
-void ToolBar::addToRebar(ReBar * rebar) {
+void ToolBar::addToRebar(ReBar * rebar)
+{
 	if (_pRebar)
 		return;
 	_pRebar = rebar;
-
 	ZeroMemory(&_rbBand, sizeof(REBARBANDINFO));
 	_rbBand.cbSize  = sizeof(REBARBANDINFO);
 	_rbBand.fMask   = RBBIM_STYLE | RBBIM_CHILD | RBBIM_CHILDSIZE |
 					  RBBIM_SIZE | RBBIM_IDEALSIZE | RBBIM_ID;
 
-	_rbBand.fStyle		= RBBS_VARIABLEHEIGHT | RBBS_USECHEVRON;
+	_rbBand.fStyle		= RBBS_VARIABLEHEIGHT | RBBS_USECHEVRON | RBBS_NOGRIPPER;
 	_rbBand.hwndChild	= getHSelf();
 	_rbBand.wID			= REBAR_BAR_TOOLBAR;	//ID REBAR_BAR_TOOLBAR for toolbar
 	_rbBand.cxMinChild	= 0;
@@ -308,11 +313,16 @@ void ReBar::init(HINSTANCE hInst, HWND hPere)
 	::SendMessage(_hSelf, RB_SETBARINFO, 0, (LPARAM)&rbi);
 }
 
-bool ReBar::addBand(REBARBANDINFO * rBand, bool useID) {
-	if (rBand->fMask & RBBIM_STYLE)
-		rBand->fStyle |= RBBS_GRIPPERALWAYS;
-	else
+bool ReBar::addBand(REBARBANDINFO * rBand, bool useID) 
+{
+	if (rBand->fMask & RBBIM_STYLE) {
+		if (!(rBand->fStyle & RBBS_NOGRIPPER)) {
+			rBand->fStyle |= RBBS_GRIPPERALWAYS;
+		}
+	}
+	else {
 		rBand->fStyle = RBBS_GRIPPERALWAYS;
+	}
 	rBand->fMask |= RBBIM_ID | RBBIM_STYLE;
 	if (useID) {
 		if (isIDTaken(rBand->wID))
@@ -352,7 +362,8 @@ void ReBar::setIDVisible(int id, bool show) {
 	::SendMessage(_hSelf, RB_SETBANDINFO, (WPARAM)index, (LPARAM)&rbBand);
 }
 
-bool ReBar::getIDVisible(int id) {
+bool ReBar::getIDVisible(int id)
+{
 	int index = (int)SendMessage(_hSelf, RB_IDTOINDEX, (WPARAM)id, 0);
 	if (index == -1 )
 		return false;	//error
@@ -363,17 +374,19 @@ bool ReBar::getIDVisible(int id) {
 	return ((rbBand.fStyle & RBBS_HIDDEN) == 0);
 }
 
-int ReBar::getNewID() {
+int ReBar::getNewID() 
+{
 	int idToUse = REBAR_BAR_EXTERNAL;
-	int curVal = 0;
 	SIZE_T size = usedIDs.size();
-	for(SIZE_T i = 0; i < size; i++) {
-		curVal = usedIDs.at(i);
+	for(SIZE_T i = 0; i < size; ++i) {
+		int curVal = usedIDs.at(i);
 		if (curVal < idToUse) {
 			continue;
-		} else if (curVal == idToUse) {
+		}
+		else if (curVal == idToUse) {
 			idToUse++;
-		} else {
+		}
+		else {
 			break;		//found gap
 		}
 	}
@@ -382,9 +395,10 @@ int ReBar::getNewID() {
 	return idToUse;
 }
 
-void ReBar::releaseID(int id) {
+void ReBar::releaseID(int id)
+{
 	SIZE_T size = usedIDs.size();
-	for(SIZE_T i = 0; i < size; i++) {
+	for(SIZE_T i = 0; i < size; ++i) {
 		if (usedIDs.at(i) == id) {
 			usedIDs.erase(usedIDs.begin()+i);
 			break;
@@ -392,9 +406,10 @@ void ReBar::releaseID(int id) {
 	}
 }
 
-bool ReBar::isIDTaken(int id) {
+bool ReBar::isIDTaken(int id)
+{
 	SIZE_T size = usedIDs.size();
-	for(SIZE_T i = 0; i < size; i++) {
+	for(SIZE_T i = 0; i < size; ++i) {
 		if (usedIDs.at(i) == id) {
 			return true;
 		}

@@ -147,11 +147,12 @@ static LPTSTR szToolTip[23] = {
 };
 
 
-void ExplorerDialog::GetNameStrFromCmd(UINT resID, LPTSTR tip, UINT count)
+LPTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
 {
-	if (NLGetText(_hInst, _nppData._nppHandle, szToolTip[resID - IDM_EX_PREV], tip, count) == 0) {
-		_tcscpy(tip, szToolTip[resID - IDM_EX_PREV]);
+	if ((IDM_EX_PREV <= resID) && (resID <= IDM_EX_UPDATE)) {
+		return szToolTip[resID - IDM_EX_PREV];
 	}
+	return nullptr;
 }
 
 
@@ -376,20 +377,18 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 
 				lpttt = (LPTOOLTIPTEXT)nmhdr; 
 				lpttt->hinst = _hInst; 
+				
 
 				// Specify the resource identifier of the descriptive 
 				// text for the given button.
 				int resId = int(lpttt->hdr.idFrom);
-
-				TCHAR	tip[MAX_PATH];
-				GetNameStrFromCmd(resId, tip, sizeof(tip));
-				lstrcpy(lpttt->lpszText, tip);
-				return TRUE;
+				lpttt->lpszText = GetNameStrFromCmd(resId);
+				break;
 			}
 
 			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
 
-		    return FALSE;
+			return FALSE;
 		}
 		case WM_SIZE:
 		case WM_MOVE:

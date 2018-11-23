@@ -63,11 +63,12 @@ static LPTSTR szToolTip[23] = {
 	_T("Edit Link...")
 };
 
-void FavesDialog::GetNameStrFromCmd(UINT resID, LPTSTR tip, UINT count)
+LPTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
 {
-	if (NLGetText(_hInst, _nppData._nppHandle, szToolTip[resID - IDM_EX_LINK_NEW_FILE], tip, count) == 0) {
-		_tcscpy(tip, szToolTip[resID - IDM_EX_LINK_NEW_FILE]);
+	if ((IDM_EX_LINK_NEW_FILE <= resID) && (resID <= IDM_EX_LINK_EDIT)) {
+		return szToolTip[resID - IDM_EX_LINK_NEW_FILE];
 	}
+	return nullptr;
 }
 
 
@@ -374,10 +375,8 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 				// Specify the resource identifier of the descriptive 
 				// text for the given button.
 				int idButton = int(lpttt->hdr.idFrom);
-
-				TCHAR	tip[MAX_PATH];
-				GetNameStrFromCmd(idButton, tip, sizeof(tip));
-				lpttt->lpszText = tip;
+				lpttt->lpszText = GetNameStrFromCmd(idButton);
+				break;
 			}
 
 			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
