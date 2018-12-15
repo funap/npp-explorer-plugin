@@ -135,7 +135,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "%LocalAppData%\Notepad++\plugins\Explorer\"</Command>
+      <Command>copy "$(TargetPath)" "%PROGRAMDATA%\Notepad++\plugins\Explorer\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -202,7 +202,7 @@
       <Culture>0x0407</Culture>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "%LocalAppData%\Notepad++\plugins\Explorer\"</Command>
+      <Command>copy "$(TargetPath)" "%PROGRAMDATA%\Notepad++\plugins\Explorer\"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
