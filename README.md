@@ -8,7 +8,7 @@ https://github.com/funap/npp-explorer-plugin/releases
 ### Notepad++ 7.6.1
 Drop to the `Explorer\Explorer.dll` into `%PROGRAMDATA%\Notepad++\plugins\` folder.
 i.e.  
-`C:\ProgramData\Notepad++\plugins`
+`C:\ProgramData\Notepad++\plugins\Explorer\Explorer.dll`
 
 ### Notepad++ 7.6
 Drop to the `Explorer\Explorer.dll` into `%LocalAppData%\Notepad++\plugins\` folder.
