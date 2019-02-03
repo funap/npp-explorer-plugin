@@ -80,10 +80,10 @@ protected:
 
 	virtual void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) = 0;
 	void DrawChildren(HTREEITEM parentItem);
-	void UpdateChildren(LPTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE );
-	HTREEITEM InsertChildFolder(LPTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
-	HTREEITEM InsertItem(LPTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
-	BOOL UpdateItem(HTREEITEM hItem, LPTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
+	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE );
+	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+	HTREEITEM InsertItem(LPCTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
+	BOOL UpdateItem(HTREEITEM hItem, LPCTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
 	void DeleteChildren(HTREEITEM parentItem);
 	BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
 	LPARAM GetParam(HTREEITEM hItem);
@@ -98,7 +98,7 @@ private:
 		DWORD	dwAttributes;
 	};
 	void QuickSortItems(vector<tItemList>* vList, INT d, INT h);
-	BOOL FindFolderAfter(LPTSTR itemName, HTREEITEM pAfterItem);
+	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
 
 private:	/* for thread */
 

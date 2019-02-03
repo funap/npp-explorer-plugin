@@ -70,7 +70,7 @@ LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 }
 
 
-void ComboOrgi::addText(LPTSTR pszText)
+void ComboOrgi::addText(LPCTSTR pszText)
 {
 	/* find item */
 	INT		count		= (INT)_comboItems.size();
@@ -100,7 +100,7 @@ void ComboOrgi::addText(LPTSTR pszText)
 }
 
 
-void ComboOrgi::setText(LPTSTR pszText, UINT size)
+void ComboOrgi::setText(LPCTSTR pszText, UINT size)
 {
 	::SendMessage(_hCombo, WM_SETTEXT, size, (LPARAM)pszText);
 }
@@ -125,7 +125,7 @@ bool ComboOrgi::getSelText(LPTSTR pszText)
 	return false;
 }
 
-void ComboOrgi::selectComboText(LPTSTR pszText)
+void ComboOrgi::selectComboText(LPCTSTR pszText)
 {
 	LRESULT lResult	= -1;
 

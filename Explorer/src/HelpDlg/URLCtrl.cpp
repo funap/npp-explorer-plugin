@@ -92,7 +92,7 @@ static BYTE ANDMask[128] =
 };
 
 
-void URLCtrl::create(HWND itemHandle, LPTSTR link, COLORREF linkColor)
+void URLCtrl::create(HWND itemHandle, LPCTSTR link, COLORREF linkColor)
 {
 	// turn on notify style
     ::SetWindowLongPtr(itemHandle, GWL_STYLE, ::GetWindowLongPtr(itemHandle, GWL_STYLE) | SS_NOTIFY);

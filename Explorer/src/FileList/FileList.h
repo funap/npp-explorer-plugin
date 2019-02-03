@@ -83,7 +83,7 @@ public:
 
 	void filterFiles(LPCTSTR currentFilter);
 	void SelectCurFile(void);
-	void SelectFolder(LPTSTR selFolder);
+	void SelectFolder(LPCTSTR selFolder);
 
 	virtual void destroy() {};
 	virtual void redraw(void) {

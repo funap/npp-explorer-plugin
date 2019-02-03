@@ -53,8 +53,8 @@ public :
 	virtual void destroy() {
 	};
 
-	void addText(LPTSTR pszText);
-	void setText(LPTSTR pszText, UINT size = MAX_PATH);
+	void addText(LPCTSTR pszText);
+	void setText(LPCTSTR pszText, UINT size = MAX_PATH);
 	void getText(LPTSTR pszText, UINT size = MAX_PATH);
 	bool getSelText(LPTSTR pszText);
 
@@ -67,7 +67,7 @@ public :
 	};
 
 private:
-	void selectComboText(LPTSTR pszText);
+	void selectComboText(LPCTSTR pszText);
 
 private :
 	HWND					_hCombo;

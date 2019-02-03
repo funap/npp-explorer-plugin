@@ -33,12 +33,12 @@ class NewDlg : public StaticDialog
 public:
 	NewDlg() : StaticDialog() {};
     
-    void init(HINSTANCE hInst, HWND hWnd, LPTSTR pszWndName = NULL) {
+    void init(HINSTANCE hInst, HWND hWnd, LPCTSTR pszWndName = NULL) {
 		Window::init(hInst, hWnd);
 		_pszWndName = pszWndName;
 	};
 
-	INT_PTR doDialog(LPTSTR pFileName, LPTSTR pDesc);
+	INT_PTR doDialog(LPCTSTR pFileName, LPCTSTR pDesc);
 
     virtual void destroy() {};
 
@@ -47,9 +47,9 @@ protected :
 	BOOL CALLBACK run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 private:
-	LPTSTR			_pszWndName;
-	LPTSTR			_pFileName;
-	LPTSTR			_pDesc;
+	LPCTSTR			_pszWndName;
+	LPCTSTR			_pFileName;
+	LPCTSTR			_pDesc;
 
 };
 

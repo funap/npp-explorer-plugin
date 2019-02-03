@@ -39,11 +39,12 @@ class CEnumFormatEtc : public IEnumFORMATETC
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CIDropSource : public IDropSource
 {
-	long m_cRefCount;
 public:
-	bool m_bDropped;
-
-	CIDropSource::CIDropSource():m_cRefCount(0),m_bDropped(false) {}
+	CIDropSource()
+		: m_cRefCount(0)
+		, m_bDropped(false)
+	{
+	}
 	//IUnknown
     virtual HRESULT STDMETHODCALLTYPE QueryInterface(
             /* [in] */ REFIID riid,
@@ -57,6 +58,10 @@ public:
     
     virtual HRESULT STDMETHODCALLTYPE GiveFeedback( 
         /* [in] */ DWORD dwEffect);
+private:
+	long m_cRefCount;
+	bool m_bDropped;
+
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////

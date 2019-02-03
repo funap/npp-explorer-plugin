@@ -31,7 +31,7 @@ public:
     URLCtrl():_hfUnderlined(0),_hCursor(0), _oldproc(NULL), \
         _linkColor(), _visitedColor(), _clicking(false) {_URL[0] = '\0';};
 
-    void create(HWND itemHandle, LPTSTR link, COLORREF linkColor = RGB(0,0,255));
+    void create(HWND itemHandle, LPCTSTR link, COLORREF linkColor = RGB(0,0,255));
     void destroy(){
         	if(_hfUnderlined)
                 ::DeleteObject(_hfUnderlined);
