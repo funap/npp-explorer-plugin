@@ -5,17 +5,23 @@ https://github.com/funap/npp-explorer-plugin/releases
 
 ## Installation
 
-### Notepad++ 7.6.1
-Drop to the `Explorer\Explorer.dll` into `%PROGRAMDATA%\Notepad++\plugins\` folder.  
+### Notepad++ 7.6.3
+Drop to the `Explorer\Explorer.dll` into `%ProgramFiles%\Notepad++\plugins\` folder.  
+i.e.  
+`C:\Program Files\Notepad++\plugins\Explorer\Explorer.dll`
+
+### older versions
+#### Notepad++ 7.6.1
+Drop to the `Explorer\Explorer.dll` into `%ProgramData%\Notepad++\plugins\` folder.  
 i.e.  
 `C:\ProgramData\Notepad++\plugins\Explorer\Explorer.dll`
 
-### Notepad++ 7.6
+#### Notepad++ 7.6
 Drop to the `Explorer\Explorer.dll` into `%LocalAppData%\Notepad++\plugins\` folder.  
 i.e.  
 `C:\Users\[USERNAME]\AppData\Local\Notepad++\plugins\Explorer\Explorer.dll`
 
-### older versions
+#### 7.5.9 or lower
 Just copy the Explorer.dll to your Notepad++\plugins directory.
 
 ## License
