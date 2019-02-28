@@ -328,15 +328,6 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 						}
 						break;
 					}
-					case TVN_KEYDOWN:
-					{
-						if (((LPNMTVKEYDOWN)lParam)->wVKey == VK_RIGHT)
-						{
-							HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
-							DrawChildren(hItem);
-						}
-						return TRUE;
-					}
 					case TVN_BEGINDRAG:
 					{
 						CIDropSource	dropSrc;
