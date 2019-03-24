@@ -93,7 +93,7 @@ protected:
 
 	virtual BOOL CALLBACK run_dlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-	LPTSTR GetNameStrFromCmd(UINT idButton);
+	LPCTSTR GetNameStrFromCmd(UINT idButton);
 	void tb_cmd(UINT message);
 
 	void InitialDialog(void);

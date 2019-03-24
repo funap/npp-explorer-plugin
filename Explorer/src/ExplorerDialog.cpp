@@ -135,7 +135,7 @@ static ToolBarButtonUnit toolBarIconsNT[] = {
 /** 
  *	Note: On change, keep sure to change order of IDM_EX_... also
  */
-static LPTSTR szToolTip[23] = {
+static LPCTSTR szToolTip[23] = {
 	_T("Previous Folder"),
 	_T("Next Folder"),
 	_T("New File..."),
@@ -147,7 +147,7 @@ static LPTSTR szToolTip[23] = {
 };
 
 
-LPTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
+LPCTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
 {
 	if ((IDM_EX_PREV <= resID) && (resID <= IDM_EX_UPDATE)) {
 		return szToolTip[resID - IDM_EX_PREV];
@@ -373,8 +373,8 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 				// Specify the resource identifier of the descriptive 
 				// text for the given button.
 				int resId = int(lpttt->hdr.idFrom);
-				lpttt->lpszText = GetNameStrFromCmd(resId);
-				break;
+				lpttt->lpszText = const_cast<LPTSTR>(GetNameStrFromCmd(resId));
+				return TRUE;
 			}
 
 			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);

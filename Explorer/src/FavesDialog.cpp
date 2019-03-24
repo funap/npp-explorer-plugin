@@ -33,9 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 extern winVer gWinVersion;
 
-
-static void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName);
-
 static ToolBarButtonUnit toolBarIcons[] = {
 	
     {IDM_EX_LINK_NEW_FILE,  IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_LINKNEWFILE, 0},
@@ -55,7 +52,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_LINK_EDIT,	    IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_LINKEDIT, 0}
 };    
 		
-static LPTSTR szToolTip[23] = {
+static LPCTSTR szToolTip[23] = {
 	_T("Link Current File..."),
 	_T("Link Current Folder..."),
 	_T("New Link..."),
@@ -63,17 +60,13 @@ static LPTSTR szToolTip[23] = {
 	_T("Edit Link...")
 };
 
-LPTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
+LPCTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
 {
 	if ((IDM_EX_LINK_NEW_FILE <= resID) && (resID <= IDM_EX_LINK_EDIT)) {
 		return szToolTip[resID - IDM_EX_LINK_NEW_FILE];
 	}
 	return nullptr;
 }
-
-
-
-
 
 FavesDialog::FavesDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
 {
@@ -375,8 +368,8 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 				// Specify the resource identifier of the descriptive 
 				// text for the given button.
 				int idButton = int(lpttt->hdr.idFrom);
-				lpttt->lpszText = GetNameStrFromCmd(idButton);
-				break;
+				lpttt->lpszText = const_cast<LPTSTR>(GetNameStrFromCmd(idButton));
+				return TRUE;
 			}
 
 			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);

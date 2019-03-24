@@ -71,7 +71,7 @@ typedef enum {
 	FAVES_ITEM_MAX
 } eFavesElements;
 
-static LPTSTR cFavesItemNames[11] = {
+static LPCTSTR cFavesItemNames[11] = {
 	_T("[Folders]"),
 	_T("[Files]"),
 	_T("[Web]"),
@@ -98,7 +98,7 @@ typedef vector<TItemElement>::iterator		ELEM_ITR;
 
 /******************** explorer ***************************/
 
-static LPTSTR cColumns[5] = {
+static LPCTSTR cColumns[5] = {
 	_T("Name"),
 	_T("Ext."),
 	_T("Size"),
@@ -120,7 +120,7 @@ static TCHAR CONFIG_PATH[]		= _T("\\plugins\\Config");
 /********************************************************/
 
 /* see in notepad sources */
-static LPTSTR cVarExNppExec[] = {
+static LPCTSTR cVarExNppExec[] = {
 	_T("EXP_FULL_PATH"),
 	_T("EXP_ROOT_PATH"),
 	_T("EXP_PARENT_FULL_DIR"),
@@ -164,7 +164,7 @@ typedef enum {
 } eSizeFmt;
 
 
-const LPTSTR pszSizeFmt[18] = {
+const LPCTSTR pszSizeFmt[18] = {
 	_T("Bytes"),
 	_T("kBytes"),
 	_T("Dynamic x b/k/M"),
@@ -177,7 +177,7 @@ typedef enum {
 	DFMT_MAX
 } eDateFmt;
 
-const LPTSTR pszDateFmt[12] = {
+const LPCTSTR pszDateFmt[12] = {
 	_T("Y/M/D HH:MM"),
 	_T("D.M.Y HH:MM")
 };
@@ -236,7 +236,7 @@ typedef struct {
 
 
 #define MAX_NPP_EXAMPLE_LINE	22
-static LPTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
+static LPCTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
 	_T("//Explorer: NppExec.dll EXP_FULL_PATH[0]\r\n"),
 	_T("// ------------------------------------------------------------------\r\n"),
 	_T("// NOTE: The first line is in every script necessary\r\n"),
@@ -280,7 +280,6 @@ LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARA
 
 #define	ALLOW_PARENT_SEL	1
 
-void FileListUpdate(void);
 BOOL VolumeNameExists(LPTSTR rootDrive, LPTSTR volumeName);
 bool IsValidFileName(LPTSTR pszFileName);
 bool IsValidFolder(const WIN32_FIND_DATA & Find);
