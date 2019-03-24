@@ -223,6 +223,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
 		}
 	}
 
+	UpdateColors();
 	display(willBeShown);
 }
 
@@ -2012,17 +2013,16 @@ void ExplorerDialog::UpdateColors()
 	COLORREF bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
 	COLORREF fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
 
-	TreeView_SetBkColor(_hTreeCtrl, bgColor);
-	TreeView_SetTextColor(_hTreeCtrl, fgColor);
+	if (NULL != _hTreeCtrl) {
+		TreeView_SetBkColor(_hTreeCtrl, bgColor);
+		TreeView_SetTextColor(_hTreeCtrl, fgColor);
+		::InvalidateRect(_hTreeCtrl, NULL, TRUE);
+	}
 
-	ListView_SetBkColor(_hListCtrl, bgColor);
-	ListView_SetTextColor(_hListCtrl, fgColor);
-	ListView_SetTextBkColor(_hListCtrl, CLR_NONE);
-
-	// also look at listview's custom draw code (NM_CUSTOMDRAW) in FileList.cpp
-	// the code there was modified to use ListView_GetBkColor and ListView_GetTextColor
-	// so that we get a consistent look.
-
-	::InvalidateRect(_hTreeCtrl, NULL, TRUE);
-	::InvalidateRect(_hListCtrl, NULL, TRUE);
+	if (NULL != _hListCtrl) {
+		ListView_SetBkColor(_hListCtrl, bgColor);
+		ListView_SetTextColor(_hListCtrl, fgColor);
+		ListView_SetTextBkColor(_hListCtrl, CLR_NONE);
+		::InvalidateRect(_hListCtrl, NULL, TRUE);
+	}
 }

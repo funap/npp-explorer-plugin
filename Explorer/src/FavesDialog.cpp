@@ -118,6 +118,7 @@ void FavesDialog::doDialog(bool willBeShown)
 		ExpandElementsRecursive(TVI_ROOT);
 	}
 
+	UpdateColors();
     display(willBeShown);
 }
 
@@ -2172,8 +2173,9 @@ void FavesDialog::UpdateColors()
 	COLORREF bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
 	COLORREF fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
 
-	TreeView_SetBkColor(_hTreeCtrl, bgColor);
-	TreeView_SetTextColor(_hTreeCtrl, fgColor);
-
-	::InvalidateRect(_hTreeCtrl, NULL, TRUE);
+	if (NULL != _hTreeCtrl) {
+		TreeView_SetBkColor(_hTreeCtrl, bgColor);
+		TreeView_SetTextColor(_hTreeCtrl, fgColor);
+		::InvalidateRect(_hTreeCtrl, NULL, TRUE);
+	}
 }
