@@ -312,7 +312,7 @@ STDMETHODIMP CIDropSource::GiveFeedback(
 // CEnumFormatEtc Class
 //////////////////////////////////////////////////////////////////////
 
-CEnumFormatEtc::CEnumFormatEtc(const vector<FORMATETC>& ArrFE):
+CEnumFormatEtc::CEnumFormatEtc(const std::vector<FORMATETC>& ArrFE):
 m_cRefCount(0),m_iCur(0)
 {
    // ATLTRACE("CEnumFormatEtc::CEnumFormatEtc()\n");
@@ -320,7 +320,7 @@ m_cRefCount(0),m_iCur(0)
 		m_pFmtEtc.push_back(ArrFE[i]);
 }
 
-CEnumFormatEtc::CEnumFormatEtc(const vector<FORMATETC*>& ArrFE):
+CEnumFormatEtc::CEnumFormatEtc(const std::vector<FORMATETC*>& ArrFE):
 m_cRefCount(0),m_iCur(0)
 {
    for(SIZE_T i = 0; i < ArrFE.size(); ++i)

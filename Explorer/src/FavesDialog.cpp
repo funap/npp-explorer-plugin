@@ -84,7 +84,7 @@ FavesDialog::~FavesDialog(void)
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentElement, tExProp *prop)
+void FavesDialog::init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentElement, ExProp *prop)
 {
 	_nppData = nppData;
 	_pExProp = prop;
@@ -671,7 +671,7 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
 	if ((pElem->uParam & FAVES_PARAM) == (pElemCC->uParam & FAVES_PARAM))
 	{
 		/* add element */
-		tItemElement	element;
+		ItemElement	element;
 
 		if ((_isCut == FALSE) && (TreeView_GetParent(_hTreeCtrl, _hTreeCutCopy) == hItem))
 		{
@@ -808,7 +808,7 @@ void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
 
 			if (isOk == TRUE)
 			{
-				tItemElement	element;
+				ItemElement	element;
 				element.pszName	= (LPTSTR)new TCHAR[_tcslen(pszName)+1];
 				element.pszLink	= (LPTSTR)new TCHAR[_tcslen(pszLink)+1];
 				element.uParam	= FAVES_PARAM_LINK | root;
@@ -935,7 +935,7 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
 				else
 				{
 					/* push information back */
-					tItemElement	element;
+					ItemElement	element;
 					element.pszName	= (LPTSTR)new TCHAR[_tcslen(pszName)+1];
 					element.pszLink	= (LPTSTR)new TCHAR[_tcslen(pszLink)+1];
 					element.uParam	= FAVES_PARAM_LINK | root;
@@ -1017,7 +1017,7 @@ void FavesDialog::NewItem(HTREEITEM hItem)
 
 			if (isOk == TRUE)
 			{
-				tItemElement	element;
+				ItemElement	element;
 				element.pszName	= (LPTSTR)new TCHAR[_tcslen(pszName)+1];
 				element.pszLink	= (LPTSTR)new TCHAR[_tcslen(pszLink)+1];
 				element.uParam	= FAVES_PARAM_LINK | root;
@@ -1289,7 +1289,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
 							if (isOk == TRUE)
 							{
-								tItemElement	element;
+								ItemElement	element;
 								element.pszName	= (LPTSTR)new TCHAR[_tcslen(pszName)+1];
 								element.pszLink	= NULL;
 								element.uParam	= FAVES_PARAM_GROUP | root;
@@ -1761,11 +1761,11 @@ void FavesDialog::OpenLink(PELEM pElem)
 	}
 }
 
-void FavesDialog::SortElementList(vector<tItemElement> & elementList)
+void FavesDialog::SortElementList(std::vector<ItemElement> & elementList)
 {
-	vector<tItemElement>	groupList;
-	vector<tItemElement>	linkList;
-	ELEM_ITR				itr			= elementList.begin();
+	std::vector<ItemElement>	groupList;
+	std::vector<ItemElement>	linkList;
+	ELEM_ITR					itr			= elementList.begin();
 
 	/* get all last elements in a seperate list and remove from sort list */
 	for (; itr != elementList.end(); itr++)
@@ -1802,11 +1802,11 @@ void FavesDialog::SortElementList(vector<tItemElement> & elementList)
 	}
 }
 
-void FavesDialog::SortElementsRecursive(vector<tItemElement> & vElement, int d, int h)
+void FavesDialog::SortElementsRecursive(std::vector<ItemElement> & vElement, int d, int h)
 {
-	int		i	= 0;
-	int		j	= 0;
-	string	str = _T("");
+	int				i	= 0;
+	int				j	= 0;
+	std::wstring	str = _T("");
 
 	/* return on empty list */
 	if (d > h || d < 0)
@@ -1826,7 +1826,7 @@ void FavesDialog::SortElementsRecursive(vector<tItemElement> & vElement, int d, 
 		{
 			if ( i != j )
 			{
-				tItemElement buf = vElement[i];
+				ItemElement buf = vElement[i];
 				vElement[i] = vElement[j];
 				vElement[j] = buf;
 			}
@@ -1872,7 +1872,7 @@ void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 
 void FavesDialog::ReadSettings(void)
 {
-	tItemElement	list;
+	ItemElement	list;
 	extern TCHAR	configPath[MAX_PATH];
 	LPTSTR			readFilePath			= (LPTSTR)new TCHAR[MAX_PATH];
 	DWORD			hasRead					= 0;
@@ -1971,7 +1971,7 @@ void FavesDialog::ReadSettings(void)
 
 void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 {
-	tItemElement	element;
+	ItemElement	element;
 	LPTSTR			pszPos			= NULL;
 	UINT			root			= elem_itr->uParam & FAVES_PARAM;
 	UINT			param			= 0;

@@ -63,12 +63,12 @@ void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
     if (_nbExt < nbExtMax)
         _tcscpy(_extArray[_nbExt++], ext);
     // 
-    std::string extFilter = extText;
+    std::wstring extFilter = extText;
    
     va_list pArg;
     va_start(pArg, ext);
 
-    std::string exts;
+    std::wstring exts;
 
 	if (ext[0] == '.')
 		exts += _T("*");
@@ -135,7 +135,7 @@ stringVector * FileDlg::doOpenMultiFilesDlg()
 		TCHAR fn[MAX_PATH];
 		LPTSTR pFn = _fileName + _tcslen(_fileName) + 1;
 		if (!(*pFn))
-			_fileNames.push_back(std::string(_fileName));
+			_fileNames.push_back(std::wstring(_fileName));
 		else
 		{
 			_tcscpy(fn, _fileName);
@@ -148,7 +148,7 @@ stringVector * FileDlg::doOpenMultiFilesDlg()
 		{
 			fn[term] = '\0';
 			_tcscat(fn, pFn);
-			_fileNames.push_back(std::string(fn));
+			_fileNames.push_back(std::wstring(fn));
 			pFn += _tcslen(pFn) + 1;
 		}
 

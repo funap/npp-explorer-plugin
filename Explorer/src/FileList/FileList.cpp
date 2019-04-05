@@ -169,7 +169,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	AddSuportedFormat(_hSelf, fmtetc); 
 }
 
-void FileList::initProp(tExProp* prop)
+void FileList::initProp(ExProp* prop)
 {
 	/* set properties */
 	_pExProp		= prop;
@@ -298,7 +298,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			Header_GetItemRect(_hHeader, 0, &rc);
 
 			UINT	iItem	= ListView_GetTopIndex(_hSelf);		
-			eScDir	scrDir	= GetScrollDirection(_hSelf, rc.bottom - rc.top);
+			ScDir	scrDir	= GetScrollDirection(_hSelf, rc.bottom - rc.top);
 
 			if ((scrDir != SCR_UP) || (iItem == 0) || (!m_bAllowDrop)) {
 				::KillTimer(_hSelf, EXT_SCROLLLISTUP);
@@ -311,7 +311,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		}
 		else if (wParam == EXT_SCROLLLISTDOWN) {
 			UINT	iItem	= ListView_GetTopIndex(_hSelf) + ListView_GetCountPerPage(_hSelf) - 1;
-			eScDir	scrDir	= GetScrollDirection(_hSelf);
+			ScDir	scrDir	= GetScrollDirection(_hSelf);
 
 			if ((scrDir != SCR_DOWN) || (iItem >= _uMaxElements) || (!m_bAllowDrop)) {
 				::KillTimer(_hSelf, EXT_SCROLLLISTDOWN);
@@ -330,7 +330,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		INT			iSelected	= 0;
 		RECT		rcIcon		= {0};
 		UINT		iPos		= (UINT)wParam;
-		eDevType	type		= (eDevType)lParam;
+		DevType		type		= (DevType)lParam;
 
 		if (iPos < _uMaxElements) {
 			/* test if overlay icon is need to be updated and if it's changed do a redraw */
@@ -354,7 +354,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			/* get hight of header */
 			RECT	rc = {0};
 			Header_GetItemRect(_hHeader, 0, &rc);
-			eScDir scrDir = GetScrollDirection(_hSelf, rc.bottom - rc.top);
+			ScDir scrDir = GetScrollDirection(_hSelf, rc.bottom - rc.top);
 
 			if (scrDir == SCR_UP) {
 				::SetTimer(_hSelf, EXT_SCROLLLISTUP, 300, NULL);
@@ -733,7 +733,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 					/* get correct font */
 					HFONT	hDefFont = NULL;
 					if (iItem >= _uMaxFolders) {
-						string	strFilePath = _pExProp->szCurrentPath + _vFileList[iItem].strNameExt;
+						std::wstring	strFilePath = _pExProp->szCurrentPath + _vFileList[iItem].strNameExt;
 						if (IsFileOpen(strFilePath.c_str()) == TRUE) {
 							hDefFont = (HFONT)::SelectObject(hMemDc, _hFontUnder);
 						}
@@ -1038,7 +1038,7 @@ void FileList::UpdateOverlayIcon(void)
 void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL pbHidden)
 {
 	INT			iIconSelected	= 0;
-	eDevType	type			= (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
+	DevType		type			= (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
 	if (_vFileList[iItem].iIcon == -1) {
 		ExtractIcons(_pExProp->szCurrentPath, _vFileList[iItem].strNameExt.c_str(), 
@@ -1083,8 +1083,8 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 	TCHAR					TEMP[MAX_PATH];
 	WIN32_FIND_DATA			Find			= {0};
 	HANDLE					hFind			= NULL;
-	vector<tFileListData>	vFoldersTemp;
-	vector<tFileListData>	vFilesTemp;
+	std::vector<FileListData>	vFoldersTemp;
+	std::vector<FileListData>	vFilesTemp;
 
 	/* end thread if it is in run mode */
 	::SetEvent(_hEvent[FL_EVT_INT]);
@@ -1103,7 +1103,7 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 
 	if (hFind != INVALID_HANDLE_VALUE) {
 		/* get current filters */
-		tFileListData	tempData;
+		FileListData	tempData;
 		TCHAR	szFilter[MAX_PATH]		= _T("\0");
 		TCHAR	szExFilter[MAX_PATH]	= _T("\0");
 		GetFilterLists(szFilter, szExFilter);
@@ -1381,8 +1381,8 @@ void FileList::SetOrder(void)
  */ 
 void FileList::onRMouseBtn(void)
 {
-	vector<string>	data;
-	BOOL			isParent = FALSE;
+	std::vector<std::wstring>	data;
+	BOOL						isParent = FALSE;
 
 	/* create data */
 	for (UINT uList = 0; uList < _uMaxElements; uList++) {
@@ -1598,10 +1598,10 @@ BOOL FileList::FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos
  */
 void FileList::QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending)
 {
-	INT		i		= 0;
-	INT		j		= 0;
-	string	str		= _T("");
-	__int64	i64Data	= 0;
+	INT				i		= 0;
+	INT				j		= 0;
+	std::wstring	str		= _T("");
+	__int64			i64Data	= 0;
 
 	/* return on empty list */
 	if (d > h || d < 0) {
@@ -1626,7 +1626,7 @@ void FileList::QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending)
 			}
 			if ( i >= j ) {
 				if ( i != j ) {
-					tFileListData buf = _vFileList[i];
+					FileListData buf = _vFileList[i];
 					_vFileList[i] = _vFileList[j];
 					_vFileList[j] = buf;
 				}
@@ -1650,7 +1650,7 @@ void FileList::QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending)
 			}
 			if ( i >= j ) {
 				if ( i != j ) {
-					tFileListData buf = _vFileList[i];
+					FileListData buf = _vFileList[i];
 					_vFileList[i] = _vFileList[j];
 					_vFileList[j] = buf;
 				}
@@ -1675,7 +1675,7 @@ void FileList::QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending)
 			}
 			if ( i >= j ) {
 				if ( i != j ) {
-					tFileListData buf = _vFileList[i];
+					FileListData buf = _vFileList[i];
 					_vFileList[i] = _vFileList[j];
 					_vFileList[j] = buf;
 				}
@@ -1705,7 +1705,7 @@ void FileList::QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending
 	{
 	case 1:
 	{
-		string		str = _T("");
+		std::wstring str = _T("");
 
 		for (INT i = d; i < h ;) {
 			INT iOld = i;
@@ -1751,7 +1751,7 @@ void FileList::QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending
 	}
 }
 
-void FileList::GetSize(__int64 size, string & str)
+void FileList::GetSize(__int64 size, std::wstring & str)
 {
 	TCHAR	TEMP[MAX_PATH];
 
@@ -1864,7 +1864,7 @@ void FileList::GetSize(__int64 size, string & str)
 	}
 }
 
-void FileList::GetDate(FILETIME ftLastWriteTime, string & str)
+void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
 {
 	FILETIME		ftLocalTime;
 	SYSTEMTIME		sysTime;
@@ -2001,7 +2001,7 @@ void FileList::ToggleStackRec(void)
 void FileList::PushDir(LPCTSTR pszPath)
 {
 	if (_isStackRec == TRUE) {
-		tStaInfo	StackInfo;
+		StaInfo	StackInfo;
 		StackInfo.strPath = pszPath;
 
 		if (_itrPos != _vDirStack.end()) {
@@ -2021,7 +2021,7 @@ void FileList::PushDir(LPCTSTR pszPath)
 	UpdateToolBarElements();
 }
 
-bool FileList::GetPrevDir(LPTSTR pszPath, vector<string> & vStrItems)
+bool FileList::GetPrevDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems)
 {
 	if (_vDirStack.size() > 1) {
 		if (_itrPos != _vDirStack.begin()) {
@@ -2034,7 +2034,7 @@ bool FileList::GetPrevDir(LPTSTR pszPath, vector<string> & vStrItems)
 	return false;
 }
 
-bool FileList::GetNextDir(LPTSTR pszPath, vector<string> & vStrItems)
+bool FileList::GetNextDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems)
 {
 	if (_vDirStack.size() > 1) {
 		if (_itrPos != _vDirStack.end() - 1) {
@@ -2050,7 +2050,7 @@ bool FileList::GetNextDir(LPTSTR pszPath, vector<string> & vStrItems)
 INT FileList::GetPrevDirs(LPTSTR *pszPathes)
 {
 	INT i = 0;
-	vector<tStaInfo>::iterator	itr	= _itrPos;
+	std::vector<StaInfo>::iterator	itr	= _itrPos;
 
 	if (_vDirStack.size() > 1) {
 		while (1) {
@@ -2071,7 +2071,7 @@ INT FileList::GetPrevDirs(LPTSTR *pszPathes)
 INT FileList::GetNextDirs(LPTSTR	*pszPathes)
 {
 	INT i = 0;
-	vector<tStaInfo>::iterator	itr	= _itrPos;
+	std::vector<StaInfo>::iterator	itr	= _itrPos;
 
 	if (_vDirStack.size() > 1) {
 		while (1) {
@@ -2089,7 +2089,7 @@ INT FileList::GetNextDirs(LPTSTR	*pszPathes)
 	return i;
 }
 
-void FileList::OffsetItr(INT offsetItr, vector<string> & vStrItems)
+void FileList::OffsetItr(INT offsetItr, std::vector<std::wstring> & vStrItems)
 {
 	_itrPos += offsetItr;
 	vStrItems = _itrPos->vStrItems;
@@ -2116,7 +2116,7 @@ void FileList::UpdateSelItems(void)
 	}
 }
 
-void FileList::SetItems(vector<string> vStrItems)
+void FileList::SetItems(std::vector<std::wstring> vStrItems)
 {
 	UINT	selType = LVIS_SELANDFOC;
 

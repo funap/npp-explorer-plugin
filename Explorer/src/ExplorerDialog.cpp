@@ -77,7 +77,7 @@ DWORD WINAPI GetVolumeInformationTimeoutThread(LPVOID lpParam)
 	DWORD			serialNr		= 0;
 	DWORD			space			= 0;
 	DWORD			flags			= 0;
-	tGetVolumeInfo*	volInfo         = (tGetVolumeInfo*)lpParam;
+	GetVolumeInfo*	volInfo         = (GetVolumeInfo*)lpParam;
 
 	if (volInfo->maxSize < MAX_PATH+1)
 		*volInfo->pIsValidDrive = GetVolumeInformation(volInfo->pszDrivePathName,
@@ -185,7 +185,7 @@ ExplorerDialog::~ExplorerDialog(void)
 }
 
 
-void ExplorerDialog::init(HINSTANCE hInst, NppData nppData, tExProp *prop)
+void ExplorerDialog::init(HINSTANCE hInst, NppData nppData, ExProp *prop)
 {
 	_nppData = nppData;
 	DockingDlgInterface::init(hInst, nppData._nppHandle);
@@ -668,12 +668,12 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 		}
 		case EXM_RIGHTCLICK:
 		{
-			ContextMenu		cm;
-			POINT			pt				= {0};
-			vector<string>	files			= *((vector<string>*)lParam);
-			HTREEITEM		hItem			= TreeView_GetSelection(_hTreeCtrl);
-			DWORD			dwpos			= ::GetMessagePos();
-			TCHAR			folderPathName[MAX_PATH];
+			ContextMenu					cm;
+			POINT						pt				= {0};
+			std::vector<std::wstring>	files			= *((std::vector<std::wstring>*)lParam);
+			HTREEITEM					hItem			= TreeView_GetSelection(_hTreeCtrl);
+			DWORD						dwpos			= ::GetMessagePos();
+			TCHAR						folderPathName[MAX_PATH];
 
 			GetFolderPathName(hItem, folderPathName);
 
@@ -826,7 +826,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 
 			if (_isScrolling == FALSE)
 			{
-				eScDir scrDir = GetScrollDirection(_hTreeCtrl);
+				ScDir scrDir = GetScrollDirection(_hTreeCtrl);
 
 				if (scrDir == SCR_UP) {
 					::SetTimer(_hTreeCtrl, EXT_SCROLLLISTUP, 300, NULL);
@@ -868,7 +868,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			{
 				HTREEITEM	hItemHigh	= TreeView_GetDropHilight(_hTreeCtrl);
 				HTREEITEM	hItemRoot	= TreeView_GetRoot(_hTreeCtrl);
-				eScDir		scrDir		= GetScrollDirection(_hTreeCtrl);
+				ScDir		scrDir		= GetScrollDirection(_hTreeCtrl);
 
 				if ((scrDir != SCR_UP) || (hItemHigh == hItemRoot) || (!m_bAllowDrop)) {
 					::KillTimer(_hTreeCtrl, EXT_SCROLLLISTUP);
@@ -882,7 +882,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			{
 				HTREEITEM	hItemHigh	= TreeView_GetDropHilight(_hTreeCtrl);
 				HTREEITEM	hItemLast	= TreeView_GetLastVisible(_hTreeCtrl);
-				eScDir		scrDir		= GetScrollDirection(_hTreeCtrl);
+				ScDir		scrDir		= GetScrollDirection(_hTreeCtrl);
 
 				if ((scrDir != SCR_DOWN) || (hItemHigh == hItemLast) || (!m_bAllowDrop)) {
 					::KillTimer(_hTreeCtrl, EXT_SCROLLLISTDOWN);
@@ -1010,7 +1010,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 			TCHAR			pszPath[MAX_PATH];
 			BOOL			dirValid	= TRUE;
 			BOOL			selected	= TRUE;
-			vector<string>	vStrItems;
+			std::vector<std::wstring>	vStrItems;
 
 			_FileList.ToggleStackRec();
 
@@ -1033,7 +1033,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 			TCHAR			pszPath[MAX_PATH];
 			BOOL			dirValid	= TRUE;
 			BOOL			selected	= TRUE;
-			vector<string>	vStrItems;
+			std::vector<std::wstring>	vStrItems;
 
 			_FileList.ToggleStackRec();
 
@@ -1207,7 +1207,7 @@ void ExplorerDialog::tb_not(LPNMTOOLBAR lpnmtb)
 
 	/* select element */
 	if (cmd) {
-		vector<string>	vStrItems;
+		std::vector<std::wstring>	vStrItems;
 
 		SelectItem(pszPathes[cmd-1]);
 		_FileList.OffsetItr(lpnmtb->iItem == IDM_EX_PREV ? -cmd : cmd, vStrItems);
@@ -1788,7 +1788,7 @@ void ExplorerDialog::NotifyNewFile(void)
 
 BOOL ExplorerDialog::ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize)
 {
-	tGetVolumeInfo	volInfo;
+	GetVolumeInfo	volInfo;
 	DWORD			dwThreadId		= 0;
 	BOOL			isValidDrive	= FALSE;
 	HANDLE			hThread			= NULL;

@@ -37,7 +37,7 @@ IContextMenu3 * g_IContext3		= NULL;
 WNDPROC			g_OldWndProc	= NULL;
 
 /* global explorer params */
-extern tExProp	exProp;
+extern ExProp	exProp;
 
 
 ContextMenu::ContextMenu()
@@ -460,10 +460,10 @@ void ContextMenu::InvokeCommand (LPCONTEXTMENU pContextMenu, UINT idCommand)
 
 
 
-void ContextMenu::SetObjects(string strObject)
+void ContextMenu::SetObjects(std::wstring strObject)
 {
 	// only one object is passed
-	vector<string>	strArray;
+	std::vector<std::wstring>	strArray;
 	strArray.push_back(strObject);	// create a CStringArray with one element
 	
 	SetObjects (strArray);			// and pass it to SetObjects (vector<string> strArray)
@@ -471,7 +471,7 @@ void ContextMenu::SetObjects(string strObject)
 }
 
 
-void ContextMenu::SetObjects(vector<string> strArray)
+void ContextMenu::SetObjects(std::vector<std::wstring> strArray)
 {
 	// store also the string for later menu use
 	_strFirstElement = strArray[0];
@@ -745,7 +745,7 @@ void ContextMenu::newFile(void)
 			/* test if is correct */
 			if (IsValidFileName(szFileName))
 			{
-				string		newFile	= _strFirstElement + szFileName;
+				std::wstring newFile = _strFirstElement + szFileName;
 				
 				::CloseHandle(::CreateFile(newFile.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 				::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)newFile.c_str());
@@ -780,7 +780,7 @@ void ContextMenu::newFolder(void)
 			/* test if is correct */
 			if (IsValidFileName(szFolderName))
 			{
-				string		newFolder = _strFirstElement + szFolderName;
+				std::wstring newFolder = _strFirstElement + szFolderName;
 				if (::CreateDirectory(newFolder.c_str(), NULL) == FALSE) {
 					if (NLMessageBox(_hInst, _hWndNpp, _T("MsgBox FolderCreateError"), MB_OK) == FALSE)
 						::MessageBox(_hWndNpp, _T("Folder couldn't be created."), _T("Error"), MB_OK);
@@ -819,7 +819,7 @@ void ContextMenu::openFileInOtherView(void)
 
 void ContextMenu::openFileInNewInstance(void)
 {
-	string	args2Exec;
+	std::wstring		args2Exec;
 	extern	HANDLE		g_hModule;
 	TCHAR				szNpp[MAX_PATH];
 
@@ -851,7 +851,7 @@ void ContextMenu::openPrompt(void)
 		/* is file */
 		if (path.at(path.size() - 1) != '\\') {
 			SIZE_T pos = path.rfind(_T("\\"), path.size() - 1);
-			if (string::npos != pos) {
+			if (std::wstring::npos != pos) {
 				path.erase(pos, path.size());
 			}
 		}
@@ -876,7 +876,7 @@ void ContextMenu::addToFaves(bool isFolder)
 
 void ContextMenu::addFullPathsCB(void)
 {
-	string temp;
+	std::wstring temp;
 	BOOL isFirstItem = TRUE;
 	for (auto &path : _strArray) {
 		if (isFirstItem) {
@@ -892,11 +892,11 @@ void ContextMenu::addFullPathsCB(void)
 
 void ContextMenu::addFileNamesCB(void)
 {
-	string	temp;
+	std::wstring	temp;
 	BOOL isFirstItem = TRUE;
 	for (auto &path : _strArray) {
 		SIZE_T	pos = path.rfind(_T("\\"), path.size() - 1);
-		if (string::npos != pos) {
+		if (std::wstring::npos != pos) {
 			if (isFirstItem) {
 				isFirstItem = FALSE;
 			}
@@ -907,7 +907,7 @@ void ContextMenu::addFileNamesCB(void)
 			/* is folder */
 			if (path.at(path.size() - 1) == '\\') {
 				pos = path.rfind(_T("\\"), pos - 1);
-				if (string::npos != pos) {
+				if (std::wstring::npos != pos) {
 					path.erase(0, pos);
 					path.erase(path.size() - 1);
 				}

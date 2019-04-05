@@ -34,7 +34,7 @@ static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pDa
 };
 
 
-INT_PTR OptionDlg::doDialog(tExProp *prop)
+INT_PTR OptionDlg::doDialog(ExProp *prop)
 {
 	_pProp = prop;
 	return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_OPTION_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
@@ -221,8 +221,8 @@ BOOL OptionDlg::GetParams(void)
 	else
 		_pProp->bViewLong = FALSE;
 
-	_pProp->fmtSize = (eSizeFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_GETCURSEL, 0, 0);
-	_pProp->fmtDate = (eDateFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_GETCURSEL, 0, 0);
+	_pProp->fmtSize = (SizeFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_GETCURSEL, 0, 0);
+	_pProp->fmtDate = (DateFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_GETCURSEL, 0, 0);
 
 	if (::SendDlgItemMessage(_hSelf, IDC_CHECK_SEPEXT, BM_GETCHECK, 0, 0) == BST_CHECKED)
 		_pProp->bAddExtToName = FALSE;

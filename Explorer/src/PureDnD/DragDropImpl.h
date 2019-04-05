@@ -10,20 +10,18 @@
 #define __DRAGDROPIMPL_H__
 
 #include <vector>
-using namespace std;
 
-//#include <ShlDisp.h>
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CEnumFormatEtc : public IEnumFORMATETC
 {
    private:
      ULONG           m_cRefCount;
-     vector<FORMATETC>  m_pFmtEtc;
+     std::vector<FORMATETC>  m_pFmtEtc;
      SIZE_T           m_iCur;
 
    public:
-     CEnumFormatEtc(const vector<FORMATETC>& ArrFE);
-	 CEnumFormatEtc(const vector<FORMATETC*>& ArrFE);
+     CEnumFormatEtc(const std::vector<FORMATETC>& ArrFE);
+	 CEnumFormatEtc(const std::vector<FORMATETC*>& ArrFE);
      //IUnknown members
      STDMETHOD(QueryInterface)(REFIID, void FAR* FAR*);
      STDMETHOD_(ULONG, AddRef)(void);
@@ -69,8 +67,8 @@ class CIDataObject : public IDataObject//,public IAsyncOperation
 {
 	CIDropSource* m_pDropSource;
 	long m_cRefCount;
-	vector<FORMATETC*> m_ArrFormatEtc;
-    vector<STGMEDIUM*> m_StgMedium;
+	std::vector<FORMATETC*> m_ArrFormatEtc;
+	std::vector<STGMEDIUM*> m_StgMedium;
 public:
 	CIDataObject(CIDropSource* pDropSource);
 	~CIDataObject();
@@ -161,7 +159,7 @@ public:
 private:
 	DWORD m_cRefCount;
 	struct IDropTargetHelper *m_pDropTargetHelper;
-	vector<FORMATETC> m_formatetc;
+	std::vector<FORMATETC> m_formatetc;
 	FORMATETC* m_pSupportedFrmt;
 protected:
 	HWND m_hTargetWnd;

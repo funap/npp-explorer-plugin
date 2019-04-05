@@ -26,12 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <vector>
 #include <string>
 
-using namespace std;
-
-#ifdef _UNICODE
-#define string	wstring
-#endif
-
 enum {
 	ICON_UPDATE_EVT_START,
 	ICON_UPDATE_EVT_RESP,
@@ -39,10 +33,10 @@ enum {
 	ICON_UPDATE_EVT_MAX
 };
 
-typedef struct {
-	string				strLastPath;
+struct TreeIconUpdate {
+	std::wstring		strLastPath;
 	HTREEITEM			hLastItem;
-} tTreeIconUpdate;
+};
 
 
 
@@ -93,11 +87,11 @@ protected:
 
 private:
 
-	struct tItemList {
-		string	strName;
-		DWORD	dwAttributes;
+	struct ItemList {
+		std::wstring	strName;
+		DWORD			dwAttributes;
 	};
-	void QuickSortItems(vector<tItemList>* vList, INT d, INT h);
+	void QuickSortItems(std::vector<ItemList>* vList, INT d, INT h);
 	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
 
 private:	/* for thread */
@@ -120,7 +114,7 @@ protected:
 
 private:
 	/* member var for overlay update thread */
-	vector<tTreeIconUpdate>		_vIconUpdate;
+	std::vector<TreeIconUpdate>		_vIconUpdate;
 	HANDLE						_hSemaphore;
 	HANDLE						_hEvent[ICON_UPDATE_EVT_MAX];
 	HANDLE						_hOverThread;

@@ -27,10 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define	CB_GETCOMBOBOXINFO	0x0164
 #endif
 
-#ifdef _UNICODE
-#define string	wstring
-#endif
-
 #if(WINVER <= 0x0400)
 struct COMBOBOXINFO 
 {
@@ -58,8 +54,8 @@ public :
 	void getText(LPTSTR pszText, UINT size = MAX_PATH);
 	bool getSelText(LPTSTR pszText);
 
-	void setComboList(vector<string> &vStrList);
-	void getComboList(vector<string> &vStrList);
+	void setComboList(std::vector<std::wstring> &vStrList);
+	void getComboList(std::vector<std::wstring> &vStrList);
 
 	void clearComboList(void)
 	{
@@ -73,8 +69,8 @@ private :
 	HWND					_hCombo;
     WNDPROC					_hDefaultComboProc;
 
-	string					_currData;
-	vector<string>			_comboItems;
+	std::wstring				_currData;
+	std::vector<std::wstring>	_comboItems;
 
 	LRESULT runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK wndDefaultProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {

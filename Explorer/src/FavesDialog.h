@@ -38,10 +38,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerResource.h"
 
-using namespace std;
 
-
-typedef enum eMenuID {
+enum MenuID {
 	FM_NEWLINK = 1,
 	FM_NEWGROUP,
 	FM_ADDSESSION,
@@ -55,7 +53,7 @@ typedef enum eMenuID {
 	FM_OPENOTHERVIEW,
 	FM_OPENNEWINSTANCE,
 	FM_ADDTOSESSION
-} eMenuID;
+};
 
 
 class FavesDialog : public DockingDlgInterface, public TreeHelper
@@ -64,7 +62,7 @@ public:
 	FavesDialog(void);
 	~FavesDialog(void);
 
-    void init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentPath, tExProp *prop);
+    void init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentPath, ExProp *prop);
 
 	virtual void redraw(void) {
 		::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
@@ -120,8 +118,8 @@ protected:
 	void UpdateLink(HTREEITEM hItem);
 	void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
 
-	void SortElementList(vector<tItemElement> & parentElement);
-	void SortElementsRecursive(vector<tItemElement> & parentElement, int d, int h);
+	void SortElementList(std::vector<ItemElement> & parentElement);
+	void SortElementsRecursive(std::vector<ItemElement> & parentElement, int d, int h);
 
 	void DrawSessionChildren(HTREEITEM hItem);
 
@@ -133,7 +131,7 @@ protected:
 
 	void ExpandElementsRecursive(HTREEITEM hItem);
 
-	eLinkDlg MapPropDlg(int root) {
+	LinkDlg MapPropDlg(int root) {
 		switch (root) {
 			case FAVES_FOLDERS:		return LINK_DLG_FOLDER;
 			case FAVES_FILES:		return LINK_DLG_FILE;
@@ -180,10 +178,10 @@ private:
 
 	BOOL					_addToSession;
 	PELEM					_peOpenLink;
-	tExProp*				_pExProp;
+	ExProp*					_pExProp;
 
 	/* database */
-	vector<tItemElement>	_vDB;
+	std::vector<ItemElement>	_vDB;
 };
 
 

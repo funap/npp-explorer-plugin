@@ -98,7 +98,7 @@ OptionDlg			optionDlg;
 HelpDlg				helpDlg;
 
 /* global explorer params */
-tExProp				exProp;
+ExProp				exProp;
 
 /* global favorite params */
 TCHAR				szLastElement[MAX_PATH];
@@ -116,11 +116,11 @@ WNDPROC				wndProcNotepad		= NULL;
 winVer				gWinVersion			= WV_UNKNOWN;
 
 /* own image list variables */
-vector<tDrvMap>		gvDrvMap;
+std::vector<DrvMap>	gvDrvMap;
 HIMAGELIST			ghImgList			= NULL;
 
 /* current open docs */
-vector<string>		g_vStrCurrentFiles;
+std::vector<std::wstring>		g_vStrCurrentFiles;
 
 
 
@@ -334,7 +334,7 @@ void loadSettings(void)
 
 	/* Test if config path exist, if not create */
 	if (::PathFileExists(configPath) == FALSE) {
-		vector<string> vPaths;
+		std::vector<std::wstring> vPaths;
 		do {
 			vPaths.push_back(configPath);
 			::PathRemoveFileSpec(configPath);
@@ -379,8 +379,8 @@ void loadSettings(void)
 	exProp.bViewLong				= ::GetPrivateProfileInt(Explorer, ShowLongInfo, FALSE, iniFilePath);
 	exProp.bAddExtToName			= ::GetPrivateProfileInt(Explorer, AddExtToName, FALSE, iniFilePath);
 	exProp.bAutoUpdate				= ::GetPrivateProfileInt(Explorer, AutoUpdate, TRUE, iniFilePath);
-	exProp.fmtSize					= (eSizeFmt)::GetPrivateProfileInt(Explorer, SizeFormat, SFMT_KBYTE, iniFilePath);
-	exProp.fmtDate					= (eDateFmt)::GetPrivateProfileInt(Explorer, DateFormat, DFMT_ENG, iniFilePath);
+	exProp.fmtSize					= (SizeFmt)::GetPrivateProfileInt(Explorer, SizeFormat, SFMT_KBYTE, iniFilePath);
+	exProp.fmtDate					= (DateFmt)::GetPrivateProfileInt(Explorer, DateFormat, DFMT_ENG, iniFilePath);
 	exProp.uTimeout					= ::GetPrivateProfileInt(Explorer, TimeOut, 1000, iniFilePath);
 	exProp.bUseSystemIcons			= ::GetPrivateProfileInt(Explorer, UseSystemIcons, TRUE, iniFilePath);
 	::GetPrivateProfileString(Explorer, NppExecAppName, _T("NppExec.dll"), exProp.nppExecProp.szAppName, MAX_PATH, iniFilePath);
@@ -395,7 +395,7 @@ void loadSettings(void)
 		}
 	}
 	::GetPrivateProfileString(Explorer, LastFilter, _T("*.*"), pszTemp, MAX_PATH, iniFilePath);
-	exProp.strLastFilter = string(pszTemp);
+	exProp.strLastFilter = std::wstring(pszTemp);
 
 	if (::PathFileExists(exProp.szCurrentPath) == FALSE) {
 		_tcscpy(exProp.szCurrentPath, _T("C:\\"));
@@ -718,7 +718,7 @@ HIMAGELIST GetSmallImageList(BOOL bSystem)
 	return himl;
 }
 
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, eDevType type, 
+void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, 
 	LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
 {
 	SHFILEINFO		sfi	= {0};
@@ -778,7 +778,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, eDevType type,
 			/* if not found add to list otherwise replace new drive icon */
 			if (onPos == 0) {
 				onPos = ImageList_AddIcon(ghImgList, sfi.hIcon);
-				tDrvMap drvMap = {TEMP[0], onPos};
+				DrvMap drvMap = {TEMP[0], onPos};
 				gvDrvMap.push_back(drvMap);
 			} else {
 				ImageList_ReplaceIcon(ghImgList, onPos, sfi.hIcon);
@@ -1012,13 +1012,13 @@ BOOL IsFileOpen(LPCTSTR pCurrFile)
 /**************************************************************************
  *	compare arguments and convert
  */
-BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, vector<string> vFileList)
+BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::vector<std::wstring> vFileList)
 {
 	TCHAR			szElement[MAX_PATH];
 	LPTSTR			pszPtr		= NULL;
 	LPTSTR			pszEnd		= NULL;
 	UINT			iCount		= 0;
-	eVarExNppExec	varElement	= VAR_UNKNOWN;
+	VarExNppExec	varElement	= VAR_UNKNOWN;
 
 	/* get name of NppExec plugin */
 	pszPtr = _tcstok(pszExplArg, _T(" "));
@@ -1167,7 +1167,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, vector<
 /**************************************************************************
  *	Scroll up/down test function
  */
-eScDir GetScrollDirection(HWND hWnd, UINT offTop, UINT offBottom)
+ScDir GetScrollDirection(HWND hWnd, UINT offTop, UINT offBottom)
 {
 	RECT	rcUp	= {0};
 	RECT	rcDown	= {0};

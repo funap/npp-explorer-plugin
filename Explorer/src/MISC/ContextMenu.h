@@ -37,13 +37,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string>
 #include <commctrl.h>
 
-using namespace std;
-
 
 struct __declspec(uuid("000214e6-0000-0000-c000-000000000046")) IShellFolder;
 
-typedef struct
-{
+struct OBJECT_DATA {
 	TCHAR * pszFullPath;
 	TCHAR	szFileName[MAX_PATH];
 	TCHAR	szTypeName[MAX_PATH];
@@ -51,13 +48,12 @@ typedef struct
 	DWORD	dwFileAttributes;
 	int		iIcon;
 	FILETIME ftLastModified;
-} OBJECT_DATA;
+} ;
 
 #define CTX_MIN 1
 #define CTX_MAX 10000
 
-typedef enum
-{
+enum eContextMenuID {
 	CTX_DELETE			= 18,
 	CTX_RENAME			= 19,
 	CTX_CUT				= 25,
@@ -75,7 +71,7 @@ typedef enum
 	CTX_FULL_FILES,
 	CTX_GOTO_SCRIPT_PATH,
 	CTX_START_SCRIPT
-} eContextMenuID;
+} ;
 
 class ContextMenu  
 {
@@ -86,8 +82,8 @@ public:
 	/* get menu */
 	HMENU	GetMenu (void);
 
-	void SetObjects(string strObject);
-	void SetObjects(vector<string> strArray);
+	void SetObjects(std::wstring strObject);
+	void SetObjects(std::vector<std::wstring> strArray);
 	UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:
@@ -130,9 +126,9 @@ private:
 	IShellFolder*			_psfFolder;
 	LPITEMIDLIST*			_pidlArray;	
 
-	string					_strFirstElement;
-	vector<string>			_strArray;
-	vector<string>			_strNppScripts;
+	std::wstring				_strFirstElement;
+	std::vector<std::wstring>	_strArray;
+	std::vector<std::wstring>	_strNppScripts;
 };
 
 #endif // CONTEXTMENU_DEFINE_H

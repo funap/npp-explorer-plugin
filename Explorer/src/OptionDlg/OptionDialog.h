@@ -39,7 +39,7 @@ public:
 		Window::init(hInst, nppData._nppHandle);
 	};
 
-	INT_PTR doDialog(tExProp *prop);
+	INT_PTR doDialog(ExProp *prop);
 
     virtual void destroy() {};
 
@@ -56,7 +56,7 @@ private:
 	NppData			_nppData;
     HWND			_HSource;
 
-	tExProp*		_pProp;
+	ExProp*			_pProp;
 };
 
 

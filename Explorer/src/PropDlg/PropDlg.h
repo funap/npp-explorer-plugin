@@ -30,16 +30,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TreeHelperClass.h"
 #include <vector>
 
-using namespace std;
-
-
-typedef enum {
+enum LinkDlg {
 	LINK_DLG_NONE,
 	LINK_DLG_FOLDER,
 	LINK_DLG_FILE
-} eLinkDlg;
-
-
+};
 
 class PropDlg : public StaticDialog, public TreeHelper
 {
@@ -51,7 +46,7 @@ public:
 		Window::init(hInst, hWnd);
 	};
 
-	INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, eLinkDlg linkDlg = LINK_DLG_NONE, BOOL fileMustExist = FALSE);
+	INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LINK_DLG_NONE, BOOL fileMustExist = FALSE);
 
     virtual void destroy() {};
 
@@ -70,16 +65,16 @@ private:
 	LPTSTR			_pName;
 	LPTSTR			_pLink;
 	LPTSTR			_pDesc;
-	eLinkDlg		_linkDlg;
+	LinkDlg			_linkDlg;
 	BOOL			_fileMustExist;
 	BOOL			_bWithLink;
 	BOOL			_seeDetails;
 	PELEM			_pElem;
 	INT				_iUImgPos;
 #ifdef _UNICODE
-	wstring			_strGroupName;
+	std::wstring	_strGroupName;
 #else
-	string			_strGroupName;
+	std::string		_strGroupName;
 #endif
 	TCHAR			_szDetails[20];
 };

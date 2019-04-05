@@ -32,14 +32,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <shellapi.h>
 
-#ifdef _UNICODE
-#define string	wstring
-#endif
-
-typedef struct {
-	string			strPath;
-	vector<string>	vStrItems;
-} tStaInfo;
+struct StaInfo {
+	std::wstring				strPath;
+	std::vector<std::wstring>	vStrItems;
+};
 
 
 static class FileList*	lpFileListClass	= NULL;
@@ -50,22 +46,22 @@ static const WORD DotPattern[] =
 	0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 };
 
-typedef struct {
-	BOOL		bParent;
-	INT			iIcon;
-	INT			iOverlay;
-	BOOL		bHidden;
-	string		strName;
-	string		strExt;
-	string		strSize;
-	string		strDate;
+struct FileListData {
+	BOOL			bParent;
+	INT				iIcon;
+	INT				iOverlay;
+	BOOL			bHidden;
+	std::wstring	strName;
+	std::wstring	strExt;
+	std::wstring	strSize;
+	std::wstring	strDate;
 	/* not visible, only for sorting */
-	string		strNameExt;
-	__int64		i64Size;
-	__int64		i64Date;
+	std::wstring	strNameExt;
+	__int64			i64Size;
+	__int64			i64Date;
 	/* not visible, remember state */
-	UINT		state;
-} tFileListData;
+	UINT			state;
+};
 
 
 class FileList : public Window, public CIDropTarget
@@ -75,7 +71,7 @@ public:
 	~FileList(void);
 	
 	void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
-	void initProp(tExProp* prop);
+	void initProp(ExProp* prop);
 
 	void viewPath(LPCTSTR currentPath, BOOL redraw = FALSE);
 
@@ -95,13 +91,13 @@ public:
 	void ToggleStackRec(void);					// enables/disable trace of viewed directories
 	void ResetDirStack(void);					// resets the stack
 	void SetToolBarInfo(ToolBar *ToolBar, UINT idRedo, UINT idUndo);	// set dependency to a toolbar element
-	bool GetPrevDir(LPTSTR pszPath, vector<string> & vStrItems);			// get previous directory
-	bool GetNextDir(LPTSTR pszPath, vector<string> & vStrItems);			// get next directory
+	bool GetPrevDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems);			// get previous directory
+	bool GetNextDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems);			// get next directory
 	INT  GetPrevDirs(LPTSTR *pszPathes);		// get previous directorys
 	INT  GetNextDirs(LPTSTR *pszPathes);		// get next directorys
-	void OffsetItr(INT offsetItr, vector<string> & vStrItems);			// get offset directory
+	void OffsetItr(INT offsetItr, std::vector<std::wstring> & vStrItems);			// get offset directory
 	void UpdateSelItems(void);
-	void SetItems(vector<string> vStrItems);
+	void SetItems(std::vector<std::wstring> vStrItems);
 
 	void UpdateOverlayIcon(void);
 
@@ -168,8 +164,8 @@ protected:
 		ListView_SetSelectionMark(_hSelf, item);
 	};
 
-	void GetSize(__int64 size, string & str);
-	void GetDate(FILETIME ftLastWriteTime, string & str);
+	void GetSize(__int64 size, std::wstring & str);
+	void GetDate(FILETIME ftLastWriteTime, std::wstring & str);
 
 	void GetFilterLists(LPTSTR pszFilter, LPTSTR pszExFilter);
 	BOOL DoFilter(LPCTSTR pszFileName, LPTSTR pszFilter, LPTSTR pszExFilter);
@@ -195,7 +191,7 @@ private:
 	WNDPROC						_hDefaultListProc;
 	WNDPROC						_hDefaultHeaderProc;
 
-	tExProp*					_pExProp;
+	ExProp*						_pExProp;
 
 	/* file list owner drawn */
 	HFONT						_hFont;
@@ -227,7 +223,7 @@ private:
 	SIZE_T						_uMaxFolders;
 	SIZE_T						_uMaxElements;
 	SIZE_T						_uMaxElementsOld;
-	vector<tFileListData>		_vFileList;
+	std::vector<FileListData>	_vFileList;
 
 	/* search in list by typing of characters */
 	BOOL						_bSearchFile;
@@ -237,9 +233,9 @@ private:
 	BOOL						_bOldViewLong;
 
 	/* stack for prev and next dir */
-	BOOL						_isStackRec;
-	vector<tStaInfo>			_vDirStack;
-	vector<tStaInfo>::iterator	_itrPos;
+	BOOL							_isStackRec;
+	std::vector<StaInfo>			_vDirStack;
+	std::vector<StaInfo>::iterator	_itrPos;
     
 	ToolBar*					_pToolBar;
 	UINT						_idRedo;

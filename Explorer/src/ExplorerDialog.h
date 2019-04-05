@@ -34,10 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerResource.h"
 
-using namespace std;
-
-
-typedef enum {
+enum EventID {
 	EID_INIT = 0,
 	EID_UPDATE_USER,
 	EID_UPDATE_DEVICE,
@@ -48,14 +45,14 @@ typedef enum {
 	EID_MAX_THREAD,
 	EID_GET_VOLINFO,
 	EID_MAX
-} eEventID;
+};
 
-typedef struct {
+struct GetVolumeInfo {
 	LPCTSTR		pszDrivePathName;
 	LPTSTR		pszVolumeName;
 	UINT		maxSize;
 	LPBOOL		pIsValidDrive;
-} tGetVolumeInfo;
+};
 
 
 class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget
@@ -64,7 +61,7 @@ public:
 	ExplorerDialog(void);
 	~ExplorerDialog(void);
 
-    void init(HINSTANCE hInst, NppData nppData, tExProp *prop);
+    void init(HINSTANCE hInst, NppData nppData, ExProp *prop);
 
 	virtual void redraw(void) {
 		/* possible new imagelist -> update the window */
@@ -173,7 +170,7 @@ private:
 	BOOL					_isLeftButtonDown;
 	HCURSOR					_hSplitterCursorUpDown;
 	HCURSOR					_hSplitterCursorLeftRight;
-	tExProp*				_pExProp;
+	ExProp*					_pExProp;
 
 	/* thread variable */
 	HCURSOR					_hCurWait;

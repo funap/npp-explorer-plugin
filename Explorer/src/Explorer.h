@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <TCHAR.H>
 #include <vector>
-using namespace std;
+#include <string>
 
 
 #define DOCKABLE_EXPLORER_INDEX		0
@@ -63,13 +63,13 @@ extern enum winVer gWinVersion;
 #define	ICON_PARENT		5
 
 
-typedef enum {
+enum FavesElements {
 	FAVES_FOLDERS = 0,
 	FAVES_FILES,
 	FAVES_WEB,
 	FAVES_SESSIONS,
 	FAVES_ITEM_MAX
-} eFavesElements;
+};
 
 static LPCTSTR cFavesItemNames[11] = {
 	_T("[Folders]"),
@@ -86,14 +86,15 @@ static LPCTSTR cFavesItemNames[11] = {
 #define FAVES_PARAM_EXPAND		0x00000100
 
 
-typedef struct TItemElement {
+struct ItemElement {
 	UINT						uParam;
 	LPTSTR						pszName;
 	LPTSTR						pszLink;
-	vector<TItemElement>		vElements;
-} tItemElement, *PELEM;
+	std::vector<ItemElement>	vElements;
+};
+typedef ItemElement* PELEM;
 
-typedef vector<TItemElement>::iterator		ELEM_ITR;
+typedef std::vector<ItemElement>::iterator		ELEM_ITR;
 
 
 /******************** explorer ***************************/
@@ -131,7 +132,7 @@ static LPCTSTR cVarExNppExec[] = {
 };
 
 
-typedef enum {
+enum VarExNppExec {
 	VAR_FULL_PATH,
 	VAR_ROOT_PATH,
 	VAR_PARENT_FULL_DIR,
@@ -140,7 +141,7 @@ typedef enum {
 	VAR_FILE_NAME,
 	VAR_FILE_EXT,
 	VAR_UNKNOWN
-} eVarExNppExec;
+};
 
 
 /********************************************************/
@@ -148,20 +149,20 @@ typedef enum {
 #define TITLETIP_CLASSNAME "MyToolTip"
 
 
-typedef enum {
+enum DevType {
 	DEVT_DRIVE,
 	DEVT_DIRECTORY,
 	DEVT_FILE
-} eDevType;
+} ;
 
 
-typedef enum {
+enum SizeFmt {
 	SFMT_BYTES,
 	SFMT_KBYTE,
 	SFMT_DYNAMIC,
 	SFMT_DYNAMIC_EX,
 	SFMT_MAX
-} eSizeFmt;
+} ;
 
 
 const LPCTSTR pszSizeFmt[18] = {
@@ -171,40 +172,40 @@ const LPCTSTR pszSizeFmt[18] = {
 	_T("Dynamic x,x b/k/M")
 };
 
-typedef enum {
+enum DateFmt {
 	DFMT_ENG,
 	DFMT_GER,
 	DFMT_MAX
-} eDateFmt;
+};
 
 const LPCTSTR pszDateFmt[12] = {
 	_T("Y/M/D HH:MM"),
 	_T("D.M.Y HH:MM")
 };
 
-typedef struct {
+struct DrvMap {
 	TCHAR	cDrv;
 	UINT	pos;
-} tDrvMap;
+};
 
-typedef enum {
+enum ScDir {
 	SCR_OUTSIDE,
 	SCR_UP,
 	SCR_DOWN
-} eScDir;
+};
 
-typedef struct {
+struct NppExecScripts {
 	TCHAR			szScriptName[MAX_PATH];
 	TCHAR			szArguments[MAX_PATH];
-} tNppExecScripts;
+};
 
-typedef struct {
+struct NppExecProp {
 	TCHAR			szAppName[MAX_PATH];
 	TCHAR			szScriptPath[MAX_PATH];
-	vector<tNppExecScripts>	vNppExecScripts;
-} tNppExecProp;
+	std::vector<NppExecScripts>	vNppExecScripts;
+};
 
-typedef struct {
+struct ExProp{
 	/* pointer to global current path */
 	TCHAR			szCurrentPath[MAX_PATH];
 	INT				iSplitterPos;
@@ -220,19 +221,19 @@ typedef struct {
 	BOOL			bViewLong;
 	BOOL			bAddExtToName;
 	BOOL			bAutoUpdate;
-	eSizeFmt		fmtSize;
-	eDateFmt		fmtDate;
+	SizeFmt			fmtSize;
+	DateFmt			fmtDate;
 #ifdef _UNICODE
-	vector<wstring>	vStrFilterHistory;
-	wstring			strLastFilter;
+	std::vector<std::wstring>	vStrFilterHistory;
+	std::wstring				strLastFilter;
 #else
-	vector<string>	vStrFilterHistory;
-	string			strLastFilter;
+	std::vector<std::string>	vStrFilterHistory;
+	std::string					strLastFilter;
 #endif
 	UINT			uTimeout;
 	BOOL			bUseSystemIcons;
-	tNppExecProp	nppExecProp;
-} tExProp;
+	NppExecProp		nppExecProp;
+};
 
 
 #define MAX_NPP_EXAMPLE_LINE	22
@@ -290,7 +291,7 @@ BOOL ConvertNetPathName(LPCTSTR pPathName, LPTSTR pRemotePath, UINT length);
 
 /* Get Image Lists */
 HIMAGELIST GetSmallImageList(BOOL bSystem);
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, eDevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
+void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
 /* Resolve Links */
 HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBuf);
@@ -301,7 +302,7 @@ void UpdateCurrUsedDocs(LPTSTR *ppFiles, UINT numFiles);
 BOOL IsFileOpen(LPCTSTR pCurrFile);
 
 /* scroll up/down test function */
-eScDir GetScrollDirection(HWND hWnd, UINT offTop = 0, UINT offBottom = 0);
+ScDir GetScrollDirection(HWND hWnd, UINT offTop = 0, UINT offBottom = 0);
 
 /* Extended Window Functions */
 void ClientToScreen(HWND hWnd, RECT* rect);
@@ -309,7 +310,7 @@ void ScreenToClient(HWND hWnd, RECT* rect);
 void ErrorMessage(DWORD err);
 
 /* Helper functions for NppExec */
-BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, vector<string> vFileList);
+BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::vector<std::wstring> vFileList);
 
 #endif //EXPLORER_H
 

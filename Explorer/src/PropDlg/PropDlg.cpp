@@ -45,7 +45,7 @@ PropDlg::PropDlg() : StaticDialog()
 }
 
 
-INT_PTR PropDlg::doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, eLinkDlg linkDlg, BOOL fileMustExist)
+INT_PTR PropDlg::doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg, BOOL fileMustExist)
 {
 	_pName			= pName;
 	_pLink			= pLink;

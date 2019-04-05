@@ -100,13 +100,13 @@ void TreeHelper::UpdateOverlayIcon(void)
 
 void TreeHelper::DrawChildren(HTREEITEM parentItem)
 {
-	TCHAR				parentFolderPathName[MAX_PATH];
-	SIZE_T				iCnt			= 0;
-	WIN32_FIND_DATA		Find			= {0};
-	HANDLE				hFind			= NULL;
-	tItemList			listElement;
-	tTreeIconUpdate		iconUpdateData;
-	vector<tItemList>	vFolderList;
+	TCHAR					parentFolderPathName[MAX_PATH];
+	SIZE_T					iCnt			= 0;
+	WIN32_FIND_DATA			Find			= {0};
+	HANDLE					hFind			= NULL;
+	ItemList				listElement;
+	TreeIconUpdate			iconUpdateData;
+	std::vector<ItemList>	vFolderList;
 
 	GetFolderPathName(parentItem, parentFolderPathName);
 
@@ -168,18 +168,18 @@ void TreeHelper::UseOverlayThreading(void)
 
 void TreeHelper::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem, BOOL doRecursive)
 {
-	SIZE_T				iCnt			= 0;
-	WIN32_FIND_DATA		Find			= {0};
-	HANDLE				hFind			= NULL;
-	TVITEM				item			= {0};
-	tTreeIconUpdate		iconUpdateData;
+	SIZE_T					iCnt			= 0;
+	WIN32_FIND_DATA			Find			= {0};
+	HANDLE					hFind			= NULL;
+	TVITEM					item			= {0};
+	TreeIconUpdate			iconUpdateData;
 	
-	vector<tItemList>	vFolderList;
-	tItemList			listElement;
-	TCHAR				pszItem[MAX_PATH];
-	TCHAR				pszPath[MAX_PATH];
-	TCHAR				pszSearch[MAX_PATH];
-	HTREEITEM			hCurrentItem	= TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
+	std::vector<ItemList>	vFolderList;
+	ItemList				listElement;
+	TCHAR					pszItem[MAX_PATH];
+	TCHAR					pszPath[MAX_PATH];
+	TCHAR					pszSearch[MAX_PATH];
+	HTREEITEM				hCurrentItem	= TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
 
 	debug_print("UpdateChildren() starts:\n");
 
@@ -328,14 +328,14 @@ BOOL TreeHelper::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
 	return isFound;
 }
 
-void TreeHelper::QuickSortItems(vector<tItemList>* vList, INT d, INT h)
+void TreeHelper::QuickSortItems(std::vector<ItemList>* vList, INT d, INT h)
 {
-	INT		i		= 0;
-	INT		j		= 0;
+	INT				i		= 0;
+	INT				j		= 0;
 #ifdef _UNICODE
-	wstring	str		= _T("");
+	std::wstring	str		= _T("");
 #else
-	string	str		= "";
+	std::string		str		= "";
 #endif
 
 	/* return on empty list */
@@ -355,7 +355,7 @@ void TreeHelper::QuickSortItems(vector<tItemList>* vList, INT d, INT h)
 		{
 			if ( i != j )
 			{
-				tItemList buf = (*vList)[i];
+				ItemList buf = (*vList)[i];
 				(*vList)[i] = (*vList)[j];
 				(*vList)[j] = buf;
 			}
@@ -375,7 +375,7 @@ HTREEITEM TreeHelper::InsertChildFolder(LPCTSTR childFolderName, HTREEITEM paren
 	BOOL				bHidden			= FALSE;
 	WIN32_FIND_DATA		Find			= {0};
 	HANDLE				hFind			= NULL;
-	eDevType			devType			= (parentItem == TVI_ROOT ? DEVT_DRIVE : DEVT_DIRECTORY);
+	DevType				devType			= (parentItem == TVI_ROOT ? DEVT_DRIVE : DEVT_DIRECTORY);
 
 	pCurrentItem = NULL;
 
