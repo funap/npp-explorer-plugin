@@ -128,7 +128,7 @@ stringVector * FileDlg::doOpenMultiFilesDlg()
 		//if (isReadOnly())
 			//::MessageBox(NULL, "read only", "", MB_OK);
 
-		TCHAR fn[MAX_PATH];
+		TCHAR fn[MAX_PATH] = {};
 		LPTSTR pFn = _fileName + _tcslen(_fileName) + 1;
 		if (!(*pFn))
 			_fileNames.push_back(std::wstring(_fileName));
