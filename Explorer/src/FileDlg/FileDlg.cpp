@@ -100,7 +100,7 @@ void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
 LPTSTR FileDlg::doOpenSingleFileDlg() 
 {
 	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(dir), dir);
+	::GetCurrentDirectory(_countof(dir), dir);
 	_ofn.lpstrInitialDir = dir;
 
 	_ofn.Flags |= OFN_FILEMUSTEXIST;
@@ -118,7 +118,7 @@ LPTSTR FileDlg::doOpenSingleFileDlg()
 stringVector * FileDlg::doOpenMultiFilesDlg()
 {
 	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(dir), dir);
+	::GetCurrentDirectory(_countof(dir), dir);
 	_ofn.lpstrInitialDir = dir;
 
 	_ofn.Flags |= OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT;
@@ -157,7 +157,7 @@ stringVector * FileDlg::doOpenMultiFilesDlg()
 LPTSTR FileDlg::doSaveDlg() 
 {
 	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(sizeof(dir), dir);
+	::GetCurrentDirectory(_countof(dir), dir);
 	_ofn.lpstrInitialDir = dir;
 
 	_ofn.Flags |= OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
