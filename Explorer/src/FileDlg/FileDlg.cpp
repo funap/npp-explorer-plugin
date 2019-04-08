@@ -64,26 +64,22 @@ void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
         _tcscpy(_extArray[_nbExt++], ext);
     // 
     std::wstring extFilter = extText;
-   
-    va_list pArg;
-    va_start(pArg, ext);
-
     std::wstring exts;
 
-	if (ext[0] == '.')
-		exts += _T("*");
-    exts += ext;
-    exts += _T(";");
+	va_list pArg;
+	va_start(pArg, ext);
 
-    LPCTSTR ext2Concat;
+	const TCHAR* ext2Concat;
+	ext2Concat = ext;
+	do {
+		if (ext2Concat[0] == _T('.')) {
+			exts += _T("*");
+		}
+		exts += ext2Concat;
+		exts += _T(";");
+		}
+	while ((ext2Concat = va_arg(pArg, const TCHAR*)) != nullptr);
 
-    while ((ext2Concat = va_arg(pArg, LPCTSTR)))
-	{
-        if (ext2Concat[0] == '.')
-            exts += _T("*");
-        exts += ext2Concat;
-        exts += _T(";");
-	}
 	va_end(pArg);
 
 	// remove the last ';'
