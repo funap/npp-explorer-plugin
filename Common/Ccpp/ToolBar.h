@@ -33,15 +33,14 @@
 #include "windows.h"
 #include <commctrl.h>
 #include <vector>
-using namespace std;
 
 enum toolBarStatusType {/*TB_HIDE, */TB_SMALL, TB_LARGE, TB_STANDARD};
 
-typedef struct {
+struct DynamicList {
 	UINT		message;		// identification of icon in tool bar (menu ID)
 	HBITMAP		hBmp;			// bitmap for toolbar
 	HICON		hIcon;			// icon for toolbar
-} tDynamicList;
+};
 
 class ReBar;
 
@@ -117,7 +116,7 @@ private :
 	TBBUTTON *_pTBB;
 	ToolBarIcons _toolBarIcons;
 	toolBarStatusType _state;
-	vector<tDynamicList> _vDynBtnReg;
+	std::vector<DynamicList> _vDynBtnReg;
 	SIZE_T _nrButtons;
 	SIZE_T _nrDynButtons;
 	SIZE_T _nrTotalButtons;
@@ -163,7 +162,7 @@ public :
 	bool getIDVisible(int id);
 
 private:
-	vector<int> usedIDs;
+	std::vector<int> usedIDs;
 
 	int getNewID();
 	void releaseID(int id);
