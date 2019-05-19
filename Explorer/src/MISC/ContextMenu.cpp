@@ -40,12 +40,16 @@ WNDPROC			g_OldWndProc	= NULL;
 extern ExProp	exProp;
 
 
-ContextMenu::ContextMenu()
+ContextMenu::ContextMenu() :
+	_hInst(nullptr),
+	_hWndNpp(nullptr),
+	_hWndParent(nullptr),
+	_nItems(0),
+	_bDelete(FALSE),
+	_hMenu(nullptr),
+	_psfFolder(nullptr),
+	_pidlArray(nullptr)
 {
-	_psfFolder			= NULL;
-	_pidlArray			= NULL;
-	_hMenu				= NULL;
-	_strFirstElement	= _T("");
 }
 
 ContextMenu::~ContextMenu()
@@ -824,7 +828,7 @@ void ContextMenu::openFileInNewInstance(void)
 	TCHAR				szNpp[MAX_PATH];
 
     // get path name
-	GetModuleFileName((HMODULE)g_hModule, szNpp, sizeof(szNpp));
+	GetModuleFileName((HMODULE)g_hModule, szNpp, _countof(szNpp));
 
     // remove the module name : get plugins directory path
 	PathRemoveFileSpec(szNpp);
@@ -928,7 +932,7 @@ void ContextMenu::openScriptPath(HMODULE hInst)
 	if (exProp.nppExecProp.szScriptPath[0] == '.')
 	{
 		/* module path of notepad */
-		GetModuleFileName(hInst, TEMP, sizeof(TEMP));
+		GetModuleFileName(hInst, TEMP, _countof(TEMP));
 		PathRemoveFileSpec(TEMP);
 		PathAppend(TEMP, exProp.nppExecProp.szScriptPath);
 	} else {
@@ -945,7 +949,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 	if (exProp.nppExecProp.szScriptPath[0] == '.')
 	{
 		/* module path of notepad */
-		GetModuleFileName(hInst, szScriptPath, sizeof(szScriptPath));
+		GetModuleFileName(hInst, szScriptPath, _countof(szScriptPath));
 		PathRemoveFileSpec(szScriptPath);
 		PathAppend(szScriptPath, exProp.nppExecProp.szScriptPath);
 	} else {
@@ -984,7 +988,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 				} else if ((pszData[0] == _T('/'))) {
 					pszPtr = _tcstok(pszData, _T("\n"));
 				} else if (((LPSTR)pszData)[0] == '/') {
-					pszData2 = (LPTSTR)new TCHAR[dwSize * 2];
+					pszData2 = new TCHAR[dwSize * 2];
 					::MultiByteToWideChar(CP_ACP, 0, (LPSTR)pszData, -1, pszData2, dwSize * 2);
 					pszPtr = _tcstok(pszData2, _T("\n"));
 				} else {
@@ -1000,7 +1004,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 				if (ConvertCall(pszPtr, szAppName, &pszArg, _strArray) == TRUE)
 				{
 					TCHAR	szPath[MAX_PATH];
-					::GetModuleFileName((HMODULE)_hInst, szPath, MAX_PATH);
+					::GetModuleFileName((HMODULE)_hInst, szPath, _countof(szPath));
 
 					NpeNppExecParam			npep;
 					npep.szScriptName		= szScriptPath;
@@ -1061,8 +1065,10 @@ bool ContextMenu::Str2CB(LPCTSTR str2cpy)
 
 	// Lock the handle and copy the text to the buffer. 
 	LPTSTR pStr = (LPTSTR)::GlobalLock(hglbCopy);
+	if (pStr) {
 	_tcscpy(pStr, str2cpy);
 	::GlobalUnlock(hglbCopy); 
+	}
 
 	// Place the handle on the clipboard. 
 #ifdef _UNICODE
