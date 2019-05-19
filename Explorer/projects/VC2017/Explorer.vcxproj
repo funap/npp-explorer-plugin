@@ -235,6 +235,7 @@
     <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
     <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
     <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
+    <ClCompile Include="..\..\src\MISC\FuzzyMatcher.cpp" />
     <ClCompile Include="..\..\src\MISC\NppInterface.cpp" />
     <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
     <ClCompile Include="..\..\src\NewDlg\NewDlg.cpp" />
@@ -270,6 +271,7 @@
     <ClInclude Include="..\..\src\HelpDlg\HelpDialog.h" />
     <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
     <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
+    <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h" />
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
     <ClInclude Include="..\..\src\MISC\NppInterface.h" />
     <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />

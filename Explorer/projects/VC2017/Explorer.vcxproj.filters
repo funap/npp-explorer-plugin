@@ -90,6 +90,9 @@
     <ClCompile Include="..\..\src\MISC\NppInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\MISC\FuzzyMatcher.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\ExplorerDialog.rc">
@@ -191,6 +194,9 @@
       <Filter>Header Files\NppExec</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\MISC\NppInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
