@@ -17,19 +17,21 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "Explorer.h"
 #include "FavesDialog.h"
-#include "ExplorerDialog.h"
-#include "ExplorerResource.h"
-#include "NewDlg.h"
-#include "Scintilla.h"
-#include "ToolTip.h"
-#include "resource.h"
-#include <dbt.h>
 
+#include <dbt.h>
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <shlobj.h>
+
+#include "Explorer.h"
+#include "ExplorerDialog.h"
+#include "ExplorerResource.h"
+#include "NewDlg.h"
+#include "ToolTip.h"
+#include "resource.h"
+#include "NppInterface.h"
+
 
 extern winVer gWinVersion;
 
@@ -2170,8 +2172,8 @@ void FavesDialog::SaveElementTreeRecursive(PELEM pElem, HANDLE hFile)
 
 void FavesDialog::UpdateColors()
 {
-	COLORREF bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
-	COLORREF fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
+	COLORREF fgColor = NppInterface::getEditorDefaultForegroundColor();
+	COLORREF bgColor = NppInterface::getEditorDefaultBackgroundColor();
 
 	if (NULL != _hTreeCtrl) {
 		TreeView_SetBkColor(_hTreeCtrl, bgColor);

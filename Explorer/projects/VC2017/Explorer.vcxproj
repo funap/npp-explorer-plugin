@@ -22,7 +22,7 @@
     <ProjectGuid>{BA345CAF-580B-4786-8699-717F831D10CF}</ProjectGuid>
     <SccProjectName />
     <SccLocalPath />
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -35,16 +35,16 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -118,6 +118,7 @@
       <SDLCheck>true</SDLCheck>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -183,6 +184,7 @@
       <SDLCheck>true</SDLCheck>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;shlwapi.lib;Mpr.lib;comctl32.lib;Msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -233,6 +235,7 @@
     <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
     <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
     <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
+    <ClCompile Include="..\..\src\MISC\NppInterface.cpp" />
     <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
     <ClCompile Include="..\..\src\NewDlg\NewDlg.cpp" />
     <ClCompile Include="..\..\src\OptionDlg\OptionDialog.cpp" />
@@ -268,6 +271,7 @@
     <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
     <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
+    <ClInclude Include="..\..\src\MISC\NppInterface.h" />
     <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
     <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
     <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />

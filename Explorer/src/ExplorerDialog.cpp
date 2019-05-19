@@ -17,19 +17,21 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#include "Explorer.h"
+
 #include "ExplorerDialog.h"
-#include "ExplorerResource.h"
-#include "ContextMenu.h"
-#include "NewDlg.h"
-#include "Scintilla.h"
-#include "ToolTip.h"
-#include "resource.h"
 
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <dbt.h>
+
+#include "Explorer.h"
+#include "ExplorerResource.h"
+#include "ContextMenu.h"
+#include "NewDlg.h"
+#include "NppInterface.h"
+#include "ToolTip.h"
+#include "resource.h"
 
 
 ToolTip		toolTip;
@@ -2010,8 +2012,8 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 
 void ExplorerDialog::UpdateColors()
 {
-	COLORREF bgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0);
-	COLORREF fgColor = (COLORREF)::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0);
+	COLORREF bgColor = NppInterface::getEditorDefaultBackgroundColor();
+	COLORREF fgColor = NppInterface::getEditorDefaultForegroundColor();
 
 	if (NULL != _hTreeCtrl) {
 		TreeView_SetBkColor(_hTreeCtrl, bgColor);

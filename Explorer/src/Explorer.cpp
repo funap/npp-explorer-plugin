@@ -21,12 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /* include files */
 #include "stdafx.h"
 #include "Explorer.h"
-#include "ExplorerDialog.h"
-#include "FavesDialog.h"
-#include "OptionDialog.h"
-#include "HelpDialog.h"
-#include "ToolTip.h"
-#include "SysMsg.h"
+
 #include <stdlib.h>
 #include <iostream>
 #include <shellapi.h>
@@ -34,6 +29,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <dbt.h>
 #include <atlbase.h>
+
+#include "NppInterface.h"
+#include "ExplorerDialog.h"
+#include "FavesDialog.h"
+#include "OptionDialog.h"
+#include "HelpDialog.h"
+#include "ToolTip.h"
+#include "SysMsg.h"
+
 
 #define SHGFI_OVERLAYINDEX 0x000000040
 
@@ -226,6 +230,8 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
+	NppInterface::setNppData(notpadPlusData);
+
 	/* stores notepad data */
 	nppData = notpadPlusData;
 
@@ -242,7 +248,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 	helpDlg.init((HINSTANCE)g_hModule, nppData);
 
 	/* Subclassing for Notepad */
-	wndProcNotepad = (WNDPROC)SetWindowLongPtr(nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
+	wndProcNotepad = (WNDPROC)::SetWindowLongPtr(nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
 }
 
 extern "C" __declspec(dllexport) LPCTSTR getName()
@@ -1236,6 +1242,3 @@ void ErrorMessage(DWORD err)
 
 	LocalFree(lpMsgBuf);
 }
-
-
-

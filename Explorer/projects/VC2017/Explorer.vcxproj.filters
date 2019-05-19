@@ -87,6 +87,9 @@
     <ClCompile Include="..\..\..\Common\Ccpp\stdafx.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\MISC\NppInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\ExplorerDialog.rc">
@@ -186,6 +189,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h">
       <Filter>Header Files\NppExec</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MISC\NppInterface.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
