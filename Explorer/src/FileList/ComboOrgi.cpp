@@ -135,7 +135,7 @@ void ComboOrgi::selectComboText(LPCTSTR pszText)
 	::SendMessage(_hCombo, CB_SETCURSEL, lResult, 0);
 }
 
-void ComboOrgi::setComboList(std::vector<std::wstring> &vStrList)
+void ComboOrgi::setComboList(const std::vector<std::wstring> &vStrList)
 {
 	SIZE_T	iCnt	= vStrList.size();
 
@@ -146,21 +146,18 @@ void ComboOrgi::setComboList(std::vector<std::wstring> &vStrList)
 	}
 }
 
-void ComboOrgi::getComboList(std::vector<std::wstring> &vStrList)
+std::vector<std::wstring> ComboOrgi::getComboList()
 {
-	TCHAR	szTemp[MAX_PATH];
-	SIZE_T	iCnt	= ::SendMessage(_hCombo, CB_GETCOUNT, 0, 0);
+	std::vector<std::wstring> result;
 
-	vStrList.clear();
-
-	for (SIZE_T i = 0; i < iCnt; i++)
-	{
-		if (MAX_PATH > ::SendMessage(_hCombo, CB_GETLBTEXTLEN, i, 0))
-		{
+	TCHAR	szTemp[MAX_PATH] = {};
+	SIZE_T	count = ::SendMessage(_hCombo, CB_GETCOUNT, 0, 0);
+	for (SIZE_T i = 0; i < count; ++i) {
+		if (MAX_PATH > ::SendMessage(_hCombo, CB_GETLBTEXTLEN, i, 0)) {
 			::SendMessage(_hCombo, CB_GETLBTEXT, i, (LPARAM)szTemp);
-			vStrList.push_back(szTemp);
+			result.emplace_back(szTemp);
 		}
 	}
+
+	return result;
 }
-
-

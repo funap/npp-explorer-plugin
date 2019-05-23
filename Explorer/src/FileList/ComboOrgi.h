@@ -54,8 +54,8 @@ public :
 	void getText(LPTSTR pszText, UINT size = MAX_PATH);
 	bool getSelText(LPTSTR pszText);
 
-	void setComboList(std::vector<std::wstring> &vStrList);
-	void getComboList(std::vector<std::wstring> &vStrList);
+	void setComboList(const std::vector<std::wstring> &vStrList);
+	std::vector<std::wstring> getComboList();
 
 	void clearComboList(void)
 	{
