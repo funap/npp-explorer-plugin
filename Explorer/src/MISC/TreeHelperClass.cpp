@@ -101,7 +101,6 @@ void TreeHelper::UpdateOverlayIcon(void)
 void TreeHelper::DrawChildren(HTREEITEM parentItem)
 {
 	TCHAR					parentFolderPathName[MAX_PATH];
-	SIZE_T					iCnt			= 0;
 	WIN32_FIND_DATA			Find			= {0};
 	HANDLE					hFind			= NULL;
 	ItemList				listElement;

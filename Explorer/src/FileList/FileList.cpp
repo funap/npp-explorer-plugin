@@ -1445,7 +1445,6 @@ void FileList::onSelectItem(TCHAR charkey)
 		selRow++;
 	}
 
-	UINT startPos	= selRow;
 	BOOL bRet		= FindNextItemInList(_uMaxFolders, _uMaxElements, &selRow);
 	if ((bRet == FALSE) && (_bSearchFile == TRUE)) {
 		_strSearchFile[_tcslen(_strSearchFile)-1] = '\0';
