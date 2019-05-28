@@ -555,7 +555,7 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 			TCHAR	szLastFilter[MAX_PATH];
 
 			::DestroyIcon(_data.hIconTab);
-			_ComboFilter.getComboList(_pExProp->vStrFilterHistory);
+			_pExProp->vStrFilterHistory = _ComboFilter.getComboList();
 			_ComboFilter.getText(szLastFilter, MAX_PATH);
 			if (_tcslen(szLastFilter) != 0)
 				_pExProp->strLastFilter = szLastFilter;
