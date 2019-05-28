@@ -275,6 +275,7 @@ void gotoPath(void);
 void clearFilter(void);
 void openOptionDlg(void);
 void openHelpDlg(void);
+void openQuickOpenDlg(void);
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
