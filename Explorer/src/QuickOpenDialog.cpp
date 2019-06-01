@@ -94,7 +94,6 @@ namespace {
 	};
 }
 
-
 void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 {
 	_pExProp = prop;
@@ -154,6 +153,23 @@ void QuickOpenDlg::setDefaultPosition()
 	::SetWindowPos(_hSelf, HWND_TOP, x, y, _rc.right - _rc.left, _rc.bottom - _rc.top, SWP_SHOWWINDOW);
 }
 
+VOID QuickOpenDlg::CalcMetrics()
+{
+	UINT dpi = GetDpiForWindow(_hWndResult);
+	if (0 == dpi) {
+		dpi = 96;
+	}
+
+	TEXTMETRIC textMetric;
+	HDC hdc = ::GetDC(_hWndResult);
+	::GetTextMetrics(hdc, &textMetric);
+	::ReleaseDC(_hWndResult, hdc);
+
+	_itemMarginLeft          = ::MulDiv(7, dpi, 96);
+	_itemTextHeight          = ::MulDiv(textMetric.tmHeight, dpi, 96);
+	_itemTextExternalLeading = ::MulDiv(textMetric.tmExternalLeading, dpi, 96);
+}
+
 BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 {
 	UINT& itemID = drawItem->itemID;
@@ -176,21 +192,21 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		::FillRect(drawItem->hDC, &drawItem->rcItem, hBrush);
 		::DeleteObject(hBrush);
 
-		// draw text
+		// first line
+		RECT drawPosition;
+		drawPosition.top = drawItem->rcItem.top + _itemTextExternalLeading;
+		drawPosition.left = drawItem->rcItem.left + _itemMarginLeft;
 		::SetTextColor(drawItem->hDC, textColor1);
 		::SetBkMode(drawItem->hDC, OPAQUE);
-
-		// first line
 		std::wstring text = _results[itemID].second->filename().wstring();
 		INT length = static_cast<INT>(text.length());
-		RECT calcRect = { 0, 0, 0, 0 };
-		RECT drawPosition = { 7, drawItem->rcItem.top + 3, drawItem->rcItem.right, drawItem->rcItem.bottom };
 
 		std::vector<size_t> match;
 		FuzzyMatcher matcher(_pattern);
 		if (matcher.ScoreMatch(text, &match)) {
 			match.emplace_back(std::string::npos);		// Add terminal for iterator
 			size_t matchIndex = 0;
+			RECT calcRect = {};
 			for (size_t i = 0; i < length; ++i) {
 				if (i == match[matchIndex]) {
 					::SetBkColor(drawItem->hDC, backgroundMatchColor);
@@ -210,11 +226,13 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		}
 
 		// second line
+		drawPosition.top += _itemTextHeight;
+		drawPosition.left = drawItem->rcItem.left + _itemMarginLeft;
 		::SetTextColor(drawItem->hDC, textColor2);
 		::SetBkMode(drawItem->hDC, TRANSPARENT);
 		text = _results[itemID].second->parent_path().wstring();
 		length = static_cast<INT>(text.length());
-		::TextOut(drawItem->hDC, drawItem->rcItem.left + 7, drawItem->rcItem.top + 17, text.data(), length);
+		::DrawText(drawItem->hDC, text.c_str(), length, &drawPosition, DT_SINGLELINE);
 	}
 	return TRUE;
 }
@@ -277,15 +295,15 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		}
 		break;
 	case WM_INITDIALOG:
-		{
-			_hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
-			int listItemHeight = static_cast<INT>(::SendMessage(_hWndResult, LB_GETITEMHEIGHT, 0, 0)) * 2;
-			::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, listItemHeight);
-
-			::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-			_defaultEditProc = (WNDPROC)::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
-		}
+	{
+		_hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
+		CalcMetrics();
+		const int height = _itemTextHeight * 2 + _itemTextExternalLeading;
+		::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, height);
+		::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+		_defaultEditProc = (WNDPROC)::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
 		break;
+	}
 	case WM_DESTROY:
 		::SetWindowLongPtr(GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
 		break;

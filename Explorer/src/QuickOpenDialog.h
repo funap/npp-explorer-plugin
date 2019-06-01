@@ -38,8 +38,11 @@ class HilightListbox;
 class QuickOpenDlg : public StaticDialog
 {
 public:
-	QuickOpenDlg() : 
+	QuickOpenDlg() :
 		StaticDialog(),
+		_itemMarginLeft(0),
+		_itemTextHeight(0),
+		_itemTextExternalLeading(0),
 		_defaultEditProc(nullptr),
 		_hWndResult(nullptr),
 		_pExProp(nullptr),
@@ -53,6 +56,7 @@ public:
 
 
 protected :
+	VOID CalcMetrics();
 	BOOL OnDrawItem(LPDRAWITEMSTRUCT drawItem);
 
 
@@ -62,7 +66,9 @@ protected :
 	LRESULT APIENTRY runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
-
+	INT _itemMarginLeft;
+	INT _itemTextHeight;
+	INT _itemTextExternalLeading;
 	WNDPROC														_defaultEditProc;
 	HWND														_hWndResult;
 	ExProp*														_pExProp;
