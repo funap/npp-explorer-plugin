@@ -155,7 +155,7 @@ void QuickOpenDlg::setDefaultPosition()
 
 VOID QuickOpenDlg::CalcMetrics()
 {
-	UINT dpi = GetDpiForWindow(_hWndResult);
+	UINT dpi = ::GetDpiForWindow(_hWndResult);
 	if (0 == dpi) {
 		dpi = 96;
 	}
@@ -193,8 +193,8 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		::DeleteObject(hBrush);
 
 		// first line
-		RECT drawPosition;
-		drawPosition.top = drawItem->rcItem.top + _itemTextExternalLeading;
+		RECT drawPosition = drawItem->rcItem;
+		drawPosition.top += _itemTextExternalLeading;
 		drawPosition.left = drawItem->rcItem.left + _itemMarginLeft;
 		::SetTextColor(drawItem->hDC, textColor1);
 		::SetBkMode(drawItem->hDC, OPAQUE);
