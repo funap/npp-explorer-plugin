@@ -181,8 +181,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_GROUP)));
 			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_PARENTFOLDER)));
 
-			/* clear property struct */
-			::ZeroMemory(&exProp, sizeof(exProp));
 			break;
 		}	
 		case DLL_PROCESS_DETACH:

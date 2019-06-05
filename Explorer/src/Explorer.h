@@ -207,6 +207,30 @@ struct NppExecProp {
 };
 
 struct ExProp{
+	ExProp() :
+		szCurrentPath(),
+		iSplitterPos(0),
+		iSplitterPosHorizontal(0),
+		bAscending(false),
+		iSortPos(0),
+		iColumnPosName(0),
+		iColumnPosExt(0),
+		iColumnPosSize(0),
+		iColumnPosDate(0),
+		bShowHidden(false),
+		bViewBraces(false),
+		bViewLong(false),
+		bAddExtToName(false),
+		bAutoUpdate(false),
+		fmtSize(SFMT_BYTES),
+		fmtDate(DFMT_ENG),
+		vStrFilterHistory(),
+		fileFilter(),
+		uTimeout(0),
+		bUseSystemIcons(false),
+		nppExecProp()
+	{
+	}
 	/* pointer to global current path */
 	TCHAR			szCurrentPath[MAX_PATH];
 	INT				iSplitterPos;
