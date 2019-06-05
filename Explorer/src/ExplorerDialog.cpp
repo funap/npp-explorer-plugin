@@ -1138,24 +1138,11 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 			break;
 		}
 		case IDM_EX_GO_TO_USER:
-		{
-			TCHAR	pathName[MAX_PATH];
-
-			if (SHGetSpecialFolderPath(_hSelf, pathName, CSIDL_PROFILE, FALSE) == TRUE) {
-				_tcscat(pathName, _T("\\"));
-				SelectItem(pathName);
-			}
+			gotoUserFolder();
 			break;
-		}
 		case IDM_EX_GO_TO_FOLDER:
-		{
-			TCHAR	pathName[MAX_PATH];
-			::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
-			_tcscat(pathName, _T("\\"));
-			SelectItem(pathName);
-			_FileList.SelectCurFile();
+			gotoCurrentFile();
 			break;
-		}
 		case IDM_EX_UPDATE:
 		{
 			::SetEvent(g_hEvent[EID_UPDATE_USER]);
@@ -1541,6 +1528,39 @@ void ExplorerDialog::gotoPath(void)
 		else
 			bLeave = TRUE;
 	}
+}
+
+void ExplorerDialog::gotoUserFolder(void)
+{
+	TCHAR	pathName[MAX_PATH];
+
+	if (SHGetSpecialFolderPath(_hSelf, pathName, CSIDL_PROFILE, FALSE) == TRUE) {
+		_tcscat(pathName, _T("\\"));
+		SelectItem(pathName);
+	}
+}
+
+void ExplorerDialog::gotoCurrentFolder(void)
+{
+	TCHAR	pathName[MAX_PATH];
+	::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
+	_tcscat(pathName, _T("\\"));
+	SelectItem(pathName);
+}
+
+void ExplorerDialog::gotoCurrentFile(void)
+{
+	TCHAR	pathName[MAX_PATH];
+	::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
+	_tcscat(pathName, _T("\\"));
+	SelectItem(pathName);
+	_FileList.SelectCurFile();
+	::SetFocus(_FileList.getHSelf());
+}
+
+void ExplorerDialog::setFocusOnFileList(void)
+{
+	::SetFocus(_FileList.getHSelf());
 }
 
 void ExplorerDialog::clearFilter(void)

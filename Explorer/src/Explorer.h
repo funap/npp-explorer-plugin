@@ -267,11 +267,20 @@ void initMenu(void);
 
 void toggleExplorerDialog(void);
 void toggleFavesDialog(void);
+void openQuickOpenDlg(void);
+
 void gotoPath(void);
+void gotoUserFolder(void);
+void gotoCurrentFolder(void);
+void gotoCurrentFile(void);
+void showExplorerDialogOnFolder(void);
+void showExplorerDialogOnFile(void);
+void showFavesDialog(void);
 void clearFilter(void);
+
 void openOptionDlg(void);
 void openHelpDlg(void);
-void openQuickOpenDlg(void);
+
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

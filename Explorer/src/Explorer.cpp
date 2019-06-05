@@ -43,10 +43,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define SHGFI_OVERLAYINDEX 0x000000040
 
 
-CONST INT	nbFunc	= 10;
-
-
-
 /* information for notepad */
 CONST TCHAR  PLUGIN_NAME[] = _T("&Explorer");
 
@@ -92,7 +88,26 @@ HANDLE				g_hModule;
 HWND				g_HSource;
 INT					g_docCnt = 0;
 TCHAR				g_currentFile[MAX_PATH];
-FuncItem			funcItem[nbFunc];
+FuncItem			funcItem[] = {
+//      {  _itemName,                         _pFunc,                _cmdID, _init2Check,   _pShKey}
+/*  0 */{ L"&Explorer...",                    toggleExplorerDialog,       0,       false,   nullptr},
+/*  1 */{ L"&Favorites...",                   toggleFavesDialog,          0,       false,   nullptr},
+/*  2 */{ L"&Quick Open...",                  openQuickOpenDlg,           0,       false,   nullptr},
+/*  3 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/*  4 */{ L"&Go to Path...",                  gotoPath,                   0,       false,   nullptr},
+/*  5 */{ L"&Go to User Folder",              gotoUserFolder,             0,       false,   nullptr},
+/*  6 */{ L"&Go to Current Folder",           gotoCurrentFolder,          0,       false,   nullptr},
+/*  7 */{ L"&Go to Current File",             gotoCurrentFile,            0,       false,   nullptr},
+/*  8 */{ L"Show Explorer (Focus on folder)", showExplorerDialogOnFolder, 0,       false,   nullptr},
+/*  9 */{ L"Show Explorer (Focus on file)",   showExplorerDialogOnFile,   0,       false,   nullptr},
+/* 10 */{ L"Show Favorites",                  showFavesDialog,            0,       false,   nullptr},
+/* 11 */{ L"&Clear Filter",                   clearFilter,                0,       false,   nullptr},
+/* 12 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 13 */{ L"Explorer &Options...",            openOptionDlg,              0,       false,   nullptr},
+/* 14 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 15 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
+};
+
 toolbarIcons		g_TBExplorer;
 toolbarIcons		g_TBFaves;
 
@@ -140,27 +155,6 @@ BOOL APIENTRY DllMain( HANDLE hModule,
     {
 		case DLL_PROCESS_ATTACH:
 		{
-			/* Set function pointers */
-			funcItem[0]._pFunc = toggleExplorerDialog;
-			funcItem[1]._pFunc = toggleFavesDialog;
-			funcItem[2]._pFunc = NULL;
-			funcItem[3]._pFunc = gotoPath;
-			funcItem[4]._pFunc = openQuickOpenDlg;
-			funcItem[5]._pFunc = clearFilter;
-			funcItem[6]._pFunc = NULL;
-			funcItem[7]._pFunc = openOptionDlg;
-			funcItem[8]._pFunc = NULL;
-			funcItem[9]._pFunc = openHelpDlg;
-			
-			/* Fill menu names */
-			_tcscpy(funcItem[0]._itemName, _T("&Explorer..."));
-			_tcscpy(funcItem[1]._itemName, _T("&Favorites..."));
-			_tcscpy(funcItem[3]._itemName, _T("&Go to Path..."));
-			_tcscpy(funcItem[4]._itemName, _T("&Quick Open..."));
-			_tcscpy(funcItem[5]._itemName, _T("&Clear Filter"));
-			_tcscpy(funcItem[7]._itemName, _T("Explorer &Options..."));
-			_tcscpy(funcItem[9]._itemName, _T("&Help..."));
-
 			/* Set shortcuts */
 			funcItem[0]._pShKey = new ShortcutKey;
 			funcItem[0]._pShKey->_isAlt		= true;
@@ -172,19 +166,11 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 			funcItem[1]._pShKey->_isCtrl	= true;
 			funcItem[1]._pShKey->_isShift	= true;
 			funcItem[1]._pShKey->_key		= 0x56;
-			funcItem[2]._pShKey				= NULL;
-			funcItem[3]._pShKey				= NULL;
-			funcItem[4]._pShKey = new ShortcutKey;
-			funcItem[4]._pShKey->_isAlt		= false;
-			funcItem[4]._pShKey->_isCtrl	= true;
-			funcItem[4]._pShKey->_isShift	= false;
-			funcItem[4]._pShKey->_key		= 'P';
-			funcItem[5]._pShKey				= NULL;
-
-			funcItem[6]._pShKey				= NULL;
-			funcItem[7]._pShKey				= NULL;
-			funcItem[8]._pShKey				= NULL;
-			funcItem[9]._pShKey				= NULL;
+			funcItem[2]._pShKey = new ShortcutKey;
+			funcItem[2]._pShKey->_isAlt		= false;
+			funcItem[2]._pShKey->_isCtrl	= true;
+			funcItem[2]._pShKey->_isShift	= false;
+			funcItem[2]._pShKey->_key		= 'P';
 
 			/* set image list and icon */
 			ghImgList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 6, 30);
@@ -215,6 +201,7 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 	
 			delete funcItem[0]._pShKey;
 			delete funcItem[1]._pShKey;
+			delete funcItem[2]._pShKey;
 
 			if (g_TBExplorer.hToolbarBmp)
 				::DeleteObject(g_TBExplorer.hToolbarBmp);
@@ -269,7 +256,7 @@ extern "C" __declspec(dllexport) LPCTSTR getName()
 
 extern "C" __declspec(dllexport) FuncItem * getFuncsArray(INT *nbF)
 {
-	*nbF = nbFunc;
+	*nbF = _countof(funcItem);
 	return funcItem;
 }
 
@@ -291,7 +278,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	if (notifyCode->nmhdr.hwndFrom == nppData._nppHandle) {
 		if (notifyCode->nmhdr.code == NPPN_TBMODIFICATION) {
 			/* change menu language */
-			NLChangeNppMenu((HINSTANCE)g_hModule, nppData._nppHandle, PLUGIN_NAME, funcItem, nbFunc);
+			NLChangeNppMenu((HINSTANCE)g_hModule, nppData._nppHandle, PLUGIN_NAME, funcItem, _countof(funcItem));
 
 			g_TBExplorer.hToolbarBmp = (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 			g_TBFaves.hToolbarBmp = (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
@@ -508,10 +495,53 @@ void toggleFavesDialog(void)
 void gotoPath(void)
 {
 	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (state & MF_UNCHECKED) {
+	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
 		explorerDlg.doDialog();
 	}
 	explorerDlg.gotoPath();
+}
+
+void gotoUserFolder(void)
+{
+	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
+	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+		explorerDlg.doDialog();
+	}
+	explorerDlg.gotoUserFolder();
+}
+
+void gotoCurrentFolder(void)
+{
+	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
+	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+		explorerDlg.doDialog();
+	}
+	explorerDlg.gotoCurrentFolder();
+}
+
+void gotoCurrentFile(void)
+{
+	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
+	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+		explorerDlg.doDialog();
+	}
+	explorerDlg.gotoCurrentFile();
+}
+
+void showExplorerDialogOnFolder(void)
+{
+	explorerDlg.doDialog();
+}
+
+void showExplorerDialogOnFile(void)
+{
+	explorerDlg.doDialog();
+	explorerDlg.setFocusOnFileList();
+}
+
+void showFavesDialog(void)
+{
+	favesDlg.doDialog();
 }
 
 void clearFilter(void)

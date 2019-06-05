@@ -78,7 +78,11 @@ public:
    	void doDialog(bool willBeShown = true);
 
 	void gotoPath(void);
+	void gotoUserFolder(void);
+	void gotoCurrentFolder(void);
+	void gotoCurrentFile(void);
 	void clearFilter(void);
+	void setFocusOnFileList(void);
 
 	void NotifyNewFile(void);
 
