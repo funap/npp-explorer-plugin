@@ -153,7 +153,7 @@ void QuickOpenDlg::setDefaultPosition()
 	::SetWindowPos(_hSelf, HWND_TOP, x, y, _rc.right - _rc.left, _rc.bottom - _rc.top, SWP_SHOWWINDOW);
 }
 
-VOID QuickOpenDlg::CalcMetrics()
+VOID QuickOpenDlg::calcMetrics()
 {
 	UINT dpi = ::GetDpiForWindow(_hWndResult);
 	if (0 == dpi) {
@@ -170,7 +170,7 @@ VOID QuickOpenDlg::CalcMetrics()
 	_itemTextExternalLeading = ::MulDiv(textMetric.tmExternalLeading, dpi, 96);
 }
 
-BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
+BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 {
 	UINT& itemID = drawItem->itemID;
 
@@ -199,15 +199,15 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		::SetTextColor(drawItem->hDC, textColor1);
 		::SetBkMode(drawItem->hDC, OPAQUE);
 		std::wstring text = _results[itemID].second->filename().wstring();
-		INT length = static_cast<INT>(text.length());
+		
 
 		std::vector<size_t> match;
 		FuzzyMatcher matcher(_pattern);
 		if (matcher.ScoreMatch(text, &match)) {
-			match.emplace_back(std::string::npos);		// Add terminal for iterator
+			match.emplace_back(std::wstring::npos);		// Add terminal for iterator
 			size_t matchIndex = 0;
 			RECT calcRect = {};
-			for (size_t i = 0; i < length; ++i) {
+			for (size_t i = 0; i < text.length(); ++i) {
 				if (i == match[matchIndex]) {
 					::SetBkColor(drawItem->hDC, backgroundMatchColor);
 					++matchIndex;
@@ -222,7 +222,7 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		}
 		else {
 			::SetBkColor(drawItem->hDC, backgroundColor);
-			::DrawText(drawItem->hDC, text.c_str(), length, &drawPosition, DT_SINGLELINE);
+			::DrawText(drawItem->hDC, text.c_str(), static_cast<INT>(text.length()), &drawPosition, DT_SINGLELINE);
 		}
 
 		// second line
@@ -231,8 +231,7 @@ BOOL QuickOpenDlg::OnDrawItem(LPDRAWITEMSTRUCT drawItem)
 		::SetTextColor(drawItem->hDC, textColor2);
 		::SetBkMode(drawItem->hDC, TRANSPARENT);
 		text = _results[itemID].second->parent_path().wstring();
-		length = static_cast<INT>(text.length());
-		::DrawText(drawItem->hDC, text.c_str(), length, &drawPosition, DT_SINGLELINE);
+		::DrawText(drawItem->hDC, text.c_str(), static_cast<INT>(text.length()), &drawPosition, DT_SINGLELINE);
 	}
 	return TRUE;
 }
@@ -246,7 +245,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		break;
 	case WM_DRAWITEM:
 		if ((UINT)wParam == IDC_LIST_RESULTS) {
-			ret = OnDrawItem(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
+			ret = onDrawItem(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
 		}
 		break;
 	case WM_TIMER:
@@ -281,8 +280,8 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		case IDOK:	
 		{
 			const int selection = (INT)::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, LB_GETCURSEL, 0, 0);
-			if (LB_ERR != selection) {
-				if (selection < _results.size()) {
+			if (0 < selection) {
+				if (static_cast<SIZE_T>(selection) < _results.size()) {
 					NppInterface::doOpen(_results[selection].second->wstring());
 				}
 			}
@@ -297,7 +296,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 	case WM_INITDIALOG:
 	{
 		_hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
-		CalcMetrics();
+		calcMetrics();
 		const int height = _itemTextHeight * 2 + _itemTextExternalLeading;
 		::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, height);
 		::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
