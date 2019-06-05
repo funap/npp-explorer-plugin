@@ -412,7 +412,7 @@ void loadSettings(void)
 		}
 	}
 	::GetPrivateProfileString(Explorer, LastFilter, _T("*.*"), pszTemp, MAX_PATH, iniFilePath);
-	exProp.strLastFilter = std::wstring(pszTemp);
+	exProp.fileFilter.setFilter(pszTemp);
 
 	if (::PathFileExists(exProp.szCurrentPath) == FALSE) {
 		_tcscpy(exProp.szCurrentPath, _T("C:\\"));
@@ -454,7 +454,7 @@ void saveSettings(void)
 	for (INT i = (INT)exProp.vStrFilterHistory.size() - 1; i >= 0 ; i--)	{
 		::WritePrivateProfileString(FilterHistory, _itot(i, temp, 10), exProp.vStrFilterHistory[i].c_str(), iniFilePath);
 	}
-	::WritePrivateProfileString(Explorer, LastFilter, exProp.strLastFilter.c_str(), iniFilePath);
+	::WritePrivateProfileString(Explorer, LastFilter, exProp.fileFilter.getFilterString(), iniFilePath);
 }
 
 

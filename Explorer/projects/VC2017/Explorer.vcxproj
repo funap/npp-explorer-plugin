@@ -27,7 +27,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v120_xp</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -89,6 +89,7 @@
       <SDLCheck>true</SDLCheck>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -151,6 +152,7 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <IntrinsicFunctions>true</IntrinsicFunctions>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;shlwapi.lib;Mpr.lib;comctl32.lib;Msimg32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -235,6 +237,7 @@
     <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
     <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
     <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
+    <ClCompile Include="..\..\src\MISC\FileFilter.cpp" />
     <ClCompile Include="..\..\src\MISC\FuzzyMatcher.cpp" />
     <ClCompile Include="..\..\src\MISC\NppInterface.cpp" />
     <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
@@ -272,6 +275,7 @@
     <ClInclude Include="..\..\src\HelpDlg\HelpDialog.h" />
     <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
     <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
+    <ClInclude Include="..\..\src\MISC\FileFilter.h" />
     <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h" />
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
     <ClInclude Include="..\..\src\MISC\NppInterface.h" />

@@ -558,7 +558,7 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 			_pExProp->vStrFilterHistory = _ComboFilter.getComboList();
 			_ComboFilter.getText(szLastFilter, MAX_PATH);
 			if (_tcslen(szLastFilter) != 0)
-				_pExProp->strLastFilter = szLastFilter;
+				_pExProp->fileFilter.setFilter(szLastFilter);
 
 			::SetEvent(g_hEvent[EID_THREAD_END]);
 			if (::WaitForSingleObject(_hExploreVolumeThread, 50) != WAIT_OBJECT_0)
@@ -1242,7 +1242,7 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 			/* initilize combo */
 			_ComboFilter.setComboList(_pExProp->vStrFilterHistory);
 			_ComboFilter.addText(_T("*.*"));
-			_ComboFilter.setText((LPTSTR)_pExProp->strLastFilter.c_str());
+			_ComboFilter.setText(_pExProp->fileFilter.getFilterString());
 
 			/* initilize file list */
 			_FileList.SetToolBarInfo(&_ToolBar , IDM_EX_PREV, IDM_EX_NEXT);
@@ -1546,7 +1546,7 @@ void ExplorerDialog::gotoPath(void)
 void ExplorerDialog::clearFilter(void)
 {
 	_pExProp->vStrFilterHistory.clear();
-	_pExProp->strLastFilter = _T("*.*");
+	_pExProp->fileFilter.setFilter(L"*.*");
 	_ComboFilter.clearComboList();
 	_ComboFilter.addText(_T("*.*"));
 	_ComboFilter.setText(_T("*.*"));

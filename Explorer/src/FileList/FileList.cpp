@@ -21,6 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileList.h"
 #include "resource.h"
 #include "NativeLang_def.h"
+#include "fileFilter.h"
+
 #include <windows.h>
 
 
@@ -93,7 +95,6 @@ FileList::FileList(void)
 	_uMaxElements		= 0;
 	_uMaxElementsOld	= 0;
 	_tcscpy(_strSearchFile, _T(""));
-	_tcscpy(_szFileFilter, _T("*.*"));
 	_vFileList.clear();
 }
 
@@ -173,7 +174,6 @@ void FileList::initProp(ExProp* prop)
 {
 	/* set properties */
 	_pExProp		= prop;
-	SetFilter(_pExProp->strLastFilter.c_str());
 }
 
 
@@ -1106,7 +1106,6 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 		FileListData	tempData;
 		TCHAR	szFilter[MAX_PATH]		= _T("\0");
 		TCHAR	szExFilter[MAX_PATH]	= _T("\0");
-		GetFilterLists(szFilter, szExFilter);
 
 		do {
 			if (IsValidFolder(Find) == TRUE) {
@@ -1128,7 +1127,7 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 
 				vFoldersTemp.push_back(tempData);
 			}
-			else if ((IsValidFile(Find) == TRUE) && (DoFilter(Find.cFileName, szFilter, szExFilter) == TRUE))
+			else if ((IsValidFile(Find) == TRUE) && (_pExProp->fileFilter.match(Find.cFileName) == TRUE))
 			{
 				/* store for correct sorting the complete name (with extension) */
 				tempData.strNameExt		= Find.cFileName;
@@ -1228,27 +1227,8 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 
 void FileList::filterFiles(LPCTSTR currentFilter)
 {
-	SetFilter(currentFilter);
+	_pExProp->fileFilter.setFilter(currentFilter);
 	viewPath(_pExProp->szCurrentPath, TRUE);
-}
-
-void FileList::SetFilter(LPCTSTR pszNewFilter)
-{
-	TCHAR	szTempFilter[MAX_PATH];
-
-	/* delete current filter */
-	_szFileFilter[0] = '\0';
-
-	/* copy new filter into buffer for tok */
-	_tcscpy(szTempFilter, pszNewFilter);
-
-	/* get new filter (remove spaces) */
-	LPTSTR	ptr = _tcstok(szTempFilter, _T(" "));
-
-	while (ptr != NULL) {
-		_tcscat(_szFileFilter, ptr);
-		ptr = _tcstok(NULL, _T(" "));
-	}
 }
 
 void FileList::SelectFolder(LPCTSTR selFile)
@@ -1880,99 +1860,7 @@ void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
 	str = TEMP;
 }
 
-void FileList::GetFilterLists(LPTSTR pszFilter, LPTSTR pszExFilter)
-{
-	LPTSTR	ptr			= _szFileFilter;
-	LPTSTR	exc_beg		= NULL;
-	LPTSTR	exc_end		= NULL;
 
-	do {
-		exc_beg = _tcsstr(ptr, _T("[^"));
-
-		if (exc_beg == NULL) {
-			_tcscat(pszFilter, ptr);
-		}
-		else {
-			exc_end = _tcsstr(exc_beg, _T("]"));
-
-			if (exc_end > exc_beg) {
-				_tcsncat(pszFilter, ptr, exc_beg-ptr);
-				_tcsncat(pszExFilter, &exc_beg[2], exc_end-exc_beg-2);
-				ptr = exc_end+1;
-			}
-		}
-	} while (exc_beg != NULL);
-}
-
-BOOL FileList::DoFilter(LPCTSTR pszFileName, LPTSTR pszFilter, LPTSTR pszExFilter)
-{
-	TCHAR	TEMP[256];
-	LPTSTR	ptr		= NULL;
-
-	if ((pszFileName == NULL) || (pszFilter == NULL) || (pszExFilter == NULL))
-		return FALSE;
-
-	if (_tcsicmp(pszFilter, _T("*.*")) == 0)
-		return TRUE;
-	
-	if (pszExFilter[0] != '\0') {
-		_tcsncpy(TEMP, pszExFilter, 256);
-
-		ptr		= _tcstok(TEMP, _T(";"));
-		while (ptr != NULL) {
-			if (WildCmp(pszFileName, ptr) != NULL)
-				return FALSE;
-			ptr = _tcstok(NULL, _T(";"));
-		}
-	}
-
-	_tcsncpy(TEMP, pszFilter, 256);
-
-	ptr		= _tcstok(TEMP, _T(";"));
-	while (ptr != NULL) {
-		if (WildCmp(pszFileName, ptr) != NULL)
-			return TRUE;
-		ptr = _tcstok(NULL, _T(";"));
-	}
-	return FALSE;
-}
-
-INT FileList::WildCmp(LPCTSTR string, LPCTSTR wild)
-{
-	// Written by Jack Handy - jakkhandy@hotmail.com
-	// See: http://www.codeproject.com/string/wildcmp.asp
-	LPCTSTR		cp = NULL;
-	LPCTSTR		mp = NULL;
-
-	while ((*string) && (*wild != '*')) {
-		if ((tolower(*wild) != tolower(*string)) && (*wild != '?')) {
-			return 0;
-		}
-		wild++;
-		string++;
-	}
-
-	while (*string) {
-		if (*wild == '*') {
-			if (!*++wild) {
-				return 1;
-			}
-			mp = wild;
-			cp = string+1;
-		} else if ((tolower(*wild) == tolower(*string)) || (*wild == '?')) {
-			wild++;
-			string++;
-		} else {
-			wild = mp;
-			string = cp++;
-		}
-	}
-
-	while (*wild == '*') {
-		wild++;
-	}
-	return !*wild;
-}
 
 /**************************************************************************************
  *	Stack functions

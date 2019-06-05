@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ToolTip.h"
 #include "window.h"
 #include "DragDropImpl.h"
+
 #include <commctrl.h>
 #include <shlwapi.h>
 #include <shlobj.h>
@@ -127,7 +128,6 @@ protected:
 	void UpdateList(void);
 	void SetColumns(void);
 	void SetOrder(void);
-	void SetFilter(LPCTSTR pszNewFilter);
 
 	BOOL FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos);
 
@@ -166,10 +166,6 @@ protected:
 
 	void GetSize(__int64 size, std::wstring & str);
 	void GetDate(FILETIME ftLastWriteTime, std::wstring & str);
-
-	void GetFilterLists(LPTSTR pszFilter, LPTSTR pszExFilter);
-	BOOL DoFilter(LPCTSTR pszFileName, LPTSTR pszFilter, LPTSTR pszExFilter);
-	INT  WildCmp(LPCTSTR string, LPCTSTR wild);
 
 private:	/* for thread */
 
@@ -214,9 +210,6 @@ private:
 	ToolTip						_pToolTip;
 	UINT						_iItem;
 	UINT						_iSubItem;
-
-	/* current file filter */
-	TCHAR						_szFileFilter[MAX_PATH];
 
 	/* stores the path here for sorting		*/
 	/* Note: _vFolder will not be sorted    */

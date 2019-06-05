@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "PluginInterface.h"
 #include "Notepad_plus_rc.h"
 #include "NativeLang_def.h"
+#include "FileFilter.h"
 
 #include <TCHAR.H>
 #include <vector>
@@ -223,13 +224,8 @@ struct ExProp{
 	BOOL			bAutoUpdate;
 	SizeFmt			fmtSize;
 	DateFmt			fmtDate;
-#ifdef _UNICODE
 	std::vector<std::wstring>	vStrFilterHistory;
-	std::wstring				strLastFilter;
-#else
-	std::vector<std::string>	vStrFilterHistory;
-	std::string					strLastFilter;
-#endif
+	FileFilter					fileFilter;
 	UINT			uTimeout;
 	BOOL			bUseSystemIcons;
 	NppExecProp		nppExecProp;

@@ -96,6 +96,9 @@
     <ClCompile Include="..\..\src\QuickOpenDialog.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\MISC\FileFilter.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\ExplorerDialog.rc">
@@ -203,6 +206,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\QuickOpenDialog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\MISC\FileFilter.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
