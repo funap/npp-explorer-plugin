@@ -38,6 +38,25 @@ namespace {
 	constexpr UINT WM_BUILD_INDEX_COMPLETE = WM_USER + 1;
 	constexpr UINT_PTR UPDATE_TIMER = 1;
 
+	UINT getDpiForWindow(HWND hWnd) {
+		UINT dpi = 96;
+		HMODULE user32dll = ::LoadLibrary(L"User32.dll");
+		if (nullptr != user32dll) {
+			typedef UINT(WINAPI * PGETDPIFORWINDOW)(HWND);
+			PGETDPIFORWINDOW pGetDpiForWindow = (PGETDPIFORWINDOW)::GetProcAddress(user32dll, "GetDpiForWindow");
+			if (nullptr != pGetDpiForWindow) {
+				dpi = pGetDpiForWindow(hWnd);
+			}
+			else {
+				HDC hdc = GetDC(hWnd);
+				dpi = GetDeviceCaps(hdc, LOGPIXELSX);
+				ReleaseDC(hWnd, hdc);
+			}
+			::FreeLibrary(user32dll);
+		}
+		return dpi;
+	}
+	
 	void rebuildFileIndex(std::vector<std::filesystem::path> *fileIndex , const std::filesystem::path& path)
 	{
 		namespace fs = std::filesystem;
@@ -155,7 +174,7 @@ void QuickOpenDlg::setDefaultPosition()
 
 VOID QuickOpenDlg::calcMetrics()
 {
-	UINT dpi = ::GetDpiForWindow(_hWndResult);
+	UINT dpi = getDpiForWindow(_hSelf);
 	if (0 == dpi) {
 		dpi = 96;
 	}
@@ -280,7 +299,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		case IDOK:	
 		{
 			const int selection = (INT)::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, LB_GETCURSEL, 0, 0);
-			if (0 < selection) {
+			if (0 <= selection) {
 				if (static_cast<SIZE_T>(selection) < _results.size()) {
 					NppInterface::doOpen(_results[selection].second->wstring());
 				}
