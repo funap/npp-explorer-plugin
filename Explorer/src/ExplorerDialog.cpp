@@ -1538,6 +1538,7 @@ void ExplorerDialog::gotoUserFolder(void)
 		_tcscat(pathName, _T("\\"));
 		SelectItem(pathName);
 	}
+	::SetFocus(_FileList.getHSelf());
 }
 
 void ExplorerDialog::gotoCurrentFolder(void)
@@ -1546,6 +1547,7 @@ void ExplorerDialog::gotoCurrentFolder(void)
 	::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
 	_tcscat(pathName, _T("\\"));
 	SelectItem(pathName);
+	::SetFocus(_hTreeCtrl);
 }
 
 void ExplorerDialog::gotoCurrentFile(void)
@@ -1558,7 +1560,12 @@ void ExplorerDialog::gotoCurrentFile(void)
 	::SetFocus(_FileList.getHSelf());
 }
 
-void ExplorerDialog::setFocusOnFileList(void)
+void ExplorerDialog::setFocusOnFolder(void)
+{
+	::SetFocus(_hTreeCtrl);
+}
+
+void ExplorerDialog::setFocusOnFile(void)
 {
 	::SetFocus(_FileList.getHSelf());
 }

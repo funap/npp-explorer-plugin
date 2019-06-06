@@ -82,7 +82,8 @@ public:
 	void gotoCurrentFolder(void);
 	void gotoCurrentFile(void);
 	void clearFilter(void);
-	void setFocusOnFileList(void);
+	void setFocusOnFolder(void);
+	void setFocusOnFile(void);
 
 	void NotifyNewFile(void);
 

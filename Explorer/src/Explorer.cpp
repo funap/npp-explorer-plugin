@@ -493,7 +493,7 @@ void toggleFavesDialog(void)
 void gotoPath(void)
 {
 	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+	if (MF_UNCHECKED == (state & MF_CHECKED)) {
 		explorerDlg.doDialog();
 	}
 	explorerDlg.gotoPath();
@@ -502,7 +502,7 @@ void gotoPath(void)
 void gotoUserFolder(void)
 {
 	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+	if (MF_UNCHECKED == (state & MF_CHECKED)) {
 		explorerDlg.doDialog();
 	}
 	explorerDlg.gotoUserFolder();
@@ -511,7 +511,7 @@ void gotoUserFolder(void)
 void gotoCurrentFolder(void)
 {
 	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+	if (MF_UNCHECKED == (state & MF_CHECKED)) {
 		explorerDlg.doDialog();
 	}
 	explorerDlg.gotoCurrentFolder();
@@ -520,7 +520,7 @@ void gotoCurrentFolder(void)
 void gotoCurrentFile(void)
 {
 	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_UNCHECKED)) {
+	if (MF_UNCHECKED == (state & MF_CHECKED)) {
 		explorerDlg.doDialog();
 	}
 	explorerDlg.gotoCurrentFile();
@@ -529,12 +529,13 @@ void gotoCurrentFile(void)
 void showExplorerDialogOnFolder(void)
 {
 	explorerDlg.doDialog();
+	explorerDlg.setFocusOnFolder();
 }
 
 void showExplorerDialogOnFile(void)
 {
 	explorerDlg.doDialog();
-	explorerDlg.setFocusOnFileList();
+	explorerDlg.setFocusOnFile();
 }
 
 void showFavesDialog(void)
