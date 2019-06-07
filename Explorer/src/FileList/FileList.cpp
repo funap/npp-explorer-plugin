@@ -274,11 +274,17 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 
 		if (_hSemaphore) {
 			::SetEvent(_hEvent[FL_EVT_EXIT]);
+
 			::CloseHandle(_hOverThread);
+			_hOverThread = nullptr;
+
 			for (INT i = 0; i < FL_EVT_MAX; i++) {
 				::CloseHandle(_hEvent[i]);
+				_hEvent[i] = nullptr;
 			}
+
 			::CloseHandle(_hSemaphore);
+			_hSemaphore = nullptr;
 		}
 
 		_vDirStack.clear();

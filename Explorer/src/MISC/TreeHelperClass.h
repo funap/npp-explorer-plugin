@@ -59,9 +59,11 @@ public:
 
 			for (UINT i = 0; i < ICON_UPDATE_EVT_MAX; i++) {
 				::CloseHandle(_hEvent[i]);
-				_hEvent[i] = NULL;
+				_hEvent[i] = nullptr;
 			}
 			::CloseHandle(_hSemaphore);
+			_hSemaphore = nullptr;
+
 			_vIconUpdate.clear();
 		}
 	};

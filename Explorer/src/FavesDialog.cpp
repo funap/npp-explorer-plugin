@@ -411,13 +411,17 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 		case WM_DESTROY:
 		{
 			::DeleteObject(_hFontUnder);
+			_hFontUnder = nullptr;
 
 			SaveSettings();
 			::DestroyIcon(_data.hIconTab);
+			_data.hIconTab = nullptr;
 
 			/* destroy duplicated handle when we are on W2k machine */
-			if (gWinVersion == WV_W2K)
+			if (gWinVersion == WV_W2K) {
 				ImageList_Destroy(_hImageListSys);
+				_hImageListSys = nullptr;
+			}
 			break;
 		}
 		case EXM_OPENLINK:

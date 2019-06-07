@@ -33,10 +33,14 @@ public:
 
     void create(HWND itemHandle, LPCTSTR link, COLORREF linkColor = RGB(0,0,255));
     void destroy(){
-        	if(_hfUnderlined)
-                ::DeleteObject(_hfUnderlined);
-	        if(_hCursor)
-                ::DestroyCursor(_hCursor);
+		if (_hfUnderlined) {
+			::DeleteObject(_hfUnderlined);
+			_hfUnderlined = nullptr;
+		}
+		if (_hCursor) {
+			::DestroyCursor(_hCursor);
+			_hCursor = nullptr;
+		}
     };
 
 private :

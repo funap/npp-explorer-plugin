@@ -323,7 +323,10 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		break;
 	}
 	case WM_DESTROY:
-		::SetWindowLongPtr(GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
+		if (_defaultEditProc) {
+			::SetWindowLongPtr(GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
+			_defaultEditProc = nullptr;
+		}
 		break;
 	case WM_ACTIVATE:
 		if (WA_INACTIVE == LOWORD(wParam)) {

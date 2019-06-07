@@ -198,18 +198,29 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 			FreeLibrary(hShell32);
 	
 			delete funcItem[0]._pShKey;
+			funcItem[0]._pShKey = nullptr;
 			delete funcItem[1]._pShKey;
+			funcItem[1]._pShKey = nullptr;
 			delete funcItem[2]._pShKey;
+			funcItem[2]._pShKey = nullptr;
 
-			if (g_TBExplorer.hToolbarBmp)
+			if (g_TBExplorer.hToolbarBmp) {
 				::DeleteObject(g_TBExplorer.hToolbarBmp);
-			if (g_TBExplorer.hToolbarIcon)
+				g_TBExplorer.hToolbarBmp = nullptr;
+			}
+			if (g_TBExplorer.hToolbarIcon) {
 				::DestroyIcon(g_TBExplorer.hToolbarIcon);
+				g_TBExplorer.hToolbarIcon = nullptr;
+			}
 
-			if (g_TBFaves.hToolbarBmp)
+			if (g_TBFaves.hToolbarBmp) {
 				::DeleteObject(g_TBFaves.hToolbarBmp);
-			if (g_TBFaves.hToolbarIcon)
+				g_TBFaves.hToolbarBmp = nullptr;
+			}
+			if (g_TBFaves.hToolbarIcon) {
 				::DestroyIcon(g_TBFaves.hToolbarIcon);
+				g_TBFaves.hToolbarIcon = nullptr;
+			}
 
 			break;
 		}

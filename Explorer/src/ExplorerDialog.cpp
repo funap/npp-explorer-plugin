@@ -567,17 +567,26 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 				Sleep(1);
 
 			/* destroy events */
-			for (int i = 0; i < EID_MAX; i++)
+			for (int i = 0; i < EID_MAX; i++) {
 				::CloseHandle(g_hEvent[i]);
+				g_hEvent[i] = nullptr;
+			}
 
 			/* destroy thread */
-			::CloseHandle(g_hThread);
+			if (g_hThread) {
+				::CloseHandle(g_hThread);
+				g_hThread = nullptr;
+			}
 
 			/* unsubclass */
-			if (_hDefaultTreeProc != NULL)
+			if (_hDefaultTreeProc != nullptr) {
 				::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)_hDefaultTreeProc);
-			if (_hDefaultSplitterProc != NULL)
+				_hDefaultTreeProc = nullptr;
+			}
+			if (_hDefaultSplitterProc != nullptr) {
 				::SetWindowLongPtr(_hSplitterCtrl, GWLP_WNDPROC, (LONG_PTR)_hDefaultSplitterProc);
+				_hDefaultSplitterProc = nullptr;
+			}
 
 			break;
 		}
@@ -1830,13 +1839,15 @@ BOOL ExplorerDialog::ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR p
 
 	_hExploreVolumeThread = ::CreateThread(NULL, 0, GetVolumeInformationTimeoutThread, &volInfo, 0, &dwThreadId);
 
-	if (WAIT_OBJECT_0 != ::WaitForSingleObject(g_hEvent[EID_GET_VOLINFO], _pExProp->uTimeout))
-	{
-		::TerminateThread(_hExploreVolumeThread, 0);
-		isValidDrive = FALSE;
+	if (_hExploreVolumeThread) {
+		if (WAIT_OBJECT_0 != ::WaitForSingleObject(g_hEvent[EID_GET_VOLINFO], _pExProp->uTimeout)) {
+			::TerminateThread(_hExploreVolumeThread, 0);
+			isValidDrive = FALSE;
+		}
+
+		::CloseHandle(_hExploreVolumeThread);
+		_hExploreVolumeThread = nullptr;
 	}
-	::CloseHandle(_hExploreVolumeThread);
-	_hExploreVolumeThread = NULL;
 
 	return isValidDrive;
 }
