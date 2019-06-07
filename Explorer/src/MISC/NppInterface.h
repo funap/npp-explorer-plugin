@@ -39,6 +39,7 @@ public:
 	static std::wstring	getSelectedText();
 	static COLORREF		getEditorDefaultForegroundColor();
 	static COLORREF		getEditorDefaultBackgroundColor();
+	static void         setFocusToCurrentEdit();
 
 	NppInterface(const NppInterface&)				= delete;
 	NppInterface& operator=(const NppInterface&)	= delete;

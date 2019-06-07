@@ -397,6 +397,12 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 		}
 		case WM_COMMAND:
 		{
+			// ESC key has been pressed
+			if (LOWORD(wParam) == IDCANCEL) {
+				NppInterface::setFocusToCurrentEdit();
+				return TRUE;
+			}
+
 			if ((HWND)lParam == _ToolBar.getHSelf())
 			{
 				tb_cmd(LOWORD(wParam));

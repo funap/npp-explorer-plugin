@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "resource.h"
 #include "NativeLang_def.h"
 #include "fileFilter.h"
+#include "NppInterface.h"
 
 #include <windows.h>
 
@@ -226,6 +227,10 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		}
 		if (wParam == VK_F5) {
 			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
+			return TRUE;
+		}
+		if (VK_ESCAPE == wParam) {
+			NppInterface::setFocusToCurrentEdit();
 			return TRUE;
 		}
 		break;

@@ -45,12 +45,11 @@ BOOL NppInterface::doOpen(std::wstring_view path)
 
 std::wstring NppInterface::getSelectedText()
 {
-	UINT currentEdit;
-	HWND currentSciHandle;
 	std::wstring selectedTextW;
 
+	UINT currentEdit;
 	::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
-	currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
+	HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
 
 	INT charLength = (INT)::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, 0) - 1;
 	if (0 < charLength) {
@@ -75,3 +74,11 @@ COLORREF NppInterface::getEditorDefaultBackgroundColor()
 	return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
 }
 
+void NppInterface::setFocusToCurrentEdit()
+{
+	UINT currentEdit;
+	::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)& currentEdit);
+	HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
+
+	::SetFocus(currentSciHandle);
+}
