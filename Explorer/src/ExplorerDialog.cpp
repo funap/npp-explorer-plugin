@@ -33,6 +33,25 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ToolTip.h"
 #include "resource.h"
 
+int DebugPrintf(LPCTSTR format, ...)
+{
+	va_list args;
+	int     len;
+	WCHAR* buf;
+
+	va_start(args, format);
+
+	len = _vscwprintf(format, args) + 1;
+	buf = (WCHAR*)malloc(len * sizeof(WCHAR));
+	len = _vstprintf(buf, format, args);
+
+	OutputDebugString(buf);
+
+	free(buf);
+
+	return len;
+}
+
 
 ToolTip		toolTip;
 
@@ -63,10 +82,12 @@ DWORD WINAPI UpdateThread(LPVOID lpParam)
 
 		if (dwWaitResult == EID_THREAD_END)
 		{
+			DebugPrintf(L"UpdateThread() : EID_THREAD_END\n");
 			bRun = FALSE;
 		}
 		else if (dwWaitResult < EID_MAX)
 		{
+			DebugPrintf(L"UpdateThread() : NotifyEvent(%d)\n", dwWaitResult);
 			dlg->NotifyEvent(dwWaitResult);
 		}
 	}
@@ -560,11 +581,23 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 			if (_tcslen(szLastFilter) != 0)
 				_pExProp->fileFilter.setFilter(szLastFilter);
 
+			DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => ::SetEvent(g_hEvent[EID_THREAD_END])\n");
 			::SetEvent(g_hEvent[EID_THREAD_END]);
-			if (::WaitForSingleObject(_hExploreVolumeThread, 50) != WAIT_OBJECT_0)
-				Sleep(1);
-			if (::WaitForSingleObject(g_hThread, 50) != WAIT_OBJECT_0)
-				Sleep(1);
+			if (::WaitForSingleObject(_hExploreVolumeThread, 50) != WAIT_OBJECT_0) {
+				::Sleep(1);
+			}
+			if (::WaitForSingleObject(g_hThread, 3000) != WAIT_OBJECT_0) {
+				DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => TerminateThread!!\n");
+				// https://github.com/funap/npp-explorer-plugin/issues/4
+				// Failsafe for [Bug] Incompatibility with NppMenuSearch plugin #4
+				// If an exception occurs in another Plugin, TreeView_*** function in TreeHelper class won't return.
+				// Force thread termination because the thread was deadlock.
+				::TerminateThread(g_hThread, 0);
+				::Sleep(1);
+			}
+			else {
+				DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => Thread ended normally\n");
+			}
 
 			/* destroy events */
 			for (int i = 0; i < EID_MAX; i++) {
@@ -1767,6 +1800,7 @@ void ExplorerDialog::UpdateFolders(void)
 		{
 			GetItemText(hCurrentItem, pszPath, MAX_PATH);
 			pszPath[2] = '\0';
+			DebugPrintf(L"ExplorerDialog::UpdateFolders(void) : call UpdateChildren(%s)\n", pszPath);
 			UpdateChildren(pszPath, hCurrentItem);
 		}
 		hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
