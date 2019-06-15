@@ -1556,6 +1556,7 @@ void ExplorerDialog::gotoPath(void)
 				if (szFolderName[_tcslen(szFolderName) - 1] != '\\')
 					_tcscat(szFolderName, _T("\\"));
 				SelectItem(szFolderName);
+				::SetFocus(_FileList.getHSelf());
 				bLeave = TRUE;
 			}
 			else
