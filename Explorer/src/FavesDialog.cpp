@@ -1985,8 +1985,7 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 {
 	ItemElement	element;
 	LPTSTR			pszPos			= NULL;
-	UINT			root			= elem_itr->uParam & FAVES_PARAM;
-	UINT			param			= 0;
+	const UINT		root			= elem_itr->uParam & FAVES_PARAM;
 
 	while (1)
 	{
@@ -2007,8 +2006,9 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 				_tcscpy(element.pszName, &(*ptr)[6]);
 				*ptr = _tcstok(NULL, _T("\n"));
 			}
-			else
+			else {
 				::MessageBox(_hSelf, _T("Error in file 'Favorites.dat'\nName in LINK not correct!"), _T("Error"), MB_OK);
+			}
 
 			/* get next element link */
 			if (_tcsstr(*ptr, _T("\tLink=")) == *ptr)
@@ -2017,8 +2017,9 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 				_tcscpy(element.pszLink, &(*ptr)[6]);
 				*ptr = _tcstok(NULL, _T("\n"));
 			}
-			else
+			else {
 				::MessageBox(_hSelf, _T("Error in file 'Favorites.dat'\nLink in LINK not correct!"), _T("Error"), MB_OK);
+			}
 
 			element.uParam	= FAVES_PARAM_LINK | root;
 			element.vElements.clear();
@@ -2037,18 +2038,23 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 				_tcscpy(element.pszName, &(*ptr)[6]);
 				*ptr = _tcstok(NULL, _T("\n"));
 			}
-			else
+			else {
 				::MessageBox(_hSelf, _T("Error in file 'Favorites.dat'\nName in GROUP not correct!"), _T("Error"), MB_OK);
+			}
 
-			if (_tcsstr(*ptr, _T("\tExpand=")) == *ptr)
-			{
-				if ((*ptr)[8] == '1')
-					param = FAVES_PARAM_EXPAND;
+			BOOL isExpand = false;
+			if (_tcsstr(*ptr, _T("\tExpand=")) == *ptr) {
+				if ((*ptr)[8] == '1') {
+					isExpand = true;
+				}
 				*ptr = _tcstok(NULL, _T("\n"));
 			}
 
 			element.pszLink = NULL;
-			element.uParam	= param | FAVES_PARAM_GROUP | root;
+			element.uParam	= FAVES_PARAM_GROUP | root;
+			if (isExpand) {
+				element.uParam |= FAVES_PARAM_EXPAND;
+			}
 			element.vElements.clear();
 
 			elem_itr->vElements.push_back(element);
