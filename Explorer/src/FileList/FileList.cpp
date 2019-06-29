@@ -42,6 +42,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 static HWND		hWndServer		= NULL;
 static HHOOK	hookMouse		= NULL;
 
+namespace SubItem {
+	constexpr int Name      = 0;
+	constexpr int Extension = 1;
+	constexpr int Size      = 2;
+	constexpr int Date      = 3;
+}
 
 static LRESULT CALLBACK hookProcMouse(INT nCode, WPARAM wParam, LPARAM lParam)
 {
@@ -687,7 +693,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
 			{
 				switch (lpCD->iSubItem) {
-				case 0:
+				case SubItem::Name:
 				{
 					COLORREF bgColor = ListView_GetBkColor(_hSelf);
 					COLORREF fgColor = ListView_GetTextColor(_hSelf);
@@ -806,7 +812,9 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 					::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
 					return TRUE;
 				}
-				case 1:
+				case SubItem::Extension:
+				case SubItem::Size:
+				case SubItem::Date:
 				{
 					RECT rc = { 0 };
 					ListView_GetSubItemRect(_hSelf, lpCD->nmcd.dwItemSpec, lpCD->iSubItem, LVIR_BOUNDS, &rc);
@@ -928,8 +936,8 @@ void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
 			::GetClientRect(_hSelf, &rc);
 
 			/* get width of selected column */
-			if ((hittest.iSubItem == 0) || 
-				((hittest.iSubItem == 1) && (_pExProp->bAddExtToName == TRUE))) {
+			if ((hittest.iSubItem == SubItem::Name) || 
+				((hittest.iSubItem == SubItem::Extension) && (_pExProp->bAddExtToName == TRUE))) {
 				HDC		hDc			= ::GetDC(_hSelf);
 				SIZE	size		= {0};
 
@@ -961,10 +969,10 @@ void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
 			}
 
 			/* open tooltip only when it's content is too small */
-			if ((((rcLabel.right - rcLabel.left) - (hittest.iSubItem == 0 ? 5 : 12)) < width) ||
-				(((rc.right - rcLabel.left) - (hittest.iSubItem == 0 ? 5 : 5)) < width)) {
+			if ((((rcLabel.right - rcLabel.left) - (hittest.iSubItem == SubItem::Name ? 5 : 12)) < width) ||
+				(((rc.right - rcLabel.left) - (hittest.iSubItem == SubItem::Name ? 5 : 5)) < width)) {
 				_pToolTip.init(_hInst, _hSelf);
-				if ((hittest.iSubItem == 0) || ((hittest.iSubItem == 1) && (_pExProp->bAddExtToName == TRUE))) {
+				if ((hittest.iSubItem == SubItem::Name) || ((hittest.iSubItem == SubItem::Extension) && (_pExProp->bAddExtToName == TRUE))) {
 					rcLabel.left -= 1;
 				}
 				else {
@@ -975,7 +983,7 @@ void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
 				}
 				ClientToScreen(_hSelf, &rcLabel);
 
-				if ((_pExProp->bAddExtToName == FALSE) && (hittest.iSubItem == 0)) {
+				if ((_pExProp->bAddExtToName == FALSE) && (hittest.iSubItem == SubItem::Name)) {
 					TCHAR	pszItemTextExt[MAX_PATH];
 					ListView_GetItemText(_hSelf, hittest.iItem, 1, pszItemTextExt, MAX_PATH);
 					if (pszItemTextExt[0] != '\0') {
@@ -1064,7 +1072,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
 {
 	/* copy into temp */
 	switch (iSubItem) {
-	case 0:
+	case SubItem::Name:
 		if ((iItem < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
 			_stprintf(szItem, _T("[%s]"), _vFileList[iItem].strName.c_str());
 		}
@@ -1072,7 +1080,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
 			_stprintf(szItem, _T("%s"), _vFileList[iItem].strName.c_str());
 		}
 		break;
-	case 1:
+	case SubItem::Extension:
 		if ((iItem < (INT)_uMaxFolders) || (_pExProp->bAddExtToName == FALSE)) {
 			_tcscpy(szItem, _vFileList[iItem].strExt.c_str());
 		}
@@ -1080,9 +1088,10 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
 			szItem[0] = '\0';
 		}
 		break;
-	case 2:
+	case SubItem::Size:
 		_tcscpy(szItem, _vFileList[iItem].strSize.c_str());
 		break;
+	case SubItem::Date:
 	default:
 		_tcscpy(szItem, _vFileList[iItem].strDate.c_str());
 		break;
@@ -1858,7 +1867,7 @@ void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
 {
 	FILETIME		ftLocalTime;
 	SYSTEMTIME		sysTime;
-	TCHAR			TEMP[16];
+	TCHAR			TEMP[18];
 
 	FileTimeToLocalFileTime(&ftLastWriteTime, &ftLocalTime);
 	FileTimeToSystemTime(&ftLocalTime, &sysTime);
