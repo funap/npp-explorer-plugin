@@ -249,7 +249,12 @@ void TreeHelper::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem, BO
 				}
 
 				/* get current path */
-				_stprintf(pszPath, _T("%s\\%s"), pszParentPath, pszItem);
+				if (pszParentPath[_tcslen(pszParentPath) - 1] == '\\') {
+					_stprintf(pszPath, _T("%s%s"), pszParentPath, pszItem);
+				}
+				else {
+					_stprintf(pszPath, _T("%s\\%s"), pszParentPath, pszItem);
+				}
 
 				/* update icons and expandable information */
 				INT		iIconNormal		= 0;
