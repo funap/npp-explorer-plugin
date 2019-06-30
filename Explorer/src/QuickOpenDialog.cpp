@@ -24,9 +24,6 @@
 
 #include "QuickOpenDialog.h"
 
-#include <map>
-#include <future>
-#include <thread>
 #include <cwctype>
 
 #include <windowsx.h>
@@ -35,7 +32,7 @@
 #include "NppInterface.h"
 
 namespace {
-	constexpr UINT WM_BUILD_INDEX_COMPLETE = WM_USER + 1;
+	constexpr UINT WM_INDEX_BUILD_COMPLETED = WM_USER + 1;
 	constexpr UINT_PTR UPDATE_TIMER = 1;
 
 	UINT getDpiForWindow(HWND hWnd) {
@@ -57,33 +54,6 @@ namespace {
 		return dpi;
 	}
 	
-	void rebuildFileIndex(std::vector<std::filesystem::path> *fileIndex , const std::filesystem::path& path)
-	{
-		namespace fs = std::filesystem;
-		fs::directory_iterator it(path, fs::directory_options::skip_permission_denied);
-		fs::directory_iterator end;
-		while (it != end) {
-			try {
-				if (it->is_directory()) {
-					const std::wstring name = it->path().filename().wstring();
-					if ('.' == name[0]) {
-						// skip hidden name directory
-					}
-					else {
-						rebuildFileIndex(fileIndex, it->path());
-					}
-				}
-				else if (it->is_regular_file()) {
-					fileIndex->emplace_back(it->path());
-				}
-			}
-			catch (fs::filesystem_error& err) {
-				OutputDebugStringA(err.what());
-			}
-			++it;
-		}
-	};
-
 	void removeWhitespaces(std::wstring& str)
 	{
 		auto it = str.begin();
@@ -96,26 +66,12 @@ namespace {
 			}
 		}
 	};
-
-	auto scoredMatches(std::vector<std::filesystem::path>& fileIndex, const std::wstring& pattern)
-	{
-		FuzzyMatcher matcher(pattern);
-		std::vector<std::pair<int, const std::filesystem::path*>> matches;
-
-		for (const auto& entry : fileIndex) {
-			int score = matcher.ScoreMatch(entry.filename().wstring());
-			if (0 < score) {
-				matches.emplace_back(std::make_pair(score, &entry));
-			}
-		}
-		std::sort(matches.begin(), matches.end(), [](auto&& a, auto&& b) { return a.first > b.first; });
-		return matches;
-	};
 }
 
 void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 {
 	_pExProp = prop;
+	_direcotryIndex.setListener(this);
 
 	Window::init(hInst, parent);
 	create(IDD_QUICK_OPEN_DLG, FALSE, TRUE);
@@ -123,18 +79,15 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 
 void QuickOpenDlg::setCurrentPath(const std::filesystem::path& currentPath)
 {
-	if (_currentPath.compare(currentPath)) {
-		_currentPath = currentPath;
+	if (_direcotryIndex.GetCurrentDir().compare(currentPath)) {
 		_pattern = L"*";
 
 		::SendMessage(_hWndResult, LB_SETCOUNT, 0, 0);
 		::SendMessage(_hWndResult, LB_SETCURSEL, 0, 0);
 
-		if (DialogState::BUILDING_INDEX != _dialogState) {
-			_dialogState = DialogState::BUILDING_INDEX;
-			std::thread t([](QuickOpenDlg *arg) { arg->rebuildIndex(); }, this);
-			t.detach();
-		}
+		_direcotryIndex.cancel();
+		_direcotryIndex.init(currentPath);
+		_direcotryIndex.build();
 	}
 }
 
@@ -155,6 +108,16 @@ void QuickOpenDlg::close()
 {
 	::KillTimer(_hSelf, 1);
 	display(false);
+}
+
+void QuickOpenDlg::onIndexBuildCompleted() const
+{
+	::PostMessage(_hSelf, WM_INDEX_BUILD_COMPLETED, 0, 0);
+}
+
+void QuickOpenDlg::onIndexBuildCanceled() const
+{
+
 }
 
 void QuickOpenDlg::setDefaultPosition()
@@ -249,7 +212,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 		drawPosition.left = drawItem->rcItem.left + _itemMarginLeft;
 		::SetTextColor(drawItem->hDC, textColor2);
 		::SetBkMode(drawItem->hDC, TRANSPARENT);
-		text = _results[itemID].second->parent_path().wstring();
+		text = std::filesystem::relative(_results[itemID].second->wstring(), _direcotryIndex.GetCurrentDir()).wstring();
 		::DrawText(drawItem->hDC, text.c_str(), static_cast<INT>(text.length()), &drawPosition, DT_SINGLELINE);
 	}
 	return TRUE;
@@ -259,7 +222,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 {
 	BOOL ret = FALSE;
 	switch (Message) {
-	case WM_BUILD_INDEX_COMPLETE:
+	case WM_INDEX_BUILD_COMPLETED:
 		populateResultList();
 		break;
 	case WM_DRAWITEM:
@@ -339,17 +302,9 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 	return ret;
 }
 
-void QuickOpenDlg::rebuildIndex()
-{
-	_fileIndex.clear();
-	rebuildFileIndex(&_fileIndex, _currentPath);
-	_dialogState = DialogState::READY;
-	::PostMessage(_hSelf, WM_BUILD_INDEX_COMPLETE, 0, 0);
-}
-
 void QuickOpenDlg::populateResultList()
 {
-	if (DialogState::BUILDING_INDEX == _dialogState) {
+	if (_direcotryIndex.isIndexing()) {
 		return;
 	}
 
@@ -363,15 +318,25 @@ void QuickOpenDlg::populateResultList()
 	}
 
 	if (_pattern != pattern) {
-		if (0 < pattern.length()) {
-			_results = scoredMatches(_fileIndex, pattern);
-		}
-		else {
-			_results.clear();
-			for (const auto& entry : _fileIndex) {
-				_results.emplace_back(0, &entry);
+		_results.clear();
+
+		FuzzyMatcher matcher(pattern);
+
+		for (const auto& entry : _direcotryIndex.GetFileIndex()) {
+			if (_pExProp->fileFilter.match(entry.filename())) {
+				if (0 < pattern.length()) {
+					int score = matcher.ScoreMatch(entry.filename().wstring());
+					if (0 < score) {
+						_results.emplace_back(std::make_pair(score, &entry));
+					}
+				}
+				else {
+					_results.emplace_back(std::make_pair(0, &entry));
+				}
 			}
 		}
+		std::sort(_results.begin(), _results.end(), [](auto&& a, auto&& b) { return a.first > b.first; });
+
 		::SendMessage(_hWndResult, LB_SETCOUNT, _results.size(), 0);
 		::SendMessage(_hWndResult, LB_SETCURSEL, 0, 0);
 		_pattern = pattern;

@@ -32,10 +32,10 @@
 #include "Explorer.h"
 #include "StaticDialog.h"
 #include "ExplorerResource.h"
+#include "DirectoryIndex.h"
 
-class HilightListbox;
 
-class QuickOpenDlg : public StaticDialog
+class QuickOpenDlg : public StaticDialog, public DirectoryIndexListener
 {
 public:
 	QuickOpenDlg() :
@@ -46,7 +46,9 @@ public:
 		_defaultEditProc(nullptr),
 		_hWndResult(nullptr),
 		_pExProp(nullptr),
-		_dialogState(DialogState::READY)
+		_direcotryIndex(),
+		_pattern(),
+		_results()
 	{};
 	
 	void init(HINSTANCE hInst, HWND parent, ExProp* prop);
@@ -54,7 +56,8 @@ public:
 	void setCurrentPath(const std::filesystem::path& currentPath);
 	void close();
 
-
+	void onIndexBuildCompleted() const override;
+	void onIndexBuildCanceled() const override;
 protected :
 	VOID calcMetrics();
 	BOOL onDrawItem(LPDRAWITEMSTRUCT drawItem);
@@ -69,19 +72,12 @@ private:
 	WNDPROC														_defaultEditProc;
 	HWND														_hWndResult;
 	ExProp*														_pExProp;
-	std::filesystem::path										_currentPath;
+	DirectoryIndex												_direcotryIndex;
 	std::wstring												_pattern;
-	std::vector<std::filesystem::path>							_fileIndex;
 	std::vector<std::pair<int, const std::filesystem::path*>>	_results;
 
-	enum class DialogState {
-		BUILDING_INDEX = 0,
-		READY
-	};
-	DialogState													_dialogState;
 
 	void setDefaultPosition();
-	void rebuildIndex();
 	void populateResultList();
 };
 
