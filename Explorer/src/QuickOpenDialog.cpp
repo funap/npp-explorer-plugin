@@ -32,8 +32,10 @@
 #include "NppInterface.h"
 
 namespace {
-	constexpr UINT WM_INDEX_BUILD_COMPLETED = WM_USER + 1;
-	constexpr UINT_PTR UPDATE_TIMER = 1;
+	constexpr UINT WM_INDEX_BUILD_COMPLETED	= WM_USER + 1;
+	constexpr UINT WM_INDEX_BUILD_CANCELED	= WM_USER + 2;
+	constexpr UINT_PTR UPDATE_RESULTLIST	= 1;
+	constexpr UINT_PTR UPDATE_PROGRESSBAR	= 2;
 
 	UINT getDpiForWindow(HWND hWnd) {
 		UINT dpi = 96;
@@ -95,18 +97,23 @@ void QuickOpenDlg::show()
 {
 	std::wstring selectedText = NppInterface::getSelectedText();
 	if (!selectedText.empty()) {
-		::Edit_SetText(GetDlgItem(_hSelf, IDC_EDIT_SEARCH), selectedText.c_str());
+		::Edit_SetText(_hWndEdit, selectedText.c_str());
 	}
 	populateResultList();
 
 	setDefaultPosition();
 	display(true);
-	::PostMessage(_hSelf, WM_NEXTDLGCTL, (WPARAM)GetDlgItem(_hSelf, IDC_EDIT_SEARCH), TRUE);
+	::PostMessage(_hSelf, WM_NEXTDLGCTL, (WPARAM)_hWndEdit, TRUE);
+
+	if (_direcotryIndex.isIndexing()) {
+		::SetTimer(_hSelf, UPDATE_PROGRESSBAR, 33, nullptr);
+	}
 }
 
 void QuickOpenDlg::close()
 {
-	::KillTimer(_hSelf, 1);
+	::KillTimer(_hSelf, UPDATE_RESULTLIST);
+	::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
 	display(false);
 }
 
@@ -117,7 +124,7 @@ void QuickOpenDlg::onIndexBuildCompleted() const
 
 void QuickOpenDlg::onIndexBuildCanceled() const
 {
-
+	::PostMessage(_hSelf, WM_INDEX_BUILD_CANCELED, 0, 0);	
 }
 
 void QuickOpenDlg::setDefaultPosition()
@@ -218,12 +225,23 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 	return TRUE;
 }
 
-BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wParam, LPARAM lParam)
+BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+	static int progressPos = 0;
+
 	BOOL ret = FALSE;
 	switch (Message) {
 	case WM_INDEX_BUILD_COMPLETED:
+		progressPos = 0;
+		::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
+		::InvalidateRect(_hSelf, &_progressBarRect, false);
+		::UpdateWindow(_hSelf);
 		populateResultList();
+		ret = TRUE;
+		break;
+	case WM_INDEX_BUILD_CANCELED:
+		progressPos = 0;
+		ret = TRUE;
 		break;
 	case WM_DRAWITEM:
 		if ((UINT)wParam == IDC_LIST_RESULTS) {
@@ -232,21 +250,56 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 		break;
 	case WM_TIMER:
 		switch (wParam) {
-		case UPDATE_TIMER:
+		case UPDATE_RESULTLIST:
 			populateResultList();
-			::KillTimer(_hSelf, UPDATE_TIMER);
+			::KillTimer(_hSelf, UPDATE_RESULTLIST);
+			ret = TRUE;
+			break;
+		case UPDATE_PROGRESSBAR:
+			::InvalidateRect(_hSelf, &_progressBarRect, false);
+			::UpdateWindow(_hSelf);
 			ret = TRUE;
 			break;
 		default:
 			break;
 		}
 		break;
+	case WM_PRINTCLIENT:
+	case WM_PAINT:
+	{
+		HDC hDC = (Message == WM_PRINTCLIENT)
+			? reinterpret_cast<HDC>(wParam)
+			: GetDCEx(hWnd, nullptr, DCX_INTERSECTUPDATE | DCX_CACHE | DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS);
+
+		// Erase progressbar background
+		const COLORREF backgroundColor = ::GetSysColor(COLOR_3DFACE);
+		const HBRUSH hBkBrush = ::CreateSolidBrush(backgroundColor);
+		::FillRect(hDC, &_progressBarRect, hBkBrush);
+		::DeleteObject(hBkBrush);
+
+		// draw progress bar
+		if (_direcotryIndex.isIndexing()) {
+			RECT barRect	= _progressBarRect;
+			barRect.left	= max(_progressBarRect.left, progressPos - 16);
+			barRect.right	= min(progressPos + 16,		_progressBarRect.right);
+			progressPos	+= 2;
+			progressPos	%= _progressBarRect.right;
+
+			const COLORREF progressBarColor = RGB(14, 112, 192);
+			const HBRUSH hPbBrush = ::CreateSolidBrush(progressBarColor);
+			::FillRect(hDC, &barRect, hPbBrush);
+			::DeleteObject(hPbBrush);
+		}
+
+		ret = FALSE; // continue default proc
+		break;
+	}
 	case WM_COMMAND : 
 		switch (LOWORD(wParam)) {
 		case IDC_EDIT_SEARCH:
 			if (EN_CHANGE == HIWORD(wParam)) {
-				::KillTimer(_hSelf, UPDATE_TIMER);
-				::SetTimer(_hSelf, UPDATE_TIMER, 100, NULL);
+				::KillTimer(_hSelf, UPDATE_RESULTLIST);
+				::SetTimer(_hSelf, UPDATE_RESULTLIST, 100, nullptr);
 				ret = TRUE;
 			}
 			break;
@@ -278,16 +331,22 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND /* hWnd */, UINT Message, WPARAM wP
 	case WM_INITDIALOG:
 	{
 		_hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
+		_hWndEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
 		calcMetrics();
 		const int height = _itemTextHeight * 2 + _itemTextExternalLeading;
 		::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, height);
-		::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-		_defaultEditProc = (WNDPROC)::SetWindowLongPtr(::GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
+
+		::SetWindowLongPtr(_hWndEdit, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+		_defaultEditProc = (WNDPROC)::SetWindowLongPtr(_hWndEdit, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
+
+		GetClientRect(hWnd, &_progressBarRect);
+		_progressBarRect.top = 2;
+		_progressBarRect.bottom = _progressBarRect.top + 2;
 		break;
 	}
 	case WM_DESTROY:
 		if (_defaultEditProc) {
-			::SetWindowLongPtr(GetDlgItem(_hSelf, IDC_EDIT_SEARCH), GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
+			::SetWindowLongPtr(_hWndEdit, GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
 			_defaultEditProc = nullptr;
 		}
 		break;
@@ -308,12 +367,11 @@ void QuickOpenDlg::populateResultList()
 		return;
 	}
 
-	const HWND hEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
-	const int bufferLength = ::Edit_GetTextLength(hEdit) + 1;	// text length + null terminated
+	const int bufferLength = ::Edit_GetTextLength(_hWndEdit) + 1;	// text length + null terminated string
 	std::wstring pattern;
 	if (1 < bufferLength) {
 		pattern.resize(bufferLength);
-		::Edit_GetText(hEdit, &pattern[0], bufferLength);
+		::Edit_GetText(_hWndEdit, &pattern[0], bufferLength);
 		removeWhitespaces(pattern);
 	}
 
@@ -369,4 +427,3 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	}
 	return ::CallWindowProc(_defaultEditProc, hWnd, uMsg, wParam, lParam);
 }
-

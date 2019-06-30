@@ -48,7 +48,8 @@ public:
 		_pExProp(nullptr),
 		_direcotryIndex(),
 		_pattern(),
-		_results()
+		_results(),
+		_progressBarRect()
 	{};
 	
 	void init(HINSTANCE hInst, HWND parent, ExProp* prop);
@@ -71,11 +72,12 @@ private:
 	INT _itemTextExternalLeading;
 	WNDPROC														_defaultEditProc;
 	HWND														_hWndResult;
+	HWND														_hWndEdit;
 	ExProp*														_pExProp;
 	DirectoryIndex												_direcotryIndex;
 	std::wstring												_pattern;
 	std::vector<std::pair<int, const std::filesystem::path*>>	_results;
-
+	RECT														_progressBarRect;
 
 	void setDefaultPosition();
 	void populateResultList();
