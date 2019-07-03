@@ -160,12 +160,12 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 			funcItem[0]._pShKey->_isAlt		= true;
 			funcItem[0]._pShKey->_isCtrl	= true;
 			funcItem[0]._pShKey->_isShift	= true;
-			funcItem[0]._pShKey->_key		= 0x45;
+			funcItem[0]._pShKey->_key		= 'E';
 			funcItem[1]._pShKey = new ShortcutKey;
 			funcItem[1]._pShKey->_isAlt		= true;
 			funcItem[1]._pShKey->_isCtrl	= true;
 			funcItem[1]._pShKey->_isShift	= true;
-			funcItem[1]._pShKey->_key		= 0x56;
+			funcItem[1]._pShKey->_key		= 'V';
 			funcItem[2]._pShKey = new ShortcutKey;
 			funcItem[2]._pShKey->_isAlt		= false;
 			funcItem[2]._pShKey->_isCtrl	= true;
@@ -503,37 +503,27 @@ void toggleFavesDialog(void)
 
 void gotoPath(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_CHECKED)) {
+	if (explorerDlg.gotoPath()) {
 		explorerDlg.doDialog();
+		explorerDlg.setFocusOnFile();
 	}
-	explorerDlg.gotoPath();
 }
 
 void gotoUserFolder(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_CHECKED)) {
-		explorerDlg.doDialog();
-	}
+	explorerDlg.doDialog();
 	explorerDlg.gotoUserFolder();
 }
 
 void gotoCurrentFolder(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_CHECKED)) {
-		explorerDlg.doDialog();
-	}
+	explorerDlg.doDialog();
 	explorerDlg.gotoCurrentFolder();
 }
 
 void gotoCurrentFile(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (MF_UNCHECKED == (state & MF_CHECKED)) {
-		explorerDlg.doDialog();
-	}
+	explorerDlg.doDialog();
 	explorerDlg.gotoCurrentFile();
 }
 

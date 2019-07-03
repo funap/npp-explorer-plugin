@@ -77,7 +77,7 @@ public:
 
    	void doDialog(bool willBeShown = true);
 
-	void gotoPath(void);
+	BOOL gotoPath(void);
 	void gotoUserFolder(void);
 	void gotoCurrentFolder(void);
 	void gotoCurrentFile(void);

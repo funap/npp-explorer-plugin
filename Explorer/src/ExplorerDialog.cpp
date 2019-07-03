@@ -1527,13 +1527,14 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 	return folderExists;
 }
 
-void ExplorerDialog::gotoPath(void)
+BOOL ExplorerDialog::gotoPath(void)
 {
 	/* newDlg is exactly what I need */
 	NewDlg		dlg;
 	TCHAR		szFolderName[MAX_PATH];
 	TCHAR		szComment[MAX_PATH];
 	BOOL		bLeave			= FALSE;
+	BOOL		bResult			= FALSE;
 
 	szFolderName[0] = '\0';
 
@@ -1556,8 +1557,8 @@ void ExplorerDialog::gotoPath(void)
 				if (szFolderName[_tcslen(szFolderName) - 1] != '\\')
 					_tcscat(szFolderName, _T("\\"));
 				SelectItem(szFolderName);
-				::SetFocus(_FileList.getHSelf());
 				bLeave = TRUE;
+				bResult = TRUE;
 			}
 			else
 			{
@@ -1572,6 +1573,7 @@ void ExplorerDialog::gotoPath(void)
 		else
 			bLeave = TRUE;
 	}
+	return bResult;
 }
 
 void ExplorerDialog::gotoUserFolder(void)
@@ -1582,7 +1584,7 @@ void ExplorerDialog::gotoUserFolder(void)
 		_tcscat(pathName, _T("\\"));
 		SelectItem(pathName);
 	}
-	::SetFocus(_FileList.getHSelf());
+	setFocusOnFile();
 }
 
 void ExplorerDialog::gotoCurrentFolder(void)
@@ -1591,7 +1593,7 @@ void ExplorerDialog::gotoCurrentFolder(void)
 	::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
 	_tcscat(pathName, _T("\\"));
 	SelectItem(pathName);
-	::SetFocus(_hTreeCtrl);
+	setFocusOnFile();
 }
 
 void ExplorerDialog::gotoCurrentFile(void)
@@ -1601,7 +1603,7 @@ void ExplorerDialog::gotoCurrentFile(void)
 	_tcscat(pathName, _T("\\"));
 	SelectItem(pathName);
 	_FileList.SelectCurFile();
-	::SetFocus(_FileList.getHSelf());
+	setFocusOnFile();
 }
 
 void ExplorerDialog::setFocusOnFolder(void)
