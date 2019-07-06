@@ -45,6 +45,9 @@ int FuzzyMatcher::ScoreMatch(std::wstring_view target, std::vector<size_t>* posi
     if (0 == target.length()) {
         return 0;
     }
+    if (pattern_.length() > target.length()) {
+        return 0;
+    }
 
     auto scoreMatrix = std::make_unique<int[]>(pattern_.length() * target.length());
     auto matcheMatrix = std::make_unique<int[]>(pattern_.length() * target.length());
