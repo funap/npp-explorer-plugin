@@ -134,7 +134,7 @@ BOOL CALLBACK OptionDlg::run_dlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 					if (_pProp->nppExecProp.szScriptPath[0] == '.')
 					{
 						/* module path of notepad */
-						GetModuleFileName(_hInst, szExampleScriptPath, sizeof(szExampleScriptPath));
+						::GetModuleFileName(_hInst, szExampleScriptPath, _countof(szExampleScriptPath));
 						PathRemoveFileSpec(szExampleScriptPath);
 						PathAppend(szExampleScriptPath, _pProp->nppExecProp.szScriptPath);
 					} else {
