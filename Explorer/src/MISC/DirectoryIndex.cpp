@@ -61,10 +61,10 @@ void DirectoryIndex::build()
 		_indexed = false;
 
 		_workerThread = std::thread([](DirectoryIndex *arg) {
-			bool complate = arg->buildTaskRecursive(arg->_currentDirectory);
+			bool complete = arg->buildTaskRecursive(arg->_currentDirectory);
 			arg->_indexed = true;
 			if (arg->_listener) {
-				if (complate) {
+				if (complete) {
 					arg->_listener->onIndexBuildCompleted();
 				}
 				else {
