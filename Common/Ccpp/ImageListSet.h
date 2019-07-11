@@ -28,7 +28,14 @@ const int nbMax = 45;
 class IconList
 {
 public :
-	IconList() : _hImglst(NULL) {};
+	IconList() :
+		_hImglst(nullptr),
+		_hInst(nullptr),
+		_pIconIDArray(nullptr),
+		_iconIDArraySize(0),
+		_iconSize(0)
+	{
+	};
 
 	void create(HINSTANCE hInst, int iconSize) {
 		InitCommonControls();
