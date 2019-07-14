@@ -31,7 +31,13 @@ class NewDlg : public StaticDialog
 {
 
 public:
-	NewDlg() : StaticDialog() {};
+	NewDlg() : 
+		StaticDialog(),
+		_pszWndName(nullptr),
+		_pFileName(nullptr),
+		_pDesc(nullptr)
+	{
+	};
     
     void init(HINSTANCE hInst, HWND hWnd, LPCTSTR pszWndName = NULL) {
 		Window::init(hInst, hWnd);
