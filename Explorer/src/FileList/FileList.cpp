@@ -2232,7 +2232,7 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 		if (dwEffect == DROPEFFECT_MOVE) {
 			_stprintf(text, _T("Move %d file(s)/folder(s) to:\n\n%s"), count, pszTo);
 		}
-		else if (dwEffect == DROPEFFECT_COPY) {
+		else {// dwEffect == DROPEFFECT_COPY
 			_stprintf(text, _T("Copy %d file(s)/folder(s) to:\n\n%s"), count, pszTo);
 		}
 

@@ -924,12 +924,6 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
 {
     HRESULT hRes = S_FALSE;
     CComPtr<IShellLink> ipShellLink;
-        // buffer that receives the null-terminated string for the drive and path
-    TCHAR szPath[MAX_PATH];     
-        // structure that receives the information about the shortcut
-    WIN32_FIND_DATA wfd;    
-    WCHAR wszTemp[MAX_PATH];
-
     lpszFilePath[0] = '\0';
 
     // Get a pointer to the IShellLink interface
@@ -945,6 +939,7 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
         CComQIPtr<IPersistFile> ipPersistFile(ipShellLink);
 
         // IPersistFile is using LPCOLESTR, so make sure that the string is Unicode
+		WCHAR wszTemp[MAX_PATH];
 #if !defined UNICODE
         MultiByteToWideChar(CP_ACP, 0, lpszShortcutPath, -1, wszTemp, MAX_PATH);
 #else
@@ -960,6 +955,8 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
             if (hRes == S_OK) 
             {
                 // Get the path to the shortcut target
+				TCHAR szPath[MAX_PATH];
+				WIN32_FIND_DATA wfd;
                 hRes = ipShellLink->GetPath(szPath, MAX_PATH, &wfd, SLGP_RAWPATH); 
 				if (hRes == S_OK) 
 				{
