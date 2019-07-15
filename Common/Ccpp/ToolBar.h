@@ -47,7 +47,18 @@ class ReBar;
 class ToolBar : public Window
 {
 public :
-	ToolBar():Window(), _pTBB(NULL), _nrButtons(0), _nrDynButtons(0), _nrTotalButtons(0), _nrCurrentButtons(0), _pRebar(NULL) {};
+	ToolBar() : 
+		Window(),
+		_pTBB(NULL),
+		_state(TB_STANDARD),
+		_nrButtons(0),
+		_nrDynButtons(0),
+		_nrTotalButtons(0),
+		_nrCurrentButtons(0), 
+		_pRebar(NULL),
+		_rbBand()
+	{
+	};
 	virtual ~ToolBar(){};
 
 	virtual bool init(HINSTANCE hInst, HWND hPere, toolBarStatusType type, 

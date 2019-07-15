@@ -46,7 +46,7 @@ struct DLGTEMPLATEEX {
 class StaticDialog : public Window
 {
 public :
-	StaticDialog() : Window(), _isModeles(false) {};
+	StaticDialog() : Window(), _rc(), _isModeles(false) {};
 	~StaticDialog(){
 		if (isCreated())
 			destroy();
