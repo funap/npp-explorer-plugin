@@ -447,47 +447,53 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 {
 	switch (Message)
 	{
-		case WM_LBUTTONDBLCLK:
+	case WM_KEYDOWN:
+		if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
+			openQuickOpenDlg();
+			return TRUE;
+		}
+		break;
+	case WM_LBUTTONDBLCLK:
+	{
+		TVHITTESTINFO	hti = {0};
+
+		hti.pt.x = GET_X_LPARAM(lParam);
+		hti.pt.y = GET_Y_LPARAM(lParam);
+
+		HTREEITEM hItem = TreeView_HitTest(_hTreeCtrl, &hti);
+
+		if (hItem != NULL)
 		{
-			TVHITTESTINFO	hti = {0};
+			PELEM	pElem = (PELEM)GetParam(hItem);
 
-			hti.pt.x = GET_X_LPARAM(lParam);
-			hti.pt.y = GET_Y_LPARAM(lParam);
-
-			HTREEITEM hItem = TreeView_HitTest(_hTreeCtrl, &hti);
-
-			if (hItem != NULL)
+			if (pElem != NULL)
 			{
-				PELEM	pElem = (PELEM)GetParam(hItem);
-
-				if (pElem != NULL)
+				/* open link only when double click on bitmap or label */
+				if (hti.flags & TVHT_ONITEM)
 				{
-					/* open link only when double click on bitmap or label */
-					if (hti.flags & TVHT_ONITEM)
-					{
-						_peOpenLink = pElem;
-						::PostMessage(_hSelf, EXM_OPENLINK, 0, 0);
-					}
-
-					if ((!(pElem->uParam & FAVES_PARAM_MAIN)) &&
-						((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS))
-					{
-						return TRUE;
-					}
+					_peOpenLink = pElem;
+					::PostMessage(_hSelf, EXM_OPENLINK, 0, 0);
 				}
-				else
+
+				if ((!(pElem->uParam & FAVES_PARAM_MAIN)) &&
+					((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS))
 				{
-					/* session file will be opened */
-					TCHAR	TEMP[MAX_PATH];
-					
-					GetItemText(hItem, TEMP, MAX_PATH);
-					::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)TEMP);
+					return TRUE;
 				}
 			}
-			break;
+			else
+			{
+				/* session file will be opened */
+				TCHAR	TEMP[MAX_PATH];
+					
+				GetItemText(hItem, TEMP, MAX_PATH);
+				::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)TEMP);
+			}
 		}
-		default:
-			break;
+		break;
+	}
+	default:
+		break;
 	}
 	
 	return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);

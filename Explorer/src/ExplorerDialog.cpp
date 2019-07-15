@@ -845,6 +845,10 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 				::SetEvent(g_hEvent[EID_UPDATE_USER]);
 				return TRUE;
 			}
+			if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
+				openQuickOpenDlg();
+				return TRUE;
+			}
 			if (VK_ESCAPE == wParam) {
 				NppInterface::setFocusToCurrentEdit();
 				return TRUE;
