@@ -4,13 +4,21 @@ You could easy browse through files and edit sources in Notepad++.
 
 ## Difference between the original plugin
 - Notepad++ 64-bit compatible
+- More configurable actions to the plugin menu.
+- Quick Open Feature.  
+  If you press <kbd>Ctrl+P</kbd>, the Fuzzy Finder will pop up.  
+  This will let you quickly search for any file in current path by typing parts of the file name.
 - And, minor bug fixes. See also the [Releases] for more information.
 
 ## Download
 https://github.com/funap/npp-explorer-plugin/releases
 
 ## Screenshot
-![Screenshot]
+- Explorer Panel & Plugin Menu  
+  ![Screenshot]
+
+- Quick Open  
+  ![QuickOpen]
 
 ## Installation
 
@@ -39,4 +47,5 @@ This project is licensed under the terms of the GNU GPL v2.0 license
 [Explorer]: http://sourceforge.net/projects/npp-plugins/files/Explorer/
 [Notepad++]: http://notepad-plus-plus.org/
 [Screenshot]: https://raw.githubusercontent.com/funap/npp-explorer-plugin/master/.github/screenshot.png "Screenshot"
+[QuickOpen]: https://raw.githubusercontent.com/funap/npp-explorer-plugin/master/.github/quickopen.gif "Screenshot"
 [releases]: https://github.com/funap/npp-explorer-plugin/releases
