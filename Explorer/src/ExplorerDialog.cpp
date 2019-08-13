@@ -130,6 +130,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
 	 
+    {IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
 	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
 };
 					
@@ -152,6 +153,7 @@ static ToolBarButtonUnit toolBarIconsNT[] = {
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
 	 
+    {IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
 	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
 };
 					
@@ -166,6 +168,7 @@ static LPCTSTR szToolTip[23] = {
 	_T("Find in Files..."),
 	_T("Folder of Current File"),
 	_T("User Folder"),
+	_T("Favorites"),
 	_T("Refresh")
 };
 
@@ -1189,6 +1192,9 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 			break;
 		case IDM_EX_GO_TO_FOLDER:
 			gotoCurrentFile();
+			break;
+		case IDM_EX_FAVORITES:
+			toggleFavesDialog();
 			break;
 		case IDM_EX_UPDATE:
 		{
