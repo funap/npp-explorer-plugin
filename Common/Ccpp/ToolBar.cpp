@@ -38,9 +38,7 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 
 	//Create the list of buttons
 	_nrButtons    = arraySize;
-	_nrDynButtons = _vDynBtnReg.size();
-	_nrTotalButtons = _nrButtons + (_nrDynButtons ? _nrDynButtons + 1 : 0);
-	_pTBB = new TBBUTTON[_nrTotalButtons];	//add one for the extra separator
+	_pTBB = new TBBUTTON[_nrButtons];	//add one for the extra separator
 
 	int cmd = 0;
 	int bmpIndex = -1;
@@ -66,30 +64,6 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 		_pTBB[i].fsStyle = style; 
 		_pTBB[i].dwData = 0; 
 		_pTBB[i].iString = 0;
-	}
-
-	if (_nrDynButtons > 0) {
-		//add separator
-		_pTBB[i].iBitmap = 0;
-		_pTBB[i].idCommand = 0;
-		_pTBB[i].fsState = TBSTATE_ENABLED;
-		_pTBB[i].fsStyle = BTNS_SEP;
-		_pTBB[i].dwData = 0; 
-		_pTBB[i].iString = 0;
-		++i;
-		//add plugin buttons
-		for (SIZE_T j = 0; j < _nrDynButtons ; ++j, ++i)
-		{
-			cmd = _vDynBtnReg[j].message;
-			++bmpIndex;
-
-			_pTBB[i].iBitmap = bmpIndex;
-			_pTBB[i].idCommand = cmd;
-			_pTBB[i].fsState = TBSTATE_ENABLED;
-			_pTBB[i].fsStyle = BTNS_BUTTON | _toolBarIcons.getIconStyle(i); 
-			_pTBB[i].dwData = 0; 
-			_pTBB[i].iString = 0;
-		}
 	}
 
 	reset(true);	//load icons etc
@@ -185,17 +159,10 @@ void ToolBar::reset(bool create)
 			addbmp.nID = _toolBarIcons.getStdIconAt(i);
 			::SendMessage(_hSelf, TB_ADDBITMAP, 1, (LPARAM)&addbmp);
 		}
-		if (_nrDynButtons > 0) {
-			for (SIZE_T j = 0; j < _nrDynButtons; j++)
-			{
-				addbmpdyn.nID = (UINT_PTR)_vDynBtnReg.at(j).hBmp;
-				::SendMessage(_hSelf, TB_ADDBITMAP, 1, (LPARAM)&addbmpdyn);
-			}
-		}
 	}
 
 	if (create) {	//if the toolbar has been recreated, readd the buttons
-		SIZE_T nrBtnToAdd = (_state == TB_STANDARD?_nrTotalButtons:_nrButtons);
+		SIZE_T nrBtnToAdd = _nrButtons;
 		_nrCurrentButtons = nrBtnToAdd;
 		WORD btnSize = (_state == TB_LARGE?32:16);
 		::SendMessage(_hSelf, TB_SETBUTTONSIZE , (WPARAM)0, (LPARAM)MAKELONG (btnSize, btnSize));
@@ -211,19 +178,6 @@ void ToolBar::reset(bool create)
 		_rbBand.cxIdeal		= getWidth();
 
 		_pRebar->reNew(REBAR_BAR_TOOLBAR, &_rbBand);
-	}
-}
-
-void ToolBar::registerDynBtn(UINT messageID, toolbarIcons* tIcon)
-{
-	// Note: Register of buttons only possible before init!
-	if ((_hSelf == NULL) && (messageID != 0) && (tIcon->hToolbarBmp != NULL))
-	{
-		DynamicList			dynList;
-		dynList.message		= messageID;
-		dynList.hBmp		= tIcon->hToolbarBmp;
-		dynList.hIcon		= tIcon->hToolbarIcon;
-		_vDynBtnReg.push_back(dynList);
 	}
 }
 

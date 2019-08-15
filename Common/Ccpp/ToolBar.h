@@ -52,8 +52,6 @@ public :
 		_pTBB(NULL),
 		_state(TB_STANDARD),
 		_nrButtons(0),
-		_nrDynButtons(0),
-		_nrTotalButtons(0),
 		_nrCurrentButtons(0), 
 		_pRebar(NULL),
 		_rbBand()
@@ -117,8 +115,6 @@ public :
 		return _toolBarIcons.replaceIcon(whichLst, iconIndex, iconLocation);
 	};
 
-	void registerDynBtn(UINT message, toolbarIcons* hBmp);
-
 	UINT doPopop(POINT chevPoint);	//show the popup if buttons are hidden
 
 	void addToRebar(ReBar * rebar);
@@ -127,10 +123,7 @@ private :
 	TBBUTTON *_pTBB;
 	ToolBarIcons _toolBarIcons;
 	toolBarStatusType _state;
-	std::vector<DynamicList> _vDynBtnReg;
 	SIZE_T _nrButtons;
-	SIZE_T _nrDynButtons;
-	SIZE_T _nrTotalButtons;
 	SIZE_T _nrCurrentButtons;
 	ReBar * _pRebar;
 	REBARBANDINFO _rbBand;
