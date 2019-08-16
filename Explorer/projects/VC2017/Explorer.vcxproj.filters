@@ -231,12 +231,6 @@
     <Image Include="..\..\res\SortUp.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="..\..\res\bitmap1.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="..\..\res\bmp00001.bmp">
-      <Filter>Resource Files</Filter>
-    </Image>
     <Image Include="..\..\res\explore.bmp">
       <Filter>Resource Files</Filter>
     </Image>
@@ -298,6 +292,9 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\res\web.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\terminal.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

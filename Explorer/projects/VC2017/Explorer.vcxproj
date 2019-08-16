@@ -298,8 +298,6 @@
     <ClInclude Include="..\..\src\resource.h" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="..\..\res\bitmap1.bmp" />
-    <Image Include="..\..\res\bmp00001.bmp" />
     <Image Include="..\..\res\explore.bmp" />
     <Image Include="..\..\res\explore.ico" />
     <Image Include="..\..\res\file.ico" />
@@ -322,6 +320,7 @@
     <Image Include="..\..\res\session.ico" />
     <Image Include="..\..\res\SortDown.bmp" />
     <Image Include="..\..\res\SortUp.bmp" />
+    <Image Include="..\..\res\terminal.bmp" />
     <Image Include="..\..\res\undo.bmp" />
     <Image Include="..\..\res\update.bmp" />
     <Image Include="..\..\res\web.ico" />
