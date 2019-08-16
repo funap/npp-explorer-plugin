@@ -956,11 +956,16 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
             {
                 // Get the path to the shortcut target
 				TCHAR szPath[MAX_PATH];
-				WIN32_FIND_DATA wfd;
-                hRes = ipShellLink->GetPath(szPath, MAX_PATH, &wfd, SLGP_RAWPATH); 
+                hRes = ipShellLink->GetPath(szPath, MAX_PATH, nullptr, SLGP_RAWPATH); 
 				if (hRes == S_OK) 
 				{
 	                _tcsncpy(lpszFilePath, szPath, maxBuf);
+
+					if (::PathIsDirectory(lpszFilePath) != FALSE) {
+						if (lpszFilePath[wcslen(lpszFilePath) - 1] != '\\') {
+							wcsncat(lpszFilePath, L"\\", MAX_PATH);
+						}
+					}
 				}
             } 
         } 
