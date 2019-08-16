@@ -304,7 +304,7 @@ void clearFilter(void);
 
 void openOptionDlg(void);
 void openHelpDlg(void);
-
+void openTerminal(void);
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

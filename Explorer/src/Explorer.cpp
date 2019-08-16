@@ -568,6 +568,12 @@ void openQuickOpenDlg(void)
 	quickOpenDlg.show();
 }
 
+void openTerminal(void)
+{
+	std::filesystem::path path(exProp.szCurrentPath);
+	::ShellExecute(nppData._nppHandle, _T("open"), _T("cmd.exe"), nullptr, path.c_str(), SW_SHOW);
+}
+
 /**************************************************************************
  *	Subclass of Notepad
  */

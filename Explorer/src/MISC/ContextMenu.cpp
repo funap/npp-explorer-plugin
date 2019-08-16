@@ -266,7 +266,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 		/* version not supported */
 		::DestroyMenu(hMenuNppExec);
 	}
-	::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, _T("DOS Prompt..."));
+	::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, _T("Open Command Window Here"));
 
 	::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, _T("Add to 'Favorites'..."));

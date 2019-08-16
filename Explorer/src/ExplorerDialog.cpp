@@ -115,37 +115,16 @@ DWORD WINAPI GetVolumeInformationTimeoutThread(LPVOID lpParam)
 static ToolBarButtonUnit toolBarIcons[] = {
 	
 	{IDM_EX_PREV,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_PREV, TBSTYLE_DROPDOWN},
-	{IDM_EX_NEXT,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_NEXT, TBSTYLE_DROPDOWN},	 
-	 
-	//-------------------------------------------------------------------------------------//
-	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,	IDI_SEPARATOR_ICON, 0},
-	//-------------------------------------------------------------------------------------//
-	 
-    {IDM_EX_FILE_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FILENEW, 0},
-    {IDM_EX_FOLDER_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERNEW, 0},
-	{IDM_EX_SEARCH_FIND,	IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FIND, 0},
-	{IDM_EX_GO_TO_FOLDER,	IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERGO, 0},
-
-	//-------------------------------------------------------------------------------------//
-	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-	//-------------------------------------------------------------------------------------//
-	 
-    {IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
-	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
-};
-					
-static ToolBarButtonUnit toolBarIconsNT[] = {
-	
-	{IDM_EX_PREV,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_PREV, TBSTYLE_DROPDOWN},
-	{IDM_EX_NEXT,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_NEXT, TBSTYLE_DROPDOWN},	 
+	{IDM_EX_NEXT,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_NEXT, TBSTYLE_DROPDOWN},
 	 
 	//-------------------------------------------------------------------------------------//
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
 	 
-    {IDM_EX_FILE_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FILENEW, 0},
-    {IDM_EX_FOLDER_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERNEW, 0},
+	{IDM_EX_FILE_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FILENEW, 0},
+	{IDM_EX_FOLDER_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERNEW, 0},
 	{IDM_EX_SEARCH_FIND,	IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FIND, 0},
+	{IDM_EX_TERMINAL,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_TERMINAL, 0},
 	{IDM_EX_GO_TO_USER,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERUSER, 0},
 	{IDM_EX_GO_TO_FOLDER,	IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERGO, 0},
 
@@ -153,10 +132,10 @@ static ToolBarButtonUnit toolBarIconsNT[] = {
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
 	 
-    {IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
+	{IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
 	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
 };
-					
+
 /** 
  *	Note: On change, keep sure to change order of IDM_EX_... also
  */
@@ -166,6 +145,7 @@ static LPCTSTR szToolTip[23] = {
 	_T("New File..."),
 	_T("New Folder..."),
 	_T("Find in Files..."),
+	_T("Open Command Window Here"),
 	_T("Folder of Current File"),
 	_T("User Folder"),
 	_T("Favorites"),
@@ -1193,6 +1173,9 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 		case IDM_EX_GO_TO_FOLDER:
 			gotoCurrentFile();
 			break;
+		case IDM_EX_TERMINAL:
+			openTerminal();
+			break;
 		case IDM_EX_FAVORITES:
 			toggleFavesDialog();
 			break;
@@ -1398,11 +1381,7 @@ void ExplorerDialog::InitialDialog(void)
 	_FileList.init(_hInst, _hSelf, _hListCtrl);
 
 	/* create toolbar */
-	if (gWinVersion < WV_NT) {
-		_ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
-	} else {
-		_ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIconsNT, sizeof(toolBarIconsNT)/sizeof(ToolBarButtonUnit));
-	}
+	_ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
 
 	_Rebar.init(_hInst, _hSelf);
 	_ToolBar.addToRebar(&_Rebar);

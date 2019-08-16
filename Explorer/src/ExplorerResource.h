@@ -36,28 +36,28 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 /* Toolbar icons */
-
 #define	IDB_EX_PREV							1050
 #define	IDB_EX_NEXT							1051
 #define	IDB_EX_FILENEW						1052
 #define IDB_EX_FOLDERNEW                    1053
 #define	IDB_EX_FIND							1054
-#define	IDB_EX_FOLDERGO						1055
-#define	IDB_EX_UPDATE						1056
-#define IDB_EX_LINKNEWFILE                  1057
-#define IDB_EX_LINKNEWFOLDER                1058
-#define IDB_EX_LINKNEW                      1059
-#define IDB_EX_LINKEDIT                     1060
-#define IDB_EX_LINKDELETE                   1061
-#define IDB_TB_EXPLORER						1062
-#define IDB_TB_FAVES						1063
-#define IDB_EX_FOLDERUSER					1064
+#define IDB_EX_TERMINAL						1055
+#define	IDB_EX_FOLDERGO						1056
+#define	IDB_EX_UPDATE						1057
+#define IDB_EX_LINKNEWFILE                  1058
+#define IDB_EX_LINKNEWFOLDER                1059
+#define IDB_EX_LINKNEW                      1060
+#define IDB_EX_LINKEDIT                     1061
+#define IDB_EX_LINKDELETE                   1062
+#define IDB_TB_EXPLORER						1063
+#define IDB_TB_FAVES						1064
+#define IDB_EX_FOLDERUSER					1065
 
 
 /* header sort icons */
 
-#define IDB_SORTUP							1065
-#define IDB_SORTDOWN						1066
+#define IDB_SORTUP							1066
+#define IDB_SORTDOWN						1067
 
 
 #define		IDM_TOOLBAR		2000
@@ -66,15 +66,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define	IDM_EX_FILE_NEW					(IDM_TOOLBAR + 3)
 	#define	IDM_EX_FOLDER_NEW				(IDM_TOOLBAR + 4)
 	#define	IDM_EX_SEARCH_FIND				(IDM_TOOLBAR + 5)
-	#define	IDM_EX_GO_TO_FOLDER				(IDM_TOOLBAR + 6)
-	#define	IDM_EX_GO_TO_USER				(IDM_TOOLBAR + 7)
-	#define	IDM_EX_FAVORITES				(IDM_TOOLBAR + 8)
-	#define IDM_EX_UPDATE					(IDM_TOOLBAR + 9)
-	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 10)
-	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 11)
-	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 12)
-	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 13)
-	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 14)
+	#define	IDM_EX_TERMINAL					(IDM_TOOLBAR + 6)
+	#define	IDM_EX_GO_TO_FOLDER				(IDM_TOOLBAR + 7)
+	#define	IDM_EX_GO_TO_USER				(IDM_TOOLBAR + 8)
+	#define	IDM_EX_FAVORITES				(IDM_TOOLBAR + 9)
+	#define IDM_EX_UPDATE					(IDM_TOOLBAR + 10)
+	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 11)
+	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 12)
+	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 13)
+	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 14)
+	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 15)
 
 
 

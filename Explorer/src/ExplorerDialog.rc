@@ -250,37 +250,22 @@ IDI_HEART               ICON                    "..\\res\\Heart.ico"
 //
 
 IDB_EX_PREV             BITMAP                  "..\\res\\undo.bmp"
-
 IDB_EX_NEXT             BITMAP                  "..\\res\\redo.bmp"
-
 IDB_EX_FILENEW          BITMAP                  "..\\res\\newFile.bmp"
-
 IDB_EX_FOLDERNEW        BITMAP                  "..\\res\\newFolder.bmp"
-
 IDB_EX_FIND             BITMAP                  "..\\res\\findFile.bmp"
-
+IDB_EX_TERMINAL         BITMAP                  "..\\res\\terminal.bmp"
 IDB_EX_FOLDERGO         BITMAP                  "..\\res\\folderGo.bmp"
-
 IDB_EX_UPDATE           BITMAP                  "..\\res\\update.bmp"
-
 IDB_EX_LINKNEWFILE      BITMAP                  "..\\res\\linkNewFile.bmp"
-
 IDB_EX_LINKNEWFOLDER    BITMAP                  "..\\res\\linkNewFolder.bmp"
-
 IDB_EX_LINKNEW          BITMAP                  "..\\res\\linkNew.bmp"
-
 IDB_EX_LINKEDIT         BITMAP                  "..\\res\\linkEdit.bmp"
-
 IDB_EX_LINKDELETE       BITMAP                  "..\\res\\linkDelete.bmp"
-
 IDB_TB_FAVES            BITMAP                  "..\\res\\Heart.bmp"
-
 IDB_TB_EXPLORER         BITMAP                  "..\\res\\explore.bmp"
-
 IDB_EX_FOLDERUSER       BITMAP                  "..\\res\\folderUser.bmp"
-
 IDB_SORTUP              BITMAP                  "..\\res\\SortUp.bmp"
-
 IDB_SORTDOWN            BITMAP                  "..\\res\\SortDown.bmp"
 
 
