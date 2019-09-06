@@ -206,6 +206,10 @@ struct NppExecProp {
 	std::vector<NppExecScripts>	vNppExecScripts;
 };
 
+struct CphProgram {
+	TCHAR			szAppName[MAX_PATH];
+};
+
 struct ExProp{
 	ExProp() :
 		szCurrentPath(),
@@ -228,7 +232,8 @@ struct ExProp{
 		fileFilter(),
 		uTimeout(0),
 		bUseSystemIcons(false),
-		nppExecProp()
+		nppExecProp(),
+        cphProgram()
 	{
 	}
 	/* pointer to global current path */
@@ -253,6 +258,7 @@ struct ExProp{
 	UINT			uTimeout;
 	BOOL			bUseSystemIcons;
 	NppExecProp		nppExecProp;
+    CphProgram      cphProgram;
 };
 
 

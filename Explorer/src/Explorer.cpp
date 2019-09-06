@@ -79,6 +79,7 @@ CONST TCHAR TimeOut[]			= _T("TimeOut");
 CONST TCHAR UseSystemIcons[]	= _T("UseSystemIcons");
 CONST TCHAR NppExecAppName[]	= _T("NppExecAppName");
 CONST TCHAR NppExecScriptPath[]	= _T("NppExecScriptPath");
+CONST TCHAR CphProgramName[]	= _T("CphProgramName");
 
 
 /* global values */
@@ -398,6 +399,7 @@ void loadSettings(void)
 	exProp.bUseSystemIcons			= ::GetPrivateProfileInt(Explorer, UseSystemIcons, TRUE, iniFilePath);
 	::GetPrivateProfileString(Explorer, NppExecAppName, _T("NppExec.dll"), exProp.nppExecProp.szAppName, MAX_PATH, iniFilePath);
 	::GetPrivateProfileString(Explorer, NppExecScriptPath, configPath, exProp.nppExecProp.szScriptPath, MAX_PATH, iniFilePath);
+	::GetPrivateProfileString(Explorer, CphProgramName, _T("cmd.exe"), exProp.cphProgram.szAppName, MAX_PATH, iniFilePath);
 
 	TCHAR	number[3];
 	TCHAR	pszTemp[MAX_PATH];
@@ -445,6 +447,7 @@ void saveSettings(void)
 	::WritePrivateProfileString(Explorer, UseSystemIcons, _itot(exProp.bUseSystemIcons, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, NppExecAppName, exProp.nppExecProp.szAppName, iniFilePath);
 	::WritePrivateProfileString(Explorer, NppExecScriptPath, exProp.nppExecProp.szScriptPath, iniFilePath);
+	::WritePrivateProfileString(Explorer, CphProgramName, exProp.cphProgram.szAppName, iniFilePath);
 
 
 	for (INT i = (INT)exProp.vStrFilterHistory.size() - 1; i >= 0 ; i--)	{
@@ -571,7 +574,7 @@ void openQuickOpenDlg(void)
 void openTerminal(void)
 {
 	std::filesystem::path path(exProp.szCurrentPath);
-	::ShellExecute(nppData._nppHandle, _T("open"), _T("cmd.exe"), nullptr, path.c_str(), SW_SHOW);
+	::ShellExecute(nppData._nppHandle, _T("open"), exProp.cphProgram.szAppName, nullptr, path.c_str(), SW_SHOW);
 }
 
 /**************************************************************************
