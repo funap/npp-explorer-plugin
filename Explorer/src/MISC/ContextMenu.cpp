@@ -859,7 +859,7 @@ void ContextMenu::openPrompt(void)
 				path.erase(pos, path.size());
 			}
 		}
-		::ShellExecute(_hWndNpp, _T("open"), _T("cmd.exe"), NULL, path.c_str(), SW_SHOW);
+		::ShellExecute(_hWndNpp, _T("open"), exProp.cphProgram.szAppName, NULL, path.c_str(), SW_SHOW);
 	}
 }
 
