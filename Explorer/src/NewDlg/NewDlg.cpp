@@ -18,7 +18,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "NewDlg.h"
-#include "stdio.h"
 
 
 INT_PTR NewDlg::doDialog(LPCTSTR pFileName, LPCTSTR pDesc)

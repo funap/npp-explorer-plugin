@@ -118,12 +118,14 @@
       <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\Toolbar\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;EXPLORER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <ForcedIncludeFiles>pch.h</ForcedIncludeFiles>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -227,12 +229,6 @@
       <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
     </ClCompile>
     <ClCompile Include="..\..\..\Common\Ccpp\StaticDialog.cpp" />
-    <ClCompile Include="..\..\..\Common\Ccpp\stdafx.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="..\..\..\Common\Ccpp\SysMsg.cpp" />
     <ClCompile Include="..\..\..\Common\Ccpp\ToolBar.cpp" />
     <ClCompile Include="..\..\src\Explorer.cpp" />
@@ -252,6 +248,10 @@
     <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
     <ClCompile Include="..\..\src\NewDlg\NewDlg.cpp" />
     <ClCompile Include="..\..\src\OptionDlg\OptionDialog.cpp" />
+    <ClCompile Include="..\..\src\pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">pch.h</PrecompiledHeaderFile>
+    </ClCompile>
     <ClCompile Include="..\..\src\PropDlg\PropDlg.cpp" />
     <ClCompile Include="..\..\src\PureDnD\DragDropImpl.cpp" />
     <ClCompile Include="..\..\src\QuickOpenDialog.cpp" />
@@ -268,7 +268,6 @@
     <ClInclude Include="..\..\..\Common\Ccpp\PluginInterface.h" />
     <ClInclude Include="..\..\..\Common\Ccpp\Scintilla.h" />
     <ClInclude Include="..\..\..\Common\Ccpp\StaticDialog.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\stdafx.h" />
     <ClInclude Include="..\..\..\Common\Ccpp\SysMsg.h" />
     <ClInclude Include="..\..\..\Common\Ccpp\ToolBar.h" />
     <ClInclude Include="..\..\..\Common\Ccpp\Window.h" />
@@ -292,6 +291,7 @@
     <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
     <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
     <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />
+    <ClInclude Include="..\..\src\pch.h" />
     <ClInclude Include="..\..\src\PropDlg\PropDlg.h" />
     <ClInclude Include="..\..\src\PureDnD\DragDropImpl.h" />
     <ClInclude Include="..\..\src\QuickOpenDialog.h" />

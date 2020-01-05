@@ -17,6 +17,8 @@
 
 #include "URLCtrl.h"
 
+#include <shellapi.h>
+
 static BYTE XORMask[128] =
 {
   0xff, 0xff, 0xff, 0xff,

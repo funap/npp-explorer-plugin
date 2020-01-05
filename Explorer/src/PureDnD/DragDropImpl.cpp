@@ -7,8 +7,10 @@
 **************************************************************************/
 // IDataObjectImpl.cpp: implementation of the CIDataObjectImpl class.
 //////////////////////////////////////////////////////////////////////
-#include <shlobj.h>
 #include "DragDropImpl.h"
+
+#include <shlobj.h>
+
 #include "ExplorerResource.h"
 
 //////////////////////////////////////////////////////////////////////

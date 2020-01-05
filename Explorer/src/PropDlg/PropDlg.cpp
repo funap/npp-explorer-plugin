@@ -19,8 +19,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 #include "PropDlg.h"
-#include "stdio.h"
-#include <Shlobj.h>
+
+#include <shlobj.h>
 
 
 // Set a call back with the handle after init to set the path.

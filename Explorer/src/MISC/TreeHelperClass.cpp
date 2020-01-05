@@ -19,11 +19,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 #include "TreeHelperClass.h"
+
 #include "Explorer.h"
 
 
 extern winVer	gWinVersion;
-
 
 // a simple printf style wrapper for OutputDebugString
 void debug_print(char const* format, ...)

@@ -16,6 +16,7 @@
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 #include "StaticDialog.h"
+
 #include "SysMsg.h"
 
 #define WS_EX_LAYOUTRTL 0x00400000L
