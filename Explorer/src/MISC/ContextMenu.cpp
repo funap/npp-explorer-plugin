@@ -23,12 +23,10 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-#include "stdafx.h"
-#include "FavesDialog.h"
 #include "ContextMenu.h"
-#include "nppexec_msgs.h"
 
+#include "FavesDialog.h"
+#include "nppexec_msgs.h"
 
 
 IContextMenu2 * g_IContext2		= NULL;
