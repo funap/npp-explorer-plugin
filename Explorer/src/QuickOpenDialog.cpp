@@ -70,6 +70,26 @@ namespace {
 	};
 }
 
+QuickOpenDlg::QuickOpenDlg() :
+	StaticDialog(),
+	_itemMarginLeft(0),
+	_itemTextHeight(0),
+	_itemTextExternalLeading(0),
+	_defaultEditProc(nullptr),
+	_hWndResult(nullptr),
+	_hWndEdit(nullptr),
+	_pExProp(nullptr),
+	_direcotryIndex(),
+	_pattern(),
+	_results(),
+	_progressBarRect()
+{
+}
+
+QuickOpenDlg::~QuickOpenDlg()
+{
+}
+
 void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 {
 	_pExProp = prop;
@@ -215,7 +235,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 		}
 
 		// second line
-		drawPosition.top += _itemTextHeight;
+		drawPosition.top += _itemTextHeight + _itemTextExternalLeading;
 		drawPosition.left = drawItem->rcItem.left + _itemMarginLeft;
 		::SetTextColor(drawItem->hDC, textColor2);
 		::SetBkMode(drawItem->hDC, TRANSPARENT);
@@ -333,7 +353,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, 
 		_hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
 		_hWndEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
 		calcMetrics();
-		const int height = _itemTextHeight * 2 + _itemTextExternalLeading;
+		const int height = (_itemTextHeight + _itemTextExternalLeading) * 2;
 		::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, height);
 
 		::SetWindowLongPtr(_hWndEdit, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));

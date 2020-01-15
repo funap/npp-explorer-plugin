@@ -38,20 +38,9 @@
 class QuickOpenDlg : public StaticDialog, public DirectoryIndexListener
 {
 public:
-	QuickOpenDlg() :
-		StaticDialog(),
-		_itemMarginLeft(0),
-		_itemTextHeight(0),
-		_itemTextExternalLeading(0),
-		_defaultEditProc(nullptr),
-		_hWndResult(nullptr),
-		_pExProp(nullptr),
-		_direcotryIndex(),
-		_pattern(),
-		_results(),
-		_progressBarRect()
-	{};
-	
+	QuickOpenDlg();
+	~QuickOpenDlg();
+
 	void init(HINSTANCE hInst, HWND parent, ExProp* prop);
 	void show();
 	void setCurrentPath(const std::filesystem::path& currentPath);
