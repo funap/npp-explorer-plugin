@@ -483,8 +483,7 @@ HWND getCurrentHScintilla(INT which)
 
 void toggleExplorerDialog(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, MF_BYCOMMAND);
-	if (state & MF_CHECKED) {
+	if (explorerDlg.isWindowVisible()) {
 		explorerDlg.doDialog(false);
 	} else {
 		UpdateDocs();
@@ -494,8 +493,7 @@ void toggleExplorerDialog(void)
 
 void toggleFavesDialog(void)
 {
-	UINT state = ::GetMenuState(::GetMenu(nppData._nppHandle), funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, MF_BYCOMMAND);
-	if (state & MF_CHECKED) {
+	if (favesDlg.isWindowVisible()) {
 		favesDlg.doDialog(false);
 	} else {
 		UpdateDocs();
