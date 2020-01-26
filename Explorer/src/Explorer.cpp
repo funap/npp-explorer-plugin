@@ -725,16 +725,11 @@ BOOL ConvertNetPathName(LPCTSTR pPathName, LPTSTR pRemotePath, UINT length)
 {
 	DWORD			dwRemoteLength	= 0;
 	DWORD			driveList		= ::GetLogicalDrives();
-	TCHAR			drivePathName[]	= _T(" :");	// it is longer for function 'HaveChildren()'
 	TCHAR			volumeName[MAX_PATH];
 	TCHAR			remoteName[MAX_PATH];
 
-	for (int i = 1; i < 32; i++)
-	{
-		drivePathName[0] = 'A' + i;
-
-		if (0x01 & (driveList >> i))
-		{
+	for (INT i = 0; i < 26; ++i) {
+		if (0x01 & (driveList >> i)) {
 			_stprintf(volumeName, _T("%c:"), 'A' + i);
 
 			/* call get connection twice to get the real size */
