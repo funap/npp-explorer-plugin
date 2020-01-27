@@ -114,11 +114,6 @@ void StaticDialog::create(int dialogID, bool isRTL, bool isModeles)
 	}
 }
 
-BOOL StaticDialog::isWindowVisible()
-{
-	return ::IsWindowVisible(_hSelf);
-}
-
 BOOL CALLBACK StaticDialog::dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) 
 {
 	switch (message) 

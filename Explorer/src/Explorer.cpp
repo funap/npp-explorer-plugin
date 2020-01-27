@@ -483,7 +483,7 @@ HWND getCurrentHScintilla(INT which)
 
 void toggleExplorerDialog(void)
 {
-	if (explorerDlg.isWindowVisible()) {
+	if (explorerDlg.isVisible()) {
 		explorerDlg.doDialog(false);
 	} else {
 		UpdateDocs();
@@ -493,7 +493,7 @@ void toggleExplorerDialog(void)
 
 void toggleFavesDialog(void)
 {
-	if (favesDlg.isWindowVisible()) {
+	if (favesDlg.isVisible()) {
 		favesDlg.doDialog(false);
 	} else {
 		UpdateDocs();

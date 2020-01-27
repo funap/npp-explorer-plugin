@@ -57,8 +57,6 @@ public :
 		return (_hSelf != NULL);
 	};
 
-	BOOL isWindowVisible();
-
 	void goToCenter();
 
 	void display(bool toShow = true) const;
