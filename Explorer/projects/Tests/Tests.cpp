@@ -20,6 +20,11 @@ namespace Tests
 			Assert::IsTrue(2 + 2 == 4);
 		}
 
+		TEST_METHOD(SettingsLoadTest)
+		{
+			//loadSettings();
+		}
+
 		// Write your unit tests here or in a separate testing file.
 		// For separate files, make sure to use the correct namespace, macros and types. 
 		// Be sure to _at least_ include CppUnitTest.h.
