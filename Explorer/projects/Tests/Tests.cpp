@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+#include "Explorer.h"
+
 #include <iostream>
 
 using namespace std;
