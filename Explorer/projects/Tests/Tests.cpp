@@ -1,5 +1,7 @@
 #include "pch.h"
 #include "CppUnitTest.h"
+#include "Explorer.h"
+
 #include <iostream>
 
 using namespace std;
@@ -16,6 +18,11 @@ namespace Tests
 			cout << "Hello world! This is Group 36's test framework!" << endl;
 			int foo = _documentedMethod("some value");
 			Assert::IsTrue(2 + 2 == 4);
+		}
+
+		TEST_METHOD(SettingsLoadTest)
+		{
+			//loadSettings();
 		}
 
 		// Write your unit tests here or in a separate testing file.
