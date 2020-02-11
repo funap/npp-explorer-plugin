@@ -822,19 +822,10 @@ void ContextMenu::openFileInOtherView(void)
 void ContextMenu::openFileInNewInstance(void)
 {
 	std::wstring		args2Exec;
-	extern	HANDLE		g_hModule;
 	TCHAR				szNpp[MAX_PATH];
 
-    // get path name
-	GetModuleFileName((HMODULE)g_hModule, szNpp, _countof(szNpp));
-
-    // remove the module name : get plugins directory path
-	PathRemoveFileSpec(szNpp);
-	PathRemoveFileSpec(szNpp);
-
-	/* add notepad as default program */
-	_tcscat(szNpp, _T("\\"));
-	_tcscat(szNpp, _T("notepad++.exe"));
+    // get explorer.exe path
+	::GetModuleFileName(nullptr, szNpp, _countof(szNpp));
 
 	for (UINT i = 0; i < _strArray.size(); i++)
 	{
