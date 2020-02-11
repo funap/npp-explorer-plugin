@@ -1412,20 +1412,11 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 				}
 				case FM_OPENNEWINSTANCE:
 				{
-					extern	HANDLE		g_hModule;
 					LPTSTR				pszNpp		= (LPTSTR)new TCHAR[MAX_PATH];
 					LPTSTR				pszParams	= (LPTSTR)new TCHAR[MAX_PATH];
 
-					// get path name
-					GetModuleFileName((HMODULE)g_hModule, pszNpp, MAX_PATH);
-
-					// remove the module name : get plugins directory path
-					PathRemoveFileSpec(pszNpp);
-					PathRemoveFileSpec(pszNpp);
-
-					/* add notepad as default program */
-					_tcscat(pszNpp, _T("\\"));
-					_tcscat(pszNpp, _T("notepad++.exe"));
+					// get notepad++.exe path
+					::GetModuleFileName(nullptr, pszNpp, MAX_PATH);
 
 					_stprintf(pszParams, _T("-multiInst %s"), pElem->pszLink);
 					::ShellExecute(_hParent, _T("open"), pszNpp, pszParams, _T("."), SW_SHOW);
