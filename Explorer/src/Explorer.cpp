@@ -448,7 +448,7 @@ void saveSettings(void)
 	::WritePrivateProfileString(Explorer, NppExecScriptPath, exProp.nppExecProp.szScriptPath, iniFilePath);
 	::WritePrivateProfileString(Explorer, CphProgramName, exProp.cphProgram.szAppName, iniFilePath);
 
-
+	::WritePrivateProfileString(FilterHistory, nullptr, nullptr, iniFilePath);
 	for (INT i = (INT)exProp.vStrFilterHistory.size() - 1; i >= 0 ; i--)	{
 		::WritePrivateProfileString(FilterHistory, _itot(i, temp, 10), exProp.vStrFilterHistory[i].c_str(), iniFilePath);
 	}
