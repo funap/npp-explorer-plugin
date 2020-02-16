@@ -1,6 +1,5 @@
 .vs/*
 .vscode/*
 Explorer/projects/VC2017/.vs/*
-Explorer/projects/VC2017/x64/*
-Explorer/projects/VC2017/Release/*
-Explorer/projects/VC2017/Debug/*
+Explorer/projects/VC2017/bin/*
+Explorer/projects/VC2017/obj/*
