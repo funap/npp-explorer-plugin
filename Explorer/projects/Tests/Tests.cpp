@@ -5,7 +5,7 @@
 #include <iostream>
 
 // Context Menu Includes
-// NOTE
+/*
 #include "ExplorerDialog.h"
 
 #include <shellapi.h>
@@ -19,7 +19,10 @@
 #include "NewDlg.h"
 #include "NppInterface.h"
 #include "ToolTip.h"
-#include "resource.h"
+#include "resource.h"*/
+
+#include <ShlObj.h>
+#include "ContextMenu.h"
 
 using namespace std;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -40,6 +43,11 @@ namespace Tests
 		TEST_METHOD(SettingsLoadTest)
 		{
 			//loadSettings();
+		}
+
+		TEST_METHOD(ContextMenuInit)
+		{
+			ContextMenu cm;
 		}
 
 		// Write your unit tests here or in a separate testing file.
