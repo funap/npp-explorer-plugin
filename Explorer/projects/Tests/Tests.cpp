@@ -4,6 +4,23 @@
 
 #include <iostream>
 
+// Context Menu Includes
+// NOTE
+#include "ExplorerDialog.h"
+
+#include <shellapi.h>
+#include <shlwapi.h>
+#include <shlobj.h>
+#include <dbt.h>
+
+#include "Explorer.h"
+#include "ExplorerResource.h"
+#include "ContextMenu.h"
+#include "NewDlg.h"
+#include "NppInterface.h"
+#include "ToolTip.h"
+#include "resource.h"
+
 using namespace std;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
