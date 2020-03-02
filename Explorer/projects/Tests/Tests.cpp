@@ -4,6 +4,26 @@
 
 #include <iostream>
 
+// Context Menu Includes
+/*
+#include "ExplorerDialog.h"
+
+#include <shellapi.h>
+#include <shlwapi.h>
+#include <shlobj.h>
+#include <dbt.h>
+
+#include "Explorer.h"
+#include "ExplorerResource.h"
+#include "ContextMenu.h"
+#include "NewDlg.h"
+#include "NppInterface.h"
+#include "ToolTip.h"
+#include "resource.h"*/
+
+#include <ShlObj.h>
+#include "ContextMenu.h"
+
 using namespace std;
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -23,6 +43,11 @@ namespace Tests
 		TEST_METHOD(SettingsLoadTest)
 		{
 			//loadSettings();
+		}
+
+		TEST_METHOD(ContextMenuInit)
+		{
+			ContextMenu cm;
 		}
 
 		// Write your unit tests here or in a separate testing file.
