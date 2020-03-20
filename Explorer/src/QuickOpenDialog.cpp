@@ -54,20 +54,20 @@ namespace {
 			::FreeLibrary(user32dll);
 		}
 		return dpi;
-	}
-	
-	void removeWhitespaces(std::wstring& str)
-	{
-		auto it = str.begin();
-		while (it != str.end()) {
-			if (std::iswcntrl(*it) || std::iswblank(*it)) {
-				it = str.erase(it);
-			}
-			else {
-				++it;
-			}
+	}	
+}
+
+void removeWhitespaces(std::wstring& str)
+{
+	auto it = str.begin();
+	while (it != str.end()) {
+		if (std::iswcntrl(*it) || std::iswblank(*it)) {
+			it = str.erase(it);
 		}
-	};
+		else {
+			++it;
+		}
+	}
 }
 
 QuickOpenDlg::QuickOpenDlg() :
