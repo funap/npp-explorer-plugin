@@ -739,6 +739,12 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 				::SetEvent(g_hEvent[EID_UPDATE_ACTIVATEPATH]);
 				return FALSE;
 			}
+			else if (wParam == EXT_AUTOGOTOFILE)
+			{
+				::KillTimer(_hSelf, EXT_AUTOGOTOFILE);
+				::SetEvent(g_hEvent[EID_UPDATE_GOTOCURRENTFILE]);
+				return FALSE;
+			}
 			else if (wParam == EXT_SELCHANGE)
 			{
 				::KillTimer(_hSelf, EXT_SELCHANGE);
@@ -1313,6 +1319,11 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 				UpdateChildren(strPathName, hItem, FALSE);
 				UpdatePath();
 			}
+			break;
+		}
+		case EID_UPDATE_GOTOCURRENTFILE :
+		{
+			gotoCurrentFile();
 			break;
 		}
 		case EID_EXPAND_ITEM:

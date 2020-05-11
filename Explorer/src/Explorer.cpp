@@ -303,6 +303,10 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			explorerDlg.UpdateColors();
 			favesDlg.UpdateColors();
 		}
+        if (notifyCode->nmhdr.code == NPPN_BUFFERACTIVATED) {
+            ::KillTimer(explorerDlg.getHSelf(), EXT_AUTOGOTOFILE);
+    		::SetTimer(explorerDlg.getHSelf(), EXT_AUTOGOTOFILE, 200, NULL);
+        }
 	}
 }
 
