@@ -70,6 +70,7 @@ CONST TCHAR ShowBraces[]		= _T("ShowBraces");
 CONST TCHAR ShowLongInfo[]		= _T("ShowLongInfo");
 CONST TCHAR AddExtToName[]		= _T("AddExtToName");
 CONST TCHAR AutoUpdate[]		= _T("AutoUpdate");
+CONST TCHAR AutoNavigate[]		= _T("AutoNavigate");
 CONST TCHAR SizeFormat[]		= _T("SizeFormat");
 CONST TCHAR DateFormat[]		= _T("DateFormat");
 CONST TCHAR FilterHistory[]		= _T("FilterHistory");
@@ -303,6 +304,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 			explorerDlg.UpdateColors();
 			favesDlg.UpdateColors();
 		}
+        if (notifyCode->nmhdr.code == NPPN_BUFFERACTIVATED) {
+            if (exProp.bAutoNavigate == TRUE) {
+                ::KillTimer(explorerDlg.getHSelf(), EXT_AUTOGOTOFILE);
+    		    ::SetTimer(explorerDlg.getHSelf(), EXT_AUTOGOTOFILE, 200, NULL);
+            }
+        }
 	}
 }
 
@@ -392,6 +399,7 @@ void loadSettings(void)
 	exProp.bViewLong				= ::GetPrivateProfileInt(Explorer, ShowLongInfo, FALSE, iniFilePath);
 	exProp.bAddExtToName			= ::GetPrivateProfileInt(Explorer, AddExtToName, FALSE, iniFilePath);
 	exProp.bAutoUpdate				= ::GetPrivateProfileInt(Explorer, AutoUpdate, TRUE, iniFilePath);
+	exProp.bAutoNavigate			= ::GetPrivateProfileInt(Explorer, AutoNavigate, FALSE, iniFilePath);
 	exProp.fmtSize					= (SizeFmt)::GetPrivateProfileInt(Explorer, SizeFormat, SizeFmt::SFMT_KBYTE, iniFilePath);
 	exProp.fmtDate					= (DateFmt)::GetPrivateProfileInt(Explorer, DateFormat, DFMT_ENG, iniFilePath);
 	exProp.uTimeout					= ::GetPrivateProfileInt(Explorer, TimeOut, 1000, iniFilePath);
@@ -439,6 +447,7 @@ void saveSettings(void)
 	::WritePrivateProfileString(Explorer, ShowLongInfo, _itot(exProp.bViewLong, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, AddExtToName, _itot(exProp.bAddExtToName, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, AutoUpdate, _itot(exProp.bAutoUpdate, temp, 10), iniFilePath);
+	::WritePrivateProfileString(Explorer, AutoNavigate, _itot(exProp.bAutoNavigate, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, SizeFormat, _itot((INT)exProp.fmtSize, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);
 	::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);
