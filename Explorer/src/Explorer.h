@@ -226,6 +226,7 @@ struct ExProp{
 		bViewLong(false),
 		bAddExtToName(false),
 		bAutoUpdate(false),
+		bAutoNavigate(false),
 		fmtSize(SFMT_BYTES),
 		fmtDate(DFMT_ENG),
 		vStrFilterHistory(),
@@ -251,6 +252,7 @@ struct ExProp{
 	BOOL			bViewLong;
 	BOOL			bAddExtToName;
 	BOOL			bAutoUpdate;
+	BOOL			bAutoNavigate;
 	SizeFmt			fmtSize;
 	DateFmt			fmtDate;
 	std::vector<std::wstring>	vStrFilterHistory;
