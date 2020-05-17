@@ -39,7 +39,7 @@ BEGIN
     LTEXT           "eMail:",IDC_STATIC_MAIL,12,41,51,8
     CTEXT           "At first, I would like to thank Don for his great program and his support to create this plugin.",IDC_STATIC_THXTO,7,67,216,25
     LTEXT           "Options...\t\tAllows you to personalize the\n\t\t\tsettings for explorers file list.",IDC_STATIC_OPT,17,137,197,16
-    CTEXT           "Explorer Plugin v1.8.2.7 for Notepad++",IDC_STATIC_VERSION,7,7,216,17,SS_CENTERIMAGE,WS_EX_DLGMODALFRAME | WS_EX_TRANSPARENT
+    CTEXT           "Explorer Plugin v1.8.2.8 for Notepad++",IDC_STATIC_VERSION,7,7,216,17,SS_CENTERIMAGE,WS_EX_DLGMODALFRAME | WS_EX_TRANSPARENT
     LTEXT           "https://github.com/funap/npp-explorer-plugin",IDC_NPP_PLUGINS_URL,65,52,158,8
     LTEXT           "URL:",IDC_STATIC,12,52,51,8
     LTEXT           "Jens Lorenz / funap",IDC_STATIC,65,31,158,8
@@ -289,8 +289,8 @@ IDC_LEFTRIGHT           CURSOR                  "..\\res\\leftright.cur"
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,8,2,7
- PRODUCTVERSION 1,8,2,7
+ FILEVERSION 1,8,2, 8
+ PRODUCTVERSION 1,8,2, 8
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x21L
@@ -308,12 +308,12 @@ BEGIN
             VALUE "Comments", "https://github.com/funap/npp-explorer-plugin"
             VALUE "CompanyName", "funap"
             VALUE "FileDescription", "Explorer plugin for Notepad++"
-            VALUE "FileVersion", "1, 8, 2, 7"
+            VALUE "FileVersion", "1, 8, 2, 8"
             VALUE "InternalName", "Explorer"
             VALUE "LegalCopyright", "Copyright (c) 2018"
             VALUE "OriginalFilename", "Explorer.dll"
             VALUE "ProductName", "Explorer"
-            VALUE "ProductVersion", "1, 8, 2, 7"
+            VALUE "ProductVersion", "1, 8, 2, 8"
             VALUE "SpecialBuild", "UNICODE"
         END
     END
