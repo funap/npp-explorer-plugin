@@ -113,7 +113,12 @@ DWORD WINAPI GetVolumeInformationTimeoutThread(LPVOID lpParam)
 
 
 static ToolBarButtonUnit toolBarIcons[] = {
-	
+	{IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
+
+	//-------------------------------------------------------------------------------------//
+	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
+	//-------------------------------------------------------------------------------------//
+
 	{IDM_EX_PREV,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_PREV, TBSTYLE_DROPDOWN},
 	{IDM_EX_NEXT,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_NEXT, TBSTYLE_DROPDOWN},
 	 
@@ -131,8 +136,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
 	//-------------------------------------------------------------------------------------//
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
-	 
-	{IDM_EX_FAVORITES,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_FAVES, 0},
+
 	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
 };
 
@@ -140,6 +144,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
  *	Note: On change, keep sure to change order of IDM_EX_... also
  */
 static LPCTSTR szToolTip[23] = {
+	_T("Favorites"),
 	_T("Previous Folder"),
 	_T("Next Folder"),
 	_T("New File..."),
@@ -148,15 +153,14 @@ static LPCTSTR szToolTip[23] = {
 	_T("Open Command Window Here"),
 	_T("Folder of Current File"),
 	_T("User Folder"),
-	_T("Favorites"),
 	_T("Refresh")
 };
 
 
 LPCTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
 {
-	if ((IDM_EX_PREV <= resID) && (resID <= IDM_EX_UPDATE)) {
-		return szToolTip[resID - IDM_EX_PREV];
+	if ((IDM_EX_FAVORITES <= resID) && (resID <= IDM_EX_UPDATE)) {
+		return szToolTip[resID - IDM_EX_FAVORITES];
 	}
 	return nullptr;
 }
@@ -1603,6 +1607,12 @@ void ExplorerDialog::gotoCurrentFile(void)
 	_tcscat(pathName, _T("\\"));
 	SelectItem(pathName);
 	_FileList.SelectCurFile();
+	setFocusOnFile();
+}
+
+void ExplorerDialog::gotoFile(const std::wstring& filePath)
+{
+	SelectItem(filePath.c_str());
 	setFocusOnFile();
 }
 

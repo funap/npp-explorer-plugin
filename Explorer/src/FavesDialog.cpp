@@ -36,7 +36,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 extern winVer gWinVersion;
 
 static ToolBarButtonUnit toolBarIcons[] = {
-	
+	{IDM_EX_EXPLORER,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_EXPLORER, 0},
+
+	//-------------------------------------------------------------------------------------//
+	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
+	//-------------------------------------------------------------------------------------//
+
     {IDM_EX_LINK_NEW_FILE,  IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_LINKNEWFILE, 0},
     {IDM_EX_LINK_NEW_FOLDER,IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_LINKNEWFOLDER, 0},
 
@@ -55,6 +60,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
 };    
 		
 static LPCTSTR szToolTip[23] = {
+	_T("Explorer"),
 	_T("Link Current File..."),
 	_T("Link Current Folder..."),
 	_T("New Link..."),
@@ -64,8 +70,8 @@ static LPCTSTR szToolTip[23] = {
 
 LPCTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
 {
-	if ((IDM_EX_LINK_NEW_FILE <= resID) && (resID <= IDM_EX_LINK_EDIT)) {
-		return szToolTip[resID - IDM_EX_LINK_NEW_FILE];
+	if ((IDM_EX_EXPLORER <= resID) && (resID <= IDM_EX_LINK_EDIT)) {
+		return szToolTip[resID - IDM_EX_EXPLORER];
 	}
 	return nullptr;
 }
@@ -503,6 +509,11 @@ void FavesDialog::tb_cmd(UINT message)
 {
 	switch (message)
 	{
+		case IDM_EX_EXPLORER:
+		{
+			toggleExplorerDialog();
+			break;
+		}
 		case IDM_EX_LINK_NEW_FILE:
 		{
 			TCHAR	TEMP[MAX_PATH];
@@ -1378,6 +1389,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 			{
 				::AppendMenu(hMenu, MF_STRING, FM_OPENOTHERVIEW, _T("Open in Other View"));
 				::AppendMenu(hMenu, MF_STRING, FM_OPENNEWINSTANCE, _T("Open in New Instance"));
+				::AppendMenu(hMenu, MF_STRING, FM_GOTO_FILE_LOCATION, _T("Go to File Location"));
 			}
 			else if (root == FAVES_SESSIONS)
 			{
@@ -1423,6 +1435,15 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
 					delete [] pszNpp;
 					delete [] pszParams;
+					break;
+				}
+				case FM_GOTO_FILE_LOCATION:
+				{
+					extern ExplorerDialog explorerDlg;
+
+					std::wstring filePath = pElem->pszLink;
+					explorerDlg.gotoFile(filePath);
+					explorerDlg.doDialog();
 					break;
 				}
 				case FM_ADDTOSESSION:

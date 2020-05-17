@@ -61,21 +61,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 #define		IDM_TOOLBAR		2000
-	#define	IDM_EX_PREV						(IDM_TOOLBAR + 1)
-	#define	IDM_EX_NEXT						(IDM_TOOLBAR + 2)
-	#define	IDM_EX_FILE_NEW					(IDM_TOOLBAR + 3)
-	#define	IDM_EX_FOLDER_NEW				(IDM_TOOLBAR + 4)
-	#define	IDM_EX_SEARCH_FIND				(IDM_TOOLBAR + 5)
-	#define	IDM_EX_TERMINAL					(IDM_TOOLBAR + 6)
-	#define	IDM_EX_GO_TO_FOLDER				(IDM_TOOLBAR + 7)
-	#define	IDM_EX_GO_TO_USER				(IDM_TOOLBAR + 8)
-	#define	IDM_EX_FAVORITES				(IDM_TOOLBAR + 9)
+	#define	IDM_EX_FAVORITES				(IDM_TOOLBAR + 1)
+	#define	IDM_EX_PREV						(IDM_TOOLBAR + 2)
+	#define	IDM_EX_NEXT						(IDM_TOOLBAR + 3)
+	#define	IDM_EX_FILE_NEW					(IDM_TOOLBAR + 4)
+	#define	IDM_EX_FOLDER_NEW				(IDM_TOOLBAR + 5)
+	#define	IDM_EX_SEARCH_FIND				(IDM_TOOLBAR + 6)
+	#define	IDM_EX_TERMINAL					(IDM_TOOLBAR + 7)
+	#define	IDM_EX_GO_TO_FOLDER				(IDM_TOOLBAR + 8)
+	#define	IDM_EX_GO_TO_USER				(IDM_TOOLBAR + 9)
 	#define IDM_EX_UPDATE					(IDM_TOOLBAR + 10)
-	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 11)
-	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 12)
-	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 13)
-	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 14)
-	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 15)
+	
+	#define	IDM_EX_EXPLORER					(IDM_TOOLBAR + 11)
+	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 12)
+	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 13)
+	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 14)
+	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 15)
+	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 16)
 
 
 
