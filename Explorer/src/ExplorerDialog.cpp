@@ -187,6 +187,7 @@ ExplorerDialog::ExplorerDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
 	_bOldRectInitilized		= FALSE;
 	_hExploreVolumeThread	= NULL;
 	_hItemExpand			= NULL;
+	_iDockedPos				= CONT_LEFT;
 	TreeHelper::UseOverlayThreading();
 }
 
@@ -238,7 +239,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
 }
 
 
-BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
@@ -285,8 +286,16 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 		{
 			LPNMHDR		nmhdr = (LPNMHDR)lParam;
 
-			if (nmhdr->hwndFrom == _hTreeCtrl)
-			{
+			if (nmhdr->hwndFrom == _hParent) {
+				switch (LOWORD(nmhdr->code)){
+				case DMN_DOCK:
+					_iDockedPos = HIWORD(nmhdr->code);
+					break;
+				default:
+					break;
+				}
+			}
+			else if (nmhdr->hwndFrom == _hTreeCtrl) {
 				switch (nmhdr->code)
 				{
 					case NM_RCLICK:
@@ -388,7 +397,7 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 				return TRUE;
 			}
 
-			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 
 			return FALSE;
 		}
@@ -760,14 +769,14 @@ BOOL CALLBACK ExplorerDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam
 				{
 					GetFolderPathName(hItem, strPathName);
 					_FileList.viewPath(strPathName, TRUE);
-					UPDATE_CAPTION();
+					updateDockingDlg();
 				}
 				return FALSE;
 			}
 			return TRUE;
 		}
 		default:
-			return DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			return DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 	}
 
 	return FALSE;
@@ -814,7 +823,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 				}
 				case VK_TAB:
 				{
-					if ((0x80 & ::GetKeyState(VK_SHIFT)) == 0x80) {
+					if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
 						::SetFocus(_hFilter);
 					} else {
 						::SetFocus(_hListCtrl);
@@ -828,9 +837,9 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 		}
 		case WM_KEYDOWN:
 		{
-			if ((wParam == VK_DELETE) && !((0x80 & ::GetKeyState(VK_CONTROL)) == 0x80))
+			if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000))
 			{
-				onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x80);
+				onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x8000);
 				return TRUE;
 			}
 			if (wParam == VK_F5)
@@ -850,7 +859,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 		}
 		case WM_SYSKEYDOWN:
 		{
-			if ((0x80 & ::GetKeyState(VK_MENU)) == 0x80)
+			if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000)
 			{
 				if (wParam == VK_LEFT) {
 					tb_cmd(IDM_EX_PREV);
@@ -1521,7 +1530,7 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 			TreeView_EnsureVisible(_hTreeCtrl, hItemSel);
 
 			_FileList.viewPath(szCurrPath, TRUE);
-			UPDATE_CAPTION();
+			updateDockingDlg();
 		}
 
 		/* enable detection of TVN_SELCHANGED notification */

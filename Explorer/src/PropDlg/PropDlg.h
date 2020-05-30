@@ -54,7 +54,7 @@ public:
 	LPCTSTR getGroupName(void);
 
 protected :
-	BOOL CALLBACK run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
 	void DrawChildrenOfItem(HTREEITEM hParentItem);
 

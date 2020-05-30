@@ -96,7 +96,7 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 	_direcotryIndex.setListener(this);
 
 	Window::init(hInst, parent);
-	create(IDD_QUICK_OPEN_DLG, FALSE, TRUE);
+	create(IDD_QUICK_OPEN_DLG, FALSE);
 }
 
 void QuickOpenDlg::setCurrentPath(const std::filesystem::path& currentPath)
@@ -245,7 +245,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 	return TRUE;
 }
 
-BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	static int progressPos = 0;
 
@@ -289,7 +289,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, 
 	{
 		HDC hDC = (Message == WM_PRINTCLIENT)
 			? reinterpret_cast<HDC>(wParam)
-			: GetDCEx(hWnd, nullptr, DCX_INTERSECTUPDATE | DCX_CACHE | DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS);
+			: GetDCEx(_hSelf, nullptr, DCX_INTERSECTUPDATE | DCX_CACHE | DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS);
 
 		// Erase progressbar background
 		const COLORREF backgroundColor = ::GetSysColor(COLOR_3DFACE);
@@ -359,7 +359,7 @@ BOOL CALLBACK QuickOpenDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, 
 		::SetWindowLongPtr(_hWndEdit, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
 		_defaultEditProc = (WNDPROC)::SetWindowLongPtr(_hWndEdit, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
 
-		GetClientRect(hWnd, &_progressBarRect);
+		GetClientRect(_hSelf, &_progressBarRect);
 		_progressBarRect.top = 2;
 		_progressBarRect.bottom = _progressBarRect.top + 2;
 		break;

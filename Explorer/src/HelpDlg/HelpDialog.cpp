@@ -31,7 +31,7 @@ void HelpDlg::doDialog()
 }
 
 
-BOOL CALLBACK HelpDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK HelpDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{

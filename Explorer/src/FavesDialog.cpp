@@ -154,7 +154,7 @@ void FavesDialog::NotifyNewFile(void)
 }
 
 
-BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
@@ -381,7 +381,7 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 				return TRUE;
 			}
 
-			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 
 		    return FALSE;
 		}
@@ -442,7 +442,7 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 			break;
 		}
 		default:
-			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 			break;
 	}
 

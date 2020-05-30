@@ -51,7 +51,7 @@ public:
 protected :
 	VOID calcMetrics();
 	BOOL onDrawItem(LPDRAWITEMSTRUCT drawItem);
-	BOOL CALLBACK run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam);
+	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 	static LRESULT APIENTRY wndDefaultEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 	LRESULT APIENTRY runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 

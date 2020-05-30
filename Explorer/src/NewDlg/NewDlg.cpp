@@ -28,7 +28,7 @@ INT_PTR NewDlg::doDialog(LPCTSTR pFileName, LPCTSTR pDesc)
 }
 
 
-BOOL CALLBACK NewDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK NewDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
