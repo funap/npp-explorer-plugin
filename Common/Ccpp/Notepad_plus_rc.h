@@ -193,7 +193,7 @@
 	#define	IDM_FILE_DELETE		     	(IDM_FILE + 16)
 	#define	IDM_FILE_RENAME		     	(IDM_FILE + 17)
  
- // A mettre ÅEjour si on ajoute nouveau menu item dans le menu "File"
+ // A mettre ÔøΩEjour si on ajoute nouveau menu item dans le menu "File"
 	#define	IDM_FILEMENU_LASTONE	IDM_FILE_RENAME
  
 #define	IDM_EDIT       (IDM + 2000)
@@ -606,5 +606,3 @@
 #define MENUINDEX_PLUGINS  9 
 
 #endif // RESOURCE_H
-
-

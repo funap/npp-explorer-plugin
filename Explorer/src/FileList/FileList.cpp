@@ -2092,11 +2092,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	lpDropFileStruct->pt.x = 0;
 	lpDropFileStruct->pt.y = 0;
 	lpDropFileStruct->fNC = FALSE;
-#ifdef _UNICODE
 	lpDropFileStruct->fWide = TRUE;
-#else
-	lpDropFileStruct->fWide = FALSE;
-#endif
 
 	/* add files to payload and seperate with "\0" */
 	SIZE_T	offset	= 0;
@@ -2202,7 +2198,6 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 	LPVOID		pPld					= (LPBYTE)hData + headerSize;
 	LPTSTR		lpszFilesFrom			= NULL;
 
-#ifdef _UNICODE
 	if (((LPDROPFILES)hData)->fWide == TRUE) {
 		lpszFilesFrom = (LPWSTR)pPld;
 	}
@@ -2210,15 +2205,6 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 		lpszFilesFrom = new TCHAR[payloadSize];
 		::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pPld, (int)payloadSize, lpszFilesFrom, (int)payloadSize);
 	}
-#else
-	if (((LPDROPFILES)hData)->fWide == TRUE) {
-		lpszFilesFrom = new CHAR[payloadSize/2];
-		::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pPld, payloadSize, lpszFilesFrom, payloadSize/2, NULL, NULL);
-	}
-	else {
-		lpszFilesFrom = (LPSTR)pPld;
-	}
-#endif
 
 	if (lpszFilesFrom != NULL) {
 		UINT count = 0;
@@ -2260,11 +2246,7 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 			::SetTimer(_hParent, EXT_UPDATEACTIVATEPATH, 200, NULL);
 		}
 
-#ifdef _UNICODE
 		if (((LPDROPFILES)hData)->fWide == FALSE) {
-#else
-		if (((LPDROPFILES)hData)->fWide == TRUE) {
-#endif
 			delete [] lpszFilesFrom;
 		}
 	}

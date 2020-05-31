@@ -1950,11 +1950,7 @@ void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UI
 	lpDropFileStruct->pt.x = 0;
 	lpDropFileStruct->pt.y = 0;
 	lpDropFileStruct->fNC = FALSE;
-#ifdef _UNICODE
 	lpDropFileStruct->fWide = TRUE;
-#else
-	lpDropFileStruct->fWide = FALSE;
-#endif
 
 	/* add path to payload */
 	_tcscpy((LPTSTR)&lpDropFileStruct[1], pszPath);
@@ -2037,21 +2033,12 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 	LPVOID		pPld					= (LPBYTE)hData + headerSize;
 	LPTSTR		lpszFilesFrom			= NULL;
 
-#ifdef _UNICODE
 	if (((LPDROPFILES)hData)->fWide == TRUE) {
 		lpszFilesFrom = (LPWSTR)pPld;
 	} else {
 		lpszFilesFrom = new TCHAR[payloadSize];
 		::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pPld, (int)payloadSize, lpszFilesFrom, (int)payloadSize);
 	}
-#else
-	if (((LPDROPFILES)hData)->fWide == TRUE) {
-		lpszFilesFrom = new CHAR[payloadSize/2];
-		::WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pPld, payloadSize, lpszFilesFrom, payloadSize/2, NULL, NULL);
-	} else {
-		lpszFilesFrom = (LPSTR)pPld;
-	}
-#endif
 
 	if (lpszFilesFrom != NULL)
 	{
@@ -2092,11 +2079,7 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 			::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
 		}
 
-#ifdef _UNICODE
 		if (((LPDROPFILES)hData)->fWide == FALSE) {
-#else
-		if (((LPDROPFILES)hData)->fWide == TRUE) {
-#endif
 			delete [] lpszFilesFrom;
 		}
 	}

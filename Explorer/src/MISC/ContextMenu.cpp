@@ -495,15 +495,7 @@ void ContextMenu::SetObjects(std::vector<std::wstring> strArray)
 	// that means that it's a fully qualified PIDL, which is what we need
 	LPITEMIDLIST pidl = NULL;
 
-#ifndef _UNICODE
-	OLECHAR * olePath = NULL;
-	olePath = (OLECHAR *) calloc (strArray[0].size() + 1, sizeof (OLECHAR));
-	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, strArray[0].c_str(), -1, olePath, strArray[0].size() + 1);	
-	psfDesktop->ParseDisplayName (NULL, 0, olePath, NULL, &pidl, NULL);
-	free (olePath);
-#else
 	psfDesktop->ParseDisplayName (NULL, 0, (LPOLESTR)strArray[0].c_str(), NULL, &pidl, NULL);
-#endif
 
 	if (pidl != NULL) {
 		// now we need the parent IShellFolder interface of pidl, and the relative PIDL to that interface
@@ -522,14 +514,7 @@ void ContextMenu::SetObjects(std::vector<std::wstring> strArray)
 		IShellFolder * psfFolder = NULL;
 		_nItems = strArray.size();
 		for (SIZE_T i = 0; i < _nItems; i++) {
-#ifndef _UNICODE
-			olePath = (OLECHAR *) calloc (strArray[i].size() + 1, sizeof (OLECHAR));
-			MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, strArray[i].c_str(), -1, olePath, strArray[i].size() + 1);	
-			psfDesktop->ParseDisplayName (NULL, 0, olePath, NULL, &pidl, NULL);
-			free (olePath);
-#else
 			psfDesktop->ParseDisplayName (NULL, 0, (LPOLESTR)strArray[i].c_str(), NULL, &pidl, NULL);
-#endif
 			_pidlArray = (LPITEMIDLIST *) realloc (_pidlArray, (i + 1) * sizeof (LPITEMIDLIST));
 			// get relative pidl via SHBindToParent
 			SHBindToParentEx (pidl, IID_IShellFolder, (void **) &psfFolder, (LPCITEMIDLIST *) &pidlItem);
@@ -968,7 +953,6 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 				/* read data from file */
 				::ReadFile(hFile, pszData, dwSize, &hasRead, NULL);
 
-#ifdef UNICODE
 				TCHAR		szBOM		= 0xFEFF;
 				LPTSTR		pszData2	= NULL;
 
@@ -985,10 +969,6 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 					delete [] pszData;
 					return; /* ============= Leave Function ================== */
 				}
-#else
-				/* get argument string to convert */
-				pszPtr = _tcstok(pszPtr, _T("\n"));
-#endif
 
 				if (ConvertCall(pszPtr, szAppName, &pszArg, _strArray) == TRUE)
 				{
@@ -1017,9 +997,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 					delete [] pszArg;
 				}
 				delete [] pszData;
-#ifdef UNICODE
 				delete [] pszData2;
-#endif
 			}
 		}
 
@@ -1040,11 +1018,7 @@ bool ContextMenu::Str2CB(LPCTSTR str2cpy)
 		
 	::EmptyClipboard();
 	
-#ifdef _UNICODE
 	HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, _tcslen(str2cpy) * 2 + 2);
-#else
-	HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, _tcslen(str2cpy) + 1);
-#endif
 	
 	if (hglbCopy == NULL) 
 	{ 
@@ -1060,11 +1034,7 @@ bool ContextMenu::Str2CB(LPCTSTR str2cpy)
 	}
 
 	// Place the handle on the clipboard. 
-#ifdef _UNICODE
 	::SetClipboardData(CF_UNICODETEXT, hglbCopy);
-#else
-	::SetClipboardData(CF_TEXT, hglbCopy);
-#endif
 	::CloseClipboard();
 	return true;
 }

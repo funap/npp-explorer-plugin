@@ -71,11 +71,8 @@ private:
 	BOOL			_seeDetails;
 	PELEM			_pElem;
 	INT				_iUImgPos;
-#ifdef _UNICODE
 	std::wstring	_strGroupName;
-#else
-	std::string		_strGroupName;
-#endif
+
 	TCHAR			_szDetails[20];
 };
 
