@@ -53,6 +53,8 @@ protected :
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 private:
+	void setVersionString();
+
 	/* Handles */
 	NppData			_nppData;
     HWND			_HSource;
