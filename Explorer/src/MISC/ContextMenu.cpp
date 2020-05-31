@@ -824,7 +824,7 @@ void ContextMenu::openFileInNewInstance(void)
 	std::wstring		args2Exec;
 	TCHAR				szNpp[MAX_PATH];
 
-    // get explorer.exe path
+    // get notepad++.exe path
 	::GetModuleFileName(nullptr, szNpp, _countof(szNpp));
 
 	for (UINT i = 0; i < _strArray.size(); i++)
