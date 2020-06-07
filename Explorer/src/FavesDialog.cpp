@@ -1803,6 +1803,20 @@ void FavesDialog::OpenLink(PELEM pElem)
 			}
 			case FAVES_SESSIONS:
 			{
+				// Check non-existent files
+				auto sessionFiles = NppInterface::getSessionFiles(pElem->pszLink);
+				int nonExistentFileCount = 0;
+				for (auto &&file : sessionFiles) {
+					if (!::PathFileExists(file.c_str())) {
+						++nonExistentFileCount;
+					}
+				}
+				if (0 < nonExistentFileCount) {
+					if (IDCANCEL == ::MessageBox(_hSelf, StringUtil::format(L"This session has %d non-existent files. Processing will delete all non-existent files in the session. Are you sure you want to continue?", nonExistentFileCount).c_str(), L"Open Session", MB_OKCANCEL | MB_ICONWARNING)) {
+						return;
+					}
+				}
+
 				/* in normal case close files previously */
 				if (_addToSession == FALSE) {
 					::SendMessage(_hParent, WM_COMMAND, IDM_FILE_CLOSEALL, 0);

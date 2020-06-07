@@ -82,3 +82,32 @@ void NppInterface::setFocusToCurrentEdit()
 
 	::SetFocus(currentSciHandle);
 }
+
+std::vector<std::wstring> NppInterface::getSessionFiles(const std::wstring &sessionFilePath)
+{
+	std::vector<std::wstring> sessionFiles;
+
+	LPTSTR* ppszFileNames = NULL;
+
+	/* get document count and create resources */
+	INT fileCount = (INT)::SendMessage(_nppData._nppHandle, NPPM_GETNBSESSIONFILES, 0, (LPARAM)sessionFilePath.c_str());
+
+	std::vector<WCHAR*> fileNames(fileCount);
+	for (auto &fileName : fileNames) {
+		fileName = new WCHAR[MAX_PATH];
+	}
+
+	/* get file names */
+	if (::SendMessage(_nppData._nppHandle, NPPM_GETSESSIONFILES, (WPARAM)fileNames.data(), (LPARAM)sessionFilePath.c_str())) {
+		for (int i = 0; i < fileCount; ++i) {
+			sessionFiles.push_back(std::wstring(fileNames[i]));
+		}
+	}
+
+	for (auto &fileName : fileNames) {
+		delete []fileName;
+		fileName = nullptr;
+	}
+
+	return sessionFiles;
+}
