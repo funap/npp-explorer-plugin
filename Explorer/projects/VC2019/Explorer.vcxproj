@@ -304,6 +304,7 @@
     <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h" />
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
     <ClInclude Include="..\..\src\MISC\NppInterface.h" />
+    <ClInclude Include="..\..\src\MISC\StringUtil.h" />
     <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
     <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
     <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />
@@ -345,6 +346,7 @@
   <ItemGroup>
     <None Include="..\..\res\leftright.cur" />
     <None Include="..\..\res\updown.cur" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
