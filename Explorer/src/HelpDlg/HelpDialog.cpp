@@ -19,7 +19,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "HelpDialog.h"
 
+#include <string>
+
 #include "Explorer.h"
+#include "version.h"
 
 
 void HelpDlg::doDialog()
@@ -31,12 +34,14 @@ void HelpDlg::doDialog()
 }
 
 
-BOOL CALLBACK HelpDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK HelpDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
         case WM_INITDIALOG :
 		{
+			setVersionString();
+
             _emailLink.init(_hInst, _hSelf);
             _emailLink.create(::GetDlgItem(_hSelf, IDC_EMAIL_LINK), _T("mailto:"));
 
@@ -65,3 +70,28 @@ BOOL CALLBACK HelpDlg::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARA
 	return FALSE;
 }
 
+void HelpDlg::setVersionString()
+{
+	HWND target = ::GetDlgItem(_hSelf, IDC_STATIC_VERSION);
+	const int bufferLength = ::GetWindowTextLength(target) + 1;
+	// Allocate string of proper size
+	std::wstring text;
+	text.resize(bufferLength);
+	// Get the text of the specified control
+	// Note that the address of the internal string buffer
+	// can be obtained with the &text[0] syntax
+	::GetWindowText(target, &text[0], bufferLength);
+	// Resize down the string to avoid bogus double-NUL-terminated strings
+	text.resize(bufferLength - 1);
+
+	text.append(L" v");
+	text.append(std::to_wstring(VERSION_MAJOR));
+	text.append(L".");
+	text.append(std::to_wstring(VERSION_MINOR));
+	text.append(L".");
+	text.append(std::to_wstring(VERSION_REVISION));
+	text.append(L".");
+	text.append(std::to_wstring(VERSION_BUILD));
+
+	::SetWindowText(target, text.c_str());
+}

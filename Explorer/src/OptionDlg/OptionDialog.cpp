@@ -43,7 +43,7 @@ INT_PTR OptionDlg::doDialog(ExProp *prop)
 }
 
 
-BOOL CALLBACK OptionDlg::run_dlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
@@ -127,9 +127,7 @@ BOOL CALLBACK OptionDlg::run_dlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 				}
 				case IDC_BTN_EXAMPLE_FILE:
 				{
-#ifdef UNICODE
 					BYTE	szBOM[]			= {0xFF, 0xFE};
-#endif
 					DWORD	dwByteWritten	= 0;
 					TCHAR	szExampleScriptPath[MAX_PATH];
 
@@ -148,9 +146,7 @@ BOOL CALLBACK OptionDlg::run_dlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPA
 						GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 
 						NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
-#ifdef UNICODE
 					::WriteFile(hFile, szBOM, sizeof(szBOM), &dwByteWritten, NULL);
-#endif
 					for (INT i = 0; i < MAX_NPP_EXAMPLE_LINE; i++) {
 						::WriteFile(hFile, szExampleScript[i], (DWORD)_tcslen(szExampleScript[i]) * sizeof(TCHAR), &dwByteWritten, NULL);
 					}
@@ -269,7 +265,3 @@ BOOL OptionDlg::GetParams(void)
 
 	return bRet;
 }
-
-
-
-

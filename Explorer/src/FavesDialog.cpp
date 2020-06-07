@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ToolTip.h"
 #include "resource.h"
 #include "NppInterface.h"
+#include "StringUtil.h"
 
 
 extern winVer gWinVersion;
@@ -154,7 +155,7 @@ void FavesDialog::NotifyNewFile(void)
 }
 
 
-BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) 
 	{
@@ -219,7 +220,7 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 									/* nothing to do */
 								}
 								else if (((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS) && 
-									((pElem->uParam & FAVES_PARAM) == FAVES_PARAM_LINK))
+										 ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK))
 								{
 									DeleteChildren(hItem);
 									DrawSessionChildren(hItem);
@@ -255,6 +256,31 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 								NotifyNewFile();
 							}
 						}						
+						break;
+					}
+					case TVN_GETINFOTIP:
+					{
+						LPNMTVGETINFOTIP pTip = (LPNMTVGETINFOTIP)lParam;
+						HTREEITEM item = pTip->hItem;
+
+						PELEM	pElem = (PELEM)GetParam(item);
+						if (pElem) {
+							const BOOL isLink		= ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK);
+							const BOOL isSession	= ((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS);
+							if (isLink && isSession) {
+								TCHAR itemText[1024];
+								GetItemText(item, itemText, _countof(itemText));
+
+								INT count = GetChildrenCount(item);
+								if (count > 0) {
+									std::wstring tipText = StringUtil::format(L"'%s' has %d files", itemText, count);
+									// Copy the text to the infotip.
+									wcscpy_s(pTip->pszText, pTip->cchTextMax, tipText.c_str());
+									return TRUE;
+								}
+							}
+							return FALSE; // show default tooltip text
+						}
 						break;
 					}
 					case NM_CUSTOMDRAW:
@@ -381,7 +407,7 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 				return TRUE;
 			}
 
-			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 
 		    return FALSE;
 		}
@@ -442,7 +468,7 @@ BOOL CALLBACK FavesDialog::run_dlgProc(HWND hWnd, UINT Message, WPARAM wParam, L
 			break;
 		}
 		default:
-			DockingDlgInterface::run_dlgProc(hWnd, Message, wParam, lParam);
+			DockingDlgInterface::run_dlgProc(Message, wParam, lParam);
 			break;
 	}
 
@@ -1942,7 +1968,6 @@ void FavesDialog::ReadSettings(void)
 				/* read data from file */
 				::ReadFile(hFile, data, size, &hasRead, NULL);
 
-#ifdef UNICODE
 				TCHAR	szBOM = 0xFEFF;
 				if (data[0] != szBOM)
 				{
@@ -1952,10 +1977,6 @@ void FavesDialog::ReadSettings(void)
 				{
 					ptr = data + 1;
 					ptr = _tcstok(ptr, _T("\n"));
-#else
-					/* get first element */
-					ptr = _tcstok(data, _T("\n"));
-#endif
 
 					/* finaly, fill out the tree and the vDB */
 					for (int i = 0; i < FAVES_ITEM_MAX; i++)
@@ -1985,9 +2006,7 @@ void FavesDialog::ReadSettings(void)
 						/* now read the information */
 						ReadElementTreeRecursive(_vDB.begin() + i, &ptr);
 					}
-#ifdef UNICODE
 				}
-#endif
 				delete [] data;
 			}
 		}
@@ -2109,9 +2128,7 @@ void FavesDialog::SaveSettings(void)
 	DWORD			hasWritten		= 0;
 	HANDLE			hFile			= NULL;
 
-#ifdef UNICODE
 	BYTE			szBOM[]			= {0xFF, 0xFE};
-#endif
 
 	_tcscpy(saveFilePath, configPath);
 	_tcscat(saveFilePath, FAVES_DATA);
@@ -2120,9 +2137,7 @@ void FavesDialog::SaveSettings(void)
 
 	if (hFile != INVALID_HANDLE_VALUE)
 	{
-#ifdef UNICODE
 		::WriteFile(hFile, szBOM, sizeof(szBOM), &hasWritten, NULL);
-#endif
 
 		/* delete allocated resources */
 		HTREEITEM	hItem = TreeView_GetNextItem(_hTreeCtrl, TVI_ROOT, TVGN_CHILD);

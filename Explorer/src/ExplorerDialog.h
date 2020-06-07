@@ -116,7 +116,7 @@ protected:
 		return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runSplitterProc(hwnd, Message, wParam, lParam));
 	};
 
-	virtual BOOL CALLBACK run_dlgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 	LPCTSTR GetNameStrFromCmd(UINT idButton);
 
@@ -185,6 +185,8 @@ private:
 	/* drag and drop values */
 	BOOL					_isScrolling;
 	BOOL					_isDnDStarted;
+
+	INT						_iDockedPos;
 };
 
 

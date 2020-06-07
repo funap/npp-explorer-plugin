@@ -323,13 +323,10 @@ extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam
    return TRUE;
 }
 
-
-#ifdef UNICODE
 extern "C" __declspec(dllexport) BOOL isUnicode()
 {
 	return TRUE;
 }
-#endif
 
 
 /***
@@ -371,16 +368,12 @@ void loadSettings(void)
 	_tcscat(iniFilePath, EXPLORER_INI);
 	if (::PathFileExists(iniFilePath) == FALSE)	{
 		HANDLE	hFile			= NULL;
-#ifdef UNICODE
 		BYTE	szBOM[]			= {0xFF, 0xFE};
 		DWORD	dwByteWritten	= 0;
-#endif
 			
 		if (hFile != INVALID_HANDLE_VALUE) {
 			hFile = ::CreateFile(iniFilePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-#ifdef UNICODE
 			::WriteFile(hFile, szBOM, sizeof(szBOM), &dwByteWritten, NULL);
-#endif
 			::CloseHandle(hFile);
 		}
 	}
@@ -950,11 +943,7 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
 
         // IPersistFile is using LPCOLESTR, so make sure that the string is Unicode
 		WCHAR wszTemp[MAX_PATH];
-#if !defined UNICODE
-        MultiByteToWideChar(CP_ACP, 0, lpszShortcutPath, -1, wszTemp, MAX_PATH);
-#else
         wcsncpy(wszTemp, lpszShortcutPath, MAX_PATH);
-#endif
 
         // Open the shortcut file and initialize it from its contents
         hRes = ipPersistFile->Load(wszTemp, STGM_READ); 

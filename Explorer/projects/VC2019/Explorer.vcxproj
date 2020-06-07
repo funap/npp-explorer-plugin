@@ -119,8 +119,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" "D:\Applications\Notepad++x86\plugins\Explorer</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -194,8 +193,7 @@
       <Culture>0x0407</Culture>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" "D:\Applications\Notepad++x86\plugins\Explorer</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -234,8 +232,7 @@
       <Culture>0x0407</Culture>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>
-      </Command>
+      <Command>copy "$(TargetPath)" "D:\Applications\Notepad++x64\plugins\Explorer</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -307,6 +304,7 @@
     <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h" />
     <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
     <ClInclude Include="..\..\src\MISC\NppInterface.h" />
+    <ClInclude Include="..\..\src\MISC\StringUtil.h" />
     <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
     <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
     <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />
@@ -315,6 +313,7 @@
     <ClInclude Include="..\..\src\PureDnD\DragDropImpl.h" />
     <ClInclude Include="..\..\src\QuickOpenDialog.h" />
     <ClInclude Include="..\..\src\resource.h" />
+    <ClInclude Include="..\..\src\version.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\res\explore.bmp" />
@@ -347,6 +346,7 @@
   <ItemGroup>
     <None Include="..\..\res\leftright.cur" />
     <None Include="..\..\res\updown.cur" />
+    <None Include="cpp.hint" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

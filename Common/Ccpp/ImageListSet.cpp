@@ -47,5 +47,3 @@ void ToolBarIcons::destroy()
 	_iconListVector[HLIST_DISABLE].destroy();
 	//_iconListVector[HLIST_UGLY].destroy();
 }
-
-

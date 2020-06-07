@@ -336,11 +336,7 @@ void TreeHelper::QuickSortItems(std::vector<ItemList>* vList, INT d, INT h)
 {
 	INT				i		= 0;
 	INT				j		= 0;
-#ifdef _UNICODE
 	std::wstring	str		= _T("");
-#else
-	std::string		str		= "";
-#endif
 
 	/* return on empty list */
 	if (d > h || d < 0)
@@ -593,3 +589,19 @@ BOOL TreeHelper::IsItemExpanded(HTREEITEM hItem)
 	return (BOOL)(TreeView_GetItemState(_hTreeCtrl, hItem, TVIS_EXPANDED) & TVIS_EXPANDED);
 }
 
+INT TreeHelper::GetChildrenCount(HTREEITEM item)
+{
+	INT count = 0;
+
+	TVITEM tvChildItem;
+	tvChildItem.mask = TVIF_PARAM;
+	HTREEITEM childItem = TreeView_GetChild(_hTreeCtrl, item);
+	while (childItem != nullptr) {
+		tvChildItem.hItem = childItem;
+		if (TreeView_GetItem(_hTreeCtrl, &tvChildItem)) {
+			++count;
+		}
+		childItem = TreeView_GetNextSibling(_hTreeCtrl, childItem);
+	}
+	return count;
+}

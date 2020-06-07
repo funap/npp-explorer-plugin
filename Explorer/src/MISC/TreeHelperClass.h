@@ -86,6 +86,7 @@ protected:
 	void SetParam(HTREEITEM hItem, LPARAM lParam);
 	BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);
 	BOOL IsItemExpanded(HTREEITEM hItem);
+	INT GetChildrenCount(HTREEITEM item);
 
 private:
 

@@ -15,78 +15,54 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef STATIC_DIALOG_H
-#define STATIC_DIALOG_H
+#pragma once
 
-//#include "resource.h"
 #include "Window.h"
-#include <TCHAR.h>
-#include "notepad_plus_msgs.h"
+#include "Notepad_plus_msgs.h"
 
-#include <uxtheme.h>
-
-typedef HRESULT (WINAPI * ETDTProc) (HWND, DWORD);
-
-enum PosAlign{ALIGNPOS_LEFT, ALIGNPOS_RIGHT, ALIGNPOS_TOP, ALIGNPOS_BOTTOM};
+enum class PosAlign { left, right, top, bottom };
 
 struct DLGTEMPLATEEX {
-      WORD   dlgVer;
-      WORD   signature;
-      DWORD  helpID;
-      DWORD  exStyle;
-      DWORD  style; 
-      WORD   cDlgItems;
-      short  x;
-      short  y;    
-      short  cx;
-      short  cy;
-      // The structure has more fields but are variable length
-} ;
+	WORD   dlgVer;
+	WORD   signature;
+	DWORD  helpID;
+	DWORD  exStyle;
+	DWORD  style;
+	WORD   cDlgItems;
+	short  x;
+	short  y;
+	short  cx;
+	short  cy;
+	// The structure has more fields but are variable length
+};
 
 class StaticDialog : public Window
 {
-public :
-	StaticDialog() : Window(), _rc(), _isModeles(false) {};
-	~StaticDialog(){
-		if (isCreated())
+public:
+	StaticDialog() : Window(), _rc() {};
+	~StaticDialog() {
+		if (isCreated()) {
+			::SetWindowLongPtr(_hSelf, GWLP_USERDATA, (long)NULL);	//Prevent run_dlgProc from doing anything, since its virtual
 			destroy();
+		}
 	};
-	virtual void create(int dialogID, bool isRTL = false, bool isModeles = true);
+	virtual void create(int dialogID, bool isRTL = false);
 
-    virtual bool isCreated() const {
+	virtual bool isCreated() const {
 		return (_hSelf != NULL);
 	};
 
 	void goToCenter();
-
-	void display(bool toShow = true) const;
-
-	POINT getLeftTopPoint(HWND hwnd/*, POINT & p*/) const {
-		RECT rc;
-		::GetWindowRect(hwnd, &rc);
-		POINT p;
-		p.x = rc.left;
-		p.y = rc.top;
-		::ScreenToClient(_hSelf, &p);
-		return p;
-	};
-
-    void destroy() {
-		if (_isModeles) {
-			::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, (WPARAM)_hSelf);
-		}
+	void destroy() {
+		::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, (WPARAM)_hSelf);
 		::DestroyWindow(_hSelf);
 	};
 
-protected :
+protected:
 	RECT _rc;
-	static BOOL CALLBACK dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual BOOL CALLBACK run_dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam) = 0;
+	static INT_PTR CALLBACK dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) = 0;
 
-    void alignWith(HWND handle, HWND handle2Align, PosAlign pos, POINT & point);
-	HGLOBAL makeRTLResource(int dialogID, DLGTEMPLATE **ppMyDlgTemplate);
-
-	bool		_isModeles;
+	void alignWith(HWND handle, HWND handle2Align, PosAlign pos, POINT& point);
+	HGLOBAL makeRTLResource(int dialogID, DLGTEMPLATE** ppMyDlgTemplate);
 };
-
-#endif //STATIC_DIALOG_H

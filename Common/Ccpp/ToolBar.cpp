@@ -370,4 +370,3 @@ bool ReBar::isIDTaken(int id)
 	}
 	return false;
 }
-
