@@ -31,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ToolTip.h"
 #include "resource.h"
 #include "NppInterface.h"
+#include "StringUtil.h"
 
 
 extern winVer gWinVersion;
@@ -219,7 +220,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 									/* nothing to do */
 								}
 								else if (((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS) && 
-									((pElem->uParam & FAVES_PARAM) == FAVES_PARAM_LINK))
+										 ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK))
 								{
 									DeleteChildren(hItem);
 									DrawSessionChildren(hItem);
@@ -255,6 +256,31 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 								NotifyNewFile();
 							}
 						}						
+						break;
+					}
+					case TVN_GETINFOTIP:
+					{
+						LPNMTVGETINFOTIP pTip = (LPNMTVGETINFOTIP)lParam;
+						HTREEITEM item = pTip->hItem;
+
+						PELEM	pElem = (PELEM)GetParam(item);
+						if (pElem) {
+							const BOOL isLink		= ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK);
+							const BOOL isSession	= ((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS);
+							if (isLink && isSession) {
+								TCHAR itemText[1024];
+								GetItemText(item, itemText, _countof(itemText));
+
+								INT count = GetChildrenCount(item);
+								if (count > 0) {
+									std::wstring tipText = StringUtil::format(L"'%s' has %d files", itemText, count);
+									// Copy the text to the infotip.
+									wcscpy_s(pTip->pszText, pTip->cchTextMax, tipText.c_str());
+									return TRUE;
+								}
+							}
+							return FALSE; // show default tooltip text
+						}
 						break;
 					}
 					case NM_CUSTOMDRAW:
