@@ -26,6 +26,7 @@
 #define NPP_INTERFACE_H_
 
 #include <string>
+#include <vector>
 
 #include "PluginInterface.h"
 
@@ -40,6 +41,7 @@ public:
 	static COLORREF		getEditorDefaultForegroundColor();
 	static COLORREF		getEditorDefaultBackgroundColor();
 	static void         setFocusToCurrentEdit();
+	static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
 
 	NppInterface(const NppInterface&)				= delete;
 	NppInterface& operator=(const NppInterface&)	= delete;
