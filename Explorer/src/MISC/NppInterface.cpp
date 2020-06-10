@@ -87,8 +87,6 @@ std::vector<std::wstring> NppInterface::getSessionFiles(const std::wstring &sess
 {
 	std::vector<std::wstring> sessionFiles;
 
-	LPTSTR* ppszFileNames = NULL;
-
 	/* get document count and create resources */
 	INT fileCount = (INT)::SendMessage(_nppData._nppHandle, NPPM_GETNBSESSIONFILES, 0, (LPARAM)sessionFilePath.c_str());
 
@@ -99,8 +97,8 @@ std::vector<std::wstring> NppInterface::getSessionFiles(const std::wstring &sess
 
 	/* get file names */
 	if (::SendMessage(_nppData._nppHandle, NPPM_GETSESSIONFILES, (WPARAM)fileNames.data(), (LPARAM)sessionFilePath.c_str())) {
-		for (int i = 0; i < fileCount; ++i) {
-			sessionFiles.push_back(std::wstring(fileNames[i]));
+		for (auto &&fileName : fileNames) {
+			sessionFiles.push_back(std::wstring(fileName));
 		}
 	}
 
