@@ -599,7 +599,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 		{
 			/* store the marked items */
 			for (UINT i = 0; i < _uMaxElements; i++) {
-				_vFileList[i].state = ListView_GetItemState(_hSelf, i, LVIS_SELECTED);
+				_vFileList[i].state = ListView_GetItemState(_hSelf, i, LVIS_FOCUSED | LVIS_SELECTED);
 			}
 				
 			INT iPos  = ((LPNMLISTVIEW)lParam)->iSubItem;
@@ -613,7 +613,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 
 			/* mark old items */
 			for (UINT i = 0; i < _uMaxElements; i++) {
-				ListView_SetItemState(_hSelf, i, _vFileList[i].state, 0xFF);
+				ListView_SetItemState(_hSelf, i, _vFileList[i].state, LVIS_FOCUSED | LVIS_SELECTED);
 			}
 			break;
 		}
