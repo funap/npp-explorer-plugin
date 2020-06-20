@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "ContextMenu.h"
 
+#include <Shlwapi.h>
+
+#include "Explorer.h"
 #include "FavesDialog.h"
 #include "nppexec_msgs.h"
 
@@ -34,6 +37,38 @@ extern ExProp	exProp;
 
 namespace {
 	constexpr UINT_PTR CONTEXT_MENU_SUBCLASS_ID = 1;
+	constexpr int CTX_MIN = 1;
+	constexpr int CTX_MAX = 10000;
+
+	enum eContextMenuID {
+		CTX_DELETE = 18,
+		CTX_RENAME = 19,
+		CTX_CUT = 25,
+		CTX_COPY = 26,
+		CTX_PASTE = 27,
+		CTX_NEW_FILE = CTX_MAX,
+		CTX_NEW_FOLDER,
+		CTX_FIND_IN_FILES,
+		CTX_OPEN,
+		CTX_OPEN_DIFF_VIEW,
+		CTX_OPEN_NEW_INST,
+		CTX_OPEN_CMD,
+		CTX_ADD_TO_FAVES,
+		CTX_FULL_PATH,
+		CTX_FULL_FILES,
+		CTX_GOTO_SCRIPT_PATH,
+		CTX_START_SCRIPT
+	};
+
+	struct OBJECT_DATA {
+		TCHAR* pszFullPath;
+		TCHAR	szFileName[MAX_PATH];
+		TCHAR	szTypeName[MAX_PATH];
+		UINT64	u64FileSize;
+		DWORD	dwFileAttributes;
+		int		iIcon;
+		FILETIME ftLastModified;
+	};
 }
 
 ContextMenu::ContextMenu() :
@@ -159,7 +194,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 
 	if (nullptr != _pidlArray) {
 		UINT uFlags = CMF_EXPLORE;
-		if (_strFirstElement.size()) {
+		if (!::PathIsRoot(_strFirstElement.c_str())) {
 			uFlags |= CMF_CANRENAME;
 		}
 		pContextMenu->QueryContextMenu(hShellMenu, 0, CTX_MIN, CTX_MAX, uFlags);
