@@ -23,7 +23,7 @@
     <ProjectGuid>{95304D7E-E07E-4714-8C36-A177F8CFCDFE}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Tests</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     <ProjectSubType>NativeUnitTestProject</ProjectSubType>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -77,15 +77,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(ProjectDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(ProjectDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -184,7 +192,7 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\VC2017\Explorer.vcxproj">
+    <ProjectReference Include="..\VC2019\Explorer.vcxproj">
       <Project>{ba345caf-580b-4786-8699-717f831d10cf}</Project>
     </ProjectReference>
   </ItemGroup>
