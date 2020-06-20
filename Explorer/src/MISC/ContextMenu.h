@@ -83,20 +83,19 @@ public:
 	ContextMenu();
 	~ContextMenu();
 
-	/* get menu */
-	HMENU	GetMenu (void);
-
 	void SetObjects(std::wstring strObject);
 	void SetObjects(std::vector<std::wstring> strArray);
 	UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:
-	static LRESULT CALLBACK HookWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+	static LRESULT CALLBACK defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+	LRESULT CALLBACK HookWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 	HRESULT SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast);
 
 	void	InvokeCommand(LPCONTEXTMENU pContextMenu, UINT idCommand);
-	BOOL	GetContextMenu(void ** ppContextMenu, int & iMenuType);
+	void	HandleCustomCommand(UINT idCommand);
+	LPCONTEXTMENU	GetContextMenu();
 	void	FreePIDLArray(LPITEMIDLIST * pidlArray);
 	UINT	GetPIDLSize(LPCITEMIDLIST pidl);
 	LPBYTE	GetPIDLPos(LPCITEMIDLIST pidl, int nPos);
@@ -112,7 +111,7 @@ private:
 	void	openFileInOtherView(void);
 	void	openFileInNewInstance(void);
 	void	openPrompt(void);
-	void	addToFaves(bool isFolder);
+	void	addToFaves(void);
 	void	addFullPathsCB(void);
 	void	addFileNamesCB(void);
 	bool	Str2CB(LPCTSTR str2cpy);
@@ -126,9 +125,11 @@ private:
 
 	SIZE_T					_nItems;
 	BOOL					_bDelete;
-	HMENU					_hMenu;
 	IShellFolder*			_psfFolder;
 	LPITEMIDLIST*			_pidlArray;	
+
+	IContextMenu2*			_contextMenu2;
+	IContextMenu3*			_contextMenu3;
 
 	std::wstring				_strFirstElement;
 	std::vector<std::wstring>	_strArray;

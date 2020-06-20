@@ -1,4 +1,4 @@
-/***********************************************************\
+﻿/***********************************************************\
 *	Original in MFC by Roman Engels		Copyright 2003		*
 *															*
 *	http://www.codeproject.com/shell/shellcontextmenu.asp	*
@@ -29,14 +29,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "nppexec_msgs.h"
 
 
-IContextMenu2 * g_IContext2		= NULL;
-IContextMenu3 * g_IContext3		= NULL;
-
-WNDPROC			g_OldWndProc	= NULL;
-
 /* global explorer params */
 extern ExProp	exProp;
 
+namespace {
+	constexpr UINT_PTR CONTEXT_MENU_SUBCLASS_ID = 1;
+}
 
 ContextMenu::ContextMenu() :
 	_hInst(nullptr),
@@ -44,9 +42,10 @@ ContextMenu::ContextMenu() :
 	_hWndParent(nullptr),
 	_nItems(0),
 	_bDelete(FALSE),
-	_hMenu(nullptr),
 	_psfFolder(nullptr),
-	_pidlArray(nullptr)
+	_pidlArray(nullptr),
+	_contextMenu2(nullptr),
+	_contextMenu3(nullptr)
 {
 }
 
@@ -59,42 +58,47 @@ ContextMenu::~ContextMenu()
 	FreePIDLArray(_pidlArray);
 	_pidlArray = NULL;
 
-	::DestroyMenu(_hMenu);
 }
-
 
 
 // this functions determines which version of IContextMenu is avaibale for those objects (always the highest one)
 // and returns that interface
-BOOL ContextMenu::GetContextMenu (void ** ppContextMenu, int & iMenuType)
+LPCONTEXTMENU ContextMenu::GetContextMenu()
 {
-	*ppContextMenu = NULL;
-	LPCONTEXTMENU icm1 = NULL;
+	LPCONTEXTMENU contextMenu = nullptr;
+	LPCONTEXTMENU contextMenu1 = nullptr;
 	
 	// first we retrieve the normal IContextMenu interface (every object should have it)
-	_psfFolder->GetUIObjectOf (NULL, (UINT)_nItems, (LPCITEMIDLIST *) _pidlArray, IID_IContextMenu, NULL, (void**) &icm1);
+	_psfFolder->GetUIObjectOf(NULL, (UINT)_nItems, (LPCITEMIDLIST *) _pidlArray, IID_IContextMenu, NULL, (void**) &contextMenu1);
 
-	if (icm1)
+	if (contextMenu1)
 	{	// since we got an IContextMenu interface we can now obtain the higher version interfaces via that
-		if (icm1->QueryInterface (IID_IContextMenu3, ppContextMenu) == NOERROR)
-			iMenuType = 3;
-		else if (icm1->QueryInterface (IID_IContextMenu2, ppContextMenu) == NOERROR)
-			iMenuType = 2;
+		if (SUCCEEDED(contextMenu1->QueryInterface(IID_IContextMenu3, (void**)&_contextMenu3))) {
+			contextMenu = _contextMenu3;
+		}
+		else if (SUCCEEDED(contextMenu1->QueryInterface(IID_IContextMenu2, (void**)&_contextMenu2))) {
+			contextMenu = _contextMenu2;
+		}
+		else {
+			// since no higher versions were found
+			// redirect ppContextMenu to version 1 interface
+			contextMenu = contextMenu1;
+		}
 
-		if (*ppContextMenu) 
-			icm1->Release(); // we can now release version 1 interface, cause we got a higher one
-		else 
-		{	
-			iMenuType = 1;
-			*ppContextMenu = icm1;	// since no higher versions were found
-		}							// redirect ppContextMenu to version 1 interface
+		if (contextMenu) {
+			// we can now release version 1 interface, cause we got a higher one
+			contextMenu1->Release();
+		}
 	}
-	else
-		return (FALSE);	// something went wrong
 	
-	return (TRUE); // success
+	return contextMenu;
 }
 
+LRESULT CALLBACK ContextMenu::defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+	auto* pfcmm = reinterpret_cast<ContextMenu*>(dwRefData);
+	return pfcmm->HookWndProc(hWnd, message, wParam, lParam);
+}
 
 LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -102,27 +106,34 @@ LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam
 	{ 
 		case WM_MENUCHAR:	// only supported by IContextMenu3
 		{
-			if (g_IContext3)
+			if (_contextMenu3)
 			{
 				LRESULT lResult = 0;
-				g_IContext3->HandleMenuMsg2 (message, wParam, lParam, &lResult);
+				_contextMenu3->HandleMenuMsg2 (message, wParam, lParam, &lResult);
 				return (lResult);
 			}
 			break;
 		}
 		case WM_DRAWITEM:
 		case WM_MEASUREITEM:
-		{
-			if (wParam) 
-				break; // if wParam != 0 then the message is not menu-related
-		}
 		case WM_INITMENUPOPUP:
 		{
-			if (g_IContext2)
-				g_IContext2->HandleMenuMsg (message, wParam, lParam);
-			else	// version 3
-				g_IContext3->HandleMenuMsg (message, wParam, lParam);
-			return (message == WM_INITMENUPOPUP ? 0 : TRUE); // inform caller that we handled WM_INITPOPUPMENU by ourself
+			HRESULT hr;
+			if (_contextMenu2) {
+				hr = _contextMenu2->HandleMenuMsg(message, wParam, lParam);
+			}
+			else {	// version 3
+				hr = _contextMenu3->HandleMenuMsg2(message, wParam, lParam, nullptr);
+			}
+
+			if (SUCCEEDED(hr)) {
+				if (message == WM_INITMENUPOPUP) {
+					return FALSE;
+				}
+				else { // (message == WM_MEASUREITEM || message == WM_DRAWITEM)
+					return TRUE;
+				}
+			}
 			break;
 		}
 		default:
@@ -130,7 +141,7 @@ LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam
 	}
 
 	// call original WndProc of window to prevent undefined bevhaviour of window
-	return ::CallWindowProc (g_OldWndProc, hWnd, message, wParam, lParam);
+	return ::DefSubclassProc(hWnd, message, wParam, lParam);
 }
 
 
@@ -139,50 +150,39 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	TCHAR	szText[64] = {0};
 
 	/* store notepad handle */
-	_hInst		= hInst;
-	_hWndNpp	= hWndNpp;
+	_hInst = hInst;
+	_hWndNpp = hWndNpp;
 	_hWndParent = hWndParent;
 
-	// to know which version of IContextMenu is supported
-	int iMenuType = 0;
+	HMENU hShellMenu = ::CreatePopupMenu();
+	if (nullptr == hShellMenu) {
+		return 0;
+	}
 
 	// common pointer to IContextMenu and higher version interface
-	LPCONTEXTMENU pContextMenu = NULL;
+	LPCONTEXTMENU pContextMenu = GetContextMenu();
+	if (nullptr == pContextMenu) {
+		return 0;
+	}
 
-	if (_pidlArray != NULL)
-	{
-		if (!_hMenu)
-		{
-			_hMenu = NULL;
-			_hMenu = ::CreateMenu();
+	if (nullptr != _pidlArray) {
+		UINT uFlags = CMF_EXPLORE;
+		if (_strFirstElement.size()) {
+			uFlags |= CMF_CANRENAME;
 		}
+		pContextMenu->QueryContextMenu(hShellMenu, 0, CTX_MIN, CTX_MAX, uFlags);
+	}
 
-		if (!GetContextMenu((void**) &pContextMenu, iMenuType))	
-			return (0);	// something went wrong
-
-		// lets fill out our popupmenu 
-		pContextMenu->QueryContextMenu( _hMenu,
-										::GetMenuItemCount(_hMenu),
-										CTX_MIN,
-										CTX_MAX,
-										CMF_EXPLORE | ((_strFirstElement.size() > 4)?CMF_CANRENAME:0));
- 
-		// subclass window to handle menurelated messages in ContextMenu 
-		g_OldWndProc	= NULL;
-		if (iMenuType > 1)	// only subclass if its version 2 or 3
-		{
-			g_OldWndProc = (WNDPROC)::SetWindowLongPtr (hWndParent, GWLP_WNDPROC, (LONG_PTR) HookWndProc);
-			if (iMenuType == 2)
-				g_IContext2 = (LPCONTEXTMENU2) pContextMenu;
-			else	// version 3
-				g_IContext3 = (LPCONTEXTMENU3) pContextMenu;
-		}
+	// only subclass if its version 2 or 3
+	BOOL bWindowSubclassed = FALSE;
+	if ((nullptr != _contextMenu2) || (nullptr != _contextMenu3)) {
+		bWindowSubclassed = SetWindowSubclass(hWndParent, defaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
 	}
 
 	/************************************* modification for notepad ***********************************/
 	HMENU		hMainMenu		= ::CreatePopupMenu();
 	HMENU		hMenuNppExec	= ::CreatePopupMenu();
-	bool		isFolder		= (_strFirstElement[_strFirstElement.size()-1] == '\\');
+	BOOL		isFolder		= ('\\' == _strFirstElement.back());
 	DWORD		dwExecVer		= 0;
 	DWORD		dwExecState		= 0;
 
@@ -203,21 +203,18 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	::SendMessage(hWndNpp, NPPM_MSGTOPLUGIN, (WPARAM)exProp.nppExecProp.szAppName, (LPARAM)&ci);
 
 	/* Add notepad menu items */
-	if (isFolder)
-	{
+	if (isFolder) {
 		::AppendMenu(hMainMenu, MF_STRING, CTX_NEW_FILE, _T("New File..."));
 		::AppendMenu(hMainMenu, MF_STRING, CTX_NEW_FOLDER, _T("New Folder..."));
 		::AppendMenu(hMainMenu, MF_STRING, CTX_FIND_IN_FILES, _T("Find in Files..."));
 	}
-	else
-	{
+	else {
 		::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN, _T("Open"));
 		::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_DIFF_VIEW, _T("Open in Other View"));
 		::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_NEW_INST, _T("Open in New Instance"));
 	}
 
-	if (dwExecVer >= 0x02F5)
-	{
+	if (dwExecVer >= 0x02F5) {
 		TCHAR					TEMP[MAX_PATH];
 		WIN32_FIND_DATA			Find			= {0};
 		HANDLE					hFind			= NULL;
@@ -271,10 +268,9 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	::AppendMenu(hMainMenu, MF_STRING, CTX_FULL_PATH, _T("Full File Path(s) to Clipboard"));
 	::AppendMenu(hMainMenu, MF_STRING, CTX_FULL_FILES, _T("File Name(s) to Clipboard"));
 
-	if (_pidlArray != NULL)
-	{
+	if (nullptr != _pidlArray) {
 		int				copyAt		= -1;
-		int				items		= ::GetMenuItemCount(_hMenu);
+		int				items		= ::GetMenuItemCount(hShellMenu);
 		MENUITEMINFO	info		= {0};
 
 		info.cbSize		= sizeof(MENUITEMINFO);
@@ -282,55 +278,45 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 
 		::AppendMenu(hMainMenu, MF_SEPARATOR, 0, 0);
 
-		if (normal)
-		{
+		if (normal) {
 			/* store all items in an seperate sub menu until "cut" (25) or "copy" (26) */
-			for (int i = 0; i < items; i++)
-			{
+			for (int i = 0; i < items; i++) {
 				info.cch		= 256;
 				info.dwTypeData	= szText;
-				if (copyAt == -1)
-				{
-					::GetMenuItemInfo(_hMenu, i, TRUE, &info);
-					if ((info.wID == CTX_CUT) || (info.wID == CTX_COPY) || (info.wID == CTX_PASTE))
-					{
+				if (copyAt == -1) {
+					::GetMenuItemInfo(hShellMenu, i, TRUE, &info);
+					if ((info.wID == CTX_CUT) || (info.wID == CTX_COPY) || (info.wID == CTX_PASTE)) {
 						copyAt	= i - 1;
 						::AppendMenu(hMainMenu, info.fType, info.wID, info.dwTypeData);
-						::DeleteMenu(_hMenu, i  , MF_BYPOSITION);
-						::DeleteMenu(_hMenu, i-1, MF_BYPOSITION);
+						::DeleteMenu(hShellMenu, i  , MF_BYPOSITION);
+						::DeleteMenu(hShellMenu, i-1, MF_BYPOSITION);
 					}
 				}
-				else
-				{
-					::GetMenuItemInfo(_hMenu, copyAt, TRUE, &info);
+				else {
+					::GetMenuItemInfo(hShellMenu, copyAt, TRUE, &info);
 					if ((MFT_STRING == info.fType) || (MFT_SEPARATOR == info.fType)) {
 						::AppendMenu(hMainMenu, info.fType, info.wID, info.dwTypeData);
 					}
-					::DeleteMenu(_hMenu, copyAt, MF_BYPOSITION);
+					::DeleteMenu(hShellMenu, copyAt, MF_BYPOSITION);
 				}
 			}
-
 			TCHAR	szMenuName[MAX_PATH];
 			if (!NLGetText(_hInst, _hWndNpp, _T("Standard Menu"), szMenuName, MAX_PATH)) {
 				_tcscpy(szMenuName, _T("Standard Menu"));
 			}
-			::InsertMenu(hMainMenu, 4, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT_PTR)_hMenu, szMenuName);
+			::InsertMenu(hMainMenu, 4, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT_PTR)hShellMenu, szMenuName);
 			::InsertMenu(hMainMenu, (dwExecVer >= 0x02F5 ? 7 : 6), MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 		}
-		else
-		{
+		else {
 			/* ignore all items until "cut" (25) or "copy" (26) */
-			for (int i = 0; i < items; i++)
-			{
+			for (int i = 0; i < items; i++) {
 				info.cch		= 256;
 				info.dwTypeData	= szText;
-				::GetMenuItemInfo(_hMenu, i, TRUE, &info);
-				if ((copyAt == -1) && ((info.wID == CTX_CUT) || (info.wID == CTX_COPY) || (info.wID == CTX_PASTE)))
-				{
+				::GetMenuItemInfo(hShellMenu, i, TRUE, &info);
+				if ((copyAt == -1) && ((info.wID == CTX_CUT) || (info.wID == CTX_COPY) || (info.wID == CTX_PASTE))) {
 					copyAt	= 0;
 				}
-				else if ((info.wID == 20) || (info.wID == 27))
-				{
+				else if ((info.wID == 20) || (info.wID == 27)) {
 					::AppendMenu(hMainMenu, info.fType, info.wID, info.dwTypeData);
 					::AppendMenu(hMainMenu, MF_SEPARATOR, 0, 0);
 				}
@@ -338,129 +324,96 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 			::DeleteMenu(hMainMenu, ::GetMenuItemCount(hMainMenu) - 1, MF_BYPOSITION);
 		}
 	}
-
 	/*****************************************************************************************************/
 
 	/* change language */
 	NLChangeMenu(_hInst, _hWndNpp, hMainMenu, _T("ContextMenu"), MF_BYCOMMAND);
-
 	UINT idCommand = ::TrackPopupMenu(hMainMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWndParent, NULL);
 
-	/* free resources */
-	::DestroyMenu(hMainMenu);
-	::DestroyMenu(hMenuNppExec);
-
-	if ((_pidlArray != NULL) && (g_OldWndProc != NULL)) // unsubclass
-	{
-		::SetWindowLongPtr(hWndParent, GWLP_WNDPROC, (LONG_PTR) g_OldWndProc);
+	if (bWindowSubclassed) {
+		::RemoveWindowSubclass(hWndParent, defaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID);
 	}
 
 	// see if returned idCommand belongs to shell menu entries but not for renaming (19)
-	if ((idCommand >= CTX_MIN) && (idCommand < CTX_MAX) && (idCommand != CTX_RENAME))	
-	{
-		InvokeCommand (pContextMenu, idCommand - CTX_MIN);	// execute related command
+	if ((idCommand >= CTX_MIN) && (idCommand < CTX_MAX) && (idCommand != CTX_RENAME)) {
+		InvokeCommand(pContextMenu, idCommand - CTX_MIN);	// execute related command
 	}
-	else
-	{
-
-	/************************************* modification for notepad ***********************************/
-
-		switch (idCommand)
-		{
-			case CTX_RENAME:
-			{
-				Rename();
-				break;
-			}
-			case CTX_NEW_FILE:
-			{
-				newFile();
-				break;
-			}
-			case CTX_NEW_FOLDER:
-			{
-				newFolder();
-				break;
-			}
-			case CTX_FIND_IN_FILES:
-			{
-				findInFiles();
-				break;
-			}
-			case CTX_OPEN:
-			{
-				openFile();
-				break;
-			}
-			case CTX_OPEN_DIFF_VIEW:
-			{
-				openFileInOtherView();
-				break;
-			}
-			case CTX_OPEN_NEW_INST:
-			{
-				openFileInNewInstance();
-				break;
-			}
-			case CTX_OPEN_CMD:
-			{
-				openPrompt();
-				break;
-			}
-			case CTX_ADD_TO_FAVES:
-			{
-				addToFaves(isFolder);
-				break;
-			}
-			case CTX_FULL_PATH:
-			{
-				addFullPathsCB();
-				break;
-			}
-			case CTX_FULL_FILES:
-			{
-				addFileNamesCB();
-				break;
-			}
-			case CTX_GOTO_SCRIPT_PATH:
-			{
-				openScriptPath(hInst);
-				break;
-			}
-			default: /* and greater */
-			{
-				if ((idCommand >= CTX_START_SCRIPT) && (idCommand <= (CTX_START_SCRIPT + _strNppScripts.size())))
-				{
-					startNppExec(hInst, idCommand - CTX_START_SCRIPT);
-				}
-				break;
-			}
-		}
-
-	/*****************************************************************************************************/
-
+	else {
+		HandleCustomCommand(idCommand);
 	}
 	
-	if (pContextMenu != NULL)
+	::DestroyMenu(hShellMenu);
+	::DestroyMenu(hMenuNppExec);
+	::DestroyMenu(hMainMenu);
+
+	if (pContextMenu != nullptr)
 		pContextMenu->Release();
-	g_IContext2 = NULL;
-	g_IContext3 = NULL;
+	_contextMenu2 = nullptr;
+	_contextMenu3 = nullptr;
 
 	return (idCommand);
 }
 
-
-void ContextMenu::InvokeCommand (LPCONTEXTMENU pContextMenu, UINT idCommand)
+void ContextMenu::InvokeCommand(LPCONTEXTMENU pContextMenu, UINT idCommand)
 {
-	CMINVOKECOMMANDINFO cmi = {0};
-	cmi.cbSize = sizeof (CMINVOKECOMMANDINFO);
-	cmi.lpVerb = (LPSTR) MAKEINTRESOURCE (idCommand);
+	CMINVOKECOMMANDINFOEX cmi = { 0 };
+	cmi.cbSize = sizeof(CMINVOKECOMMANDINFO);
+	cmi.hwnd = _hWndNpp;
+	cmi.fMask = CMIC_MASK_UNICODE;
+	cmi.lpVerb = MAKEINTRESOURCEA(idCommand);
+	cmi.lpVerbW = MAKEINTRESOURCEW(idCommand);
 	cmi.nShow = SW_SHOWNORMAL;
-	
-	pContextMenu->InvokeCommand (&cmi);
+
+	pContextMenu->InvokeCommand((LPCMINVOKECOMMANDINFO)&cmi);
 }
 
-
+void ContextMenu::HandleCustomCommand(UINT idCommand)
+{
+	switch (idCommand)
+	{
+	case CTX_RENAME:
+		Rename();
+		break;
+	case CTX_NEW_FILE:
+		newFile();
+		break;
+	case CTX_NEW_FOLDER:
+		newFolder();
+		break;
+	case CTX_FIND_IN_FILES:
+		findInFiles();
+		break;
+	case CTX_OPEN:
+		openFile();
+		break;
+	case CTX_OPEN_DIFF_VIEW:
+		openFileInOtherView();
+		break;
+	case CTX_OPEN_NEW_INST:
+		openFileInNewInstance();
+		break;
+	case CTX_OPEN_CMD:
+		openPrompt();
+		break;
+	case CTX_ADD_TO_FAVES:
+		addToFaves();
+		break;
+	case CTX_FULL_PATH:
+		addFullPathsCB();
+		break;
+	case CTX_FULL_FILES:
+		addFileNamesCB();
+		break;
+	case CTX_GOTO_SCRIPT_PATH:
+		openScriptPath(_hInst);
+		break;
+	default: /* and greater */
+		if ((idCommand >= CTX_START_SCRIPT) && (idCommand <= (CTX_START_SCRIPT + _strNppScripts.size()))) {
+			startNppExec(_hInst, idCommand - CTX_START_SCRIPT);
+		}
+		break;
+	}
+}
 
 void ContextMenu::SetObjects(std::wstring strObject)
 {
@@ -576,15 +529,6 @@ UINT ContextMenu::GetPIDLSize (LPCITEMIDLIST pidl)
 	}
 	return nSize;
 }
-
-HMENU ContextMenu::GetMenu()
-{
-	if (!_hMenu) {
-		_hMenu = ::CreatePopupMenu();	// create the popupmenu (its empty)
-	}
-	return (_hMenu);
-}
-
 
 // this is workaround function for the Shell API Function SHBindToParent
 // SHBindToParent is not available under Win95/98
@@ -837,7 +781,7 @@ void ContextMenu::openPrompt(void)
 	}
 }
 
-void ContextMenu::addToFaves(bool isFolder)
+void ContextMenu::addToFaves()
 {
 	/* test if only one file is selected */
 	if (_strArray.size() > 1)
@@ -848,7 +792,8 @@ void ContextMenu::addToFaves(bool isFolder)
 	else
 	{
 		extern FavesDialog	favesDlg;
-		favesDlg.AddToFavorties((WPARAM)isFolder, (LPTSTR)_strArray[0].c_str());
+		BOOL isFolder = ('\\' == _strArray[0].back());
+		favesDlg.AddToFavorties(isFolder, (LPTSTR)_strArray[0].c_str());
 	}
 }
 
