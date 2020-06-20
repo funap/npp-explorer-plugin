@@ -75,19 +75,16 @@ LPCONTEXTMENU ContextMenu::GetContextMenu()
 	{	// since we got an IContextMenu interface we can now obtain the higher version interfaces via that
 		if (SUCCEEDED(contextMenu1->QueryInterface(IID_IContextMenu3, (void**)&_contextMenu3))) {
 			contextMenu = _contextMenu3;
+			contextMenu1->Release();
 		}
 		else if (SUCCEEDED(contextMenu1->QueryInterface(IID_IContextMenu2, (void**)&_contextMenu2))) {
 			contextMenu = _contextMenu2;
+			contextMenu1->Release();
 		}
 		else {
 			// since no higher versions were found
 			// redirect ppContextMenu to version 1 interface
 			contextMenu = contextMenu1;
-		}
-
-		if (contextMenu) {
-			// we can now release version 1 interface, cause we got a higher one
-			contextMenu1->Release();
 		}
 	}
 	
@@ -96,16 +93,14 @@ LPCONTEXTMENU ContextMenu::GetContextMenu()
 
 LRESULT CALLBACK ContextMenu::defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
-	auto* pfcmm = reinterpret_cast<ContextMenu*>(dwRefData);
-	return pfcmm->HookWndProc(hWnd, message, wParam, lParam);
+	auto* cm = reinterpret_cast<ContextMenu*>(dwRefData);
+	return cm->HookWndProc(hWnd, message, wParam, lParam);
 }
 
 LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
-	{ 
+	switch (message) { 
 		case WM_MENUCHAR:	// only supported by IContextMenu3
-		{
 			if (_contextMenu3)
 			{
 				LRESULT lResult = 0;
@@ -113,7 +108,6 @@ LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam
 				return (lResult);
 			}
 			break;
-		}
 		case WM_DRAWITEM:
 		case WM_MEASUREITEM:
 		case WM_INITMENUPOPUP:
@@ -147,8 +141,6 @@ LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam
 
 UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal)
 {
-	TCHAR	szText[64] = {0};
-
 	/* store notepad handle */
 	_hInst = hInst;
 	_hWndNpp = hWndNpp;
@@ -269,6 +261,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	::AppendMenu(hMainMenu, MF_STRING, CTX_FULL_FILES, _T("File Name(s) to Clipboard"));
 
 	if (nullptr != _pidlArray) {
+		TCHAR			szText[MAX_PATH] = {0};
 		int				copyAt		= -1;
 		int				items		= ::GetMenuItemCount(hShellMenu);
 		MENUITEMINFO	info		= {0};
@@ -281,7 +274,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 		if (normal) {
 			/* store all items in an seperate sub menu until "cut" (25) or "copy" (26) */
 			for (int i = 0; i < items; i++) {
-				info.cch		= 256;
+				info.cch		= _countof(szText);
 				info.dwTypeData	= szText;
 				if (copyAt == -1) {
 					::GetMenuItemInfo(hShellMenu, i, TRUE, &info);
@@ -310,7 +303,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 		else {
 			/* ignore all items until "cut" (25) or "copy" (26) */
 			for (int i = 0; i < items; i++) {
-				info.cch		= 256;
+				info.cch		= _countof(szText);
 				info.dwTypeData	= szText;
 				::GetMenuItemInfo(hShellMenu, i, TRUE, &info);
 				if ((copyAt == -1) && ((info.wID == CTX_CUT) || (info.wID == CTX_COPY) || (info.wID == CTX_PASTE))) {
