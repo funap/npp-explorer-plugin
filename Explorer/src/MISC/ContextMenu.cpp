@@ -25,12 +25,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "ContextMenu.h"
 
+#include <algorithm>
+
 #include <Shlwapi.h>
 
 #include "Explorer.h"
 #include "FavesDialog.h"
 #include "nppexec_msgs.h"
-
+#include "NppInterface.h"
 
 /* global explorer params */
 extern ExProp	exProp;
@@ -54,6 +56,7 @@ namespace {
 		CTX_OPEN_NEW_INST,
 		CTX_OPEN_CMD,
 		CTX_ADD_TO_FAVES,
+		CTX_RELATIVE_PATH,
 		CTX_FULL_PATH,
 		CTX_FULL_FILES,
 		CTX_GOTO_SCRIPT_PATH,
@@ -292,6 +295,10 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 
 	::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, _T("Add to 'Favorites'..."));
+	std::wstring currentDirectory = NppInterface::getCurrentDirectory();
+	if (!currentDirectory.empty()) {
+		::AppendMenu(hMainMenu, MF_STRING, CTX_RELATIVE_PATH, _T("Relative File Path(s) to Clipboard"));
+	}
 	::AppendMenu(hMainMenu, MF_STRING, CTX_FULL_PATH, _T("Full File Path(s) to Clipboard"));
 	::AppendMenu(hMainMenu, MF_STRING, CTX_FULL_FILES, _T("File Name(s) to Clipboard"));
 
@@ -425,6 +432,9 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 		break;
 	case CTX_ADD_TO_FAVES:
 		addToFaves();
+		break;
+	case CTX_RELATIVE_PATH:
+		addRelativePathsCB();
 		break;
 	case CTX_FULL_PATH:
 		addFullPathsCB();
@@ -825,11 +835,34 @@ void ContextMenu::addToFaves()
 	}
 }
 
+void ContextMenu::addRelativePathsCB(void)
+{
+	const std::wstring currentDirectory = NppInterface::getCurrentDirectory();
+	if (currentDirectory.empty()) {
+		return;
+	}
+
+	WCHAR			relativePath[MAX_PATH];
+	std::wstring	relativePaths;
+	BOOL			isFirstItem = TRUE;
+	for (auto &&path : _strArray) {
+		if (isFirstItem) {
+			isFirstItem = FALSE;
+		}
+		else {
+			relativePaths += _T("\n");
+		}
+		::PathRelativePathTo(relativePath, currentDirectory.c_str(), FILE_ATTRIBUTE_DIRECTORY, path.c_str(), FILE_ATTRIBUTE_NORMAL);
+		relativePaths += relativePath;
+	}
+	Str2CB(relativePaths.c_str());
+}
+
 void ContextMenu::addFullPathsCB(void)
 {
 	std::wstring temp;
 	BOOL isFirstItem = TRUE;
-	for (auto &path : _strArray) {
+	for (auto &&path : _strArray) {
 		if (isFirstItem) {
 			isFirstItem = FALSE;
 		}
@@ -845,7 +878,7 @@ void ContextMenu::addFileNamesCB(void)
 {
 	std::wstring	temp;
 	BOOL isFirstItem = TRUE;
-	for (auto &path : _strArray) {
+	for (auto &&path : _strArray) {
 		SIZE_T	pos = path.rfind(_T("\\"), path.size() - 1);
 		if (std::wstring::npos != pos) {
 			if (isFirstItem) {

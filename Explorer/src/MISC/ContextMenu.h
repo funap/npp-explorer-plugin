@@ -77,6 +77,7 @@ private:
 	void	openFileInNewInstance(void);
 	void	openPrompt(void);
 	void	addToFaves(void);
+	void	addRelativePathsCB(void);
 	void	addFullPathsCB(void);
 	void	addFileNamesCB(void);
 	bool	Str2CB(LPCTSTR str2cpy);

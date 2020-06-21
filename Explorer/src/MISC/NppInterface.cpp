@@ -109,3 +109,12 @@ std::vector<std::wstring> NppInterface::getSessionFiles(const std::wstring &sess
 
 	return sessionFiles;
 }
+
+std::wstring NppInterface::getCurrentDirectory()
+{
+	WCHAR directoryPath[MAX_PATH];
+	if (::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTDIRECTORY, std::size(directoryPath), (LPARAM)&directoryPath[0])) {
+		return std::wstring(directoryPath);
+	}
+	return std::wstring();
+}

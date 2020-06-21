@@ -42,6 +42,7 @@ public:
 	static COLORREF		getEditorDefaultBackgroundColor();
 	static void         setFocusToCurrentEdit();
 	static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
+	static std::wstring getCurrentDirectory();
 
 	NppInterface(const NppInterface&)				= delete;
 	NppInterface& operator=(const NppInterface&)	= delete;
@@ -54,4 +55,3 @@ private:
 };
 
 #endif // NPP_INTERFACE_H_
-
