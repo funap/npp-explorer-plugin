@@ -1920,13 +1920,17 @@ void FileList::PushDir(LPCTSTR pszPath)
 
 			if (_tcsicmp(pszPath, _itrPos->strPath.c_str()) != 0) {
 				_vDirStack.push_back(StackInfo);
-				_itrPos = _vDirStack.end() - 1;
 			}
 		}
 		else {
 			_vDirStack.push_back(StackInfo);
-			_itrPos = _vDirStack.end() - 1;
 		}
+
+		while (_pExProp->maxHistorySize + 1 < _vDirStack.size()) {
+			_vDirStack.erase(_vDirStack.begin());
+		}
+		_itrPos = _vDirStack.end() - 1;
+
 	}
 
 	UpdateToolBarElements();

@@ -234,7 +234,8 @@ struct ExProp{
 		uTimeout(0),
 		bUseSystemIcons(false),
 		nppExecProp(),
-        cphProgram()
+		cphProgram(),
+		maxHistorySize(0)
 	{
 	}
 	/* pointer to global current path */
@@ -260,7 +261,8 @@ struct ExProp{
 	UINT			uTimeout;
 	BOOL			bUseSystemIcons;
 	NppExecProp		nppExecProp;
-    CphProgram      cphProgram;
+	CphProgram		cphProgram;
+	SIZE_T			maxHistorySize;
 };
 
 

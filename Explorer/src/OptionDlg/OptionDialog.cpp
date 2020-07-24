@@ -207,7 +207,8 @@ void OptionDlg::SetParams(void)
 	::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath);
 
 	TCHAR	TEMP[6];
-	::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, _itot(_pProp->uTimeout, TEMP, 10));
+	::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,		_itot(_pProp->uTimeout, TEMP, 10));
+	::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,	_itot(_pProp->maxHistorySize, TEMP, 10));
 
 	::SetDlgItemText(_hSelf, IDC_EDIT_CPH, _pProp->cphProgram.szAppName);
 }
@@ -258,6 +259,10 @@ BOOL OptionDlg::GetParams(void)
 	TCHAR	TEMP[MAX_PATH];
 	::GetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, TEMP, 6);
 	_pProp->uTimeout = (UINT)_ttoi(TEMP);
+
+	::GetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE, TEMP, 6);
+	_pProp->maxHistorySize = (UINT)_ttoi(TEMP);
+
 
 	::GetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, _pProp->nppExecProp.szAppName, MAX_PATH);
 	::GetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath, MAX_PATH);
