@@ -206,9 +206,8 @@ void OptionDlg::SetParams(void)
 	::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, _pProp->nppExecProp.szAppName);
 	::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath);
 
-	TCHAR	TEMP[6];
-	::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,		_itot(_pProp->uTimeout, TEMP, 10));
-	::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,	_itot(_pProp->maxHistorySize, TEMP, 10));
+	::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,		std::to_wstring(_pProp->uTimeout).c_str());
+	::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,	std::to_wstring(_pProp->maxHistorySize).c_str());
 
 	::SetDlgItemText(_hSelf, IDC_EDIT_CPH, _pProp->cphProgram.szAppName);
 }
