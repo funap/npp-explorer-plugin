@@ -48,6 +48,7 @@ public:
 
 	void onIndexBuildCompleted() const override;
 	void onIndexBuildCanceled() const override;
+	void openSelectedItem() const;
 protected :
 	VOID calcMetrics();
 	BOOL onDrawItem(LPDRAWITEMSTRUCT drawItem);
@@ -56,6 +57,10 @@ protected :
 	LRESULT APIENTRY runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 private:
+	void setDefaultPosition();
+	void populateResultList();
+
+
 	INT _itemMarginLeft;
 	INT _itemTextHeight;
 	INT _itemTextExternalLeading;
@@ -67,9 +72,7 @@ private:
 	std::wstring												_pattern;
 	std::vector<std::pair<int, const std::filesystem::path*>>	_results;
 	RECT														_progressBarRect;
-
-	void setDefaultPosition();
-	void populateResultList();
+	BOOL														_shouldAutoClose;
 };
 
 

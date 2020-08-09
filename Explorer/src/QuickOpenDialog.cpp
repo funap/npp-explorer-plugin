@@ -82,7 +82,8 @@ QuickOpenDlg::QuickOpenDlg() :
 	_direcotryIndex(),
 	_pattern(),
 	_results(),
-	_progressBarRect()
+	_progressBarRect(),
+	_shouldAutoClose(true)
 {
 }
 
@@ -123,7 +124,7 @@ void QuickOpenDlg::show()
 
 	setDefaultPosition();
 	display(true);
-	::PostMessage(_hSelf, WM_NEXTDLGCTL, (WPARAM)_hWndEdit, TRUE);
+	::SetFocus(_hWndEdit);
 
 	if (_direcotryIndex.isIndexing()) {
 		::SetTimer(_hSelf, UPDATE_PROGRESSBAR, 33, nullptr);
@@ -334,12 +335,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 			// FALLTHROUGH
 		case IDOK:	
 		{
-			const int selection = (INT)::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, LB_GETCURSEL, 0, 0);
-			if (0 <= selection) {
-				if (static_cast<SIZE_T>(selection) < _results.size()) {
-					NppInterface::doOpen(_results[selection].second->wstring());
-				}
-			}
+			openSelectedItem();
 			close();
 			ret = TRUE;
 			break;
@@ -371,7 +367,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 		}
 		break;
 	case WM_ACTIVATE:
-		if (WA_INACTIVE == LOWORD(wParam)) {
+		if (_shouldAutoClose && (WA_INACTIVE == LOWORD(wParam))) {
 			close();
 		}
 		break;
@@ -438,6 +434,18 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		case VK_NEXT:	// Page Down
 			// transfer to listview
 			return ::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, WM_KEYDOWN, wParam, lParam);
+		case VK_RIGHT:{
+			int editSel		= LOWORD(Edit_GetSel(_hWndEdit));
+			int editLength	= Edit_GetTextLength(_hWndEdit);
+			if (editSel == editLength) {
+				_shouldAutoClose = false;
+				openSelectedItem();
+				_shouldAutoClose = true;
+				::SetFocus(_hWndEdit);
+				return TRUE;
+			}
+			break;
+		}
 		default:
 			break;
 		}
@@ -446,4 +454,14 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 		break;
 	}
 	return ::CallWindowProc(_defaultEditProc, hWnd, uMsg, wParam, lParam);
+}
+
+void QuickOpenDlg::openSelectedItem() const
+{
+	const int index = (int)::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, LB_GETCURSEL, 0, 0);
+	if (0 <= index) {
+		if (static_cast<SIZE_T>(index) < _results.size()) {
+			NppInterface::doOpen(_results[index].second->wstring());
+		}
+	}
 }
