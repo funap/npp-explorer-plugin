@@ -538,6 +538,22 @@ BOOL TreeHelper::GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize)
 	return bRet;
 }
 
+std::wstring TreeHelper::GetItemText(HTREEITEM hItem) const
+{
+	auto buffer = std::make_unique<wchar_t[]>(MAX_PATH);
+	TVITEM			tvi;
+	tvi.mask		= TVIF_TEXT;
+	tvi.hItem		= hItem;
+	tvi.pszText		= buffer.get();
+	tvi.cchTextMax	= MAX_PATH;
+
+	BOOL bRet = TreeView_GetItem(_hTreeCtrl, &tvi);
+	if (!bRet) {
+		return std::wstring();
+	}
+	return std::wstring(buffer.get());
+}
+
 LPARAM TreeHelper::GetParam(HTREEITEM hItem)
 {
 	TVITEM			tvi;

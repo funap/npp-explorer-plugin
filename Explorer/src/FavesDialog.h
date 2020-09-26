@@ -140,7 +140,7 @@ protected:
 			default: return LINK_DLG_NONE;
 		}
 	};
-
+	BOOL OpenTreeViewItem(const HTREEITEM hItem);
 
 public:
 	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) {};

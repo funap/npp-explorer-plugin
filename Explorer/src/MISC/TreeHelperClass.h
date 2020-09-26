@@ -82,6 +82,7 @@ protected:
 	BOOL UpdateItem(HTREEITEM hItem, LPCTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
 	void DeleteChildren(HTREEITEM parentItem);
 	BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
+	std::wstring GetItemText(HTREEITEM hItem) const;
 	LPARAM GetParam(HTREEITEM hItem);
 	void SetParam(HTREEITEM hItem, LPARAM lParam);
 	BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);

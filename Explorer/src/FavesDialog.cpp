@@ -477,12 +477,25 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 
 LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	switch (Message)
-	{
+	switch (Message) {
+	case WM_GETDLGCODE:
+		switch (wParam) {
+		case VK_RETURN:
+			return DLGC_WANTALLKEYS;
+		default:
+			break;
+		}
+		break;
 	case WM_KEYDOWN:
 		if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
 			openQuickOpenDlg();
 			return TRUE;
+		}
+		if (wParam == VK_RETURN) {
+			HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+			if (OpenTreeViewItem(hItem)) {
+				return TRUE;
+			}
 		}
 		break;
 	case WM_LBUTTONDBLCLK:
@@ -493,34 +506,8 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 		hti.pt.y = GET_Y_LPARAM(lParam);
 
 		HTREEITEM hItem = TreeView_HitTest(_hTreeCtrl, &hti);
-
-		if (hItem != NULL)
-		{
-			PELEM	pElem = (PELEM)GetParam(hItem);
-
-			if (pElem != NULL)
-			{
-				/* open link only when double click on bitmap or label */
-				if (hti.flags & TVHT_ONITEM)
-				{
-					_peOpenLink = pElem;
-					::PostMessage(_hSelf, EXM_OPENLINK, 0, 0);
-				}
-
-				if ((!(pElem->uParam & FAVES_PARAM_MAIN)) &&
-					((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS))
-				{
-					return TRUE;
-				}
-			}
-			else
-			{
-				/* session file will be opened */
-				TCHAR	TEMP[MAX_PATH];
-					
-				GetItemText(hItem, TEMP, MAX_PATH);
-				::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)TEMP);
-			}
+		if ((hti.flags & TVHT_ONITEM) && OpenTreeViewItem(hItem)) {
+			return TRUE;
 		}
 		break;
 	}
@@ -529,6 +516,28 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 	}
 	
 	return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
+}
+
+BOOL FavesDialog::OpenTreeViewItem(const HTREEITEM hItem)
+{
+	if (hItem) {
+		PELEM	pElem = (PELEM)GetParam(hItem);
+		if (pElem) {
+			if (pElem->uParam & FAVES_PARAM_LINK) {
+				_peOpenLink = pElem;
+				::PostMessage(_hSelf, EXM_OPENLINK, 0, 0);
+				return TRUE;
+			}
+			return FALSE;
+		}
+		// session file
+		else {
+			std::wstring path = GetItemText(hItem);
+			NppInterface::doOpen(path);
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
 
 void FavesDialog::tb_cmd(UINT message)
