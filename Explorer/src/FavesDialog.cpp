@@ -497,6 +497,10 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 				return TRUE;
 			}
 		}
+		if (wParam == VK_DELETE) {
+			HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+			DeleteItem(hItem);
+		}
 		break;
 	case WM_LBUTTONDBLCLK:
 	{
@@ -1225,7 +1229,7 @@ void FavesDialog::DeleteItem(HTREEITEM hItem)
 	HTREEITEM	hItemParent	= TreeView_GetParent(_hTreeCtrl, hItem);
 	PELEM		pElem		= (PELEM)GetParam(hItem);
 
-	if (!(pElem->uParam & FAVES_PARAM_MAIN))
+	if (pElem && !(pElem->uParam & FAVES_PARAM_MAIN))
 	{
 		/* delete child elements */
 		DeleteRecursive(pElem);
