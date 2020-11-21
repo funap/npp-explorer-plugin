@@ -267,17 +267,40 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 						if (pElem) {
 							const BOOL isLink		= ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK);
 							const BOOL isSession	= ((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS);
+
+							// show full file path
+							std::wstring tipText;
+							if (isLink) {
+								tipText += pElem->pszLink;
+							}
+
 							if (isLink && isSession) {
 								TCHAR itemText[1024];
 								GetItemText(item, itemText, _countof(itemText));
 
 								INT count = GetChildrenCount(item);
 								if (count > 0) {
-									std::wstring tipText = StringUtil::format(L"'%s' has %d files", itemText, count);
-									// Copy the text to the infotip.
-									wcscpy_s(pTip->pszText, pTip->cchTextMax, tipText.c_str());
-									return TRUE;
+									// Check non-existent files
+									auto sessionFiles = NppInterface::getSessionFiles(pElem->pszLink);
+									int nonExistentFileCount = 0;
+									for (auto &&file : sessionFiles) {
+										if (!::PathFileExists(file.c_str())) {
+											++nonExistentFileCount;
+										}
+									}
+
+									// Add the text to the infotip.
+									if (nonExistentFileCount > 0) {
+										tipText += StringUtil::format(L"\n%d out of %d files are non-existent!", nonExistentFileCount, count);
+									}
+									else {
+										tipText += StringUtil::format(L"\nThis session has %d files.", count);
+									}
 								}
+							}
+							if (!tipText.empty()) {
+								wcscpy_s(pTip->pszText, pTip->cchTextMax, tipText.c_str());
+								return TRUE;
 							}
 							return FALSE; // show default tooltip text
 						}
