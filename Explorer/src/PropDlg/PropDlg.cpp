@@ -273,10 +273,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 
 					if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0))
 					{
-						TCHAR	pszGroupName[MAX_PATH];
-
-						GetFolderPathName(TreeView_GetSelection(_hTreeCtrl), pszGroupName);
-						_strGroupName = pszGroupName;
+						_groupPath = GetItemPathFromRoot(TreeView_GetSelection(_hTreeCtrl));
 
 						::EndDialog(_hSelf, TRUE);
 						return TRUE;
@@ -415,9 +412,9 @@ void PropDlg::setTreeElements(PELEM pElem, INT iUImgPos, BOOL bWithLink)
 	_seeDetails = TRUE;
 }
 
-LPCTSTR PropDlg::getGroupName(void)
+std::vector<std::wstring> PropDlg::getGroupPath(void) const
 {
-	return _strGroupName.c_str();
+	return _groupPath;
 }
 
 void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
@@ -467,29 +464,3 @@ void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
 		}
 	}
 }
-
-
-void PropDlg::GetFolderPathName(HTREEITEM hItem, LPTSTR name)
-{
-	/* return if current folder is root folder */
-	if (hItem == TVI_ROOT)
-	{
-		return;
-	}
-
-	TCHAR	TEMP[MAX_PATH];
-	TCHAR	szName[MAX_PATH];
-
-	/* delete folder path name */
-	name[0]	= '\0';
-
-	/* join elements together */
-	while (hItem != NULL)
-	{
-		GetItemText(hItem, szName, MAX_PATH);
-		_stprintf(TEMP, _T("%s %s"), szName, name);
-		_tcscpy(name, TEMP);
-		hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_PARENT);
-	}
-}
-

@@ -1836,40 +1836,6 @@ void ExplorerDialog::UpdatePath(void)
 	_FileList.ToggleStackRec();
 }
 
-void ExplorerDialog::GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName)
-{
-	/* return if current folder is root folder */
-	if (currentItem == TVI_ROOT)
-		return;
-
-	/* delete folder path name */
-	folderPathName[0]	= '\0';
-
-	/* create temp resources */
-	TCHAR	TEMP[MAX_PATH] = {0};
-	TCHAR	szName[MAX_PATH] = {0};;
-
-	/* join elements together */
-	while (currentItem != NULL)
-	{
-		GetItemText(currentItem, szName, MAX_PATH);
-		_stprintf(TEMP, _T("%s\\%s"), szName, folderPathName);
-		_tcscpy(folderPathName, TEMP);
-		currentItem = TreeView_GetNextItem(_hTreeCtrl, currentItem, TVGN_PARENT);
-	}
-
-	if (_tcslen(folderPathName) > 3)
-	{
-		/* remove drive name */
-		_tcscpy(TEMP, folderPathName);
-		int i;
-		for (i = 3; TEMP[i] != '\\'; i++);
-
-		_stprintf(folderPathName, _T("%c:%s"), TEMP[0], &TEMP[i]);
-	}
-}
-
-
 void ExplorerDialog::NotifyNewFile(void)
 {
 	if (isCreated())

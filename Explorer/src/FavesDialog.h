@@ -97,8 +97,8 @@ protected:
 
 	void InitialDialog(void);
 
-	HTREEITEM GetTreeItem(LPCTSTR pszGroupName);
-	PELEM GetElementPointer(LPCTSTR pszGroupName);
+	HTREEITEM GetTreeItem(const std::vector<std::wstring> &groupPath) const;
+	PELEM GetElementPointer(const std::vector<std::wstring> &groupPath);
 	void CopyItem(HTREEITEM hItem);
 	void CutItem(HTREEITEM hItem);
 	void PasteItem(HTREEITEM hItem);
@@ -141,9 +141,6 @@ protected:
 		}
 	};
 	BOOL OpenTreeViewItem(const HTREEITEM hItem);
-
-public:
-	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) {};
 
 protected:
 

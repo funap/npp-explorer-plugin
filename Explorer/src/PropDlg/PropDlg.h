@@ -51,29 +51,25 @@ public:
     virtual void destroy() {};
 
 	void setTreeElements(PELEM pElem, INT iUserImagePos, BOOL bWithLink = FALSE);
-	LPCTSTR getGroupName(void);
+	std::vector<std::wstring> getGroupPath(void) const;
 
 protected :
 	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
 	void DrawChildrenOfItem(HTREEITEM hParentItem);
 
-public:
-	void GetFolderPathName(HTREEITEM hItem, LPTSTR name);
-
 private:
-	LPTSTR			_pName;
-	LPTSTR			_pLink;
-	LPTSTR			_pDesc;
-	LinkDlg			_linkDlg;
-	BOOL			_fileMustExist;
-	BOOL			_bWithLink;
-	BOOL			_seeDetails;
-	PELEM			_pElem;
-	INT				_iUImgPos;
-	std::wstring	_strGroupName;
-
-	TCHAR			_szDetails[20];
+	LPTSTR						_pName;
+	LPTSTR						_pLink;
+	LPTSTR						_pDesc;
+	LinkDlg						_linkDlg;
+	BOOL						_fileMustExist;
+	BOOL						_bWithLink;
+	BOOL						_seeDetails;
+	PELEM						_pElem;
+	INT							_iUImgPos;
+	std::vector<std::wstring>	_groupPath;
+	TCHAR						_szDetails[20];
 };
 
 

@@ -74,7 +74,9 @@ protected:
 
 	void UseOverlayThreading(void);
 
-	virtual void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) = 0;
+	std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
+	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) const;
+	std::wstring GetFolderPathName(HTREEITEM currentItem) const;
 	void DrawChildren(HTREEITEM parentItem);
 	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE );
 	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);

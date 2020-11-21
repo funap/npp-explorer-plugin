@@ -139,7 +139,6 @@ protected:
 	void tb_cmd(WPARAM message);
 	void tb_not(LPNMTOOLBAR lpnmtb);
 
-	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName);
 	BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
 
 private:

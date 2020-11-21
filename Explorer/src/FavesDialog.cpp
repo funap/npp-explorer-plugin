@@ -578,7 +578,7 @@ void FavesDialog::tb_cmd(UINT message)
 		}
 		case IDM_EX_LINK_NEW_FILE:
 		{
-			TCHAR	TEMP[MAX_PATH];
+			TCHAR	TEMP[MAX_PATH] = {};
 
 			::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
 
@@ -590,7 +590,7 @@ void FavesDialog::tb_cmd(UINT message)
 		}
 		case IDM_EX_LINK_NEW_FOLDER:
 		{
-			TCHAR	TEMP[MAX_PATH];
+			TCHAR	TEMP[MAX_PATH] = {};
 
 			::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
 
@@ -669,70 +669,42 @@ void FavesDialog::InitialDialog(void)
 }
 
 
-HTREEITEM FavesDialog::GetTreeItem(LPCTSTR pszGroupName)
+HTREEITEM FavesDialog::GetTreeItem(const std::vector<std::wstring> &groupPath) const
 {
 	if (isCreated())
 	{
-		HTREEITEM	hItem		= TVI_ROOT;
-		LPTSTR		ptr			= NULL;
-		TCHAR		pszName[MAX_PATH];
-		TCHAR		TEMP[MAX_PATH];
-
-		/* copy the group name */
-		_tcscpy(TEMP, pszGroupName);
-
-		ptr = _tcstok(TEMP, _T(" "));
-
-		/* no need to compare if tree item is NULL, it will never happen */
-		while (ptr != NULL)
-		{
-			/* get child item */
+		HTREEITEM	hItem = TVI_ROOT;
+		std::wstring itemText;
+		for (const std::wstring &currentPathItem : groupPath) {
 			hItem = TreeView_GetChild(_hTreeCtrl, hItem);
-			GetItemText(hItem, pszName, MAX_PATH);
+			itemText = GetItemText(hItem);
 
-			while (_tcscmp(ptr, pszName) != 0)
-			{
+			while (hItem && (itemText != currentPathItem)) {
 				hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT);
-				GetItemText(hItem, pszName, MAX_PATH);
+				itemText = GetItemText(hItem);
 			}
-			/* test next element */
-			ptr = _tcstok(NULL, _T(" "));
 		}
+
 		return hItem;
 	}
-	
-	return NULL;
+
+	return nullptr;
 }
 
 
-PELEM FavesDialog::GetElementPointer(LPCTSTR pszGroupName)
+PELEM FavesDialog::GetElementPointer(const std::vector<std::wstring> &groupPath)
 {
-	LPTSTR			ptr			= NULL;
-	ELEM_ITR		elem_itr	= _vDB.begin();
-	ELEM_ITR		elem_end	= _vDB.end();
-	TCHAR			TEMP[MAX_PATH];
+	ELEM_ITR	elem_itr = _vDB.begin();
+	ELEM_ITR	elem_end = _vDB.end();
 
-	/* copy the group name */
-	_tcscpy(TEMP, pszGroupName);
-
-	ptr = _tcstok(TEMP, _T(" "));
-
-	/* find element */
-	while (ptr != NULL)
-	{
-		for (; elem_itr != elem_end; elem_itr++)
-		{
-			if (_tcscmp(elem_itr->name.c_str(), ptr) == 0)
-			{
+	for (size_t i = 0; i < groupPath.size(); i++) {
+		for (; elem_itr != elem_end; ++elem_itr) {
+			if (elem_itr->name == groupPath[i]){
 				break;
 			}
 		}
 
-		/* test next element */
-		ptr = _tcstok(NULL, _T(" "));
-
-		if (ptr != NULL)
-		{
+		if (i < groupPath.size() - 1) {
 			elem_end = elem_itr->vElements.end();
 			elem_itr = elem_itr->vElements.begin();
 		}
@@ -870,8 +842,8 @@ void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
 		if (dlgProp.doDialog(pszName, pszLink, pszDesc, MapPropDlg(root)) == TRUE)
 		{
 			/* get selected item */
-			LPCTSTR		pszGroupName = dlgProp.getGroupName();
-			hItem = GetTreeItem(pszGroupName);
+			const auto groupPath = dlgProp.getGroupPath();
+			hItem = GetTreeItem(groupPath);
 
 			/* test if name not exist and link exist */
 			if (DoesNameNotExist(hItem, NULL, pszName) == TRUE)
@@ -886,7 +858,7 @@ void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
 				element.vElements.clear();
 
 				/* push element back */
-				PELEM	pElem	= GetElementPointer(pszGroupName);
+				PELEM	pElem	= GetElementPointer(groupPath);
 				pElem->vElements.push_back(element);
 			}
 		}
@@ -965,11 +937,11 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
 			if (hItem == NULL)
 			{
 				/* get group name */
-				LPCTSTR		pszGroupName = dlgProp.getGroupName();
-				hParentItem = GetTreeItem(pszGroupName);
+				const auto groupPath = dlgProp.getGroupPath();
+				hParentItem = GetTreeItem(groupPath);
 
 				/* get pointer by name */
-				pElem = GetElementPointer(pszGroupName);
+				pElem = GetElementPointer(groupPath);
 
 				if (pElem->uParam & FAVES_PARAM_LINK)
 				{
@@ -1626,7 +1598,7 @@ void FavesDialog::UpdateNode(HTREEITEM hItem, BOOL haveChildren)
 {
 	if (hItem != NULL)
 	{
-		TCHAR	TEMP[MAX_PATH];
+		TCHAR	TEMP[MAX_PATH] = {};
 
 		TVITEM			tvi;
 		tvi.mask		= TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM;

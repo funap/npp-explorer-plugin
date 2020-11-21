@@ -625,3 +625,63 @@ INT TreeHelper::GetChildrenCount(HTREEITEM item)
 	}
 	return count;
 }
+
+std::vector<std::wstring> TreeHelper::GetItemPathFromRoot(HTREEITEM currentItem) const
+{
+	std::vector<std::wstring> result;
+
+	if (currentItem != TVI_ROOT) {
+		while (currentItem != nullptr) {
+			result.emplace_back(GetItemText(currentItem));
+			currentItem = TreeView_GetNextItem(_hTreeCtrl, currentItem, TVGN_PARENT);
+		}
+	}
+
+	std::reverse(std::begin(result), std::end(result));
+	return result;
+}
+
+void TreeHelper::GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) const
+{
+	std::vector<std::wstring> paths = GetItemPathFromRoot(currentItem);
+
+	folderPathName[0] = '\0';
+
+	for (size_t i = 0; i < paths.size(); i++) {
+		if (i == 0) {
+			_stprintf(folderPathName, _T("%c:"), paths[i][0]);
+		}
+		else {
+			_stprintf(folderPathName, _T("%s\\%s"), folderPathName, paths[i].c_str());
+		}
+	}
+	if (folderPathName[0] != '\0') {
+		PathRemoveBackslash(folderPathName);
+		_stprintf(folderPathName, _T("%s\\"), folderPathName);
+	}
+}
+
+std::wstring TreeHelper::GetFolderPathName(HTREEITEM currentItem) const
+{
+	std::wstring result;
+	std::vector<std::wstring> paths = GetItemPathFromRoot(currentItem);
+
+	bool firstItem = true;
+	for (const auto &path : paths) {
+		if (firstItem) {
+			result = path.front() + L":";
+			firstItem = false;
+		}
+		else {
+			result += path;
+		}
+	}
+
+	if (!result.empty()) {
+		if ('\\' != result.back()) {
+			result += L"\\";
+		}
+	}
+
+	return result;
+}
