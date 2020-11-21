@@ -88,10 +88,10 @@ static LPCTSTR cFavesItemNames[11] = {
 
 
 struct ItemElement {
-	UINT						uParam;
-	LPTSTR						pszName;
-	LPTSTR						pszLink;
-	std::vector<ItemElement>	vElements;
+	UINT						uParam		= 0;
+	std::wstring				name		= std::wstring();
+	std::wstring				link		= std::wstring();
+	std::vector<ItemElement>	vElements	= std::vector<ItemElement>();
 };
 typedef ItemElement* PELEM;
 
@@ -334,12 +334,12 @@ HIMAGELIST GetSmallImageList(BOOL bSystem);
 void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
 /* Resolve Links */
-HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBuf);
+HRESULT ResolveShortCut(const std::wstring& shortcutPath, LPTSTR lpszFilePath, int maxBuf);
 
 /* current open files */
 void UpdateDocs(void);
 void UpdateCurrUsedDocs(LPTSTR *ppFiles, UINT numFiles);
-BOOL IsFileOpen(LPCTSTR pCurrFile);
+BOOL IsFileOpen(const std::wstring& filePath);
 
 /* scroll up/down test function */
 ScDir GetScrollDirection(HWND hWnd, UINT offTop = 0, UINT offBottom = 0);

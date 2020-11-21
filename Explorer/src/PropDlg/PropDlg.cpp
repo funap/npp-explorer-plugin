@@ -131,7 +131,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				/* set image list */
 				::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-				HTREEITEM hItem = InsertItem(_pElem->pszName, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, TRUE, (LPARAM)_pElem);
+				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, TRUE, (LPARAM)_pElem);
 				TreeView_SelectItem(_hTreeCtrl, hItem);
 
 				if (!NLGetText(_hInst, _hParent, _T("Details"), _szDetails, 20)) {
@@ -374,8 +374,8 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 								{
 									if (pElem->uParam & FAVES_PARAM_LINK)
 									{
-										::SetDlgItemText(_hSelf, IDC_EDIT_NAME, pElem->pszName);
-										::SetDlgItemText(_hSelf, IDC_EDIT_LINK, pElem->pszLink);
+										::SetDlgItemText(_hSelf, IDC_EDIT_NAME, pElem->name.c_str());
+										::SetDlgItemText(_hSelf, IDC_EDIT_LINK, pElem->link.c_str());
 									}
 									else
 									{
@@ -455,14 +455,14 @@ void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
 					}
 				}
 				/* add new item */
-				pCurrentItem = InsertItem(pElem->pszName, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
+				pCurrentItem = InsertItem(pElem->name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
 			}
 
 			if ((pElem->uParam & FAVES_PARAM_LINK) && (_bWithLink == TRUE))
 			{
 				/* add new item */
-				ExtractIcons(pElem->pszName, NULL, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-				pCurrentItem = InsertItem(pElem->pszName, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
+				ExtractIcons(pElem->name.c_str(), NULL, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+				pCurrentItem = InsertItem(pElem->name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
 			}
 		}
 	}

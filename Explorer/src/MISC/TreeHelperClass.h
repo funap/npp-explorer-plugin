@@ -78,8 +78,8 @@ protected:
 	void DrawChildren(HTREEITEM parentItem);
 	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE );
 	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
-	HTREEITEM InsertItem(LPCTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
-	BOOL UpdateItem(HTREEITEM hItem, LPCTSTR lpszItem, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
+	HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
+	BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
 	void DeleteChildren(HTREEITEM parentItem);
 	BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
 	std::wstring GetItemText(HTREEITEM hItem) const;

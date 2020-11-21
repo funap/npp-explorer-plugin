@@ -926,7 +926,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type,
 /**************************************************************************
  *	Resolve files if they are shortcuts
  */
-HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBuf)
+HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, int maxBuf)
 {
     HRESULT hRes = S_FALSE;
     CComPtr<IShellLink> ipShellLink;
@@ -944,12 +944,8 @@ HRESULT ResolveShortCut(LPCTSTR lpszShortcutPath, LPTSTR lpszFilePath, int maxBu
         // Get a pointer to the IPersistFile interface
         CComQIPtr<IPersistFile> ipPersistFile(ipShellLink);
 
-        // IPersistFile is using LPCOLESTR, so make sure that the string is Unicode
-		WCHAR wszTemp[MAX_PATH];
-        wcsncpy(wszTemp, lpszShortcutPath, MAX_PATH);
-
         // Open the shortcut file and initialize it from its contents
-        hRes = ipPersistFile->Load(wszTemp, STGM_READ); 
+        hRes = ipPersistFile->Load(shortcutPath.c_str(), STGM_READ);
         if (hRes == S_OK) 
         {
             // Try to find the target of a shortcut, even if it has been moved or renamed
@@ -1053,12 +1049,10 @@ void UpdateCurrUsedDocs(LPTSTR* pFiles, UINT numFiles)
 	}
 }
 
-BOOL IsFileOpen(LPCTSTR pCurrFile)
+BOOL IsFileOpen(const std::wstring &filePath)
 {
-	for (UINT iCurrFiles = 0; iCurrFiles < g_vStrCurrentFiles.size(); iCurrFiles++)
-	{
-		if (_tcsicmp(g_vStrCurrentFiles[iCurrFiles].c_str(), pCurrFile) == 0)
-		{
+	for (const auto &openedFilePath : g_vStrCurrentFiles) {
+		if (_tcsicmp(openedFilePath.c_str(), filePath.c_str()) == 0) {
 			return TRUE;
 		}
 	}

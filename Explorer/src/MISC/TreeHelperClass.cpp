@@ -419,7 +419,7 @@ HTREEITEM TreeHelper::InsertChildFolder(LPCTSTR childFolderName, HTREEITEM paren
 	return InsertItem(childFolderName, iIconNormal, iIconSelected, iIconOverlayed, bHidden, parentItem, insertAfter, haveChildren);
 }
 
-HTREEITEM TreeHelper::InsertItem(LPCTSTR lpszItem, 
+HTREEITEM TreeHelper::InsertItem(const std::wstring &itemName, 
 								 INT nImage, 
 								 INT nSelectedImage, 
 								 INT nOverlayedImage,
@@ -429,13 +429,15 @@ HTREEITEM TreeHelper::InsertItem(LPCTSTR lpszItem,
 								 BOOL haveChildren, 
 								 LPARAM lParam)
 {
-	TV_INSERTSTRUCT tvis;
+	auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
+	itemName.copy(szItemName.get(), MAX_PATH);
 
+	TV_INSERTSTRUCT tvis;
 	ZeroMemory(&tvis, sizeof(TV_INSERTSTRUCT));
 	tvis.hParent			 = hParent;
 	tvis.hInsertAfter		 = hInsertAfter;
 	tvis.item.mask			 = TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT | TVIF_CHILDREN;
-	tvis.item.pszText		 = const_cast<LPTSTR>(lpszItem);
+	tvis.item.pszText		 = szItemName.get();
 	tvis.item.iImage		 = nImage;
 	tvis.item.iSelectedImage = nSelectedImage;
 	tvis.item.cChildren		 = haveChildren;
@@ -470,7 +472,7 @@ void TreeHelper::DeleteChildren(HTREEITEM parentItem)
 }
 
 BOOL TreeHelper::UpdateItem(HTREEITEM hItem, 
-							LPCTSTR lpszItem, 
+							const std::wstring &itemName, 
 							INT nImage, 
 							INT nSelectedImage, 
 							INT nOverlayedImage, 
@@ -479,12 +481,14 @@ BOOL TreeHelper::UpdateItem(HTREEITEM hItem,
 							LPARAM lParam,
 							BOOL delChildren)
 {
-	TVITEM		item;
+	auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
+	itemName.copy(szItemName.get(), MAX_PATH);
 
+	TVITEM		item;
 	ZeroMemory(&item, sizeof(TVITEM));
 	item.hItem			 = hItem;
 	item.mask			 = TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT | TVIF_CHILDREN | TVIF_STATE;
-	item.pszText		 = const_cast<LPTSTR>(lpszItem);
+	item.pszText		 = szItemName.get();
 	item.iImage			 = nImage;
 	item.iSelectedImage	 = nSelectedImage;
 	item.cChildren		 = haveChildren;
