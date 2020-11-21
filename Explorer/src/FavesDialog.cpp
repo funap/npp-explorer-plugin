@@ -289,12 +289,10 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 										}
 									}
 
-									// Add the text to the infotip.
+									// make tooltip text.
+									tipText += StringUtil::format(L"\nThis session has %d files.", count);
 									if (nonExistentFileCount > 0) {
-										tipText += StringUtil::format(L"\n%d out of %d files are non-existent!", nonExistentFileCount, count);
-									}
-									else {
-										tipText += StringUtil::format(L"\nThis session has %d files.", count);
+										tipText += StringUtil::format(L"(%d are non-existent)", nonExistentFileCount);
 									}
 								}
 							}
