@@ -664,7 +664,7 @@ void FavesDialog::InitialDialog(void)
 	/* add new items in list and make reference to items */
 	for (UINT i = 0; i < FAVES_ITEM_MAX; i++)
 	{
-		UpdateLink(InsertItem(cFavesItemNames[i], i, i, 0, 0, TVI_ROOT, TVI_LAST, TRUE, (LPARAM)&_vDB[i]));
+		UpdateLink(InsertItem(cFavesItemNames[i], i, i, 0, 0, TVI_ROOT, TVI_LAST, !_vDB[i].vElements.empty(), (LPARAM)&_vDB[i]));
 	}
 }
 
@@ -800,7 +800,7 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
 
 			/* update information and delete element */
 			UpdateLink(hParentItem);
-			UpdateNode(hParentItem, (BOOL)pParentElem->vElements.size());
+			UpdateNode(hParentItem, !pParentElem->vElements.empty());
 			ExpandElementsRecursive(hParentItem);
 		}
 		else
@@ -1662,6 +1662,9 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
 
 			hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
 		}
+
+		// Update current node
+		UpdateNode(hParentItem, !parentElement->vElements.empty());
 
 		/* delete possible not existed items */
 		while (hCurrentItem != NULL)
