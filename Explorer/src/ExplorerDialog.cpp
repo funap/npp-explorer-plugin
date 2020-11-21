@@ -604,6 +604,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				g_hThread = nullptr;
 			}
 
+			_ToolBar.destroy();
+
 			/* unsubclass */
 			if (_hDefaultTreeProc != nullptr) {
 				::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)_hDefaultTreeProc);
