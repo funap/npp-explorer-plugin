@@ -25,6 +25,31 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 
+#define MAX_NPP_EXAMPLE_LINE	22
+static LPCTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
+	_T("//Explorer: NppExec.dll EXP_FULL_PATH[0]\r\n"),
+	_T("// ------------------------------------------------------------------\r\n"),
+	_T("// NOTE: The first line is in every script necessary\r\n"),
+	_T("// Format of the first line:\r\n"),
+	_T("//   //Explorer:          = Identification for Explorer support\r\n"),
+	_T("//   NppExec.dll          = NppExec DLL identification\r\n"),
+	_T("//   EXP_FULL_PATH[0] ... = Exec arguments - [0]=First selected file\r\n"),
+	_T("// ------------------------------------------------------------------\r\n"),
+	_T("// Example for selected files in file list of Explorer:\r\n"),
+	_T("// - C:\\Folder1\\Folder2\\Filename1.Ext\r\n"),
+	_T("// - C:\\Folder1\\Folder2\\Filename2.Ext\r\n"),
+	_T("// ------------------------------------------------------------------\r\n"),
+	_T("// EXP_FULL_PATH[1]       = C:\\Folder1\\Folder2\\Filename2.Ext\r\n"),
+	_T("// EXP_ROOT_PATH[0]       = C:\r\n"),
+	_T("// EXP_PARENT_FULL_DIR[0] = C:\\Folder1\\Folder2\r\n"),
+	_T("// EXP_PARENT_DIR[0]      = Folder2\r\n"),
+	_T("// EXP_FULL_FILE[1]       = Filename2.Ext\r\n"),
+	_T("// EXP_FILE_NAME[0]       = Filename1\r\n"),
+	_T("// EXP_FILE_EXT[0]        = Ext\r\n"),
+	_T("\r\n"),
+	_T("// NppExec script body:\r\n"),
+	_T("cd $(ARGV[1])")
+};
 
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp

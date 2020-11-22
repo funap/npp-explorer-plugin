@@ -48,8 +48,8 @@ public:
 	ContextMenu();
 	~ContextMenu();
 
-	void SetObjects(std::wstring strObject);
-	void SetObjects(std::vector<std::wstring> strArray);
+	void SetObjects(const std::wstring &strObject);
+	void SetObjects(const std::vector<std::wstring> &strArray);
 	UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:

@@ -453,7 +453,7 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 	}
 }
 
-void ContextMenu::SetObjects(std::wstring strObject)
+void ContextMenu::SetObjects(const std::wstring &strObject)
 {
 	// only one object is passed
 	std::vector<std::wstring>	strArray;
@@ -464,7 +464,7 @@ void ContextMenu::SetObjects(std::wstring strObject)
 }
 
 
-void ContextMenu::SetObjects(std::vector<std::wstring> strArray)
+void ContextMenu::SetObjects(const std::vector<std::wstring> &strArray)
 {
 	// store also the string for later menu use
 	_strFirstElement = strArray[0];

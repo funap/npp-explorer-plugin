@@ -47,21 +47,21 @@ extern enum winVer gWinVersion;
 
 #define DND_SCR_TIMEOUT		200
 
-#define SHORTCUT_ALL		0x01
-#define SHORTCUT_DELETE		0x04
-#define SHORTCUT_COPY		0x03
-#define SHORTCUT_PASTE		0x16
-#define SHORTCUT_CUT		0x18
-#define SHORTCUT_REFRESH	0x12
+constexpr CHAR SHORTCUT_ALL		= 0x01;
+constexpr CHAR SHORTCUT_DELETE	= 0x04;
+constexpr CHAR SHORTCUT_COPY	= 0x03;
+constexpr CHAR SHORTCUT_PASTE	= 0x16;
+constexpr CHAR SHORTCUT_CUT		= 0x18;
+constexpr CHAR SHORTCUT_REFRESH	= 0x12;
 
 /******************** faves ***************************/
 
-#define	ICON_FOLDER		0
-#define	ICON_FILE		1
-#define	ICON_WEB		2
-#define	ICON_SESSION	3
-#define	ICON_GROUP		4
-#define	ICON_PARENT		5
+constexpr INT ICON_FOLDER		= 0;
+constexpr INT ICON_FILE			= 1;
+constexpr INT ICON_WEB			= 2;
+constexpr INT ICON_SESSION		= 3;
+constexpr INT ICON_GROUP		= 4;
+constexpr INT ICON_PARENT		= 5;
 
 
 enum FavesElements {
@@ -80,11 +80,11 @@ static LPCTSTR cFavesItemNames[11] = {
 };
 
 
-#define FAVES_PARAM				0x0000000F
-#define FAVES_PARAM_MAIN		0x00000010
-#define FAVES_PARAM_GROUP		0x00000020
-#define FAVES_PARAM_LINK		0x00000040
-#define FAVES_PARAM_EXPAND		0x00000100
+constexpr UINT FAVES_PARAM			= 0x0000000F;
+constexpr UINT FAVES_PARAM_MAIN		= 0x00000010;
+constexpr UINT FAVES_PARAM_GROUP	= 0x00000020;
+constexpr UINT FAVES_PARAM_LINK		= 0x00000040;
+constexpr UINT FAVES_PARAM_EXPAND	= 0x00000100;
 
 
 struct ItemElement {
@@ -265,32 +265,6 @@ struct ExProp{
 	SIZE_T			maxHistorySize;
 };
 
-
-#define MAX_NPP_EXAMPLE_LINE	22
-static LPCTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
-	_T("//Explorer: NppExec.dll EXP_FULL_PATH[0]\r\n"),
-	_T("// ------------------------------------------------------------------\r\n"),
-	_T("// NOTE: The first line is in every script necessary\r\n"),
-	_T("// Format of the first line:\r\n"),
-	_T("//   //Explorer:          = Identification for Explorer support\r\n"),
-	_T("//   NppExec.dll          = NppExec DLL identification\r\n"),
-	_T("//   EXP_FULL_PATH[0] ... = Exec arguments - [0]=First selected file\r\n"),
-	_T("// ------------------------------------------------------------------\r\n"),
-	_T("// Example for selected files in file list of Explorer:\r\n"),
-	_T("// - C:\\Folder1\\Folder2\\Filename1.Ext\r\n"),
-	_T("// - C:\\Folder1\\Folder2\\Filename2.Ext\r\n"),
-	_T("// ------------------------------------------------------------------\r\n"),
-	_T("// EXP_FULL_PATH[1]       = C:\\Folder1\\Folder2\\Filename2.Ext\r\n"),
-	_T("// EXP_ROOT_PATH[0]       = C:\r\n"),
-	_T("// EXP_PARENT_FULL_DIR[0] = C:\\Folder1\\Folder2\r\n"),
-	_T("// EXP_PARENT_DIR[0]      = Folder2\r\n"),
-	_T("// EXP_FULL_FILE[1]       = Filename2.Ext\r\n"),
-	_T("// EXP_FILE_NAME[0]       = Filename1\r\n"),
-	_T("// EXP_FILE_EXT[0]        = Ext\r\n"),
-	_T("\r\n"),
-	_T("// NppExec script body:\r\n"),
-	_T("cd $(ARGV[1])")
-};
 
 
 LRESULT ScintillaMsg(UINT message, WPARAM wParam = 0, LPARAM lParam = 0);
