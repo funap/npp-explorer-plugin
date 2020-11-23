@@ -604,6 +604,22 @@ BOOL TreeHelper::GetItemIcons(HTREEITEM hItem, LPINT piIcon, LPINT piSelected, L
 	return bRet;
 }
 
+void TreeHelper::SetItemIcons(HTREEITEM hItem, INT icon, INT selected, INT overlay)
+{
+	TVITEM		item;
+
+	ZeroMemory(&item, sizeof(TVITEM));
+	item.hItem = hItem;
+	item.mask = TVIF_STATE | TVIF_IMAGE | TVIF_SELECTEDIMAGE;;
+	item.iImage = icon;
+	item.iSelectedImage = selected;
+	item.state = overlay << 8;
+
+	TreeView_SetItem(_hTreeCtrl, &item);
+
+	return;
+}
+
 BOOL TreeHelper::IsItemExpanded(HTREEITEM hItem)
 {
 	return (BOOL)(TreeView_GetItemState(_hTreeCtrl, hItem, TVIS_EXPANDED) & TVIS_EXPANDED);
@@ -666,13 +682,15 @@ std::wstring TreeHelper::GetFolderPathName(HTREEITEM currentItem) const
 	std::wstring result;
 	std::vector<std::wstring> paths = GetItemPathFromRoot(currentItem);
 
-	bool firstItem = true;
+	bool firstLoop = true;
 	for (const auto &path : paths) {
-		if (firstItem) {
-			result = path.front() + L":";
-			firstItem = false;
+		if (firstLoop) {
+			result = path.front();
+			result += L":";
+			firstLoop = false;
 		}
 		else {
+			result += L"\\";
 			result += path;
 		}
 	}

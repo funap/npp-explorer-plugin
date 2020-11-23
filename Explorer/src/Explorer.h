@@ -62,7 +62,8 @@ constexpr INT ICON_WEB			= 2;
 constexpr INT ICON_SESSION		= 3;
 constexpr INT ICON_GROUP		= 4;
 constexpr INT ICON_PARENT		= 5;
-
+constexpr INT ICON_WARN_SESSION	= 6;
+constexpr INT ICON_MISSING_FILE	= 7;
 
 enum FavesElements {
 	FAVES_FOLDERS = 0,
@@ -80,12 +81,13 @@ static LPCTSTR cFavesItemNames[11] = {
 };
 
 
-constexpr UINT FAVES_PARAM			= 0x0000000F;
-constexpr UINT FAVES_PARAM_MAIN		= 0x00000010;
-constexpr UINT FAVES_PARAM_GROUP	= 0x00000020;
-constexpr UINT FAVES_PARAM_LINK		= 0x00000040;
-constexpr UINT FAVES_PARAM_EXPAND	= 0x00000100;
-
+constexpr UINT FAVES_PARAM					= 0x0000000F;
+constexpr UINT FAVES_PARAM_MAIN				= 0x00000010;
+constexpr UINT FAVES_PARAM_GROUP			= 0x00000020;
+constexpr UINT FAVES_PARAM_LINK				= 0x00000040;
+constexpr UINT FAVES_PARAM_SESSION_CHILD	= 0x00000080;
+constexpr UINT FAVES_PARAM_EXPAND			= 0x00000100;
+constexpr UINT FAVES_PARAM_USERIMAGE		= 0x00000200;
 
 struct ItemElement {
 	UINT						uParam		= 0;

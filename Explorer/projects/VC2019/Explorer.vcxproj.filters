@@ -303,6 +303,12 @@
     <Image Include="..\..\res\terminal.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="..\..\res\missingfile.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\warnsession.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\res\leftright.cur">

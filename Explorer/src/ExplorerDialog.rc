@@ -250,6 +250,9 @@ IDI_EXPLORE             ICON                    "..\\res\\explore.ico"
 
 IDI_HEART               ICON                    "..\\res\\Heart.ico"
 
+IDI_WARN_SESSION        ICON                    "..\\res\\warnsession.ico"
+
+IDI_MISSING_FILE        ICON                    "..\\res\\missingfile.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //

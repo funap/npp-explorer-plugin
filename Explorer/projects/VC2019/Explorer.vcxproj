@@ -331,6 +331,7 @@
     <Image Include="..\..\res\linkNew.bmp" />
     <Image Include="..\..\res\linkNewFile.bmp" />
     <Image Include="..\..\res\linkNewFolder.bmp" />
+    <Image Include="..\..\res\missingfile.ico" />
     <Image Include="..\..\res\newFile.bmp" />
     <Image Include="..\..\res\newFolder.bmp" />
     <Image Include="..\..\res\parent.ico" />
@@ -341,6 +342,7 @@
     <Image Include="..\..\res\terminal.bmp" />
     <Image Include="..\..\res\undo.bmp" />
     <Image Include="..\..\res\update.bmp" />
+    <Image Include="..\..\res\warnsession.ico" />
     <Image Include="..\..\res\web.ico" />
   </ItemGroup>
   <ItemGroup>
