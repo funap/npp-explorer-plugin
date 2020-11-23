@@ -124,7 +124,7 @@ void QuickOpenDlg::show()
 
 	setDefaultPosition();
 	display(true);
-	::SetFocus(_hWndEdit);
+	::PostMessage(_hSelf, WM_NEXTDLGCTL, (WPARAM)_hWndEdit, TRUE);
 
 	if (_direcotryIndex.isIndexing()) {
 		::SetTimer(_hSelf, UPDATE_PROGRESSBAR, 33, nullptr);
