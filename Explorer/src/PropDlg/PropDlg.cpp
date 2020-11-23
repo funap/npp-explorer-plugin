@@ -131,7 +131,14 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				/* set image list */
 				::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, TRUE, (LPARAM)_pElem);
+				BOOL canExpand = false;
+				for (const auto &elem : _pElem->vElements) {
+					if (elem.uParam & FAVES_PARAM_GROUP) {
+						canExpand = true;
+						break;
+					}
+				}
+				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, (LPARAM)_pElem);
 				TreeView_SelectItem(_hTreeCtrl, hItem);
 
 				if (!NLGetText(_hInst, _hParent, _T("Details"), _szDetails, 20)) {
