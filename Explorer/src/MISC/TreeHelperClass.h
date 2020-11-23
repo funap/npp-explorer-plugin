@@ -26,19 +26,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <vector>
 #include <string>
 
-enum {
-	ICON_UPDATE_EVT_START,
-	ICON_UPDATE_EVT_RESP,
-	ICON_UPDATE_EVT_END,
-	ICON_UPDATE_EVT_MAX
-};
-
-struct TreeIconUpdate {
-	std::wstring		strLastPath;
-	HTREEITEM			hLastItem;
-};
-
-
 
 #ifndef TreeView_GetItemState
 #define TVM_GETITEMSTATE (TV_FIRST+39)
@@ -50,36 +37,11 @@ struct TreeIconUpdate {
 class TreeHelper
 {
 public:
-	TreeHelper() : _hTreeCtrl(NULL), _hSemaphore(NULL) {};
-	~TreeHelper() {
-		if (_hSemaphore)
-		{
-			::SetEvent(_hEvent[ICON_UPDATE_EVT_END]);
-			::WaitForSingleObject(_hEvent[ICON_UPDATE_EVT_RESP], INFINITE);
-
-			for (UINT i = 0; i < ICON_UPDATE_EVT_MAX; i++) {
-				::CloseHandle(_hEvent[i]);
-				_hEvent[i] = nullptr;
-			}
-			::CloseHandle(_hSemaphore);
-			_hSemaphore = nullptr;
-
-			_vIconUpdate.clear();
-		}
-	};
-
-	void UpdateOverlayIcon(void);
+	TreeHelper() : _hTreeCtrl(NULL) {};
+	~TreeHelper() {};
 
 protected:
-
-	void UseOverlayThreading(void);
-
 	std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
-	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) const;
-	std::wstring GetFolderPathName(HTREEITEM currentItem) const;
-	void DrawChildren(HTREEITEM parentItem);
-	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE );
-	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
 	HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
 	BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
 	void DeleteChildren(HTREEITEM parentItem);
@@ -92,39 +54,8 @@ protected:
 	BOOL IsItemExpanded(HTREEITEM hItem);
 	INT GetChildrenCount(HTREEITEM item);
 
-private:
-
-	struct ItemList {
-		std::wstring	strName;
-		DWORD			dwAttributes;
-	};
-	void QuickSortItems(std::vector<ItemList>* vList, INT d, INT h);
-	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-
-private:	/* for thread */
-
-	void SetOverlayIcon(HTREEITEM hItem, INT iOverlayIcon);
-	void TREE_LOCK(void) {
-		while (_hSemaphore) {
-			if (::WaitForSingleObject(_hSemaphore, INFINITE) == WAIT_OBJECT_0)
-				return;
-		}
-	};
-	void TREE_UNLOCK(void) {
-		if (_hSemaphore) {
-			::ReleaseSemaphore(_hSemaphore, 1, NULL);
-		}
-	};
-
 protected:
 	HWND				_hTreeCtrl;
-
-private:
-	/* member var for overlay update thread */
-	std::vector<TreeIconUpdate>		_vIconUpdate;
-	HANDLE						_hSemaphore;
-	HANDLE						_hEvent[ICON_UPDATE_EVT_MAX];
-	HANDLE						_hOverThread;
 };
 
 #endif // TREEHELPERCLASS_H

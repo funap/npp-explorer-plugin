@@ -696,26 +696,26 @@ bool IsValidFile(const WIN32_FIND_DATA & Find)
 	return false;
 }
 
-BOOL HaveChildren(LPTSTR parentFolderPathName)
+BOOL HaveChildren(const std::wstring &folderPath)
 {
-	WIN32_FIND_DATA		Find		= {0};
-	HANDLE				hFind		= NULL;
-	BOOL				bFound		= TRUE;
-	BOOL				bRet		= FALSE;
+	WIN32_FIND_DATA		Find = { 0 };
+	HANDLE				hFind = NULL;
+	BOOL				bFound = TRUE;
+	BOOL				bRet = FALSE;
 
-	if (parentFolderPathName[_tcslen(parentFolderPathName) - 1] != '\\')
-		_tcscat(parentFolderPathName, _T("\\"));
-
+	std::wstring searchPath = folderPath;
+	if (searchPath.back() != '\\') {
+		searchPath.append(L"\\");
+	}
 	/* add wildcard */
-	_tcscat(parentFolderPathName, _T("*"));
+	searchPath.append(L"*");
 
-	if ((hFind = ::FindFirstFile(parentFolderPathName, &Find)) == INVALID_HANDLE_VALUE)
+	if ((hFind = ::FindFirstFile(searchPath.c_str(), &Find)) == INVALID_HANDLE_VALUE) {
 		return FALSE;
+	}
 
-	do
-	{
-		if (IsValidFolder(Find) == TRUE)
-		{
+	do {
+		if (IsValidFolder(Find) == TRUE) {
 			bFound = FALSE;
 			bRet = TRUE;
 		}

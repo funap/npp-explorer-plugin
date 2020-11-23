@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <dbt.h>
+#include <algorithm>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -74,6 +75,7 @@ DWORD WINAPI UpdateThread(LPVOID lpParam)
     DWORD			dwWaitResult    = EID_INIT;
 	ExplorerDialog*	dlg             = (ExplorerDialog*)lpParam;
 
+	CoInitialize(nullptr);
 	dlg->NotifyEvent(dwWaitResult);
 
 	while (bRun)
@@ -91,6 +93,8 @@ DWORD WINAPI UpdateThread(LPVOID lpParam)
 			dlg->NotifyEvent(dwWaitResult);
 		}
 	}
+
+	CoUninitialize();
 	return 0;
 }
 
@@ -188,7 +192,6 @@ ExplorerDialog::ExplorerDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
 	_hExploreVolumeThread	= NULL;
 	_hItemExpand			= NULL;
 	_iDockedPos				= CONT_LEFT;
-	TreeHelper::UseOverlayThreading();
 }
 
 ExplorerDialog::~ExplorerDialog(void)
@@ -1730,7 +1733,7 @@ void ExplorerDialog::UpdateDevices(void)
 
 	HTREEITEM		hCurrentItem	= TreeView_GetNextItem(_hTreeCtrl, TVI_ROOT, TVGN_CHILD);
 
-	TCHAR			drivePathName[]	= _T(" :\\\0\0");	// it is longer for function 'HaveChildren()'
+	TCHAR			drivePathName[]	= _T(" :\\");
 	TCHAR			TEMP[MAX_PATH]	= {0};
 	TCHAR			volumeName[MAX_PATH];
 
@@ -1749,8 +1752,6 @@ void ExplorerDialog::UpdateDevices(void)
 
 				/* have children */
 				haveChildren = HaveChildren(drivePathName);
-				/* correct modified drivePathName */
-				drivePathName[3]			= '\0';
 			}
 
 			if (hCurrentItem != NULL)
@@ -1834,6 +1835,257 @@ void ExplorerDialog::UpdatePath(void)
 	GetFolderPathName(TreeView_GetSelection(_hTreeCtrl), pszPath);
 	_FileList.viewPath(pszPath);
 	_FileList.ToggleStackRec();
+}
+
+HTREEITEM ExplorerDialog::InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter, BOOL bChildrenTest)
+{
+	/* We search if it already exists */
+	HTREEITEM			pCurrentItem	= TreeView_GetNextItem(_hTreeCtrl, parentItem, TVGN_CHILD);
+	BOOL				bHidden			= FALSE;
+	WIN32_FIND_DATA		Find			= {0};
+	HANDLE				hFind			= NULL;
+	DevType				devType			= (parentItem == TVI_ROOT ? DEVT_DRIVE : DEVT_DIRECTORY);
+
+	pCurrentItem = NULL;
+
+	/* get name of parent path and merge it */
+	TCHAR parentFolderPathName[MAX_PATH]	= _T("\0");
+	GetFolderPathName(parentItem, parentFolderPathName);
+	_tcscat(parentFolderPathName, childFolderName);
+
+	if (parentItem == TVI_ROOT) {
+		parentFolderPathName[2] = '\0';
+	}
+	else {
+		/* get only hidden icon when folder is not a device */
+		hFind = ::FindFirstFile(parentFolderPathName, &Find);
+		bHidden = ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+		::FindClose(hFind);
+	}
+
+	/* look if children test id allowed */
+	BOOL	haveChildren = FALSE;
+	if (bChildrenTest == TRUE) {
+		haveChildren = HaveChildren(parentFolderPathName);
+	}
+
+	/* insert item */
+	INT					iIconNormal		= 0;
+	INT					iIconSelected	= 0;
+	INT					iIconOverlayed	= 0;
+
+	/* get icons */
+	ExtractIcons(parentFolderPathName, NULL, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+
+	/* set item */
+	return InsertItem(childFolderName, iIconNormal, iIconSelected, iIconOverlayed, bHidden, parentItem, insertAfter, haveChildren);
+}
+
+BOOL ExplorerDialog::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
+{
+	TCHAR		pszItem[MAX_PATH];
+	BOOL		isFound = FALSE;
+	HTREEITEM	hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, pAfterItem, TVGN_NEXT);
+
+	while (hCurrentItem != NULL) {
+		GetItemText(hCurrentItem, pszItem, MAX_PATH);
+		if (_tcscmp(itemName, pszItem) == 0) {
+			isFound = TRUE;
+			hCurrentItem = NULL;
+		}
+		else {
+			hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+		}
+	}
+
+	return isFound;
+}
+
+void ExplorerDialog::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem, BOOL doRecursive)
+{
+	std::wstring			searchPath = pszParentPath;
+	HTREEITEM				hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
+
+	if (searchPath.back() != '\\') {
+		searchPath.append(L"\\");
+	}
+	searchPath.append(L"*");
+
+	WIN32_FIND_DATA			findData = { 0 };
+	HANDLE					hFind = nullptr;
+	if ((hFind = ::FindFirstFile(searchPath.c_str(), &findData)) != INVALID_HANDLE_VALUE) {
+		struct Folder {
+			std::wstring	name;
+			DWORD			attributes;
+		};
+		std::vector<Folder>		folders;
+
+		/* find folders */
+		do {
+			if (::IsValidFolder(findData) == TRUE) {
+				Folder folder;
+				folder.name			= findData.cFileName;
+				folder.attributes	= findData.dwFileAttributes;
+				folders.push_back(folder);
+			}
+		} while (::FindNextFile(hFind, &findData));
+		::FindClose(hFind);
+
+		/* sort data */
+		std::sort(folders.begin(), folders.end(), [](const auto &lhs, const auto &rhs) {
+			return lhs.name < rhs.name;
+		});
+
+		/* update tree */
+		for (const auto &folder : folders) {
+			std::wstring folderName = GetItemText(hCurrentItem);
+			if (!folderName.empty()) {
+				/* compare current item and the current folder name */
+				while ((folderName != folder.name) && (hCurrentItem != nullptr)) {
+					/* if it's not equal delete or add new item */
+					if (FindFolderAfter(folder.name.c_str(), hCurrentItem) == TRUE) {
+						HTREEITEM pPrevItem = hCurrentItem;
+						hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+						TreeView_DeleteItem(_hTreeCtrl, pPrevItem);
+					}
+					else {
+						HTREEITEM pPrevItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_PREVIOUS);
+
+						/* Note: If hCurrentItem is the first item in the list pPrevItem is nullptr */
+						if (pPrevItem == nullptr) {
+							hCurrentItem = InsertChildFolder(folder.name.c_str(), hParentItem, TVI_FIRST);
+						}
+						else {
+							hCurrentItem = InsertChildFolder(folder.name.c_str(), hParentItem, pPrevItem);
+						}
+					}
+
+					if (hCurrentItem != nullptr) {
+						folderName = GetItemText(hCurrentItem);
+					}
+				}
+
+				/* update icons and expandable information */
+				std::wstring currentPath = GetFolderPathName(hCurrentItem);
+				BOOL	haveChildren = HaveChildren(currentPath);
+
+				/* get icons and update item */
+				INT		iIconNormal = 0;
+				INT		iIconSelected = 0;
+				INT		iIconOverlayed = 0;
+				ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+
+				BOOL bHidden = ((folder.attributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+				UpdateItem(hCurrentItem, folderName, iIconNormal, iIconSelected, iIconOverlayed, bHidden, haveChildren);
+
+				/* update recursive */
+				if ((doRecursive) && IsItemExpanded(hCurrentItem)) {
+					UpdateChildren(currentPath.c_str(), hCurrentItem);
+				}
+
+				/* select next item */
+				hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+			}
+			else {
+				hCurrentItem = InsertChildFolder(folder.name.c_str(), hParentItem);
+				hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+			}
+		}
+
+		/* delete possible not existed items */
+		while (hCurrentItem != nullptr) {
+			HTREEITEM	pPrevItem = hCurrentItem;
+			hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+			TreeView_DeleteItem(_hTreeCtrl, pPrevItem);
+		}
+	}
+}
+
+void ExplorerDialog::DrawChildren(HTREEITEM parentItem)
+{
+	TCHAR						parentFolderPathName[MAX_PATH];
+	WIN32_FIND_DATA				Find = { 0 };
+	HANDLE						hFind = NULL;
+	std::vector<std::wstring>	vFolderList;
+
+	GetFolderPathName(parentItem, parentFolderPathName);
+
+	if (parentFolderPathName[_tcslen(parentFolderPathName) - 1] != '\\') {
+		_tcscat(parentFolderPathName, _T("\\"));
+	}
+
+	/* add wildcard */
+	_tcscat(parentFolderPathName, _T("*"));
+
+	/* find first file */
+	hFind = ::FindFirstFile(parentFolderPathName, &Find);
+
+	/* if not found -> exit */
+	if (hFind != INVALID_HANDLE_VALUE) {
+		do {
+			if (IsValidFolder(Find) == TRUE) {
+				vFolderList.push_back(Find.cFileName);
+			}
+		} while (FindNextFile(hFind, &Find));
+
+		::FindClose(hFind);
+
+		/* sort data */
+		std::sort(vFolderList.begin(), vFolderList.end());
+
+		for (const auto& folder : vFolderList) {
+			if (InsertChildFolder(folder.c_str(), parentItem) == NULL) {
+				break;
+			}
+		}
+	}
+}
+
+void ExplorerDialog::GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) const
+{
+	std::vector<std::wstring> paths = GetItemPathFromRoot(currentItem);
+
+	folderPathName[0] = '\0';
+
+	for (size_t i = 0; i < paths.size(); i++) {
+		if (i == 0) {
+			_stprintf(folderPathName, _T("%c:"), paths[i][0]);
+		}
+		else {
+			_stprintf(folderPathName, _T("%s\\%s"), folderPathName, paths[i].c_str());
+		}
+	}
+	if (folderPathName[0] != '\0') {
+		PathRemoveBackslash(folderPathName);
+		_stprintf(folderPathName, _T("%s\\"), folderPathName);
+	}
+}
+
+std::wstring ExplorerDialog::GetFolderPathName(HTREEITEM currentItem) const
+{
+	std::wstring result;
+	std::vector<std::wstring> paths = GetItemPathFromRoot(currentItem);
+
+	bool firstLoop = true;
+	for (const auto &path : paths) {
+		if (firstLoop) {
+			result = path.front();
+			result += L":";
+			firstLoop = false;
+		}
+		else {
+			result += L"\\";
+			result += path;
+		}
+	}
+
+	if (!result.empty()) {
+		if ('\\' != result.back()) {
+			result += L"\\";
+		}
+	}
+
+	return result;
 }
 
 void ExplorerDialog::NotifyNewFile(void)
