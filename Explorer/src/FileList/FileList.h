@@ -80,6 +80,7 @@ public:
 
 	void filterFiles(LPCTSTR currentFilter);
 	void SelectCurFile(void);
+	void SelectFile(const std::wstring& fileName);
 	void SelectFolder(LPCTSTR selFolder);
 
 	virtual void destroy() {};

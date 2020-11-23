@@ -82,7 +82,7 @@ public:
 	void gotoUserFolder(void);
 	void gotoCurrentFolder(void);
 	void gotoCurrentFile(void);
-	void gotoFile(const std::wstring& filePath);
+	void gotoFileLocation(const std::wstring& filePath);
 	void clearFilter(void);
 	void setFocusOnFolder(void);
 	void setFocusOnFile(void);

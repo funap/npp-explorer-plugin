@@ -1624,9 +1624,14 @@ void ExplorerDialog::gotoCurrentFile(void)
 	setFocusOnFile();
 }
 
-void ExplorerDialog::gotoFile(const std::wstring& filePath)
+void ExplorerDialog::gotoFileLocation(const std::wstring& filePath)
 {
-	SelectItem(filePath.c_str());
+	std::wstring parentFodler = filePath.substr(0, filePath.find_last_of(L"\\") + 1);
+	SelectItem(parentFodler.c_str());
+
+	std::wstring fileName = filePath.substr(filePath.find_last_of(L"\\") + 1);
+	_FileList.SelectFile(fileName);
+
 	setFocusOnFile();
 }
 

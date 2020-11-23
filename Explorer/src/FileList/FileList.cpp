@@ -1269,9 +1269,16 @@ void FileList::SelectCurFile(void)
 {
 	extern TCHAR g_currentFile[MAX_PATH];
 
-	for (SIZE_T uFile = _uMaxFolders; uFile < _uMaxElements; uFile++) {
-		if (_tcsstr(g_currentFile, _vFileList[uFile].strNameExt.c_str()) != NULL ) {
-			SetFocusItem(uFile);
+	std::wstring fileName = std::wstring(g_currentFile);
+	fileName = fileName.substr(fileName.find_last_of(L"\\") + 1);
+	SelectFile(fileName);
+}
+
+void FileList::SelectFile(const std::wstring &fileName)
+{
+	for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
+		if (fileName.compare(_vFileList[i].strNameExt) == 0) {
+			SetFocusItem(i);
 			return;
 		}
 	}

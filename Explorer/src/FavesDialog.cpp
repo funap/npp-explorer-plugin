@@ -1424,7 +1424,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 				{
 					extern ExplorerDialog explorerDlg;
 
-					explorerDlg.gotoFile(pElem->link);
+					explorerDlg.gotoFileLocation(pElem->link);
 					explorerDlg.doDialog();
 					break;
 				}
