@@ -149,9 +149,6 @@ enum VarExNppExec {
 
 /********************************************************/
 
-#define TITLETIP_CLASSNAME "MyToolTip"
-
-
 enum DevType {
 	DEVT_DRIVE,
 	DEVT_DIRECTORY,
@@ -198,73 +195,46 @@ enum ScDir {
 };
 
 struct NppExecScripts {
-	TCHAR			szScriptName[MAX_PATH];
-	TCHAR			szArguments[MAX_PATH];
+	TCHAR			szScriptName[MAX_PATH]	= {};
+	TCHAR			szArguments[MAX_PATH]	= {};
 };
 
 struct NppExecProp {
-	TCHAR			szAppName[MAX_PATH];
-	TCHAR			szScriptPath[MAX_PATH];
+	TCHAR			szAppName[MAX_PATH]		= {};
+	TCHAR			szScriptPath[MAX_PATH]	= {};
 	std::vector<NppExecScripts>	vNppExecScripts;
 };
 
 struct CphProgram {
-	TCHAR			szAppName[MAX_PATH];
+	TCHAR			szAppName[MAX_PATH]		= {};
 };
 
 struct ExProp{
-	ExProp() :
-		szCurrentPath(),
-		iSplitterPos(0),
-		iSplitterPosHorizontal(0),
-		bAscending(false),
-		iSortPos(0),
-		iColumnPosName(0),
-		iColumnPosExt(0),
-		iColumnPosSize(0),
-		iColumnPosDate(0),
-		bShowHidden(false),
-		bViewBraces(false),
-		bViewLong(false),
-		bAddExtToName(false),
-		bAutoUpdate(false),
-		bAutoNavigate(false),
-		fmtSize(SFMT_BYTES),
-		fmtDate(DFMT_ENG),
-		vStrFilterHistory(),
-		fileFilter(),
-		uTimeout(0),
-		bUseSystemIcons(false),
-		nppExecProp(),
-		cphProgram(),
-		maxHistorySize(0)
-	{
-	}
 	/* pointer to global current path */
-	TCHAR			szCurrentPath[MAX_PATH];
-	INT				iSplitterPos;
-	INT				iSplitterPosHorizontal;
-	BOOL			bAscending;
-	INT				iSortPos;
-	INT				iColumnPosName;
-	INT				iColumnPosExt;
-	INT				iColumnPosSize;
-	INT				iColumnPosDate;
-	BOOL			bShowHidden;
-	BOOL			bViewBraces;
-	BOOL			bViewLong;
-	BOOL			bAddExtToName;
-	BOOL			bAutoUpdate;
-	BOOL			bAutoNavigate;
-	SizeFmt			fmtSize;
-	DateFmt			fmtDate;
+	TCHAR			szCurrentPath[MAX_PATH]	= {};
+	INT				iSplitterPos			= 0;
+	INT				iSplitterPosHorizontal	= 0;
+	BOOL			bAscending				= false;
+	INT				iSortPos				= 0;
+	INT				iColumnPosName			= 0;
+	INT				iColumnPosExt			= 0;
+	INT				iColumnPosSize			= 0;
+	INT				iColumnPosDate			= 0;
+	BOOL			bShowHidden				= false;
+	BOOL			bViewBraces				= false;
+	BOOL			bViewLong				= false;
+	BOOL			bAddExtToName			= false;
+	BOOL			bAutoUpdate				= false;
+	BOOL			bAutoNavigate			= false;
+	SizeFmt			fmtSize					= SFMT_BYTES;
+	DateFmt			fmtDate					= DFMT_ENG;
 	std::vector<std::wstring>	vStrFilterHistory;
 	FileFilter					fileFilter;
-	UINT			uTimeout;
-	BOOL			bUseSystemIcons;
+	UINT			uTimeout				= 0;
+	BOOL			bUseSystemIcons			= false;
 	NppExecProp		nppExecProp;
 	CphProgram		cphProgram;
-	SIZE_T			maxHistorySize;
+	SIZE_T			maxHistorySize			= 0;
 };
 
 
