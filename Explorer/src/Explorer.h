@@ -73,11 +73,11 @@ enum FavesElements {
 	FAVES_ITEM_MAX
 };
 
-static LPCTSTR cFavesItemNames[11] = {
+static LPCTSTR cFavesItemNames[4] = {
 	_T("[Folders]"),
 	_T("[Files]"),
 	_T("[Web]"),
-	_T("[Sessions]")
+	_T("[Sessions]"),
 };
 
 
