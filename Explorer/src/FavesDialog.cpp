@@ -272,19 +272,15 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 
 						PELEM	pElem = (PELEM)GetParam(item);
 						if (pElem) {
-							const BOOL isLink		= ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK);
-							const BOOL isSession	= ((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS);
-
 							// show full file path
 							std::wstring tipText;
 							if (!pElem->link.empty()) {
 								tipText += pElem->link;
 							}
 
+							const BOOL isLink = ((pElem->uParam & FAVES_PARAM_LINK) == FAVES_PARAM_LINK);
+							const BOOL isSession = ((pElem->uParam & FAVES_PARAM) == FAVES_SESSIONS);
 							if (isLink && isSession) {
-								TCHAR itemText[1024];
-								GetItemText(item, itemText, _countof(itemText));
-
 								INT count = GetChildrenCount(item);
 								if (count > 0) {
 									// Check non-existent files
