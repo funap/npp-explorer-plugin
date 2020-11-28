@@ -87,7 +87,7 @@ public:
 		UpdateColors();
 	};
 	void UpdateColors();
-
+	void SetFont(const HFONT font);
 protected:
 
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
@@ -158,10 +158,6 @@ private:
 	/* control process */
 	WNDPROC					_hDefaultTreeProc;
 
-	/* Current active font in [Files] */
-	HFONT					_hFont;
-	HFONT					_hFontUnder;
-
 	/* different imagelists */
 	HIMAGELIST				_hImageList;
 	HIMAGELIST				_hImageListSys;
@@ -181,8 +177,6 @@ private:
 	/* database */
 	std::vector<ItemElement>	_vDB;
 };
-
-
 
 
 #endif // FAVESDLG_DEFINE_H

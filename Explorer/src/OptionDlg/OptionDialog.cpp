@@ -22,8 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <commctrl.h>
 #include <shlobj.h>
+#include <commdlg.h>
 
 #include "Explorer.h"
+#include "StringUtil.h"
 
 #define MAX_NPP_EXAMPLE_LINE	22
 static LPCTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
@@ -179,6 +181,17 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 					::CloseHandle(hFile);
 					break;
 				}
+				case IDC_BTN_CHOOSEFONT: {
+					CHOOSEFONT cf = {};
+					cf.lStructSize = sizeof(CHOOSEFONT);
+					cf.hwndOwner = _hSelf;
+					cf.lpLogFont = &_logfont;
+					cf.Flags = CF_INITTOLOGFONTSTRUCT | CF_SCREENFONTS | CF_NOVERTFONTS | CF_NOSCRIPTSEL;
+					
+					ChooseFont(&cf);
+					::SetDlgItemText(_hSelf, IDC_BTN_CHOOSEFONT, _logfont.lfFaceName);
+					break;
+				}
 				case IDCANCEL:
 					::EndDialog(_hSelf, IDCANCEL);
 					return TRUE;
@@ -235,6 +248,9 @@ void OptionDlg::SetParams(void)
 	::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,	std::to_wstring(_pProp->maxHistorySize).c_str());
 
 	::SetDlgItemText(_hSelf, IDC_EDIT_CPH, _pProp->cphProgram.szAppName);
+
+	_logfont = _pProp->logfont;
+	::SetDlgItemText(_hSelf, IDC_BTN_CHOOSEFONT, _logfont.lfFaceName);
 }
 
 
@@ -291,6 +307,8 @@ BOOL OptionDlg::GetParams(void)
 	::GetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, _pProp->nppExecProp.szAppName, MAX_PATH);
 	::GetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath, MAX_PATH);
 	::GetDlgItemText(_hSelf, IDC_EDIT_CPH, _pProp->cphProgram.szAppName, MAX_PATH);
+
+	_pProp->logfont = _logfont;
 
 	return bRet;
 }

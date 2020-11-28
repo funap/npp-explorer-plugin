@@ -1386,6 +1386,9 @@ void ExplorerDialog::InitialDialog(void)
 	_hSplitterCtrl	= ::GetDlgItem(_hSelf, IDC_BUTTON_SPLITTER);
 	_hFilter		= ::GetDlgItem(_hSelf, IDC_COMBO_FILTER);
 
+	::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+	::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+
 	if (gWinVersion < WV_NT) {
 		_hFilterButton = ::GetDlgItem(_hSelf, IDC_BUTTON_FILTER);
 		::DestroyWindow(::GetDlgItem(_hSelf, IDC_STATIC_FILTER));
@@ -1438,6 +1441,12 @@ void ExplorerDialog::InitialDialog(void)
 	/* change language */
 	NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Explorer"));
 	NLChangeHeader(_hInst, _nppData._nppHandle, _hHeader, _T("FileList"));
+}
+
+void ExplorerDialog::SetFont(const HFONT font)
+{
+	::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)font, TRUE);
+	::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)font, TRUE);
 }
 
 BOOL ExplorerDialog::SelectItem(LPCTSTR path)

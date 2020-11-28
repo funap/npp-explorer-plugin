@@ -211,30 +211,33 @@ struct CphProgram {
 
 struct ExProp{
 	/* pointer to global current path */
-	TCHAR			szCurrentPath[MAX_PATH]	= {};
-	INT				iSplitterPos			= 0;
-	INT				iSplitterPosHorizontal	= 0;
-	BOOL			bAscending				= false;
-	INT				iSortPos				= 0;
-	INT				iColumnPosName			= 0;
-	INT				iColumnPosExt			= 0;
-	INT				iColumnPosSize			= 0;
-	INT				iColumnPosDate			= 0;
-	BOOL			bShowHidden				= false;
-	BOOL			bViewBraces				= false;
-	BOOL			bViewLong				= false;
-	BOOL			bAddExtToName			= false;
-	BOOL			bAutoUpdate				= false;
-	BOOL			bAutoNavigate			= false;
-	SizeFmt			fmtSize					= SFMT_BYTES;
-	DateFmt			fmtDate					= DFMT_ENG;
+	TCHAR						szCurrentPath[MAX_PATH]	= {};
+	LOGFONT						logfont					= {};
+	HFONT						defaultFont				= nullptr;
+	HFONT						underlineFont			= nullptr;
+	INT							iSplitterPos			= 0;
+	INT							iSplitterPosHorizontal	= 0;
+	BOOL						bAscending				= false;
+	INT							iSortPos				= 0;
+	INT							iColumnPosName			= 0;
+	INT							iColumnPosExt			= 0;
+	INT							iColumnPosSize			= 0;
+	INT							iColumnPosDate			= 0;
+	BOOL						bShowHidden				= false;
+	BOOL						bViewBraces				= false;
+	BOOL						bViewLong				= false;
+	BOOL						bAddExtToName			= false;
+	BOOL						bAutoUpdate				= false;
+	BOOL						bAutoNavigate			= false;
+	SizeFmt						fmtSize					= SizeFmt::SFMT_BYTES;
+	DateFmt						fmtDate					= DateFmt::DFMT_ENG;
 	std::vector<std::wstring>	vStrFilterHistory;
 	FileFilter					fileFilter;
-	UINT			uTimeout				= 0;
-	BOOL			bUseSystemIcons			= false;
-	NppExecProp		nppExecProp;
-	CphProgram		cphProgram;
-	SIZE_T			maxHistorySize			= 0;
+	UINT						uTimeout				= 0;
+	BOOL						bUseSystemIcons			= false;
+	NppExecProp					nppExecProp;
+	CphProgram					cphProgram;
+	SIZE_T						maxHistorySize			= 0;
 };
 
 
@@ -298,5 +301,5 @@ void ErrorMessage(DWORD err);
 /* Helper functions for NppExec */
 BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::vector<std::wstring> vFileList);
 
-#endif //EXPLORER_H
 
+#endif //EXPLORER_H

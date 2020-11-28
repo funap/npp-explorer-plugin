@@ -79,8 +79,6 @@ LPCTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
 
 FavesDialog::FavesDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
 {
-	_hFont					= NULL;
-	_hFontUnder				= NULL;
 	_hTreeCtrl				= NULL;
 	_isCut					= FALSE;
 	_hTreeCutCopy			= NULL;
@@ -328,7 +326,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 								if (pElem) {
 									if ((pElem->uParam & FAVES_FILES) && (pElem->uParam & FAVES_PARAM_LINK)) {
 										if (IsFileOpen(pElem->link) == TRUE) {
-											::SelectObject(lpCD->nmcd.hdc, _hFontUnder);
+											::SelectObject(lpCD->nmcd.hdc, _pExProp->underlineFont);
 										}
 									}
 								}
@@ -388,7 +386,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 									::DeleteDC(hMemDc);
 								}
 
-								::SelectObject(lpCD->nmcd.hdc, _hFont);
+								::SelectObject(lpCD->nmcd.hdc, _pExProp->defaultFont);
 
 								SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
 								return TRUE;
@@ -471,9 +469,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 		}
 		case WM_DESTROY:
 		{
-			::DeleteObject(_hFontUnder);
-			_hFontUnder = nullptr;
-
 			SaveSettings();
 			::DestroyIcon(_data.hIconTab);
 			_data.hIconTab = nullptr;
@@ -631,15 +626,6 @@ void FavesDialog::InitialDialog(void)
 	/* change language */
 	NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Favorites"));
 
-	/* get font for drawing */
-	_hFont		= (HFONT)::SendMessage(_hSelf, WM_GETFONT, 0, 0);
-
-	/* create copy of current font with underline */
-	LOGFONT	lf			= {0};
-	::GetObject(_hFont, sizeof(LOGFONT), &lf);
-	lf.lfUnderline		= TRUE;
-	_hFontUnder	= ::CreateFontIndirect(&lf);
-
 	/* subclass tree */
 	::SetWindowLongPtr(_hTreeCtrl, GWLP_USERDATA, (LONG_PTR)this);
 	_hDefaultTreeProc = (WNDPROC)::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultTreeProc);
@@ -650,6 +636,9 @@ void FavesDialog::InitialDialog(void)
 
 	/* set image list */
 	::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)_hImageListSys);
+
+	// set font
+	::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
 
 	/* create toolbar */
 	_ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
@@ -664,6 +653,10 @@ void FavesDialog::InitialDialog(void)
 	}
 }
 
+void FavesDialog::SetFont(const HFONT font)
+{
+	::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)font, TRUE);
+}
 
 HTREEITEM FavesDialog::GetTreeItem(const std::vector<std::wstring> &groupPath) const
 {

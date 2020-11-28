@@ -82,8 +82,6 @@ DWORD WINAPI FileOverlayThread(LPVOID lpParam)
 FileList::FileList(void)
 {
 	_hOverThread		= NULL;
-	_hFont				= NULL;
-	_hFontUnder			= NULL;
 	_hHeader			= NULL;
 	_bmpSortUp			= NULL;
 	_bmpSortDown		= NULL;
@@ -125,15 +123,6 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	/* create thread */
 	DWORD	dwFlags	= 0;
 	_hOverThread = ::CreateThread(NULL, 0, FileOverlayThread, this, 0, &dwFlags);
-
-	/* get font for drawing */
-	_hFont		= (HFONT)::SendMessage(_hParent, WM_GETFONT, 0, 0);
-
-	/* create copy of current font with underline */
-	LOGFONT	lf			= {0};
-	::GetObject(_hFont, sizeof(LOGFONT), &lf);
-	lf.lfUnderline		= TRUE;
-	_hFontUnder	= ::CreateFontIndirect(&lf);
 
 	/* load sort bitmaps */
 	if (gWinVersion < WV_XP) {
@@ -285,7 +274,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		}
 
 		ImageList_Destroy(_hImlParent);
-		::DeleteObject(_hFontUnder);
 
 		if (_hSemaphore) {
 			::SetEvent(_hEvent[FL_EVT_EXIT]);
@@ -752,15 +740,15 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 					}
 
 					/* get correct font */
-					HFONT	hDefFont = NULL;
+					HFONT	hOldFont = NULL;
 					if (iItem >= _uMaxFolders) {
 						std::wstring	strFilePath = _pExProp->szCurrentPath + _vFileList[iItem].strNameExt;
 						if (IsFileOpen(strFilePath.c_str()) == TRUE) {
-							hDefFont = (HFONT)::SelectObject(hMemDc, _hFontUnder);
+							hOldFont = (HFONT)::SelectObject(hMemDc, _pExProp->underlineFont);
 						}
 					}
-					if (hDefFont == NULL) {
-						hDefFont = (HFONT)::SelectObject(hMemDc, _hFont);
+					if (hOldFont == NULL) {
+						hOldFont = (HFONT)::SelectObject(hMemDc, _pExProp->defaultFont);
 					}
 
 					/* set font color */
@@ -808,7 +796,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 					}
 
 					::SelectObject(hMemDc, hOldBmp);
-					::SelectObject(hMemDc, hDefFont);
+					::SelectObject(hMemDc, hOldFont);
 					::DeleteObject(hBrush);
 					::DeleteObject(hBmp);
 					::DeleteDC(hMemDc);
@@ -889,7 +877,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 				INT		iWidthMax	= 0;
 
 				/* get font length */
-				HFONT hDefFont = (HFONT)::SelectObject(hDc, _hFont);
+				HFONT hOldFont = (HFONT)::SelectObject(hDc, _pExProp->defaultFont);
 
 				for (UINT i = 0; i < _uMaxElements; i++) {
 					if ((i < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
@@ -904,7 +892,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 						iWidthMax = size.cx;
 					}
 				}
-				SelectObject(hDc, hDefFont);
+				::SelectObject(hDc, hOldFont);
 				_lMouseTrackPos = -1;
 				ListView_SetColumnWidth(_hSelf, 0, iWidthMax + 24);
 				_lMouseTrackPos = 0;
@@ -946,7 +934,7 @@ void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
 				SIZE	size		= {0};
 
 				/* get font length */
-				HFONT hDefFont = (HFONT)::SelectObject(hDc, _hFont);
+				HFONT hOldFont = (HFONT)::SelectObject(hDc, _pExProp->defaultFont);
 				if ((hittest.iItem < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
 					_stprintf(pszItemText, _T("[%s]"), _vFileList[hittest.iItem].strName.c_str());
 				} 
@@ -956,7 +944,7 @@ void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
 				::GetTextExtentPoint32(hDc, pszItemText, (int)_tcslen(pszItemText), &size);
 				width = size.cx;
 
-				SelectObject(hDc, hDefFont);
+				::SelectObject(hDc, hOldFont);
 
 				/* recalc label */
 				if (_pExProp->bAddExtToName == TRUE) {
@@ -2263,5 +2251,3 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 	}
 	return true;
 }
-
-

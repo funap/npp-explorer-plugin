@@ -55,10 +55,10 @@ private:
 	/* Handles */
 	NppData			_nppData;
     HWND			_HSource;
+	LOGFONT			_logfont;
 
 	ExProp*			_pProp;
 };
-
 
 
 #endif // OPTION_DEFINE_H

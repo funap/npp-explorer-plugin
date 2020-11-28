@@ -191,8 +191,6 @@ private:
 	ExProp*						_pExProp;
 
 	/* file list owner drawn */
-	HFONT						_hFont;
-	HFONT						_hFontUnder;
 	HIMAGELIST					_hImlParent;
 
 	enum eOverThEv { FL_EVT_EXIT, FL_EVT_INT, FL_EVT_START, FL_EVT_NEXT, FL_EVT_MAX };

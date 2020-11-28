@@ -43,44 +43,48 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 /* information for notepad */
-CONST TCHAR  PLUGIN_NAME[] = _T("&Explorer");
+CONST WCHAR  PLUGIN_NAME[]		= L"&Explorer";
 
 TCHAR		configPath[MAX_PATH];
 TCHAR		iniFilePath[MAX_PATH];
 
 /* ini file sections */
-CONST TCHAR WindowData[]		= _T("WindowData");
-CONST TCHAR Explorer[]			= _T("Explorer");
-CONST TCHAR Faves[]				= _T("Faves");
+CONST WCHAR WindowData[]		= L"WindowData";
+CONST WCHAR Explorer[]			= L"Explorer";
+CONST WCHAR Faves[]				= L"Faves";
 
 
 
 /* section Explorer */
-CONST TCHAR LastPath[]			= _T("LastPath");
-CONST TCHAR SplitterPos[]		= _T("SplitterPos");
-CONST TCHAR SplitterPosHor[]	= _T("SplitterPosHor");
-CONST TCHAR SortAsc[]			= _T("SortAsc");
-CONST TCHAR SortPos[]			= _T("SortPos");
-CONST TCHAR ColPosName[]		= _T("ColPosName");
-CONST TCHAR ColPosExt[]			= _T("ColPosExt");
-CONST TCHAR ColPosSize[]		= _T("ColPosSize");
-CONST TCHAR ColPosDate[]		= _T("ColPosDate");
-CONST TCHAR ShowHiddenData[]	= _T("ShowHiddenData");
-CONST TCHAR ShowBraces[]		= _T("ShowBraces");
-CONST TCHAR ShowLongInfo[]		= _T("ShowLongInfo");
-CONST TCHAR AddExtToName[]		= _T("AddExtToName");
-CONST TCHAR AutoUpdate[]		= _T("AutoUpdate");
-CONST TCHAR AutoNavigate[]		= _T("AutoNavigate");
-CONST TCHAR SizeFormat[]		= _T("SizeFormat");
-CONST TCHAR DateFormat[]		= _T("DateFormat");
-CONST TCHAR FilterHistory[]		= _T("FilterHistory");
-CONST TCHAR LastFilter[]		= _T("LastFilter");
-CONST TCHAR TimeOut[]			= _T("TimeOut");
-CONST TCHAR UseSystemIcons[]	= _T("UseSystemIcons");
-CONST TCHAR NppExecAppName[]	= _T("NppExecAppName");
-CONST TCHAR NppExecScriptPath[]	= _T("NppExecScriptPath");
-CONST TCHAR CphProgramName[]	= _T("CphProgramName");
-CONST TCHAR MaxHistorySize[]	= _T("MaxHistorySize");
+CONST WCHAR LastPath[]			= L"LastPath";
+CONST WCHAR SplitterPos[]		= L"SplitterPos";
+CONST WCHAR SplitterPosHor[]	= L"SplitterPosHor";
+CONST WCHAR SortAsc[]			= L"SortAsc";
+CONST WCHAR SortPos[]			= L"SortPos";
+CONST WCHAR ColPosName[]		= L"ColPosName";
+CONST WCHAR ColPosExt[]			= L"ColPosExt";
+CONST WCHAR ColPosSize[]		= L"ColPosSize";
+CONST WCHAR ColPosDate[]		= L"ColPosDate";
+CONST WCHAR ShowHiddenData[]	= L"ShowHiddenData";
+CONST WCHAR ShowBraces[]		= L"ShowBraces";
+CONST WCHAR ShowLongInfo[]		= L"ShowLongInfo";
+CONST WCHAR AddExtToName[]		= L"AddExtToName";
+CONST WCHAR AutoUpdate[]		= L"AutoUpdate";
+CONST WCHAR AutoNavigate[]		= L"AutoNavigate";
+CONST WCHAR SizeFormat[]		= L"SizeFormat";
+CONST WCHAR DateFormat[]		= L"DateFormat";
+CONST WCHAR FilterHistory[]		= L"FilterHistory";
+CONST WCHAR LastFilter[]		= L"LastFilter";
+CONST WCHAR TimeOut[]			= L"TimeOut";
+CONST WCHAR UseSystemIcons[]	= L"UseSystemIcons";
+CONST WCHAR NppExecAppName[]	= L"NppExecAppName";
+CONST WCHAR NppExecScriptPath[]	= L"NppExecScriptPath";
+CONST WCHAR CphProgramName[]	= L"CphProgramName";
+CONST WCHAR MaxHistorySize[]	= L"MaxHistorySize";
+CONST WCHAR FontHeight[]		= L"FontHeight";
+CONST WCHAR FontWeight[]		= L"FontWeight";
+CONST WCHAR FontItalic[]		= L"FontItalic";
+CONST WCHAR FontFaceName[]		= L"FontFaceName";
 
 
 /* global values */
@@ -130,13 +134,13 @@ TCHAR				szLastElement[MAX_PATH];
 BOOL				isNotepadCreated	= FALSE;
 
 /* section Faves */
-CONST TCHAR			LastElement[]		= _T("LastElement");
+CONST WCHAR			LastElement[]		= L"LastElement";
 
 /* for subclassing */
 WNDPROC				wndProcNotepad		= NULL;
 
 /* win version */
-winVer				gWinVersion			= WV_UNKNOWN;
+winVer				gWinVersion			= winVer::WV_UNKNOWN;
 
 /* own image list variables */
 std::vector<DrvMap>	gvDrvMap;
@@ -145,7 +149,7 @@ HIMAGELIST			ghImgList			= NULL;
 /* current open docs */
 std::vector<std::wstring>		g_vStrCurrentFiles;
 
-
+void initializeFonts();
 
 BOOL APIENTRY DllMain( HANDLE hModule, 
                        DWORD  reasonForCall, 
@@ -199,6 +203,9 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 			if (wndProcNotepad != NULL)
 				SetWindowLongPtr(nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
 
+			::DeleteObject(exProp.defaultFont);
+			::DeleteObject(exProp.underlineFont);
+
 			FreeLibrary(hShell32);
 	
 			delete funcItem[0]._pShKey;
@@ -250,6 +257,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 
 	/* load data */
 	loadSettings();
+	initializeFonts();
 
 	/* initial dialogs */
 	explorerDlg.init((HINSTANCE)g_hModule, nppData, &exProp);
@@ -342,6 +350,21 @@ LRESULT ScintillaMsg(UINT message, WPARAM wParam, LPARAM lParam)
 	return ::SendMessage(g_HSource, message, wParam, lParam);
 }
 
+
+void initializeFonts()
+{
+	if (exProp.defaultFont) {
+		::DeleteObject(exProp.defaultFont);
+	}
+	if (exProp.underlineFont) {
+		::DeleteObject(exProp.underlineFont);
+	}
+	exProp.defaultFont = ::CreateFontIndirect(&exProp.logfont);
+	LOGFONT	logfontUnder = exProp.logfont;
+	logfontUnder.lfUnderline = TRUE;
+	exProp.underlineFont = ::CreateFontIndirect(&logfontUnder);
+}
+
 /***
  *	loadSettings()
  *
@@ -419,6 +442,30 @@ void loadSettings(void)
 	if (::PathFileExists(exProp.szCurrentPath) == FALSE) {
 		_tcscpy(exProp.szCurrentPath, _T("C:\\"));
 	}
+
+	// get default font
+	SystemParametersInfo(SPI_GETICONTITLELOGFONT, sizeof(LOGFONT), &exProp.logfont, 0);
+
+	INT fontHeight = ::GetPrivateProfileInt(Explorer, FontHeight, 0, iniFilePath);
+	if (fontHeight != 0) {
+		exProp.logfont.lfHeight = fontHeight;
+	}
+	
+	INT fontWeight = ::GetPrivateProfileInt(Explorer, FontWeight, 0, iniFilePath);
+	if (fontWeight != 0) {
+		exProp.logfont.lfWeight = fontWeight;
+	}
+
+	INT fontItalic = ::GetPrivateProfileInt(Explorer, FontItalic, 0, iniFilePath);
+	if (fontItalic != 0) {
+		exProp.logfont.lfItalic = TRUE;
+	}
+
+	WCHAR fontFaceName[LF_FACESIZE] = {};
+	::GetPrivateProfileString(Explorer, FontFaceName, _T(""), fontFaceName, LF_FACESIZE, iniFilePath);
+	if (wcslen(fontFaceName) > 0) {
+		wcsncpy(exProp.logfont.lfFaceName, fontFaceName, LF_FACESIZE);
+	}
 }
 
 /***
@@ -454,6 +501,11 @@ void saveSettings(void)
 	::WritePrivateProfileString(Explorer, NppExecScriptPath, exProp.nppExecProp.szScriptPath, iniFilePath);
 	::WritePrivateProfileString(Explorer, CphProgramName, exProp.cphProgram.szAppName, iniFilePath);
 	::WritePrivateProfileString(Explorer, MaxHistorySize, std::to_wstring(exProp.maxHistorySize).c_str(), iniFilePath);
+
+	::WritePrivateProfileString(Explorer, FontHeight, _itot(exProp.logfont.lfHeight, temp, 10), iniFilePath);
+	::WritePrivateProfileString(Explorer, FontWeight, _itot(exProp.logfont.lfWeight, temp, 10), iniFilePath);
+	::WritePrivateProfileString(Explorer, FontItalic, _itot(exProp.logfont.lfItalic, temp, 10), iniFilePath);
+	::WritePrivateProfileString(Explorer, FontFaceName, exProp.logfont.lfFaceName, iniFilePath);
 
 	::WritePrivateProfileString(FilterHistory, nullptr, nullptr, iniFilePath);
 	for (INT i = (INT)exProp.vStrFilterHistory.size() - 1; i >= 0 ; i--)	{
@@ -559,6 +611,10 @@ void clearFilter(void)
 void openOptionDlg(void)
 {
 	if (optionDlg.doDialog(&exProp) == IDOK) {
+		initializeFonts();
+		explorerDlg.SetFont(exProp.defaultFont);
+		favesDlg.SetFont(exProp.defaultFont);
+
 		explorerDlg.redraw();
 		favesDlg.redraw();
 	}

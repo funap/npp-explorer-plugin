@@ -98,7 +98,7 @@ public:
 	void NotifyEvent(DWORD event);
 
 	void UpdateColors();
-
+	void SetFont(const HFONT font);
 public:
 	virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect);
 
@@ -194,8 +194,6 @@ private:
 
 	INT						_iDockedPos;
 };
-
-
 
 
 #endif // EXPLORERDLG_DEFINE_H
