@@ -120,7 +120,6 @@ protected:
 	void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
 
 	void SortElementList(std::vector<ItemElement> & parentElement);
-	void SortElementsRecursive(std::vector<ItemElement> & parentElement, int d, int h);
 
 	void DrawSessionChildren(HTREEITEM hItem);
 

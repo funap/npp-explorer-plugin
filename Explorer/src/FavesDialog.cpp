@@ -1800,81 +1800,16 @@ void FavesDialog::OpenLink(PELEM pElem)
 
 void FavesDialog::SortElementList(std::vector<ItemElement> & elementList)
 {
-	std::vector<ItemElement>	groupList;
-	std::vector<ItemElement>	linkList;
-	ELEM_ITR					itr			= elementList.begin();
-
-	/* get all last elements in a seperate list and remove from sort list */
-	for (; itr != elementList.end(); itr++)
-	{
-		if (itr->uParam & FAVES_PARAM_GROUP)
-		{
-			groupList.push_back(*itr);
+	std::sort(elementList.begin(), elementList.end(), [](const auto &lhs, const auto &rhs) {
+		if ((lhs.uParam & FAVES_PARAM_GROUP) && (rhs.uParam & FAVES_PARAM_LINK)) {
+			return true;
 		}
-		else if (itr->uParam & FAVES_PARAM_LINK)
-		{
-			linkList.push_back(*itr);
+		if ((lhs.uParam & FAVES_PARAM_LINK) && (rhs.uParam & FAVES_PARAM_GROUP)) {
+			return false;
 		}
-	}
-
-	/* get size of both lists */
-	SIZE_T		sizeOfGroup	= groupList.size();
-	SIZE_T		sizeOfLink	= linkList.size();
-
-	/* sort "sort list" */
-	SortElementsRecursive(groupList, 0, (INT)sizeOfGroup-1);
-
-	/* sort "last list" */
-	SortElementsRecursive(linkList, 0, (INT)sizeOfLink-1);
-
-	/* overwrite the information in field */
-	itr	= elementList.begin();
-	for (SIZE_T i = 0; i < sizeOfGroup; i++, itr++)
-	{
-		*itr = groupList[i];
-	}
-	for (SIZE_T i = 0; i < sizeOfLink; i++, itr++)
-	{
-		*itr = linkList[i];
-	}
+		return lhs.name < rhs.name;
+	});
 }
-
-void FavesDialog::SortElementsRecursive(std::vector<ItemElement> & vElement, int d, int h)
-{
-	int				i	= 0;
-	int				j	= 0;
-
-	/* return on empty list */
-	if (d > h || d < 0)
-		return;
-
-	i = h;
-	j = d;
-	std::wstring	str = vElement[((int)((d + h) / 2))].name;
-
-	do
-	{
-		/* sort in alphabeticaly order */
-		while (vElement[j].name < str) j++;
-		while (vElement[i].name > str) i--;
-
-		if ( i >= j )
-		{
-			if ( i != j )
-			{
-				ItemElement buf = vElement[i];
-				vElement[i] = vElement[j];
-				vElement[j] = buf;
-			}
-			i--;
-			j++;
-		}
-	} while (j <= i);
-
-	if (d < i) SortElementsRecursive(vElement,d,i);
-	if (j < h) SortElementsRecursive(vElement,j,h);
-}
-
 
 void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 {
