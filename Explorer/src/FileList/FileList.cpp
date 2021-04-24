@@ -224,10 +224,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
 			return TRUE;
 		}
-		if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
-			openQuickOpenDlg();
-			return TRUE;
-		}
 		if (VK_ESCAPE == wParam) {
 			NppInterface::setFocusToCurrentEdit();
 			return TRUE;

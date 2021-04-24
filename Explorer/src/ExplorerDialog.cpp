@@ -844,16 +844,12 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 		{
 			if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000))
 			{
-				onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x8000);
+				onDelete((0x8000 & ::GetKeyState(VK_SHIFT) == 0x8000));
 				return TRUE;
 			}
 			if (wParam == VK_F5)
 			{
 				::SetEvent(g_hEvent[EID_UPDATE_USER]);
-				return TRUE;
-			}
-			if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
-				openQuickOpenDlg();
 				return TRUE;
 			}
 			if (VK_ESCAPE == wParam) {
@@ -1920,6 +1916,9 @@ void ExplorerDialog::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem
 	std::wstring			searchPath = pszParentPath;
 	HTREEITEM				hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
 
+	if (searchPath.empty()) {
+		return;
+	}
 	if (searchPath.back() != '\\') {
 		searchPath.append(L"\\");
 	}
