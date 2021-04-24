@@ -446,6 +446,9 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 			}
 			break;
 		}
+		case VK_ESCAPE:
+			 close();
+			 return TRUE;
 		default:
 			break;
 		}

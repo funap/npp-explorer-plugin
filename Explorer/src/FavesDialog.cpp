@@ -507,8 +507,8 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 		}
 		break;
 	case WM_KEYDOWN:
-		if ((wParam == 'P') && (0 > ::GetKeyState(VK_CONTROL))) {
-			openQuickOpenDlg();
+		if (VK_ESCAPE == wParam) {
+			NppInterface::setFocusToCurrentEdit();
 			return TRUE;
 		}
 		if (wParam == VK_RETURN) {
