@@ -844,7 +844,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 		{
 			if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000))
 			{
-				onDelete((0x8000 & ::GetKeyState(VK_SHIFT) == 0x8000));
+				onDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
 				return TRUE;
 			}
 			if (wParam == VK_F5)
