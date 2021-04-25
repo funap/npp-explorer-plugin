@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerDialog.h"
 #include "ExplorerResource.h"
 #include "NewDlg.h"
-#include "ToolTip.h"
 #include "resource.h"
 #include "NppInterface.h"
 #include "StringUtil.h"
