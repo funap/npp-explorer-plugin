@@ -267,7 +267,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
 				return TRUE;
 			}
-
+			
 			/* Only used on non NT based systems */
 			if ((HWND)lParam == _hFilterButton)
 			{
@@ -623,9 +623,13 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 		}
 		case EXM_CHANGECOMBO:
 		{
-			TCHAR	TEMP[MAX_PATH];
-			if (_ComboFilter.getSelText(TEMP))
-				_FileList.filterFiles(TEMP);
+			WCHAR searchWords[MAX_PATH] = {};
+			if (_ComboFilter.getSelText(searchWords)) {
+				_FileList.filterFiles(searchWords);
+			}
+			else {
+				_FileList.filterFiles(L"*");
+			}
 			return TRUE;
 		}
 		case EXM_OPENDIR:
@@ -1418,7 +1422,7 @@ void ExplorerDialog::InitialDialog(void)
 	_Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);
 
 	/* initial combo */
-	_ComboFilter.init(_hFilter);
+	_ComboFilter.init(_hFilter, _hSelf);
 
 	/* load cursor */
 	_hCurWait = ::LoadCursor(NULL, IDC_WAIT);

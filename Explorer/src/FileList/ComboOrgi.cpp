@@ -36,9 +36,10 @@ ComboOrgi::~ComboOrgi()
 	_comboItems.clear();
 }
 
-void ComboOrgi::init(HWND hCombo)
+void ComboOrgi::init(HWND hCombo, HWND parent)
 {
 	_hCombo	= hCombo;
+	_hParent = parent;
 
 	/* subclass combo to get edit messages */
 	COMBOBOXINFO	comboBoxInfo;
@@ -54,20 +55,21 @@ LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 {
 	switch (Message)
 	{
-		case WM_KEYUP:
+	case WM_KEYUP:
+	{
+		if (wParam == VK_RETURN)
 		{
-			if (wParam == VK_RETURN)
-			{
-				TCHAR	pszText[MAX_PATH];
+			TCHAR	pszText[MAX_PATH];
 
-				getText(pszText);
-				addText(pszText);
-				return TRUE;
-			}
-			break;
+			getText(pszText);
+			addText(pszText);
+			::PostMessage(_hParent, WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(_hCombo), CBN_SELCHANGE), reinterpret_cast<LPARAM>(_hCombo));
+			return TRUE;
 		}
-		default :
-			break;
+		break;
+	}
+	default :
+		break;
 	}
 	return ::CallWindowProc(_hDefaultComboProc, hwnd, Message, wParam, lParam);
 }

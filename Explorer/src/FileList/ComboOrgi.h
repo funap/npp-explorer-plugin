@@ -23,6 +23,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 
+#include <string>
+#include <vector>
+
 #ifndef CB_GETCOMBOBOXINFO
 #define	CB_GETCOMBOBOXINFO	0x0164
 #endif
@@ -45,7 +48,7 @@ class ComboOrgi
 public :
 	ComboOrgi();
     ~ComboOrgi ();
-	virtual void init(HWND hCombo);
+	virtual void init(HWND hCombo, HWND parent);
 	virtual void destroy() {
 	};
 
@@ -68,6 +71,7 @@ private:
 private :
 	HWND					_hCombo;
     WNDPROC					_hDefaultComboProc;
+	HWND					_hParent;
 
 	std::wstring				_currData;
 	std::vector<std::wstring>	_comboItems;

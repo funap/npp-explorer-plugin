@@ -428,6 +428,9 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
 	switch (uMsg) {
 	case WM_KEYDOWN:
 		switch (wParam) {
+		case VK_RETURN:
+			openSelectedItem();
+			return TRUE;
 		case VK_UP:
 		case VK_DOWN:
 		case VK_PRIOR:	// Page Up
