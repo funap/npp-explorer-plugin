@@ -90,9 +90,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_TREE_FOLDER					(IDD_EXPLORER_DLG + 2)
 	#define IDC_BUTTON_SPLITTER             (IDD_EXPLORER_DLG + 3)
 	#define IDC_LIST_FILE   				(IDD_EXPLORER_DLG + 4)
-	#define IDC_BUTTON_FILTER               (IDD_EXPLORER_DLG + 5)
-	#define IDC_STATIC_FILTER				(IDD_EXPLORER_DLG + 6)
-    #define IDC_COMBO_FILTER                (IDD_EXPLORER_DLG + 7)
+	#define IDC_STATIC_FILTER				(IDD_EXPLORER_DLG + 5)
+    #define IDC_COMBO_FILTER                (IDD_EXPLORER_DLG + 6)
 
 #define    IDD_NEW_DLG		 30600
 	#define IDC_EDIT_NEW                    (IDD_NEW_DLG + 1)

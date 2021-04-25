@@ -169,7 +169,6 @@ private:
 	HWND					_hHeader;
 	HWND					_hSplitterCtrl;
 	HWND					_hFilter;
-	HWND					_hFilterButton;
 
 	/* classes */
 	FileList				_FileList;
