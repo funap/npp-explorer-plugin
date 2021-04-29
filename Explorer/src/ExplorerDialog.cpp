@@ -1402,6 +1402,45 @@ void ExplorerDialog::InitialDialog(void)
 	/* change language */
 	NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Explorer"));
 	NLChangeHeader(_hInst, _nppData._nppHandle, _hHeader, _T("FileList"));
+
+	// key binding
+	_FileList.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
+		switch (nChar) {
+		case VK_TAB:
+			if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
+				::SetFocus(_hTreeCtrl);
+			}
+			else {
+				::SetFocus(_hFilter);
+			}
+			return TRUE;
+		case VK_ESCAPE:
+			NppInterface::setFocusToCurrentEdit();
+			return TRUE;
+		default:
+			break;
+		}
+		return FALSE;
+	});
+
+	_ComboFilter.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
+		switch (nChar) {
+		case VK_TAB:
+			if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
+				::SetFocus(_hListCtrl);
+			}
+			else {
+				::SetFocus(_hTreeCtrl);
+			}
+			return TRUE;
+		case VK_ESCAPE:
+			NppInterface::setFocusToCurrentEdit();
+			return TRUE;
+		default:
+			break;
+		}
+		return FALSE;
+	});
 }
 
 void ExplorerDialog::SetFont(const HFONT font)

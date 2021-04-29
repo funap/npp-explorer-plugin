@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <functional>
 
 struct StaInfo {
 	std::wstring				strPath;
@@ -102,6 +103,7 @@ public:
 	void SetItems(std::vector<std::wstring> vStrItems);
 
 	void UpdateOverlayIcon(void);
+	void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
 
 public:
 	virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect);
@@ -236,6 +238,8 @@ private:
 	/* scrolling on DnD */
 	BOOL						_isScrolling;
 	BOOL						_isDnDStarted;
+
+	std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)>		_onCharHandler;
 };
 
 

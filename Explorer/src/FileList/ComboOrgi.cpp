@@ -24,9 +24,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 
-ComboOrgi::ComboOrgi() :
-	_hCombo(nullptr),
-	_hDefaultComboProc(nullptr)
+ComboOrgi::ComboOrgi()
+	: _hCombo(nullptr)
+	, _hDefaultComboProc(nullptr)
+	, _hParent(nullptr)
+	, _onCharHandler(nullptr)
 {
 	_comboItems.clear();
 }
@@ -50,21 +52,29 @@ void ComboOrgi::init(HWND hCombo, HWND parent)
 	_hDefaultComboProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(comboBoxInfo.hwndItem, GWLP_WNDPROC, (LONG_PTR)wndDefaultProc));
 }
 
-
 LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message)
 	{
-	case WM_KEYUP:
+	case WM_CHAR:
 	{
-		if (wParam == VK_RETURN)
-		{
+		switch (wParam) {
+		case VK_RETURN: {
 			TCHAR	pszText[MAX_PATH];
 
 			getText(pszText);
 			addText(pszText);
 			::PostMessage(_hParent, WM_COMMAND, MAKEWPARAM(GetDlgCtrlID(_hCombo), CBN_SELCHANGE), reinterpret_cast<LPARAM>(_hCombo));
 			return TRUE;
+		}
+		default:
+			if (_onCharHandler) {
+				BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
+				if (handled) {
+					return TRUE;
+				}
+			}
+			break;
 		}
 		break;
 	}
@@ -128,6 +138,11 @@ bool ComboOrgi::getSelText(LPTSTR pszText)
 		}
 	}
 	return false;
+}
+
+void ComboOrgi::setDefaultOnCharHandler(std::function<BOOL(UINT, UINT, UINT)> onCharHandler)
+{
+	_onCharHandler = onCharHandler;
 }
 
 void ComboOrgi::selectComboText(LPCTSTR pszText)

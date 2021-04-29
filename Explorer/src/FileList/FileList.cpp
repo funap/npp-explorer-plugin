@@ -80,27 +80,41 @@ DWORD WINAPI FileOverlayThread(LPVOID lpParam)
 
 
 FileList::FileList(void)
+	: _hHeader(nullptr)
+	, _hImlListSys(nullptr)
+	, _hDefaultListProc(nullptr)
+	, _hDefaultHeaderProc(nullptr)
+	, _pExProp(nullptr)
+	, _hImlParent(nullptr)
+	, _hEvent{}
+	, _hOverThread(nullptr)
+	, _hSemaphore(nullptr)
+	, _bmpSortUp(nullptr)
+	, _bmpSortDown(nullptr)
+	, _iMouseTrackItem(0)
+	, _lMouseTrackPos(0)
+	, _iBltPos(0)
+	, _pToolTip()
+	, _iItem(0)
+	, _iSubItem(0)
+	, _uMaxFolders(0)
+	, _uMaxElements(0)
+	, _uMaxElementsOld(0)
+	, _vFileList()
+	, _bSearchFile(FALSE)
+	, _strSearchFile{}
+	, _bOldAddExtToName(FALSE)
+	, _bOldViewLong(FALSE)
+	, _isStackRec(TRUE)
+	, _vDirStack()
+	, _itrPos()
+	, _pToolBar(nullptr)
+	, _idRedo(0)
+	, _idUndo(0)
+	, _isScrolling(FALSE)
+	, _isDnDStarted(FALSE)
+	, _onCharHandler(nullptr)
 {
-	_hOverThread		= NULL;
-	_hHeader			= NULL;
-	_bmpSortUp			= NULL;
-	_bmpSortDown		= NULL;
-	_iMouseTrackItem	= 0;
-	_lMouseTrackPos		= 0;
-	_iBltPos			= 0;
-	_isStackRec			= TRUE;
-	_iItem				= 0;
-	_iSubItem			= 0;
-	_bOldAddExtToName	= FALSE;
-	_bOldViewLong		= FALSE;
-	_bSearchFile		= FALSE;
-	_isScrolling		= FALSE;
-	_isDnDStarted		= FALSE;
-	_uMaxFolders		= 0;
-	_uMaxElements		= 0;
-	_uMaxElementsOld	= 0;
-	_tcscpy(_strSearchFile, _T(""));
-	_vFileList.clear();
 }
 
 FileList::~FileList(void)
@@ -209,24 +223,32 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
 			return TRUE;
 		default: 
-			onSelectItem(charkey); 
+			if (_onCharHandler) {
+				BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
+				if (handled) {
+					return TRUE;
+				}
+			}
+			onSelectItem(charkey);
 			break;
 		}
 		return TRUE;
 	}
 	case WM_KEYDOWN:
 	{
-		if ((wParam == VK_DELETE) && !((0x80 & ::GetKeyState(VK_CONTROL)) == 0x80)) {
-			onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x80);
-			return TRUE;
-		}
-		if (wParam == VK_F5) {
+		switch (wParam) {
+		case VK_DELETE:
+			if ((0x80 & ::GetKeyState(VK_CONTROL)) != 0x80) {
+				onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x80);
+				return TRUE;
+			}
+			break;
+		case VK_F5:
 			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
 			return TRUE;
-		}
-		if (VK_ESCAPE == wParam) {
-			NppInterface::setFocusToCurrentEdit();
-			return TRUE;
+		default:
+
+			break;
 		}
 		break;
 	}
@@ -621,11 +643,6 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			case VK_BACK:
 			{
 				::SendMessage(_hParent, EXM_OPENDIR, 0, (LPARAM)"..");
-				break;
-			}
-			case VK_TAB:
-			{
-				::SetFocus(::GetNextWindow(_hSelf, (0x80 & ::GetKeyState(VK_SHIFT)) ? GW_HWNDPREV : GW_HWNDNEXT));
 				break;
 			}
 			default:
@@ -1873,6 +1890,11 @@ void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
 		_stprintf(TEMP, _T("%02d.%02d.%04d %02d:%02d"), sysTime.wDay, sysTime.wMonth, sysTime.wYear, sysTime.wHour, sysTime.wMinute);
 
 	str = TEMP;
+}
+
+void FileList::setDefaultOnCharHandler(std::function<BOOL(UINT, UINT, UINT)> onCharHandler)
+{
+	_onCharHandler = onCharHandler;
 }
 
 

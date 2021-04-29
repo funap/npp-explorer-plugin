@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #ifndef CB_GETCOMBOBOXINFO
 #define	CB_GETCOMBOBOXINFO	0x0164
@@ -65,6 +66,8 @@ public :
 		_comboItems.clear();
 	};
 
+	void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
+
 private:
 	void selectComboText(LPCTSTR pszText);
 
@@ -75,6 +78,7 @@ private :
 
 	std::wstring				_currData;
 	std::vector<std::wstring>	_comboItems;
+	std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)>		_onCharHandler;
 
 	LRESULT runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK wndDefaultProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
