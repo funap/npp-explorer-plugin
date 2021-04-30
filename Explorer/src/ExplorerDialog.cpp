@@ -1323,10 +1323,8 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 				::GetCursorPos(&pt);
 				::SetCursorPos(pt.x, pt.y);
 
-				TCHAR	strPathName[MAX_PATH];
-				GetFolderPathName(_hItemExpand, strPathName);
-				strPathName[_tcslen(strPathName)-1] = '\0';
-				UpdateChildren(strPathName, _hItemExpand);
+				const auto pathName = GetFolderPathName(_hItemExpand);
+				UpdateChildren(pathName.c_str(), _hItemExpand);
 
 				TreeView_Expand(_hTreeCtrl, _hItemExpand, TVE_EXPAND);
 				return;
