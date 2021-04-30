@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "PropDlg.h"
 
+#include <algorithm>
 #include <shlobj.h>
 
 
@@ -131,13 +132,10 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				/* set image list */
 				::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-				BOOL canExpand = false;
-				for (const auto &elem : _pElem->vElements) {
-					if (elem.uParam & FAVES_PARAM_GROUP) {
-						canExpand = true;
-						break;
-					}
-				}
+				BOOL canExpand = std::any_of(_pElem->vElements.begin(), _pElem->vElements.end(), [](const auto &elem) {
+					return FAVES_PARAM_GROUP == (elem.uParam & FAVES_PARAM_GROUP);
+				});
+
 				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, (LPARAM)_pElem);
 				TreeView_SelectItem(_hTreeCtrl, hItem);
 
