@@ -114,8 +114,8 @@ FuncItem			funcItem[] = {
 /* 15 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
 };
 
-toolbarIcons		g_TBExplorer;
-toolbarIcons		g_TBFaves;
+toolbarIconsWithDarkMode	g_TBExplorer;
+toolbarIconsWithDarkMode	g_TBFaves;
 
 /* create classes */
 ExplorerDialog		explorerDlg;
@@ -299,12 +299,18 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	if (notifyCode->nmhdr.hwndFrom == nppData._nppHandle) {
 		if (notifyCode->nmhdr.code == NPPN_TBMODIFICATION) {
 			/* change menu language */
-			NLChangeNppMenu((HINSTANCE)g_hModule, nppData._nppHandle, PLUGIN_NAME, funcItem, _countof(funcItem));
+			const HINSTANCE& hInst = reinterpret_cast<const HINSTANCE>(g_hModule);
+			NLChangeNppMenu(hInst, nppData._nppHandle, PLUGIN_NAME, funcItem, _countof(funcItem));
 
-			g_TBExplorer.hToolbarBmp = (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-			g_TBFaves.hToolbarBmp = (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-			::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_TBExplorer);
-			::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_TBFaves);
+			g_TBExplorer.hToolbarBmp			= (HBITMAP)	::LoadImage(hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			g_TBExplorer.hToolbarIcon			= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			g_TBExplorer.hToolbarIconDarkMode	= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_TBExplorer);
+
+			g_TBFaves.hToolbarBmp			= (HBITMAP)	::LoadImage(hInst, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			g_TBFaves.hToolbarIcon			= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			g_TBFaves.hToolbarIconDarkMode	= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+			::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_TBFaves);
 		}
 		if (notifyCode->nmhdr.code == NPPN_READY) {
 			explorerDlg.initFinish();

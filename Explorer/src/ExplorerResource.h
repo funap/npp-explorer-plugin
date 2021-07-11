@@ -35,6 +35,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IDI_EXPLORE							111
 #define IDI_WARN_SESSION					112
 #define IDI_MISSING_FILE					113
+#define IDI_TB_FLUENT_EXPLORER				114
+#define IDI_TB_FLUENT_EXPLORER_DARKMODE		115
+#define IDI_TB_FLUENT_FAVES					116
+#define IDI_TB_FLUENT_FAVES_DARKMODE		117
 
 
 /* Toolbar icons */
