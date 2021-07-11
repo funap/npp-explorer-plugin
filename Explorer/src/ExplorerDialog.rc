@@ -234,26 +234,20 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_PARENTFOLDER        ICON                    "..\\res\\parent.ico"
-
-IDI_FOLDER              ICON                    "..\\res\\folder.ico"
-
-IDI_FILE                ICON                    "..\\res\\file.ico"
-
-IDI_WEB                 ICON                    "..\\res\\web.ico"
-
-IDI_SESSION             ICON                    "..\\res\\session.ico"
-
-IDI_GROUP               ICON                    "..\\res\\group.ico"
-
-IDI_EXPLORE             ICON                    "..\\res\\explore.ico"
-
-IDI_HEART               ICON                    "..\\res\\Heart.ico"
-
-IDI_WARN_SESSION        ICON                    "..\\res\\warnsession.ico"
-
-IDI_MISSING_FILE        ICON                    "..\\res\\missingfile.ico"
-
+IDI_PARENTFOLDER                ICON            "..\\res\\parent.ico"
+IDI_FOLDER                      ICON            "..\\res\\folder.ico"
+IDI_FILE                        ICON            "..\\res\\file.ico"
+IDI_WEB                         ICON            "..\\res\\web.ico"
+IDI_SESSION                     ICON            "..\\res\\session.ico"
+IDI_GROUP                       ICON            "..\\res\\group.ico"
+IDI_EXPLORE                     ICON            "..\\res\\explore.ico"
+IDI_HEART                       ICON            "..\\res\\Heart.ico"
+IDI_WARN_SESSION                ICON            "..\\res\\warnsession.ico"
+IDI_MISSING_FILE                ICON            "..\\res\\missingfile.ico"
+IDI_TB_FLUENT_EXPLORER          ICON            "..\\res\\fluent_explorer.ico"
+IDI_TB_FLUENT_EXPLORER_DARKMODE ICON            "..\\res\\fluent_explorer_dark.ico"
+IDI_TB_FLUENT_FAVES             ICON            "..\\res\\fluent_faves.ico"
+IDI_TB_FLUENT_FAVES_DARKMODE    ICON            "..\\res\\fluent_faves_dark.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
