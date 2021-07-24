@@ -118,3 +118,13 @@ std::wstring NppInterface::getCurrentDirectory()
 	}
 	return std::wstring();
 }
+
+INT NppInterface::getNppVersion()
+{
+	return static_cast<INT>(::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0));
+}
+
+BOOL NppInterface::isSupportFluentUI()
+{
+	return (HIWORD(NppInterface::getNppVersion()) >= 8);
+}
