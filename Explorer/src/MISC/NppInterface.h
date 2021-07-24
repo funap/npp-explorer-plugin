@@ -43,7 +43,8 @@ public:
 	static void         setFocusToCurrentEdit();
 	static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
 	static std::wstring getCurrentDirectory();
-
+	static INT      getNppVersion();
+	static BOOL     isSupportFluentUI();
 	NppInterface(const NppInterface&)				= delete;
 	NppInterface& operator=(const NppInterface&)	= delete;
 	NppInterface(NppInterface&&)					= delete;
