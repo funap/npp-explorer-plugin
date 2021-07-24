@@ -1862,7 +1862,9 @@ void ExplorerDialog::UpdateFolders(void)
 		if (TreeView_GetItemState(_hTreeCtrl, hCurrentItem, TVIS_EXPANDED) & TVIS_EXPANDED)
 		{
 			GetItemText(hCurrentItem, pszPath, MAX_PATH);
-			pszPath[2] = '\0';
+			if (('A' <= pszPath[0]) && (pszPath[0] <= 'Z')) {
+				pszPath[2] = '\0';
+			}
 			UpdateChildren(pszPath, hCurrentItem);
 		}
 		hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
@@ -2123,8 +2125,13 @@ std::wstring ExplorerDialog::GetFolderPathName(HTREEITEM currentItem) const
 	bool firstLoop = true;
 	for (const auto &path : paths) {
 		if (firstLoop) {
-			result = path.front();
-			result += L":";
+			if (::PathIsUNC(path.c_str())) {
+				result = path;
+			}
+			else {
+				result = path.front();
+				result += L":";
+			}
 			firstLoop = false;
 		}
 		else {
