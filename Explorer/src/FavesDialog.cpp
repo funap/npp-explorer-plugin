@@ -143,7 +143,7 @@ void FavesDialog::NotifyNewFile(void)
 
 		/* update "new file link" icon */
 		::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
-		_ToolBar.enable(IDM_EX_LINK_NEW_FILE, (TEMP[1] == ':'));
+		_ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(TEMP));
 
 		/* update "new folder link" icon */
 		::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
@@ -571,7 +571,7 @@ void FavesDialog::tb_cmd(UINT message)
 
 			::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
 
-			if (TEMP[1] == ':')
+			if (PathFileExists(TEMP))
 			{
 				AddToFavorties(FALSE, TEMP);
 			}
