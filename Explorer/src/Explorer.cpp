@@ -320,14 +320,17 @@ extern "C" __declspec(dllexport) FuncItem * getFuncsArray(INT *nbF)
  */
 extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 {
-	if ((notifyCode->nmhdr.hwndFrom == nppData._scintillaMainHandle) ||
-		(notifyCode->nmhdr.hwndFrom == nppData._scintillaSecondHandle) ||
-		(notifyCode->nmhdr.code == TCN_TABDELETE) ||
-		(notifyCode->nmhdr.code == TCN_SELCHANGE) ||
-		(notifyCode->nmhdr.code == NPPN_FILECLOSED) ||
-		(notifyCode->nmhdr.code == NPPN_FILEOPENED)) {
+	switch (notifyCode->nmhdr.code) {
+	case TCN_TABDELETE:
+	case TCN_SELCHANGE:
+	case NPPN_FILECLOSED:
+	case NPPN_FILEOPENED:
 		UpdateDocs();
+		break;
+	default:
+		break;
 	}
+
 	if (notifyCode->nmhdr.hwndFrom == nppData._nppHandle) {
 		if (notifyCode->nmhdr.code == NPPN_TBMODIFICATION) {
 			/* change menu language */
