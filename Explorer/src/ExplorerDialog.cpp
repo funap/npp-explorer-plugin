@@ -1483,13 +1483,43 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 		/* disabled detection of TVN_SELCHANGED notification */
 		_isSelNotifyEnable = FALSE;
 
+		// mount the root path if it is unmounted
+		do {
+			GetItemText(hItem, szItemName, MAX_PATH);
+
+			// truncate item name if we are in root
+			if (('A' <= szItemName[0]) && (szItemName[0] <= 'Z')) {
+				szItemName[2] = '\0';
+			}
+
+			// compare path names
+			_stprintf(TEMP, _T("%s%s\\"), szCurrPath, szItemName);
+			iTempLen = _tcslen(TEMP);
+
+			if (_tcsnicmp(szLongPath, TEMP, iTempLen) == 0) {
+				// allready mounted
+				break;
+			}
+			hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT); 
+			if (hItem == nullptr) {
+				// szLongPath is not mounted, add root item
+				WCHAR root[MAX_PATH] = {};
+				wcsncpy_s(root, szLongPath, MAX_PATH);
+				::PathStripToRoot(root);
+				auto item = InsertChildFolder(root, TVI_ROOT, TVI_LAST, 1);
+			}
+		} while (hItem != nullptr);
+
+		// expand select item
+		hItem = TreeView_GetRoot(_hTreeCtrl);
 		do
 		{
 			GetItemText(hItem, szItemName, MAX_PATH);
 
 			/* truncate item name if we are in root */
-			if (isRoot == TRUE)
+			if (isRoot == TRUE && (('A' <= szItemName[0]) && (szItemName[0] <= 'Z'))) {
 				szItemName[2] = '\0';
+			}
 
 			/* compare path names */
 			_stprintf(TEMP, _T("%s%s\\"), szCurrPath, szItemName);
@@ -1866,7 +1896,9 @@ HTREEITEM ExplorerDialog::InsertChildFolder(LPCTSTR childFolderName, HTREEITEM p
 	_tcscat(parentFolderPathName, childFolderName);
 
 	if (parentItem == TVI_ROOT) {
-		parentFolderPathName[2] = '\0';
+		if (('A' <= parentFolderPathName[0]) && (parentFolderPathName[0] <= 'Z')) {
+			parentFolderPathName[2] = '\0';
+		}
 	}
 	else {
 		/* get only hidden icon when folder is not a device */
@@ -2064,15 +2096,22 @@ void ExplorerDialog::GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathN
 
 	for (size_t i = 0; i < paths.size(); i++) {
 		if (i == 0) {
-			_stprintf(folderPathName, _T("%c:"), paths[i][0]);
+			// root is local drive,
+			if (('A' <= paths[i][0]) && (paths[i][0] <= 'Z')) {
+				swprintf(folderPathName, L"%c:", paths[i][0]);
+			}
+			// root is UNC paths
+			else {
+				swprintf(folderPathName, L"%s", paths[i].c_str());
+			}
 		}
 		else {
-			_stprintf(folderPathName, _T("%s\\%s"), folderPathName, paths[i].c_str());
+			swprintf(folderPathName, L"%s\\%s", folderPathName, paths[i].c_str());
 		}
 	}
 	if (folderPathName[0] != '\0') {
 		PathRemoveBackslash(folderPathName);
-		_stprintf(folderPathName, _T("%s\\"), folderPathName);
+		swprintf(folderPathName, L"%s\\", folderPathName);
 	}
 }
 
