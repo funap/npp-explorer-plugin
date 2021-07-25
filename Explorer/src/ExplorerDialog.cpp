@@ -313,6 +313,9 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 
 							cm.SetObjects(strPathName);
 							cm.ShowContextMenu(_hInst, _nppData._nppHandle, _hSelf, pt);
+
+							::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
+							::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
 						}
 						return TRUE;
 					}
@@ -697,6 +700,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 			cm.SetObjects(files);
 			cm.ShowContextMenu(_hInst, _nppData._nppHandle, _hSelf, pt, wParam == FALSE);
 
+			::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
+			::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
 			return TRUE;
 		}
 		case EXM_UPDATE_PATH :
