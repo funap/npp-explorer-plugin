@@ -902,17 +902,6 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type,
 		_tcscat(TEMP, volumeName);
 	}
 
-	if (_tcsstr(TEMP, _T("C:\\Users\\Public\\"))) {
-#ifdef _DEBUG
-		OutputDebugString(TEMP);
-		OutputDebugString(_T("\n"));
-		OutputDebugString(currentPath);
-		OutputDebugString(_T(" "));
-		OutputDebugString(volumeName);
-		OutputDebugString(_T("\n"));
-#endif
-	}
-
 	if (exProp.bUseSystemIcons == FALSE)
 	{
 		/* get drive icon in any case correct */
@@ -1023,11 +1012,6 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type,
 		{
 			*piIconSelected = *piIconNormal;
 		}
-	}
-
-	if (_tcsstr(TEMP, _T("C:\\Users\\Public\\"))) {
-		_stprintf(TEMP, _T("  TYPE   %d\n  Normal %d\n  Selected %d\n"), type, *piIconNormal, *piIconSelected);
-		OutputDebugString(TEMP);
 	}
 }
 
