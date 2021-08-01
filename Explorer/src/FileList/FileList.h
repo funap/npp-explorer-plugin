@@ -49,18 +49,19 @@ static const WORD DotPattern[] =
 };
 
 struct FileListData {
-	BOOL			bParent;
+	BOOL			isParent;
 	INT				iIcon;
 	INT				iOverlay;
-	BOOL			bHidden;
+	BOOL			isHidden;
+	BOOL			isDirectory;
 	std::wstring	strName;
 	std::wstring	strExt;
 	std::wstring	strSize;
 	std::wstring	strDate;
 	/* not visible, only for sorting */
 	std::wstring	strNameExt;
-	__int64			i64Size;
-	__int64			i64Date;
+	INT64			i64Size;
+	INT64			i64Date;
 	/* not visible, remember state */
 	UINT			state;
 };
@@ -167,7 +168,7 @@ protected:
 		ListView_SetSelectionMark(_hSelf, item);
 	};
 
-	void GetSize(__int64 size, std::wstring & str);
+	void GetSize(INT64 size, std::wstring & str);
 	void GetDate(FILETIME ftLastWriteTime, std::wstring & str);
 
 private:	/* for thread */
