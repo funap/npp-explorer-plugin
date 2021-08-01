@@ -1,7 +1,6 @@
 // Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
-#include "version.h"
 
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
@@ -234,20 +233,21 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_PARENTFOLDER                ICON            "..\\res\\parent.ico"
-IDI_FOLDER                      ICON            "..\\res\\folder.ico"
-IDI_FILE                        ICON            "..\\res\\file.ico"
-IDI_WEB                         ICON            "..\\res\\web.ico"
-IDI_SESSION                     ICON            "..\\res\\session.ico"
-IDI_GROUP                       ICON            "..\\res\\group.ico"
-IDI_EXPLORE                     ICON            "..\\res\\explore.ico"
-IDI_HEART                       ICON            "..\\res\\Heart.ico"
-IDI_WARN_SESSION                ICON            "..\\res\\warnsession.ico"
-IDI_MISSING_FILE                ICON            "..\\res\\missingfile.ico"
-IDI_TB_FLUENT_EXPLORER          ICON            "..\\res\\fluent_explorer.ico"
+IDI_PARENTFOLDER        ICON                    "..\\res\\parent.ico"
+IDI_FOLDER              ICON                    "..\\res\\folder.ico"
+IDI_FILE                ICON                    "..\\res\\file.ico"
+IDI_WEB                 ICON                    "..\\res\\web.ico"
+IDI_SESSION             ICON                    "..\\res\\session.ico"
+IDI_GROUP               ICON                    "..\\res\\group.ico"
+IDI_EXPLORE             ICON                    "..\\res\\explore.ico"
+IDI_HEART               ICON                    "..\\res\\Heart.ico"
+IDI_WARN_SESSION        ICON                    "..\\res\\warnsession.ico"
+IDI_MISSING_FILE        ICON                    "..\\res\\missingfile.ico"
+IDI_TB_FLUENT_EXPLORER  ICON                    "..\\res\\fluent_explorer.ico"
 IDI_TB_FLUENT_EXPLORER_DARKMODE ICON            "..\\res\\fluent_explorer_dark.ico"
-IDI_TB_FLUENT_FAVES             ICON            "..\\res\\fluent_faves.ico"
-IDI_TB_FLUENT_FAVES_DARKMODE    ICON            "..\\res\\fluent_faves_dark.ico"
+IDI_TB_FLUENT_FAVES     ICON                    "..\\res\\fluent_faves.ico"
+IDI_TB_FLUENT_FAVES_DARKMODE ICON               "..\\res\\fluent_faves_dark.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -299,47 +299,6 @@ IDB_SORTDOWN            BITMAP                  "..\\res\\SortDown.bmp"
 IDC_UPDOWN              CURSOR                  "..\\res\\updown.cur"
 
 IDC_LEFTRIGHT           CURSOR                  "..\\res\\leftright.cur"
-
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Version
-//
-
-VS_VERSION_INFO VERSIONINFO
- FILEVERSION    VERSION_NUM
- PRODUCTVERSION VERSION_NUM
- FILEFLAGSMASK 0x3fL
-#ifdef _DEBUG
- FILEFLAGS 0x21L
-#else
- FILEFLAGS 0x20L
-#endif
- FILEOS 0x40004L
- FILETYPE 0x2L
- FILESUBTYPE 0x0L
-BEGIN
-    BLOCK "StringFileInfo"
-    BEGIN
-        BLOCK "040704b0"
-        BEGIN
-            VALUE "Comments", "https://github.com/funap/npp-explorer-plugin"
-            VALUE "CompanyName", "funap"
-            VALUE "FileDescription", "Explorer plugin for Notepad++"
-            VALUE "FileVersion", VERSION_STR
-            VALUE "InternalName", "Explorer"
-            VALUE "LegalCopyright", "Copyright (c) 2018"
-            VALUE "OriginalFilename", "Explorer.dll"
-            VALUE "ProductName", "Explorer"
-            VALUE "ProductVersion", VERSION_STR
-            VALUE "SpecialBuild", "UNICODE"
-        END
-    END
-    BLOCK "VarFileInfo"
-    BEGIN
-        VALUE "Translation", 0x407, 1200
-    END
-END
 
 #endif    // resources
 /////////////////////////////////////////////////////////////////////////////

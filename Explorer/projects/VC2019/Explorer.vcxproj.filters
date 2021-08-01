@@ -107,6 +107,9 @@
     <ResourceCompile Include="..\..\src\ExplorerDialog.rc">
       <Filter>Source Files</Filter>
     </ResourceCompile>
+    <ResourceCompile Include="..\..\src\version.rc">
+      <Filter>Source Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\FileList\ComboOrgi.h">
@@ -223,6 +226,9 @@
     <ClInclude Include="..\..\src\MISC\StringUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource1.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\res\Heart.bmp">
@@ -307,6 +313,18 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="..\..\res\warnsession.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\fluent_explorer.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\fluent_explorer_dark.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\fluent_faves.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="..\..\res\fluent_faves_dark.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
