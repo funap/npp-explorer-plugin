@@ -274,6 +274,7 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="..\..\src\ExplorerDialog.rc" />
+    <ResourceCompile Include="..\..\src\version.rc" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\Common\Ccpp\Docking.h" />
@@ -314,12 +315,17 @@
     <ClInclude Include="..\..\src\QuickOpenDialog.h" />
     <ClInclude Include="..\..\src\resource.h" />
     <ClInclude Include="..\..\src\version.h" />
+    <ClInclude Include="resource1.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="..\..\res\explore.bmp" />
     <Image Include="..\..\res\explore.ico" />
     <Image Include="..\..\res\file.ico" />
     <Image Include="..\..\res\findFile.bmp" />
+    <Image Include="..\..\res\fluent_explorer.ico" />
+    <Image Include="..\..\res\fluent_explorer_dark.ico" />
+    <Image Include="..\..\res\fluent_faves.ico" />
+    <Image Include="..\..\res\fluent_faves_dark.ico" />
     <Image Include="..\..\res\folder.ico" />
     <Image Include="..\..\res\folderGo.bmp" />
     <Image Include="..\..\res\folderUser.bmp" />

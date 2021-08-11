@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "NppInterface.h"
 
 #include <windows.h>
-
+#include <algorithm>
 
 #ifndef LVM_SETSELECTEDCOLUMN
 #define LVM_SETSELECTEDCOLUMN (LVM_FIRST + 140)
@@ -787,7 +787,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 						::FillRect(hMemDc, &rc, hBrush);
 
 						/* first is parent up icon, second folder and file icons with overlay */
-						if ((iItem == 0) && (_vFileList.size() != 0) && (_vFileList[0].bParent == TRUE)) {
+						if ((iItem == 0) && (_vFileList.size() != 0) && (_vFileList[0].isParent == TRUE)) {
 							ImageList_Draw(_hImlParent, ICON_PARENT, hMemDc, rc.left, rc.top, ILD_NORMAL | (isSelected ? ILD_SELECTED : 0));
 						}
 						else {
@@ -1030,7 +1030,7 @@ void FileList::UpdateOverlayIcon(void)
 			LIST_LOCK();
 
 			/* step over parent icon */
-			if ((_uMaxFolders != 0) && (_vFileList[0].bParent == FALSE)) {
+			if ((_uMaxFolders != 0) && (_vFileList[0].isParent == FALSE)) {
 				i = 1;
 			}
 
@@ -1070,7 +1070,7 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
 	}
 	*piIcon		= _vFileList[iItem].iIcon;
 	*piOverlay	= _vFileList[iItem].iOverlay;
-	*pbHidden	= _vFileList[iItem].bHidden;
+	*pbHidden	= _vFileList[iItem].isHidden;
 }
 
 void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
@@ -1135,10 +1135,11 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 		do {
 			if (IsValidFolder(Find) == TRUE) {
 				/* get data in order of list elements */
-				tempData.bParent		= FALSE;
+				tempData.isParent		= FALSE;
 				tempData.iIcon			= -1;
 				tempData.iOverlay		= 0;
-				tempData.bHidden		= ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+				tempData.isDirectory	= TRUE;
+				tempData.isHidden		= ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
 				tempData.strName		= Find.cFileName;
 				tempData.strNameExt		= Find.cFileName;
 				tempData.strExt			= _T("");
@@ -1156,10 +1157,11 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 			{
 				/* store for correct sorting the complete name (with extension) */
 				tempData.strNameExt		= Find.cFileName;
-				tempData.bParent		= FALSE;
+				tempData.isParent		= FALSE;
 				tempData.iIcon			= -1;
 				tempData.iOverlay		= 0;
-				tempData.bHidden		= ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+				tempData.isDirectory	= FALSE;
+				tempData.isHidden		= ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
 
 				/* extract name and extension */
 				LPTSTR	extBeg = _tcsrchr(&Find.cFileName[1], '.');
@@ -1179,19 +1181,20 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 
 				if (_pExProp->bViewLong == TRUE)
 				{
-					tempData.i64Size	= (((__int64)Find.nFileSizeHigh) << 32) + Find.nFileSizeLow;
+					tempData.i64Size	= (((INT64)Find.nFileSizeHigh) << 32) + Find.nFileSizeLow;
 					GetSize(tempData.i64Size, tempData.strSize);
-					tempData.i64Date	= (((__int64)Find.ftLastWriteTime.dwHighDateTime) << 32) + Find.ftLastWriteTime.dwLowDateTime;
+					tempData.i64Date	= (((INT64)Find.ftLastWriteTime.dwHighDateTime) << 32) + Find.ftLastWriteTime.dwLowDateTime;
 					GetDate(Find.ftLastWriteTime, tempData.strDate);
 				}
 
 				vFilesTemp.push_back(tempData);
 			}
-			else if ((IsValidParentFolder(Find) == TRUE) && (TEMP[4] != NULL))
+			else if ((IsValidParentFolder(Find) == TRUE) && !PathIsRoot(TEMP))
 			{
 				/* if 'Find' is not a folder but a parent one */
-				tempData.bParent		= TRUE;
-				tempData.bHidden		= FALSE;
+				tempData.isParent		= TRUE;
+				tempData.isHidden		= FALSE;
+				tempData.isDirectory	= TRUE;
 				tempData.strName		= Find.cFileName;
 				tempData.strNameExt		= Find.cFileName;
 				tempData.strExt			= _T("");
@@ -1287,8 +1290,50 @@ void FileList::SelectFile(const std::wstring &fileName)
 
 void FileList::UpdateList(void)
 {
-	QuickSortRecursiveCol(_pExProp->szCurrentPath[3] != '\0', (INT)_uMaxFolders-1, 0, TRUE);
-	QuickSortRecursiveColEx((INT)_uMaxFolders, (INT)_uMaxElements-1, _pExProp->iSortPos, _pExProp->bAscending);
+	std::sort(_vFileList.begin(), _vFileList.end(), [&](const FileListData& lhs, const FileListData& rhs) {
+		if (lhs.isParent != rhs.isParent) {
+			return lhs.isParent > rhs.isParent;
+		}
+		else if (lhs.isDirectory != rhs.isDirectory) {
+			return lhs.isDirectory > rhs.isDirectory;
+		}
+		else {
+			const int resultNameExt = lhs.strNameExt.compare(rhs.strNameExt);
+			INT64 result = 0;
+
+			if (lhs.isDirectory && rhs.isDirectory) {
+				return resultNameExt < 0;
+			}
+			else {
+				switch (_pExProp->iSortPos) {
+				case SubItem::Name:
+					result = resultNameExt;
+					break;
+				case SubItem::Extension:
+					result = lhs.strExt.compare(rhs.strExt);
+					break;
+				case SubItem::Size:
+					result = lhs.i64Size - rhs.i64Size;
+					break;
+				case SubItem::Date:
+					result = lhs.i64Date - rhs.i64Date;
+					break;
+				default:
+					break;
+				}
+
+				if (result == 0) {
+					result = resultNameExt;
+				}
+
+				if (!_pExProp->bAscending) {
+					result *= -1;
+				}
+			}
+			return result < 0;
+
+		}
+	});
 
 	/* avoid flickering */
 	if (_uMaxElementsOld != _uMaxElements) {
@@ -1481,7 +1526,7 @@ void FileList::onSelectAll(void)
 {
 	INT firstRow	= 0;
 	if (_uMaxFolders != 0) {
-		firstRow = (_vFileList[0].bParent ? 0 : -1);
+		firstRow = (_vFileList[0].isParent ? 0 : -1);
 	}
 
 	for (UINT i = 0; i < _uMaxElements; i++) {
@@ -1551,7 +1596,7 @@ void FileList::onDelete(bool immediate)
 	SIZE_T	offset	= 0;
 	for (SIZE_T i = 0; i < _uMaxElements; i++) {
 		if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-			if ((i == 0) && (_vFileList[i].bParent == TRUE)) {
+			if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
 				continue;
 			}
 			_tcscpy(&lpszFiles[offset], _pExProp->szCurrentPath);
@@ -1604,165 +1649,7 @@ BOOL FileList::FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos
 }
 
 
-/******************************************************************************************
- *	 fast recursive Quicksort of vList; bAscending TRUE == down 
- */
-void FileList::QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending)
-{
-	INT				i		= 0;
-	INT				j		= 0;
-	std::wstring	str		= _T("");
-	__int64			i64Data	= 0;
-
-	/* return on empty list */
-	if (d > h || d < 0) {
-		return;
-	}
-
-	i = h;
-	j = d;
-
-	switch (column)	{
-	case 0:
-	{
-		str = _vFileList[((INT) ((d+h) / 2))].strNameExt;
-		do {
-			if (bAscending == TRUE) {
-				while (_tcsicmp(_vFileList[j].strNameExt.c_str(), str.c_str()) < 0) j++;
-				while (_tcsicmp(_vFileList[i].strNameExt.c_str(), str.c_str()) > 0) i--;
-			}
-			else {
-				while (_tcsicmp(_vFileList[j].strNameExt.c_str(), str.c_str()) > 0) j++;
-				while (_tcsicmp(_vFileList[i].strNameExt.c_str(), str.c_str()) < 0) i--;
-			}
-			if ( i >= j ) {
-				if ( i != j ) {
-					FileListData buf = _vFileList[i];
-					_vFileList[i] = _vFileList[j];
-					_vFileList[j] = buf;
-				}
-				i--;
-				j++;
-			}
-		} while (j <= i);
-		break;
-	}
-	case 1:
-	{
-		str = _vFileList[((INT) ((d+h) / 2))].strExt;
-		do {
-			if (bAscending == TRUE) {
-				while (_tcsicmp(_vFileList[j].strExt.c_str(), str.c_str()) < 0) j++;
-				while (_tcsicmp(_vFileList[i].strExt.c_str(), str.c_str()) > 0) i--;
-			}
-			else {
-				while (_tcsicmp(_vFileList[j].strExt.c_str(), str.c_str()) > 0) j++;
-				while (_tcsicmp(_vFileList[i].strExt.c_str(), str.c_str()) < 0) i--;
-			}
-			if ( i >= j ) {
-				if ( i != j ) {
-					FileListData buf = _vFileList[i];
-					_vFileList[i] = _vFileList[j];
-					_vFileList[j] = buf;
-				}
-				i--;
-				j++;
-			}
-		} while (j <= i);
-		break;
-	}
-	case 2:
-	case 3:
-	{
-		i64Data = (column==2?_vFileList[((INT) ((d+h) / 2))].i64Size:_vFileList[((INT) ((d+h) / 2))].i64Date);
-		do {
-			if (bAscending == TRUE) {
-				while ((column==2?_vFileList[j].i64Size:_vFileList[j].i64Date) < i64Data) j++;
-				while ((column==2?_vFileList[i].i64Size:_vFileList[i].i64Date) > i64Data) i--;
-			}
-			else {
-				while ((column==2?_vFileList[j].i64Size:_vFileList[j].i64Date) > i64Data) j++;
-				while ((column==2?_vFileList[i].i64Size:_vFileList[i].i64Date) < i64Data) i--;
-			}
-			if ( i >= j ) {
-				if ( i != j ) {
-					FileListData buf = _vFileList[i];
-					_vFileList[i] = _vFileList[j];
-					_vFileList[j] = buf;
-				}
-				i--;
-				j++;
-			}
-		} while (j <= i);
-		break;
-	}
-	default:
-		break;
-	}
-
-	if (d < i) QuickSortRecursiveCol(d,i, column, bAscending);
-	if (j < h) QuickSortRecursiveCol(j,h, column, bAscending);
-}
-
-/******************************************************************************************
- *	extended sort for Quicksort of vList, sort any column and if there are equal content 
- *	sort additional over first column(s)
- */
-void FileList::QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending)
-{
-	QuickSortRecursiveCol(d, h, column, bAscending);
-
-	switch (column)
-	{
-	case 1:
-	{
-		std::wstring str = _T("");
-
-		for (INT i = d; i < h ;) {
-			INT iOld = i;
-
-			str = _vFileList[i].strExt;
-
-			for (bool b = true; b;) {
-				if (str == _vFileList[i].strExt)
-					i++;
-				else
-					b = false;
-				if (i > h)
-					b = false;
-			}
-			QuickSortRecursiveCol(iOld, i-1, 0, TRUE);
-		}
-		break;
-	}
-	case 2:
-	case 3:
-	{
-		__int64	i64Data	= 0;
-
-		for (INT i = d; i < h ;) {
-			INT iOld = i;
-
-			i64Data = (column==2?_vFileList[i].i64Size:_vFileList[i].i64Date);
-
-			for (bool b = true; b;) {
-				if (i64Data == (column==2?_vFileList[i].i64Size:_vFileList[i].i64Date))
-					i++;
-				else
-					b = false;
-				if (i > h)
-					b = false;
-			}
-			QuickSortRecursiveCol(iOld, i-1, 0, TRUE);
-		}
-		break;
-	}
-	default:
-		break;
-	}
-}
-
-void FileList::GetSize(__int64 size, std::wstring & str)
+void FileList::GetSize(INT64 size, std::wstring & str)
 {
 	TCHAR	TEMP[MAX_PATH];
 
@@ -1832,7 +1719,7 @@ void FileList::GetSize(__int64 size, std::wstring & str)
 	case SFMT_DYNAMIC_EX:
 	{
 		INT		i		= 0;
-		__int64 komma	= 0;
+		INT64	comma	= 0;
 
 		str = _T("000");
 
@@ -1841,8 +1728,8 @@ void FileList::GetSize(__int64 size, std::wstring & str)
 			if (i < 1)
 				_stprintf(TEMP, _T("%03I64d"), size);
 			else
-				_stprintf(TEMP, _T("%03I64d,%I64d"), size % 1024, komma);
-			komma = (size % 1024) / 100;
+				_stprintf(TEMP, _T("%03I64d,%I64d"), size % 1024, comma);
+			comma = (size % 1024) / 100;
 			size /= 1024;
 			str = TEMP;
 		}
@@ -2088,7 +1975,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	/* get buffer size */
 	for (SIZE_T i = 0; i < _uMaxElements; i++) {
 		if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-			if ((i == 0) && (_vFileList[i].bParent == TRUE)) continue;
+			if ((i == 0) && (_vFileList[i].isParent == TRUE)) continue;
 			bufsz += (parsz + _vFileList[i].strNameExt.size() + 1) * sizeof(TCHAR);
 		}
 	}
@@ -2116,7 +2003,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	LPTSTR	szPath	= (LPTSTR)&lpDropFileStruct[1];
 	for (SIZE_T i = 0; i < _uMaxElements; i++) {
 		if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-			if ((i == 0) && (_vFileList[i].bParent == TRUE)) {
+			if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
 				continue;
 			}
 			_tcscpy(&szPath[offset], _pExProp->szCurrentPath);
@@ -2193,7 +2080,7 @@ bool FileList::OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect)
 	::SendMessage(_hSelf, LVM_SUBITEMHITTEST, 0, (LPARAM)&hittest);
 
 	if ((UINT)hittest.iItem < _uMaxFolders) {
-		if (_vFileList[hittest.iItem].bParent == TRUE) {
+		if (_vFileList[hittest.iItem].isParent == TRUE) {
 			::PathRemoveFileSpec(pszFilesTo);
 			::PathRemoveFileSpec(pszFilesTo);
 		}
