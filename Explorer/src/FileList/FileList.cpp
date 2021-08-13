@@ -42,6 +42,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 static HWND		hWndServer		= NULL;
 static HHOOK	hookMouse		= NULL;
 
+static LPCTSTR cColumns[] = {
+	_T("Name"),
+	_T("Ext."),
+	_T("Size"),
+	_T("Date")
+};
+
 namespace SubItem {
 	constexpr int Name      = 0;
 	constexpr int Extension = 1;

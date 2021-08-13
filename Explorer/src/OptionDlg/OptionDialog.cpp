@@ -53,6 +53,20 @@ static LPCTSTR szExampleScript[MAX_NPP_EXAMPLE_LINE] = {
 	_T("cd $(ARGV[1])")
 };
 
+
+const LPCTSTR pszSizeFmt[18] = {
+	_T("Bytes"),
+	_T("kBytes"),
+	_T("Dynamic x b/k/M"),
+	_T("Dynamic x,x b/k/M")
+};
+
+const LPCTSTR pszDateFmt[12] = {
+	_T("Y/M/D HH:MM"),
+	_T("D.M.Y HH:MM")
+};
+
+
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp
 static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pData)

@@ -58,7 +58,9 @@ static ToolBarButtonUnit toolBarIcons[] = {
 
     {IDM_EX_LINK_EDIT,	    IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_LINKEDIT, 0}
 };    
-		
+
+static TCHAR FAVES_DATA[] = _T("\\Favorites.dat");
+
 static LPCTSTR szToolTip[23] = {
 	_T("Explorer"),
 	_T("Link Current File..."),
@@ -66,6 +68,13 @@ static LPCTSTR szToolTip[23] = {
 	_T("New Link..."),
 	_T("Delete Link"),
 	_T("Edit Link...")
+};
+
+static LPCTSTR cFavesItemNames[4] = {
+	_T("[Folders]"),
+	_T("[Files]"),
+	_T("[Web]"),
+	_T("[Sessions]"),
 };
 
 LPCTSTR FavesDialog::GetNameStrFromCmd(UINT resID)

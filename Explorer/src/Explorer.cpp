@@ -114,6 +114,19 @@ FuncItem			funcItem[] = {
 /* 15 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
 };
 
+/* see in notepad sources */
+LPCTSTR cVarExNppExec[] = {
+	_T("EXP_FULL_PATH"),
+	_T("EXP_ROOT_PATH"),
+	_T("EXP_PARENT_FULL_DIR"),
+	_T("EXP_PARENT_DIR"),
+	_T("EXP_FULL_FILE"),
+	_T("EXP_FILE_NAME"),
+	_T("EXP_FILE_EXT"),
+};
+
+constexpr WCHAR EXPLORER_INI[] = _T("\\Explorer.ini");
+
 toolbarIcons				g_TBExplorer;
 toolbarIcons				g_TBFaves;
 toolbarIconsWithDarkMode	g_TBExplorerWithDarkMode;

@@ -73,14 +73,6 @@ enum FavesElements {
 	FAVES_ITEM_MAX
 };
 
-static LPCTSTR cFavesItemNames[4] = {
-	_T("[Folders]"),
-	_T("[Files]"),
-	_T("[Web]"),
-	_T("[Sessions]"),
-};
-
-
 constexpr UINT FAVES_PARAM					= 0x0000000F;
 constexpr UINT FAVES_PARAM_MAIN				= 0x00000010;
 constexpr UINT FAVES_PARAM_GROUP			= 0x00000020;
@@ -100,19 +92,6 @@ typedef ItemElement* PELEM;
 typedef std::vector<ItemElement>::iterator		ELEM_ITR;
 
 
-/******************** explorer ***************************/
-
-static LPCTSTR cColumns[5] = {
-	_T("Name"),
-	_T("Ext."),
-	_T("Size"),
-	_T("Date")
-};
-
-static TCHAR FAVES_DATA[]		= _T("\\Favorites.dat");
-static TCHAR EXPLORER_INI[]		= _T("\\Explorer.ini");
-static TCHAR CONFIG_PATH[]		= _T("\\plugins\\Config");
-
 /********************************************************/
 
 /* see in notepad sources */
@@ -123,16 +102,7 @@ static TCHAR CONFIG_PATH[]		= _T("\\plugins\\Config");
 
 /********************************************************/
 
-/* see in notepad sources */
-static LPCTSTR cVarExNppExec[] = {
-	_T("EXP_FULL_PATH"),
-	_T("EXP_ROOT_PATH"),
-	_T("EXP_PARENT_FULL_DIR"),
-	_T("EXP_PARENT_DIR"),
-	_T("EXP_FULL_FILE"),
-	_T("EXP_FILE_NAME"),
-	_T("EXP_FILE_EXT"),
-};
+
 
 
 enum VarExNppExec {
@@ -165,23 +135,12 @@ enum SizeFmt {
 } ;
 
 
-const LPCTSTR pszSizeFmt[18] = {
-	_T("Bytes"),
-	_T("kBytes"),
-	_T("Dynamic x b/k/M"),
-	_T("Dynamic x,x b/k/M")
-};
-
 enum DateFmt {
 	DFMT_ENG,
 	DFMT_GER,
 	DFMT_MAX
 };
 
-const LPCTSTR pszDateFmt[12] = {
-	_T("Y/M/D HH:MM"),
-	_T("D.M.Y HH:MM")
-};
 
 struct DrvMap {
 	TCHAR	cDrv;
