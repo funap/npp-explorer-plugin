@@ -30,10 +30,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TreeHelperClass.h"
 #include <vector>
 
-enum LinkDlg {
-	LINK_DLG_NONE,
-	LINK_DLG_FOLDER,
-	LINK_DLG_FILE
+enum class LinkDlg {
+	NONE,
+	FOLDER,
+	FILE
 };
 
 class PropDlg : public StaticDialog, public TreeHelper
@@ -46,7 +46,7 @@ public:
 		Window::init(hInst, hWnd);
 	};
 
-	INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LINK_DLG_NONE, BOOL fileMustExist = FALSE);
+	INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LinkDlg::NONE, BOOL fileMustExist = FALSE);
 
     virtual void destroy() {};
 

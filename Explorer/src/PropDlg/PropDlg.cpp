@@ -39,7 +39,7 @@ PropDlg::PropDlg() : StaticDialog()
 	_pName			= NULL;
 	_pLink			= NULL;
 	_pDesc			= NULL;
-	_linkDlg		= LINK_DLG_NONE;
+	_linkDlg		= LinkDlg::NONE;
 	_fileMustExist	= NULL;
 	_seeDetails		= FALSE;
 	_pElem			= NULL;
@@ -94,7 +94,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 
 			goToCenter();
 
-			if (_linkDlg == LINK_DLG_NONE)
+			if (_linkDlg == LinkDlg::NONE)
 			{
 				RECT	rcName, rcLink;
 
@@ -189,7 +189,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				}
 				case IDC_BTN_OPENDLG:
 				{
-					if (_linkDlg == LINK_DLG_FOLDER)
+					if (_linkDlg == LinkDlg::FOLDER)
 					{
 						// This code was copied and slightly modifed from:
 						// http://www.bcbdev.com/faqs/faq62.htm

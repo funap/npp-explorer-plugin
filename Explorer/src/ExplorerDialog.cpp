@@ -1278,21 +1278,17 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 			break;
 		}
 		case EID_UPDATE_DEVICE :
-		{
 			UpdateDevices();
 			break;
-		}
 		case EID_UPDATE_USER :
-		{
-			/* No break!! */
 			UpdateDevices();
-		}
-		case EID_UPDATE_ACTIVATE :
-		{
 			UpdateFolders();
 			UpdatePath();
 			break;
-		}
+		case EID_UPDATE_ACTIVATE :
+			UpdateFolders();
+			UpdatePath();
+			break;
 		case EID_UPDATE_ACTIVATEPATH :
 		{
 			TCHAR		strPathName[MAX_PATH];

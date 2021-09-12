@@ -133,10 +133,10 @@ protected:
 
 	LinkDlg MapPropDlg(int root) {
 		switch (root) {
-			case FAVES_FOLDERS:		return LINK_DLG_FOLDER;
-			case FAVES_FILES:		return LINK_DLG_FILE;
-			case FAVES_SESSIONS:	return LINK_DLG_FILE;
-			default: return LINK_DLG_NONE;
+			case FAVES_FOLDERS:		return LinkDlg::FOLDER;
+			case FAVES_FILES:		return LinkDlg::FILE;
+			case FAVES_SESSIONS:	return LinkDlg::FILE;
+			default: return LinkDlg::NONE;
 		}
 	};
 	BOOL OpenTreeViewItem(const HTREEITEM hItem);

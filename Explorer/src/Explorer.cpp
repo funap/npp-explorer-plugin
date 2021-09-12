@@ -705,51 +705,38 @@ void openTerminal(void)
  */
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT			ret		= 0;
-
-	switch (message)
-	{
-		case WM_ACTIVATE:
-		{
-			if (((LOWORD(wParam) == WA_ACTIVE) || (LOWORD(wParam) == WA_CLICKACTIVE)) && 
-				(explorerDlg.isVisible()) && ((HWND)lParam != hWnd))
-			{
-				if (exProp.bAutoUpdate == TRUE) {
-					::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATE);
-					::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATE, 200, NULL);
-				} else {
-					::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATEPATH);
-					::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATEPATH, 200, NULL);
-				}
-			}
-			ret = ::CallWindowProc(wndProcNotepad, hWnd, message, wParam, lParam);
-			break;
-		}
-		case WM_DEVICECHANGE:
-		{
-			if ( (explorerDlg.isVisible()) &&
-				((wParam == DBT_DEVICEARRIVAL) || (wParam == DBT_DEVICEREMOVECOMPLETE)))
-			{
-				::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEDEVICE);
-				::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEDEVICE, 1000, NULL);
-			}
-			ret = ::CallWindowProc(wndProcNotepad, hWnd, message, wParam, lParam);
-			break;
-		}
-		case WM_COMMAND:
-		{
-			if (wParam == IDM_FILE_SAVESESSION)
-			{
-				favesDlg.SaveSession();
-				return TRUE;
+	switch (message) {
+	case WM_ACTIVATE:
+		if (explorerDlg.isVisible()
+		&& ((LOWORD(wParam) == WA_ACTIVE) || (LOWORD(wParam) == WA_CLICKACTIVE))
+		&& ((HWND)lParam != hWnd)) {
+			if (exProp.bAutoUpdate == TRUE) {
+				::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATE);
+				::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATE, 200, NULL);
+			} else {
+				::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATEPATH);
+				::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEACTIVATEPATH, 200, NULL);
 			}
 		}
-		default:
-			ret = ::CallWindowProc(wndProcNotepad, hWnd, message, wParam, lParam);
-			break;
+		break;
+	case WM_DEVICECHANGE:
+		if (explorerDlg.isVisible()
+		&& ((wParam == DBT_DEVICEARRIVAL) || (wParam == DBT_DEVICEREMOVECOMPLETE))) {
+			::KillTimer(explorerDlg.getHSelf(), EXT_UPDATEDEVICE);
+			::SetTimer(explorerDlg.getHSelf(), EXT_UPDATEDEVICE, 1000, NULL);
+		}
+		break;
+	case WM_COMMAND:
+		if (wParam == IDM_FILE_SAVESESSION) {
+			favesDlg.SaveSession();
+			return TRUE;
+		}
+		break;
+	default:
+		break;
 	}
 
-	return ret;
+	return ::CallWindowProc(wndProcNotepad, hWnd, message, wParam, lParam);
 }
 
 /**************************************************************************

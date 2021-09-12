@@ -332,7 +332,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 			if (LBN_DBLCLK != HIWORD(wParam)) {
 				break;
 			}
-			// FALLTHROUGH
+			[[fallthrough]]
 		case IDOK:	
 		{
 			openSelectedItem();
