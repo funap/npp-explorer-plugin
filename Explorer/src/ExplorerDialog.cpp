@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "NewDlg.h"
 #include "NppInterface.h"
 #include "ToolTip.h"
+#include "StringUtil.h"
 #include "resource.h"
 
 int DebugPrintf(LPCTSTR format, ...)
@@ -2335,14 +2336,11 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 			}
 		}
 
-		TCHAR	text[MAX_PATH + 32];
-		if (dwEffect == DROPEFFECT_MOVE) {
-			_stprintf(text, _T("Move %d file(s)/folder(s) to:\n\n%s"), count, pszTo);
-		} else if (dwEffect == DROPEFFECT_COPY) {
-			_stprintf(text, _T("Copy %d file(s)/folder(s) to:\n\n%s"), count, pszTo);
-		}
+		const std::wstring message = (dwEffect == DROPEFFECT_MOVE)
+			? StringUtil::format(L"Move %d file(s)/folder(s) to:\n\n%s", count, pszTo)
+			: StringUtil::format(L"Copy %d file(s)/folder(s) to:\n\n%s", count, pszTo);
 
-		if (::MessageBox(_hSelf, text, _T("Explorer"), MB_YESNO) == IDYES)
+		if (::MessageBox(_hSelf, message.c_str(), _T("Explorer"), MB_YESNO) == IDYES)
 		{
 			// TODO move or copy the file views into other window in dependency to keystate
 			SHFILEOPSTRUCT	fileOp	= {0};

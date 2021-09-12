@@ -34,15 +34,21 @@ static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pDa
 };
 
 
-PropDlg::PropDlg() : StaticDialog()
+PropDlg::PropDlg()
+	: StaticDialog()
+	, TreeHelper()
+	, _pName(nullptr)
+	, _pLink(nullptr)
+	, _pDesc(nullptr)
+	, _linkDlg(LinkDlg::NONE)
+	, _fileMustExist(FALSE)
+	, _bWithLink(FALSE)
+	, _seeDetails(FALSE)
+	, _pElem(nullptr)
+	, _iUImgPos(0)
+	, _groupPath{}
+	, _szDetails{}
 {
-	_pName			= NULL;
-	_pLink			= NULL;
-	_pDesc			= NULL;
-	_linkDlg		= LinkDlg::NONE;
-	_fileMustExist	= NULL;
-	_seeDetails		= FALSE;
-	_pElem			= NULL;
 }
 
 
