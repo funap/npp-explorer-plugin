@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ContextMenu.h"
 #include "NewDlg.h"
 #include "NppInterface.h"
-#include "ToolTip.h"
 #include "StringUtil.h"
 #include "resource.h"
 
@@ -53,9 +52,6 @@ int DebugPrintf(LPCTSTR format, ...)
 
 	return len;
 }
-
-
-ToolTip		toolTip;
 
 
 BOOL	DEBUG_ON		= FALSE;

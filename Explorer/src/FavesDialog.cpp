@@ -423,9 +423,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 			}
 			else if (nmhdr->code == TTN_GETDISPINFO)
 			{
-				LPTOOLTIPTEXT lpttt; 
-
-				lpttt = (LPTOOLTIPTEXT)nmhdr; 
+				LPTOOLTIPTEXT lpttt = reinterpret_cast<LPTOOLTIPTEXT>(nmhdr); 
 				lpttt->hinst = _hInst; 
 
 				// Specify the resource identifier of the descriptive 

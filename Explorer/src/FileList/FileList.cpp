@@ -101,9 +101,6 @@ FileList::FileList(void)
 	, _iMouseTrackItem(0)
 	, _lMouseTrackPos(0)
 	, _iBltPos(0)
-	, _pToolTip()
-	, _iItem(0)
-	, _iSubItem(0)
 	, _uMaxFolders(0)
 	, _uMaxElements(0)
 	, _uMaxElementsOld(0)
@@ -156,7 +153,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	::SetWindowLongPtr(_hSelf, GWL_STYLE, style | LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS);
 
 	/* enable full row select */
-	ListView_SetExtendedListViewStyle(_hSelf, LVS_EX_FULLROWSELECT);
+	ListView_SetExtendedListViewStyle(_hSelf, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
 	ListView_SetCallbackMask(_hSelf, LVIS_OVERLAYMASK);
 
 	/* subclass list control */
@@ -288,7 +285,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			}
 			_isDnDStarted = FALSE;
 		}
-		ShowToolTip(hittest);
 		break;
 	}
 	case WM_DESTROY:
@@ -429,58 +425,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			::KillTimer(_hSelf, EXT_SCROLLLISTUP);
 			::KillTimer(_hSelf, EXT_SCROLLLISTDOWN);
 			_isScrolling = FALSE;
-		}
-		return TRUE;
-	}
-	case EXM_TOOLTIP:
-	{
-		LVHITTESTINFO	hittest		= *((LVHITTESTINFO*)lParam);
-
-		switch (wParam)
-		{
-		case WM_LBUTTONDBLCLK:
-		{
-			UINT	mkInd = (0x80 & ::GetKeyState(VK_SHIFT) ? MK_SHIFT : 0) | (0x80 & ::GetKeyState(VK_CONTROL) ? MK_CONTROL : 0);
-			LPLVHITTESTINFO	phtt = (LPLVHITTESTINFO)lParam;
-			::PostMessage(_hSelf, (UINT)wParam, mkInd, MAKELONG(phtt->pt.x, phtt->pt.y));
-
-			onLMouseBtnDbl();
-			break;
-		}
-		case WM_LBUTTONDOWN:
-		case WM_LBUTTONUP:
-		{
-			UINT	mkInd = (0x80 & ::GetKeyState(VK_SHIFT) ? MK_SHIFT : 0) | (0x80 & ::GetKeyState(VK_CONTROL) ? MK_CONTROL : 0);
-			LPLVHITTESTINFO	phtt = (LPLVHITTESTINFO)lParam;
-			::PostMessage(_hSelf, (UINT)wParam, mkInd, MAKELONG(phtt->pt.x, phtt->pt.y));
-			break;
-		}
-		case WM_RBUTTONUP:
-		{
-			/* select only one item */
-			for (UINT uList = 0; uList < _uMaxElements; uList++) {
-				ListView_SetItemState(_hSelf, uList, (hittest.iItem == uList ? LVIS_SELANDFOC : 0), 0xFF);
-			}
-			ListView_SetSelectionMark(_hSelf, hittest.iItem);
-
-			/* hide tooltip */
-			_pToolTip.destroy();
-
-			onRMouseBtn();
-			::SetFocus(_hSelf);
-			break;
-		}
-		case WM_MOUSEMOVE: /* is only send when left button is down */
-		{
-			/* hide tooltip */
-			_pToolTip.destroy();
-
-			LPLVHITTESTINFO	phtt = (LPLVHITTESTINFO)lParam;
-			::PostMessage(_hSelf, WM_MOUSEMOVE, MK_LBUTTON, MAKELONG(phtt->pt.x, phtt->pt.y));
-			break;
-		}
-		default:
-			break;
 		}
 		return TRUE;
 	}
@@ -671,7 +615,6 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			CIDropSource	dropSrc;
 			CIDataObject	dataObj(&dropSrc);
 			FolderExChange(&dropSrc, &dataObj, DROPEFFECT_COPY | DROPEFFECT_MOVE);
-			_pToolTip.destroy();
 			break;
 		}
 		case NM_DBLCLK:
@@ -928,90 +871,6 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 	}
 
 	return FALSE;
-}
-
-void FileList::ShowToolTip(const LVHITTESTINFO & hittest)
-{
-	RECT			rcLabel			= {0};
-
-	if ((hittest.flags != 1) && ((_iItem != hittest.iItem) || (_iSubItem != hittest.iSubItem))) {
-		if (_pToolTip.isVisible()) {
-			_pToolTip.destroy();
-		}
-
-		/* show text */
-		if (ListView_GetSubItemRect(_hSelf, hittest.iItem, hittest.iSubItem, LVIR_LABEL, &rcLabel)) {
-			TCHAR		pszItemText[MAX_PATH];
-			RECT		rc				= {0};
-			INT			width			= 0;
-
-			::GetClientRect(_hSelf, &rc);
-
-			/* get width of selected column */
-			if ((hittest.iSubItem == SubItem::Name) || 
-				((hittest.iSubItem == SubItem::Extension) && (_pExProp->bAddExtToName == TRUE))) {
-				HDC		hDc			= ::GetDC(_hSelf);
-				SIZE	size		= {0};
-
-				/* get font length */
-				HFONT hOldFont = (HFONT)::SelectObject(hDc, _pExProp->defaultFont);
-				if ((hittest.iItem < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
-					_stprintf(pszItemText, _T("[%s]"), _vFileList[hittest.iItem].strName.c_str());
-				} 
-				else {
-					_tcscpy(pszItemText, _vFileList[hittest.iItem].strName.c_str());
-				}
-				::GetTextExtentPoint32(hDc, pszItemText, (int)_tcslen(pszItemText), &size);
-				width = size.cx;
-
-				::SelectObject(hDc, hOldFont);
-
-				/* recalc label */
-				if (_pExProp->bAddExtToName == TRUE) {
-					RECT rcLabelSec	= {0};
-					ListView_GetSubItemRect(_hSelf, hittest.iItem, 0, LVIR_LABEL, &rcLabel);
-					ListView_GetSubItemRect(_hSelf, hittest.iItem, 1, LVIR_LABEL, &rcLabelSec);
-					rcLabel.right = rcLabelSec.right;
-				}
-				::ReleaseDC(_hSelf, hDc);
-			}
-			else {
-				ListView_GetItemText(_hSelf, hittest.iItem, hittest.iSubItem, pszItemText, MAX_PATH);
-				width = ListView_GetStringWidth(_hSelf, pszItemText);
-			}
-
-			/* open tooltip only when it's content is too small */
-			if ((((rcLabel.right - rcLabel.left) - (hittest.iSubItem == SubItem::Name ? 5 : 12)) < width) ||
-				(((rc.right - rcLabel.left) - (hittest.iSubItem == SubItem::Name ? 5 : 5)) < width)) {
-				_pToolTip.init(_hInst, _hSelf);
-				if ((hittest.iSubItem == SubItem::Name) || ((hittest.iSubItem == SubItem::Extension) && (_pExProp->bAddExtToName == TRUE))) {
-					rcLabel.left -= 1;
-				}
-				else {
-					rcLabel.left += 3;
-				}
-				if (gWinVersion == WV_VISTA) {
-					rcLabel.left -= 3;
-				}
-				ClientToScreen(_hSelf, &rcLabel);
-
-				if ((_pExProp->bAddExtToName == FALSE) && (hittest.iSubItem == SubItem::Name)) {
-					TCHAR	pszItemTextExt[MAX_PATH];
-					ListView_GetItemText(_hSelf, hittest.iItem, 1, pszItemTextExt, MAX_PATH);
-					if (pszItemTextExt[0] != '\0') {
-						_tcscat(pszItemText, _T("."));
-						_tcscat(pszItemText, pszItemTextExt);
-					}
-					_pToolTip.Show(rcLabel, pszItemText);
-				}
-				else {
-					_pToolTip.Show(rcLabel, pszItemText);
-				}
-			}
-		}
-	}
-	_iItem		= hittest.iItem;
-	_iSubItem	= hittest.iSubItem;
 }
 
 void FileList::UpdateOverlayIcon(void)

@@ -251,7 +251,6 @@
     <ClCompile Include="..\..\src\FileDlg\FileDlg.cpp" />
     <ClCompile Include="..\..\src\FileList\ComboOrgi.cpp" />
     <ClCompile Include="..\..\src\FileList\FileList.cpp" />
-    <ClCompile Include="..\..\src\FileList\ToolTip.cpp" />
     <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
     <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
     <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
@@ -296,7 +295,6 @@
     <ClInclude Include="..\..\src\FileDlg\FileDlg.h" />
     <ClInclude Include="..\..\src\FileList\ComboOrgi.h" />
     <ClInclude Include="..\..\src\FileList\FileList.h" />
-    <ClInclude Include="..\..\src\FileList\ToolTip.h" />
     <ClInclude Include="..\..\src\HelpDlg\HelpDialog.h" />
     <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
     <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
