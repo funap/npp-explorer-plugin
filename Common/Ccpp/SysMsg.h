@@ -15,8 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef M30_IDE_COMMUN_H
-#define M30_IDE_COMMUN_H
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -106,6 +105,3 @@ protected:
 	size_t _wideCharAllocLen;
 	
 };
-
-
-#endif //M30_IDE_COMMUN_H

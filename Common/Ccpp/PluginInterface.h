@@ -26,8 +26,7 @@
 // Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
 
-#ifndef PLUGININTERFACE_H
-#define PLUGININTERFACE_H
+#pragma once
 
 #ifndef SCINTILLA_H
 #include "Scintilla.h"
@@ -82,6 +81,3 @@ extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam
 
 // This API return always true now, since Notepad++ isn't compiled in ANSI mode anymore
 extern "C" __declspec(dllexport) BOOL isUnicode();
-
-
-#endif //PLUGININTERFACE_H

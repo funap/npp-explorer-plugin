@@ -18,8 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 
-#ifndef COMBOORGI_DEFINE_H
-#define COMBOORGI_DEFINE_H
+#pragma once
 
 #include "Explorer.h"
 
@@ -85,5 +84,3 @@ private :
 		return (((ComboOrgi *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProc(hwnd, Message, wParam, lParam));
 	};
 };
-
-#endif // COMBOORGI_DEFINE_H

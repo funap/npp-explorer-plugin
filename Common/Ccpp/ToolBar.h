@@ -15,8 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef TOOL_BAR_H
-#define TOOL_BAR_H
+#pragma once
 
 #include "Window.h"
 #include "Notepad_plus_msgs.h"
@@ -172,5 +171,3 @@ private:
 	void releaseID(int id);
 	bool isIDTaken(int id);
 };
-
-#endif // TOOL_BAR_H

@@ -21,8 +21,7 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
-#ifndef DIRECTORYINDEX_H
-#define DIRECTORYINDEX_H
+#pragma once
 
 #include <vector>
 #include <filesystem>
@@ -59,5 +58,3 @@ private:
 	std::filesystem::path				_currentDirectory;
 	std::thread							_workerThread;
 };
-
-#endif // DIRECTORYINDEX_H

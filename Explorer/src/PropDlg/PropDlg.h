@@ -17,9 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-#ifndef PROP_DLG_DEFINE_H
-#define PROP_DLG_DEFINE_H
+#pragma once
 
 #include <windows.h>
 #include <commctrl.h>
@@ -71,7 +69,3 @@ private:
 	std::vector<std::wstring>	_groupPath;
 	TCHAR						_szDetails[20];
 };
-
-
-
-#endif // PROP_DLG_DEFINE_H

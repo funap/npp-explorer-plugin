@@ -23,10 +23,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-
-#ifndef	CONTEXTMENU_DEFINE_H
-#define CONTEXTMENU_DEFINE_H
+#pragma once
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -101,5 +98,3 @@ private:
 	std::vector<std::wstring>	_strArray;
 	std::vector<std::wstring>	_strNppScripts;
 };
-
-#endif // CONTEXTMENU_DEFINE_H

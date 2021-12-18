@@ -6,8 +6,7 @@
    PARTICULAR PURPOSE.
    Author: Leon Finker  1/2001
 **************************************************************************/
-#ifndef __DRAGDROPIMPL_H__
-#define __DRAGDROPIMPL_H__
+#pragma once
 
 #include <shlobj.h>
 
@@ -200,6 +199,3 @@ public:
         /* [in] */ POINTL pt,
         /* [out][in] */ DWORD __RPC_FAR *pdwEffect);
 };
-
-
-#endif //__DRAGDROPIMPL_H__

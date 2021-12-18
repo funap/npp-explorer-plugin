@@ -15,8 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef WINDOW_CONTROL_H
-#define WINDOW_CONTROL_H
+#pragma once
 
 #include <windows.h>
 
@@ -108,5 +107,3 @@ protected:
 	HWND _hParent;
 	HWND _hSelf;
 };
-
-#endif //WINDOW_CONTROL_H

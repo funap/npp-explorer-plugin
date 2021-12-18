@@ -17,9 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-#ifndef NEW_DLG_DEFINE_H
-#define NEW_DLG_DEFINE_H
+#pragma once
 
 #include "StaticDialog.h"
 #include "Explorer.h"
@@ -58,7 +56,3 @@ private:
 	LPCTSTR			_pDesc;
 
 };
-
-
-
-#endif // NEW_DLG_DEFINE_H

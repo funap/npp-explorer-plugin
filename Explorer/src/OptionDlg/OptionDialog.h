@@ -17,9 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-#ifndef OPTION_DEFINE_H
-#define OPTION_DEFINE_H
+#pragma once
 
 #include "StaticDialog.h"
 #include "Explorer.h"
@@ -59,6 +57,3 @@ private:
 
 	ExProp*			_pProp;
 };
-
-
-#endif // OPTION_DEFINE_H

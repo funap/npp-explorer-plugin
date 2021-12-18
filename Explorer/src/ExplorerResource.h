@@ -16,11 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-
-
-#ifndef EXPLORER_RC_H
-#define EXPLORER_RC_H
-
+#pragma once
 
 #define IDC_UPDOWN							101
 #define IDC_LEFTRIGHT						102
@@ -190,6 +186,3 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #ifndef IDC_STATIC
 #define IDC_STATIC							-1
 #endif
-
-
-#endif // EXPLORER_RC_H

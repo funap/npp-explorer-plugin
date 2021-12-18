@@ -22,8 +22,7 @@
   THE SOFTWARE.
 */
 
-#ifndef QUICKOPENDIALOG_H
-#define QUICKOPENDIALOG_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -74,6 +73,3 @@ private:
 	RECT														_progressBarRect;
 	BOOL														_shouldAutoClose;
 };
-
-
-#endif // QUICK_OPEN_DIALOG

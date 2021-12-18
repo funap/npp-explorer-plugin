@@ -22,8 +22,7 @@
   THE SOFTWARE.
 */
 
-#ifndef FUZZY_MATCHER_H_
-#define FUZZY_MATCHER_H_
+#pragma once
 
 #include <string_view>
 #include <vector>
@@ -39,5 +38,3 @@ private:
     int CalculateScore(wchar_t patternChar, const std::wstring_view& target, size_t targetIndex, int matchesSequenceLength);
     std::wstring_view pattern_;
 };
-
-#endif  // FUZZY_MATCHER_H_

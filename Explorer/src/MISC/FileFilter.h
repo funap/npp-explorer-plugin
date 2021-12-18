@@ -22,8 +22,7 @@
   THE SOFTWARE.
 */
 
-#ifndef FILEFILTER_H
-#define FILEFILTER_H
+#pragma once
 
 #include <windows.h>
 #include <string>
@@ -45,5 +44,3 @@ private:
 	std::vector<std::wstring>	_allowList;
 	std::vector<std::wstring>	_denyList;
 };
-
-#endif // _EXTENSIONFILTER_H_

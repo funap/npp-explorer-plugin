@@ -14,8 +14,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 */
 
-#ifndef DOCKINGDLGINTERFACE_H
-#define DOCKINGDLGINTERFACE_H
+#pragma once
 
 #include "StaticDialog.h"
 #include "Docking.h"
@@ -121,5 +120,3 @@ protected :
 	TCHAR            _moduleName[MAX_PATH];
 	TCHAR			_pluginName[MAX_PATH];
 };
-
-#endif // DOCKINGDLGINTERFACE_H

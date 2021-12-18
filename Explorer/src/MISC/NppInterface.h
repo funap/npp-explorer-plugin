@@ -22,8 +22,7 @@
   THE SOFTWARE.
 */
 
-#ifndef NPP_INTERFACE_H_
-#define NPP_INTERFACE_H_
+#pragma once
 
 #include <string>
 #include <vector>
@@ -54,5 +53,3 @@ private:
 	~NppInterface() = default;
 	static NppData _nppData;
 };
-
-#endif // NPP_INTERFACE_H_

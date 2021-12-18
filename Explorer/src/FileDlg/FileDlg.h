@@ -15,8 +15,7 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#ifndef FILE_DIALOG_H
-#define FILE_DIALOG_H
+#pragma once
 
 #include <windows.h>
 #include <commdlg.h>
@@ -59,5 +58,3 @@ private:
 
     static FileDlg *staticThis;
 };
-
-#endif //FILE_DIALOG_H

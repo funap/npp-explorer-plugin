@@ -17,9 +17,7 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-
-#ifndef FILELIST_DEFINE_H
-#define FILELIST_DEFINE_H
+#pragma once
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -234,6 +232,3 @@ private:
 
 	std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)>		_onCharHandler;
 };
-
-
-#endif	//	FILELIST_DEFINE_H
