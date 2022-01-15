@@ -108,7 +108,6 @@ protected:
 	void DeleteItem(HTREEITEM hItem);
 
 	void DuplicateRecursive(PELEM pTarget, PELEM pSource);
-	void DeleteRecursive(PELEM pElem);
 
 	void OpenContext(HTREEITEM hItem, POINT pt);
 	BOOL DoesNameNotExist(HTREEITEM hItem, HTREEITEM hCurrItem, LPTSTR name);

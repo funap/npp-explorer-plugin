@@ -475,6 +475,8 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 		case WM_DESTROY:
 		{
 			SaveSettings();
+			_vDB.clear();
+
 			::DestroyIcon(_data.hIconTab);
 			_data.hIconTab = nullptr;
 
@@ -749,15 +751,17 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
 		if (_isCut == TRUE)
 		{
 			/* delete item */
-			HTREEITEM	hParentItem	= TreeView_GetParent(_hTreeCtrl, _hTreeCutCopy);
-			PELEM		pParentElem = (PELEM)GetParam(hParentItem);
+			auto parentTreeItem	= TreeView_GetParent(_hTreeCtrl, _hTreeCutCopy);
+			auto parentElem     = reinterpret_cast<PELEM>(GetParam(parentTreeItem));
 
-			pParentElem->vElements.erase(pParentElem->vElements.begin()+(pElemCC-&pParentElem->vElements[0]));
+			std::erase_if(parentElem->vElements, [pElemCC](const auto& elem) {
+				return &elem == pElemCC;
+			});
 
 			/* update information and delete element */
-			UpdateLink(hParentItem);
-			UpdateNode(hParentItem, !pParentElem->vElements.empty());
-			ExpandElementsRecursive(hParentItem);
+			UpdateLink(parentTreeItem);
+			UpdateNode(parentTreeItem, !parentElem->vElements.empty());
+			ExpandElementsRecursive(parentTreeItem);
 		}
 		else
 		{
@@ -849,11 +853,10 @@ void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
 				element.name	= pszName;
 				element.link	= pszLink;
 				element.uParam	= FAVES_PARAM_LINK | root;
-				element.vElements.clear();
 
 				/* push element back */
 				PELEM	pElem	= GetElementPointer(groupPath);
-				pElem->vElements.push_back(element);
+				pElem->vElements.push_back(std::move(element));
 			}
 		}
 		else
@@ -969,9 +972,7 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
 					element.name	= pszName;
 					element.link	= pszLink;
 					element.uParam	= FAVES_PARAM_LINK | root;
-					element.vElements.clear();
-
-					pElem->vElements.push_back(element);
+					pElem->vElements.push_back(std::move(element));
 				}
 
 				/* save current session when expected */
@@ -1048,9 +1049,7 @@ void FavesDialog::NewItem(HTREEITEM hItem)
 				element.name	= pszName;
 				element.link	= pszLink;
 				element.uParam	= FAVES_PARAM_LINK | root;
-				element.vElements.clear();
-
-				pElem->vElements.push_back(element);
+				pElem->vElements.push_back(std::move(element));
 			}
 		}
 		else
@@ -1177,9 +1176,13 @@ void FavesDialog::DeleteItem(HTREEITEM hItem)
 
 	if (pElem && !(pElem->uParam & FAVES_PARAM_MAIN))
 	{
-		/* delete child elements */
-		DeleteRecursive(pElem);
-		((PELEM)GetParam(hItemParent))->vElements.erase(((PELEM)GetParam(hItemParent))->vElements.begin()+(pElem-&((PELEM)GetParam(hItemParent))->vElements[0]));
+		// delete child elements
+		pElem->vElements.clear();
+
+		auto parent = reinterpret_cast<PELEM>(GetParam(hItemParent));
+		std::erase_if(parent->vElements, [pElem](const auto& elem) {
+			return &elem == pElem;
+		});
 
 		/* update information and delete element */
 		TreeView_DeleteItem(_hTreeCtrl, hItem);
@@ -1192,17 +1195,6 @@ void FavesDialog::DeleteItem(HTREEITEM hItem)
 		UpdateLink(hItemParent);
 	}
 }
-
-void FavesDialog::DeleteRecursive(PELEM pElem)
-{
-	/* delete elements of child items */
-	for (SIZE_T i = 0; i < pElem->vElements.size(); i++)
-	{
-		DeleteRecursive(&pElem->vElements[i]);
-	}
-	pElem->vElements.clear();
-}
-
 
 void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 {
@@ -1299,11 +1291,8 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 							{
 								ItemElement	element;
 								element.name	= pszName;
-								element.link	= std::wstring();
 								element.uParam	= FAVES_PARAM_USERIMAGE | FAVES_PARAM_GROUP | root;
-								element.vElements.clear();
-
-								pElem->vElements.push_back(element);
+								pElem->vElements.push_back(std::move(element));
 
 								/* update information */
 								if (pElem->uParam & FAVES_PARAM_GROUP)
@@ -1848,7 +1837,6 @@ void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 
 void FavesDialog::ReadSettings(void)
 {
-	ItemElement	list;
 	extern TCHAR	configPath[MAX_PATH];
 	LPTSTR			readFilePath			= (LPTSTR)new TCHAR[MAX_PATH];
 	DWORD			hasRead					= 0;
@@ -1858,12 +1846,10 @@ void FavesDialog::ReadSettings(void)
 	for (int i = 0; i < FAVES_ITEM_MAX; i++)
 	{
 		/* create element list */
+		ItemElement	list;
 		list.uParam		= FAVES_PARAM_USERIMAGE | FAVES_PARAM_MAIN | i;
 		list.name		= cFavesItemNames[i];
-		list.link		= std::wstring();
-		list.vElements.clear();
-
-		_vDB.push_back(list);
+		_vDB.push_back(std::move(list));
 	}
 
 	/* fill out tree and vDB */
@@ -1938,7 +1924,7 @@ void FavesDialog::ReadSettings(void)
 
 void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 {
-	ItemElement	element;
+
 	LPTSTR		pszPos			= NULL;
 	 UINT		defaultParam	= elem_itr->uParam & FAVES_PARAM;
 	if (defaultParam == FAVES_WEB) {
@@ -1954,6 +1940,7 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 		}
 		if (_tcscmp(*ptr, _T("#LINK")) == 0)
 		{
+			ItemElement	element;
 			/* link is found, get information and fill out the struct */
 
 			/* get element name */
@@ -1978,12 +1965,12 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 			}
 
 			element.uParam	= FAVES_PARAM_LINK | defaultParam;
-			element.vElements.clear();
-			
-			elem_itr->vElements.push_back(element);
+		
+			elem_itr->vElements.push_back(std::move(element));
 		}
 		else if ((_tcscmp(*ptr, _T("#GROUP")) == 0) || (_tcscmp(*ptr, _T("#GROUP")) == 0))
 		{
+			ItemElement	element;
 			/* group is found, get information and fill out the struct */
 
 			/* get element name */
@@ -2005,14 +1992,11 @@ void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 				*ptr = _tcstok(NULL, _T("\n"));
 			}
 
-			element.link	= std::wstring();
 			element.uParam	= FAVES_PARAM_USERIMAGE | FAVES_PARAM_GROUP | defaultParam;
 			if (isExpand) {
 				element.uParam |= FAVES_PARAM_EXPAND;
 			}
-			element.vElements.clear();
-
-			elem_itr->vElements.push_back(element);
+			elem_itr->vElements.push_back(std::move(element));
 
 			ReadElementTreeRecursive(elem_itr->vElements.end()-1, ptr);
 		}
@@ -2067,9 +2051,6 @@ void FavesDialog::SaveSettings(void)
 			std::wstring temp = StringUtil::format(L"%s\nExpand=%i\n\n", cFavesItemNames[i], (_vDB[i].uParam & FAVES_PARAM_EXPAND) == FAVES_PARAM_EXPAND);
 			::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, NULL);
 			SaveElementTreeRecursive(pElem, hFile);
-
-			/* delete tree */
-			DeleteRecursive(pElem);
 
 			hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT);
 		}
