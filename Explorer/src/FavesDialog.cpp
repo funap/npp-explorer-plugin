@@ -302,7 +302,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 					case CDDS_ITEMPREPAINT: {
 						HTREEITEM	hItem		= (HTREEITEM)lpCD->nmcd.dwItemSpec;
 						PELEM		pElem		= (PELEM)GetParam(hItem);
-						BOOL		bUserImage	= FALSE;
 
 						if (pElem) {
 							if ((pElem->uParam & FAVES_FILES) && (pElem->uParam & FAVES_PARAM_LINK)) {
@@ -1106,7 +1105,6 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 {
 	NewDlg			dlgNew;
 	HMENU			hMenu		= nullptr;
-	int				rootLevel	= 0;
 	PELEM			pElem		= (PELEM)GetParam(hItem);
 
 	/* get element and level depth */
@@ -1439,11 +1437,7 @@ void FavesDialog::UpdateNode(HTREEITEM hItem, BOOL haveChildren)
 
 void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
 {
-	INT			i				= 0;
-	INT			docCnt			= 0;
-	LPTSTR		*ppszFileNames	= nullptr;
 	PELEM		pElem			= (PELEM)GetParam(hItem);
-
 	if ((pElem->uParam & FAVES_PARAM_LINK) != FAVES_PARAM_LINK) {
 		return;
 	}
@@ -1472,7 +1466,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
 			hasMissingFile = TRUE;
 		}
 		pElem->vElements.push_back(element);
-		HTREEITEM inserted = InsertItem(element.name.c_str(), iIconNormal, iIconSelected, iIconOverlayed, 0, hItem, TVI_LAST, FALSE, (LPARAM)&pElem->vElements.back());
+		InsertItem(element.name.c_str(), iIconNormal, iIconSelected, iIconOverlayed, 0, hItem, TVI_LAST, FALSE, (LPARAM)&pElem->vElements.back());
 	}
 
 	if (hasMissingFile) {
@@ -1735,8 +1729,6 @@ void FavesDialog::ReadSettings(void)
 
 void FavesDialog::ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr)
 {
-
-	LPTSTR		pszPos			= nullptr;
 	UINT		defaultParam	= elem_itr->uParam & FAVES_PARAM;
 	if (defaultParam == FAVES_WEB) {
 		defaultParam |= FAVES_PARAM_USERIMAGE;
@@ -1867,8 +1859,6 @@ void FavesDialog::SaveSettings(void)
 void FavesDialog::SaveElementTreeRecursive(PELEM pElem, HANDLE hFile)
 {
 	DWORD		hasWritten	= 0;
-	SIZE_T		size		= 0;
-	LPTSTR		temp		= nullptr;
 	PELEM		pElemItr	= nullptr;
 
 	/* delete elements of child items */

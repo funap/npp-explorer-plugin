@@ -1504,7 +1504,7 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 				WCHAR root[MAX_PATH] = {};
 				wcsncpy_s(root, szLongPath, MAX_PATH);
 				::PathStripToRoot(root);
-				auto item = InsertChildFolder(root, TVI_ROOT, TVI_LAST, 1);
+				InsertChildFolder(root, TVI_ROOT, TVI_LAST, 1);
 			}
 		} while (hItem != nullptr);
 
@@ -1766,7 +1766,6 @@ void ExplorerDialog::onPaste(void)
  */
 void ExplorerDialog::UpdateDevices(void)
 {
-	BOOL			bDefaultDevice  = FALSE;
 	DWORD			driveList		= ::GetLogicalDrives();
 	BOOL			isValidDrive	= FALSE;
 	BOOL			haveChildren	= FALSE;
@@ -2163,7 +2162,6 @@ BOOL ExplorerDialog::ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR p
 	GetVolumeInfo	volInfo;
 	DWORD			dwThreadId		= 0;
 	BOOL			isValidDrive	= FALSE;
-	HANDLE			hThread			= NULL;
 
 	volInfo.pszDrivePathName	= pszDrivePathName;
 	volInfo.pszVolumeName		= pszVolumeName;
