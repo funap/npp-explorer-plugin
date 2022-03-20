@@ -27,7 +27,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "PluginInterface.h"
 #include "Notepad_plus_rc.h"
-#include "NativeLang_def.h"
 #include "FileFilter.h"
 
 #include <TCHAR.H>

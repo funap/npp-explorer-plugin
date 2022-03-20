@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "FileList.h"
 #include "resource.h"
-#include "NativeLang_def.h"
 #include "FileFilter.h"
 #include "NppInterface.h"
 

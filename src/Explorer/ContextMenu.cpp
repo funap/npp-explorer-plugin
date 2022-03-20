@@ -336,9 +336,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 				}
 			}
 			TCHAR	szMenuName[MAX_PATH];
-			if (!NLGetText(_hInst, _hWndNpp, _T("Standard Menu"), szMenuName, MAX_PATH)) {
-				_tcscpy(szMenuName, _T("Standard Menu"));
-			}
+			_tcscpy(szMenuName, _T("Standard Menu"));
 			::InsertMenu(hMainMenu, 4, MF_BYPOSITION | MF_STRING | MF_POPUP, (UINT_PTR)hShellMenu, szMenuName);
 			::InsertMenu(hMainMenu, (dwExecVer >= 0x02F5 ? 7 : 6), MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 		}
@@ -362,7 +360,6 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	/*****************************************************************************************************/
 
 	/* change language */
-	NLChangeMenu(_hInst, _hWndNpp, hMainMenu, _T("ContextMenu"), MF_BYCOMMAND);
 	UINT idCommand = ::TrackPopupMenu(hMainMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWndParent, NULL);
 
 	if (bWindowSubclassed) {
@@ -662,7 +659,7 @@ void ContextMenu::Rename(void)
 	extern	HANDLE		g_hModule;
 	TCHAR				newFirstElement[MAX_PATH];
 	TCHAR				szNewName[MAX_PATH];
-	TCHAR				szComment[MAX_PATH];
+	TCHAR				szComment[] = L"Rename";
 
 	/* copy current element information */
 	_tcscpy(newFirstElement, _strFirstElement.c_str());
@@ -678,11 +675,6 @@ void ContextMenu::Rename(void)
 
 	(_tcsrchr(newFirstElement, '\\')[1]) = 0;
 
-	/* rename comment */
-	if (NLGetText(_hInst, _hWndNpp, _T("Rename"), szComment, MAX_PATH) == 0) {
-		_tcscpy(szComment, _T("Rename"));
-	}
-
 	dlg.init((HINSTANCE)g_hModule, _hWndNpp);
 	if (dlg.doDialog(szNewName, szComment) == TRUE)
 	{
@@ -697,14 +689,9 @@ void ContextMenu::newFile(void)
 	extern		HANDLE		g_hModule;
 	BOOL		bLeave		= FALSE;
 	TCHAR		szFileName[MAX_PATH];
-	TCHAR		szComment[MAX_PATH];
+	TCHAR		szComment[] = L"New file";
 
 	szFileName[0] = '\0';
-
-	/* rename comment */
-	if (NLGetText(_hInst, _hWndNpp, _T("New file"), szComment, MAX_PATH) == 0) {
-		_tcscpy(szComment, _T("New file"));
-	}
 
 	dlg.init((HINSTANCE)g_hModule, _hWndNpp);
 	while (bLeave == FALSE)
@@ -732,14 +719,9 @@ void ContextMenu::newFolder(void)
 	extern		HANDLE		g_hModule;
 	BOOL		bLeave		= FALSE;
 	TCHAR		szFolderName[MAX_PATH];
-	TCHAR		szComment[MAX_PATH];
+	TCHAR		szComment[MAX_PATH] = L"New folder";
 
 	szFolderName[0] = '\0';
-
-	/* rename comment */
-	if (NLGetText(_hInst, _hWndNpp, _T("New folder"), szComment, MAX_PATH) == 0) {
-		_tcscpy(szComment, _T("New folder"));
-	}
 
 	dlg.init((HINSTANCE)g_hModule, _hWndNpp);
 	while (bLeave == FALSE)
@@ -751,8 +733,7 @@ void ContextMenu::newFolder(void)
 			{
 				std::wstring newFolder = _strFirstElement + szFolderName;
 				if (::CreateDirectory(newFolder.c_str(), NULL) == FALSE) {
-					if (NLMessageBox(_hInst, _hWndNpp, _T("MsgBox FolderCreateError"), MB_OK) == FALSE)
-						::MessageBox(_hWndNpp, _T("Folder couldn't be created."), _T("Error"), MB_OK);
+					::MessageBox(_hWndNpp, _T("Folder couldn't be created."), _T("Error"), MB_OK);
 				}
 				bLeave = TRUE;
 			}
@@ -824,8 +805,7 @@ void ContextMenu::addToFaves()
 	/* test if only one file is selected */
 	if (_strArray.size() > 1)
 	{
-		if (NLMessageBox(_hInst, _hWndNpp, _T("MsgBox OneFileToFaves"), MB_OK) == FALSE)
-			::MessageBox(_hWndNpp, _T("Only one file could be added!"), _T("Error"), MB_OK);
+		::MessageBox(_hWndNpp, _T("Only one file could be added!"), _T("Error"), MB_OK);
 	}
 	else
 	{
@@ -996,8 +976,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 
 					if (npep.dwResult != NPE_NPPEXEC_OK)
 					{
-						if (NLMessageBox(_hInst, _hWndNpp, _T("MsgBox NppExecBusy"), MB_OK) == FALSE)
-							::MessageBox(_hWndNpp, _T("NppExec currently in use!"), _T("Error"), MB_OK);
+						::MessageBox(_hWndNpp, _T("NppExec currently in use!"), _T("Error"), MB_OK);
 					}
 					
 					delete [] pszArg;

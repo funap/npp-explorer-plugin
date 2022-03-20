@@ -233,20 +233,20 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_PARENTFOLDER        ICON                    "..\\res\\parent.ico"
-IDI_FOLDER              ICON                    "..\\res\\folder.ico"
-IDI_FILE                ICON                    "..\\res\\file.ico"
-IDI_WEB                 ICON                    "..\\res\\web.ico"
-IDI_SESSION             ICON                    "..\\res\\session.ico"
-IDI_GROUP               ICON                    "..\\res\\group.ico"
-IDI_EXPLORE             ICON                    "..\\res\\explore.ico"
-IDI_HEART               ICON                    "..\\res\\Heart.ico"
-IDI_WARN_SESSION        ICON                    "..\\res\\warnsession.ico"
-IDI_MISSING_FILE        ICON                    "..\\res\\missingfile.ico"
-IDI_TB_FLUENT_EXPLORER  ICON                    "..\\res\\fluent_explorer.ico"
-IDI_TB_FLUENT_EXPLORER_DARKMODE ICON            "..\\res\\fluent_explorer_dark.ico"
-IDI_TB_FLUENT_FAVES     ICON                    "..\\res\\fluent_faves.ico"
-IDI_TB_FLUENT_FAVES_DARKMODE ICON               "..\\res\\fluent_faves_dark.ico"
+IDI_PARENTFOLDER        ICON                    "res\\parent.ico"
+IDI_FOLDER              ICON                    "res\\folder.ico"
+IDI_FILE                ICON                    "res\\file.ico"
+IDI_WEB                 ICON                    "res\\web.ico"
+IDI_SESSION             ICON                    "res\\session.ico"
+IDI_GROUP               ICON                    "res\\group.ico"
+IDI_EXPLORE             ICON                    "res\\explore.ico"
+IDI_HEART               ICON                    "res\\Heart.ico"
+IDI_WARN_SESSION        ICON                    "res\\warnsession.ico"
+IDI_MISSING_FILE        ICON                    "res\\missingfile.ico"
+IDI_TB_FLUENT_EXPLORER  ICON                    "res\\fluent_explorer.ico"
+IDI_TB_FLUENT_EXPLORER_DARKMODE ICON            "res\\fluent_explorer_dark.ico"
+IDI_TB_FLUENT_FAVES     ICON                    "res\\fluent_faves.ico"
+IDI_TB_FLUENT_FAVES_DARKMODE ICON               "res\\fluent_faves_dark.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -254,41 +254,41 @@ IDI_TB_FLUENT_FAVES_DARKMODE ICON               "..\\res\\fluent_faves_dark.ico"
 // Bitmap
 //
 
-IDB_EX_PREV             BITMAP                  "..\\res\\undo.bmp"
+IDB_EX_PREV             BITMAP                  "res\\undo.bmp"
 
-IDB_EX_NEXT             BITMAP                  "..\\res\\redo.bmp"
+IDB_EX_NEXT             BITMAP                  "res\\redo.bmp"
 
-IDB_EX_FILENEW          BITMAP                  "..\\res\\newFile.bmp"
+IDB_EX_FILENEW          BITMAP                  "res\\newFile.bmp"
 
-IDB_EX_FOLDERNEW        BITMAP                  "..\\res\\newFolder.bmp"
+IDB_EX_FOLDERNEW        BITMAP                  "res\\newFolder.bmp"
 
-IDB_EX_FIND             BITMAP                  "..\\res\\findFile.bmp"
+IDB_EX_FIND             BITMAP                  "res\\findFile.bmp"
 
-IDB_EX_TERMINAL         BITMAP                  "..\\res\\terminal.bmp"
+IDB_EX_TERMINAL         BITMAP                  "res\\terminal.bmp"
 
-IDB_EX_FOLDERGO         BITMAP                  "..\\res\\folderGo.bmp"
+IDB_EX_FOLDERGO         BITMAP                  "res\\folderGo.bmp"
 
-IDB_EX_UPDATE           BITMAP                  "..\\res\\update.bmp"
+IDB_EX_UPDATE           BITMAP                  "res\\update.bmp"
 
-IDB_EX_LINKNEWFILE      BITMAP                  "..\\res\\linkNewFile.bmp"
+IDB_EX_LINKNEWFILE      BITMAP                  "res\\linkNewFile.bmp"
 
-IDB_EX_LINKNEWFOLDER    BITMAP                  "..\\res\\linkNewFolder.bmp"
+IDB_EX_LINKNEWFOLDER    BITMAP                  "res\\linkNewFolder.bmp"
 
-IDB_EX_LINKNEW          BITMAP                  "..\\res\\linkNew.bmp"
+IDB_EX_LINKNEW          BITMAP                  "res\\linkNew.bmp"
 
-IDB_EX_LINKEDIT         BITMAP                  "..\\res\\linkEdit.bmp"
+IDB_EX_LINKEDIT         BITMAP                  "res\\linkEdit.bmp"
 
-IDB_EX_LINKDELETE       BITMAP                  "..\\res\\linkDelete.bmp"
+IDB_EX_LINKDELETE       BITMAP                  "res\\linkDelete.bmp"
 
-IDB_TB_FAVES            BITMAP                  "..\\res\\Heart.bmp"
+IDB_TB_FAVES            BITMAP                  "res\\Heart.bmp"
 
-IDB_TB_EXPLORER         BITMAP                  "..\\res\\explore.bmp"
+IDB_TB_EXPLORER         BITMAP                  "res\\explore.bmp"
 
-IDB_EX_FOLDERUSER       BITMAP                  "..\\res\\folderUser.bmp"
+IDB_EX_FOLDERUSER       BITMAP                  "res\\folderUser.bmp"
 
-IDB_SORTUP              BITMAP                  "..\\res\\SortUp.bmp"
+IDB_SORTUP              BITMAP                  "res\\SortUp.bmp"
 
-IDB_SORTDOWN            BITMAP                  "..\\res\\SortDown.bmp"
+IDB_SORTDOWN            BITMAP                  "res\\SortDown.bmp"
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -296,9 +296,9 @@ IDB_SORTDOWN            BITMAP                  "..\\res\\SortDown.bmp"
 // Cursor
 //
 
-IDC_UPDOWN              CURSOR                  "..\\res\\updown.cur"
+IDC_UPDOWN              CURSOR                  "res\\updown.cur"
 
-IDC_LEFTRIGHT           CURSOR                  "..\\res\\leftright.cur"
+IDC_LEFTRIGHT           CURSOR                  "res\\leftright.cur"
 
 #endif    // resources
 /////////////////////////////////////////////////////////////////////////////

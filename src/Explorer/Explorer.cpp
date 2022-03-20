@@ -347,7 +347,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 		if (notifyCode->nmhdr.code == NPPN_TBMODIFICATION) {
 			/* change menu language */
 			const HINSTANCE& hInst = reinterpret_cast<const HINSTANCE>(g_hModule);
-			NLChangeNppMenu(hInst, nppData._nppHandle, PLUGIN_NAME, funcItem, _countof(funcItem));
 
 			if (NppInterface::isSupportFluentUI()) {
 				g_TBExplorerWithDarkMode.hToolbarBmp			= (HBITMAP)	::LoadImage(hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
@@ -757,15 +756,7 @@ bool IsValidFileName(LPTSTR pszFileName)
 	if (_tcspbrk(pszFileName, _T("\\/:*?\"<>")) == NULL)
 		return true;
 
-	TCHAR	TEMP[128];
-	TCHAR	msgBoxTxt[128];
-
-	if (NLGetText((HINSTANCE)g_hModule, nppData._nppHandle, _T("PossibleChars"), TEMP, 128)) {
-		_stprintf(msgBoxTxt, TEMP, _T("\n       \\ / : * ? \" < >"));
-		::MessageBox(NULL, msgBoxTxt, _T("Error"), MB_OK);
-	} else {
-		::MessageBox(NULL, _T("Filename does not contain any of this characters:\n       \\ / : * ? \" < >"), _T("Error"), MB_OK);
-	}
+	::MessageBox(NULL, _T("Filename does not contain any of this characters:\n       \\ / : * ? \" < >"), _T("Error"), MB_OK);
 	return false;
 }
 

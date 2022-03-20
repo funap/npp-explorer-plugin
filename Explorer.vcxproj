@@ -27,7 +27,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -35,16 +35,16 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -68,28 +68,28 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental />
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental />
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(PlatformShortName)\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(PlatformShortName)\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)build\bin\$(PlatformShortName)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)build\obj\$(PlatformShortName)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\Toolbar\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\NppPlugin\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;EXPLORER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -125,7 +125,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\Toolbar\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\NppPlugin\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;EXPLORER_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
@@ -160,7 +160,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\NppPlugin\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;EXPLORER_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -199,7 +199,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\Common\Ccpp;..\..\src\NewDlg\;..\..\src\PropDlg\;..\..\src\FileDlg\;..\..\src\FileList\;.;..\..\src\;..\..\src\MISC\;..\..\src\HelpDlg\;..\..\src\OptionDlg\;..\..\src\PureDnD\;..\..\..\NativeLang\src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>src\NppPlugin\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_WINDOWS;_USRDLL;EXPLORER_EXPORTS;_CRT_SECURE_NO_WARNINGS;_CRT_NON_CONFORMING_SWPRINTFS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -236,122 +236,80 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\Common\Ccpp\ImageListSet.cpp">
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IntDir)%(Filename)1.obj</ObjectFileName>
-      <ObjectFileName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IntDir)%(Filename)1.obj</ObjectFileName>
-    </ClCompile>
-    <ClCompile Include="..\..\..\Common\Ccpp\StaticDialog.cpp" />
-    <ClCompile Include="..\..\..\Common\Ccpp\SysMsg.cpp" />
-    <ClCompile Include="..\..\..\Common\Ccpp\ToolBar.cpp" />
-    <ClCompile Include="..\..\src\Explorer.cpp" />
-    <ClCompile Include="..\..\src\ExplorerDialog.cpp" />
-    <ClCompile Include="..\..\src\FavesDialog.cpp" />
-    <ClCompile Include="..\..\src\FileDlg\FileDlg.cpp" />
-    <ClCompile Include="..\..\src\FileList\ComboOrgi.cpp" />
-    <ClCompile Include="..\..\src\FileList\FileList.cpp" />
-    <ClCompile Include="..\..\src\HelpDlg\HelpDialog.cpp" />
-    <ClCompile Include="..\..\src\HelpDlg\URLCtrl.cpp" />
-    <ClCompile Include="..\..\src\MISC\ContextMenu.cpp" />
-    <ClCompile Include="..\..\src\MISC\DirectoryIndex.cpp" />
-    <ClCompile Include="..\..\src\MISC\FileFilter.cpp" />
-    <ClCompile Include="..\..\src\MISC\FuzzyMatcher.cpp" />
-    <ClCompile Include="..\..\src\MISC\NppInterface.cpp" />
-    <ClCompile Include="..\..\src\MISC\TreeHelperClass.cpp" />
-    <ClCompile Include="..\..\src\NewDlg\NewDlg.cpp" />
-    <ClCompile Include="..\..\src\OptionDlg\OptionDialog.cpp" />
-    <ClCompile Include="..\..\src\pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Explorer\ComboOrgi.cpp" />
+    <ClCompile Include="src\Explorer\ContextMenu.cpp" />
+    <ClCompile Include="src\Explorer\DirectoryIndex.cpp" />
+    <ClCompile Include="src\Explorer\DragDropImpl.cpp" />
+    <ClCompile Include="src\Explorer\Explorer.cpp" />
+    <ClCompile Include="src\Explorer\ExplorerDialog.cpp" />
+    <ClCompile Include="src\Explorer\FavesDialog.cpp" />
+    <ClCompile Include="src\Explorer\FileDlg.cpp" />
+    <ClCompile Include="src\Explorer\FileFilter.cpp" />
+    <ClCompile Include="src\Explorer\FileList.cpp" />
+    <ClCompile Include="src\Explorer\FuzzyMatcher.cpp" />
+    <ClCompile Include="src\Explorer\HelpDialog.cpp" />
+    <ClCompile Include="src\Explorer\ImageListSet.cpp" />
+    <ClCompile Include="src\Explorer\NewDlg.cpp" />
+    <ClCompile Include="src\Explorer\NppInterface.cpp" />
+    <ClCompile Include="src\Explorer\OptionDialog.cpp" />
+    <ClCompile Include="src\Explorer\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="..\..\src\PropDlg\PropDlg.cpp" />
-    <ClCompile Include="..\..\src\PureDnD\DragDropImpl.cpp" />
-    <ClCompile Include="..\..\src\QuickOpenDialog.cpp" />
+    <ClCompile Include="src\Explorer\PropDlg.cpp" />
+    <ClCompile Include="src\Explorer\QuickOpenDialog.cpp" />
+    <ClCompile Include="src\Explorer\SysMsg.cpp" />
+    <ClCompile Include="src\Explorer\ToolBar.cpp" />
+    <ClCompile Include="src\Explorer\TreeHelperClass.cpp" />
+    <ClCompile Include="src\Explorer\URLCtrl.cpp" />
+    <ClCompile Include="src\NppPlugin\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="..\..\src\ExplorerDialog.rc" />
-    <ResourceCompile Include="..\..\src\version.rc" />
+    <ResourceCompile Include="src\Explorer\ExplorerDialog.rc" />
+    <ResourceCompile Include="src\Explorer\version.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\Common\Ccpp\Docking.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\DockingDlgInterface.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\ImageListSet.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\Notepad_plus_msgs.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\Notepad_plus_rc.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\PluginInterface.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\Scintilla.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\StaticDialog.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\SysMsg.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\ToolBar.h" />
-    <ClInclude Include="..\..\..\Common\Ccpp\Window.h" />
-    <ClInclude Include="..\..\..\NativeLang\src\NativeLang_def.h" />
-    <ClInclude Include="..\..\src\Explorer.h" />
-    <ClInclude Include="..\..\src\ExplorerDialog.h" />
-    <ClInclude Include="..\..\src\ExplorerResource.h" />
-    <ClInclude Include="..\..\src\FavesDialog.h" />
-    <ClInclude Include="..\..\src\FileDlg\FileDlg.h" />
-    <ClInclude Include="..\..\src\FileList\ComboOrgi.h" />
-    <ClInclude Include="..\..\src\FileList\FileList.h" />
-    <ClInclude Include="..\..\src\HelpDlg\HelpDialog.h" />
-    <ClInclude Include="..\..\src\HelpDlg\URLCtrl.h" />
-    <ClInclude Include="..\..\src\MISC\ContextMenu.h" />
-    <ClInclude Include="..\..\src\MISC\DirectoryIndex.h" />
-    <ClInclude Include="..\..\src\MISC\FileFilter.h" />
-    <ClInclude Include="..\..\src\MISC\FuzzyMatcher.h" />
-    <ClInclude Include="..\..\src\MISC\nppexec_msgs.h" />
-    <ClInclude Include="..\..\src\MISC\NppInterface.h" />
-    <ClInclude Include="..\..\src\MISC\StringUtil.h" />
-    <ClInclude Include="..\..\src\MISC\TreeHelperClass.h" />
-    <ClInclude Include="..\..\src\NewDlg\NewDlg.h" />
-    <ClInclude Include="..\..\src\OptionDlg\OptionDialog.h" />
-    <ClInclude Include="..\..\src\pch.h" />
-    <ClInclude Include="..\..\src\PropDlg\PropDlg.h" />
-    <ClInclude Include="..\..\src\PureDnD\DragDropImpl.h" />
-    <ClInclude Include="..\..\src\QuickOpenDialog.h" />
-    <ClInclude Include="..\..\src\resource.h" />
-    <ClInclude Include="..\..\src\version.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <Image Include="..\..\res\explore.bmp" />
-    <Image Include="..\..\res\explore.ico" />
-    <Image Include="..\..\res\file.ico" />
-    <Image Include="..\..\res\findFile.bmp" />
-    <Image Include="..\..\res\fluent_explorer.ico" />
-    <Image Include="..\..\res\fluent_explorer_dark.ico" />
-    <Image Include="..\..\res\fluent_faves.ico" />
-    <Image Include="..\..\res\fluent_faves_dark.ico" />
-    <Image Include="..\..\res\folder.ico" />
-    <Image Include="..\..\res\folderGo.bmp" />
-    <Image Include="..\..\res\folderUser.bmp" />
-    <Image Include="..\..\res\group.ico" />
-    <Image Include="..\..\res\Heart.bmp" />
-    <Image Include="..\..\res\Heart.ico" />
-    <Image Include="..\..\res\linkDelete.bmp" />
-    <Image Include="..\..\res\linkEdit.bmp" />
-    <Image Include="..\..\res\linkNew.bmp" />
-    <Image Include="..\..\res\linkNewFile.bmp" />
-    <Image Include="..\..\res\linkNewFolder.bmp" />
-    <Image Include="..\..\res\missingfile.ico" />
-    <Image Include="..\..\res\newFile.bmp" />
-    <Image Include="..\..\res\newFolder.bmp" />
-    <Image Include="..\..\res\parent.ico" />
-    <Image Include="..\..\res\redo.bmp" />
-    <Image Include="..\..\res\session.ico" />
-    <Image Include="..\..\res\SortDown.bmp" />
-    <Image Include="..\..\res\SortUp.bmp" />
-    <Image Include="..\..\res\terminal.bmp" />
-    <Image Include="..\..\res\undo.bmp" />
-    <Image Include="..\..\res\update.bmp" />
-    <Image Include="..\..\res\warnsession.ico" />
-    <Image Include="..\..\res\web.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\res\leftright.cur" />
-    <None Include="..\..\res\updown.cur" />
-    <None Include="cpp.hint" />
+    <ClInclude Include="src\Explorer\ComboOrgi.h" />
+    <ClInclude Include="src\Explorer\ContextMenu.h" />
+    <ClInclude Include="src\Explorer\DirectoryIndex.h" />
+    <ClInclude Include="src\Explorer\DragDropImpl.h" />
+    <ClInclude Include="src\Explorer\Explorer.h" />
+    <ClInclude Include="src\Explorer\ExplorerDialog.h" />
+    <ClInclude Include="src\Explorer\ExplorerResource.h" />
+    <ClInclude Include="src\Explorer\FavesDialog.h" />
+    <ClInclude Include="src\Explorer\FileDlg.h" />
+    <ClInclude Include="src\Explorer\FileFilter.h" />
+    <ClInclude Include="src\Explorer\FileList.h" />
+    <ClInclude Include="src\Explorer\FuzzyMatcher.h" />
+    <ClInclude Include="src\Explorer\HelpDialog.h" />
+    <ClInclude Include="src\Explorer\ImageListSet.h" />
+    <ClInclude Include="src\Explorer\NewDlg.h" />
+    <ClInclude Include="src\Explorer\NppInterface.h" />
+    <ClInclude Include="src\Explorer\OptionDialog.h" />
+    <ClInclude Include="src\Explorer\pch.h" />
+    <ClInclude Include="src\Explorer\PropDlg.h" />
+    <ClInclude Include="src\Explorer\QuickOpenDialog.h" />
+    <ClInclude Include="src\Explorer\resource.h" />
+    <ClInclude Include="src\Explorer\StringUtil.h" />
+    <ClInclude Include="src\Explorer\SysMsg.h" />
+    <ClInclude Include="src\Explorer\ToolBar.h" />
+    <ClInclude Include="src\Explorer\TreeHelperClass.h" />
+    <ClInclude Include="src\Explorer\URLCtrl.h" />
+    <ClInclude Include="src\Explorer\version.h" />
+    <ClInclude Include="src\NppPlugin\include\Docking.h" />
+    <ClInclude Include="src\NppPlugin\include\DockingDlgInterface.h" />
+    <ClInclude Include="src\NppPlugin\include\Notepad_plus_msgs.h" />
+    <ClInclude Include="src\NppPlugin\include\Notepad_plus_rc.h" />
+    <ClInclude Include="src\NppPlugin\include\nppexec_msgs.h" />
+    <ClInclude Include="src\NppPlugin\include\PluginInterface.h" />
+    <ClInclude Include="src\NppPlugin\include\Scintilla.h" />
+    <ClInclude Include="src\NppPlugin\include\StaticDialog.h" />
+    <ClInclude Include="src\NppPlugin\include\Window.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

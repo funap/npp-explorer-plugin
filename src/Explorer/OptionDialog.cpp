@@ -105,11 +105,6 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 			SetParams();
 			LongUpdate();
 
-			/* change language */
-			NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Options"));
-			NLChangeCombo(_hInst, _nppData._nppHandle, ::GetDlgItem(_hSelf, IDC_COMBO_SIZE_FORMAT), _T("ComboSize"), SFMT_MAX);
-			NLChangeCombo(_hInst, _nppData._nppHandle, ::GetDlgItem(_hSelf, IDC_COMBO_DATE_FORMAT), _T("ComboDate"), DFMT_MAX);
-
 			break;
 		}
 		case WM_COMMAND : 

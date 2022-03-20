@@ -213,9 +213,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
 
 		// define the default docking behaviour
 		_data.uMask			= DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
-		if (!NLGetText(_hInst, _nppData._nppHandle, _T("Explorer"), _data.pszName, MAX_PATH)) {
-			_tcscpy(_data.pszName, _T("Explorer"));
-		}
+		_tcscpy(_data.pszName, _T("Explorer"));
 		_data.pszAddInfo	= _pExProp->szCurrentPath;
 		_data.hIconTab		= (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_EXPLORE), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
 		_data.pszModuleName	= getPluginFileName();
@@ -1081,15 +1079,10 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 		{
 			NewDlg		dlg;
 			TCHAR		szFileName[MAX_PATH];
-			TCHAR		szComment[MAX_PATH];
+			TCHAR		szComment[] = L"New file";
 			BOOL		bLeave		= FALSE;
 
 			szFileName[0] = '\0';
-
-			/* rename comment */
-			if (NLGetText(_hInst, _nppData._nppHandle, _T("New file"), szComment, MAX_PATH) == 0) {
-				_tcscpy(szComment, _T("New file"));
-			}
 
 			dlg.init(_hInst, _hParent);
 			while (bLeave == FALSE)
@@ -1119,15 +1112,10 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 		{
 			NewDlg		dlg;
 			TCHAR		szFolderName[MAX_PATH];
-			TCHAR		szComment[MAX_PATH];
+			TCHAR		szComment[] = L"New folder";
 			BOOL		bLeave			= FALSE;
 
 			szFolderName[0] = '\0';
-
-			/* rename comment */
-			if (NLGetText(_hInst, _nppData._nppHandle, _T("New folder"), szComment, MAX_PATH) == 0) {
-				_tcscpy(szComment, _T("New folder"));
-			}
 
 			dlg.init(_hInst, _hParent);
 			while (bLeave == FALSE)
@@ -1143,8 +1131,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 						_tcscat(pszNewFolder, szFolderName);
 						
 						if (::CreateDirectory(pszNewFolder, NULL) == FALSE) {
-							if (NLMessageBox(_hInst, _hParent, _T("MsgBox FolderCreateError"), MB_OK) == FALSE)
-								::MessageBox(_hParent, _T("Folder couldn't be created."), _T("Error"), MB_OK);
+							::MessageBox(_hParent, _T("Folder couldn't be created."), _T("Error"), MB_OK);
 						}
 						bLeave = TRUE;
 					}
@@ -1395,10 +1382,6 @@ void ExplorerDialog::InitialDialog(void)
 	fmtetc.tymed		= TYMED_HGLOBAL;
 	AddSuportedFormat(_hTreeCtrl, fmtetc); 
 
-	/* change language */
-	NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Explorer"));
-	NLChangeHeader(_hInst, _nppData._nppHandle, _hHeader, _T("FileList"));
-
 	// key binding
 	_FileList.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
 		switch (nChar) {
@@ -1585,16 +1568,11 @@ BOOL ExplorerDialog::gotoPath(void)
 	/* newDlg is exactly what I need */
 	NewDlg		dlg;
 	TCHAR		szFolderName[MAX_PATH];
-	TCHAR		szComment[MAX_PATH];
+	TCHAR		szComment[] = L"Go to Path";
 	BOOL		bLeave			= FALSE;
 	BOOL		bResult			= FALSE;
 
 	szFolderName[0] = '\0';
-
-	/* rename comment */
-	if (NLGetText(_hInst, _nppData._nppHandle, _T("Go to Path"), szComment, MAX_PATH) == 0) {
-		_tcscpy(szComment, _T("Go to Path"));
-	}
 
 	/* copy current path to show current position */
 	_tcscpy(szFolderName, _pExProp->szCurrentPath);
@@ -1615,9 +1593,7 @@ BOOL ExplorerDialog::gotoPath(void)
 			}
 			else
 			{
-				INT msgRet = NLMessageBox(_hInst, _hParent, _T("MsgBox FolderDoesNotExist"), MB_RETRYCANCEL);
-				if (msgRet == FALSE)
-					msgRet = ::MessageBox(_hParent, _T("Path doesn't exist."), _T("Error"), MB_RETRYCANCEL);
+				INT msgRet = ::MessageBox(_hParent, _T("Path doesn't exist."), _T("Error"), MB_RETRYCANCEL);
 
 				if (msgRet == IDCANCEL)
 					bLeave = TRUE;

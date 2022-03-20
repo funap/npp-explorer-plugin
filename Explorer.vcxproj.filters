@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="cpp.hint" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{7a27a30d-b96d-49e8-b661-7bf86c0586f0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource">
+      <UniqueIdentifier>{9b87ff09-c82f-4add-b01a-e178b6f8647c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header">
+      <UniqueIdentifier>{923ca7ce-8984-4f53-95ce-29c9c2ef765a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header\NppPlugin">
+      <UniqueIdentifier>{a59b1228-3978-491a-bd09-80b2500a7c7b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\NppPlugin">
+      <UniqueIdentifier>{f71ab500-8c79-47c1-af4e-e4132d0358c6}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Explorer\ComboOrgi.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ContextMenu.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\DirectoryIndex.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\DragDropImpl.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\Explorer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FavesDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FileDlg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FileFilter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FileList.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FuzzyMatcher.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\HelpDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ImageListSet.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\NewDlg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\NppInterface.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\OptionDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\PropDlg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\QuickOpenDialog.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\SysMsg.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ToolBar.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\TreeHelperClass.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\URLCtrl.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\pch.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\NppPlugin\StaticDialog.cpp">
+      <Filter>Source\NppPlugin</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="src\Explorer\ExplorerDialog.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+    <ResourceCompile Include="src\Explorer\version.rc">
+      <Filter>Resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Explorer\ComboOrgi.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ContextMenu.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\DirectoryIndex.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\DragDropImpl.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\Explorer.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerResource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FavesDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FileDlg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FileFilter.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FileList.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FuzzyMatcher.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\HelpDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ImageListSet.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\NewDlg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\NppInterface.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\OptionDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\pch.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\PropDlg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\QuickOpenDialog.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\resource.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\StringUtil.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\SysMsg.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ToolBar.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\TreeHelperClass.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\URLCtrl.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\version.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\Docking.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\DockingDlgInterface.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\Notepad_plus_msgs.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\Notepad_plus_rc.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\nppexec_msgs.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\PluginInterface.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\Scintilla.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\StaticDialog.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\NppPlugin\include\Window.h">
+      <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

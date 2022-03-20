@@ -48,9 +48,6 @@ INT_PTR CALLBACK HelpDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
             _urlNppPlugins.init(_hInst, _hSelf);
             _urlNppPlugins.create(::GetDlgItem(_hSelf, IDC_NPP_PLUGINS_URL), _T("https://github.com/funap/npp-explorer-plugin"));
 
-			/* change language */
-			NLChangeDialog(_hInst, _nppData._nppHandle, _hSelf, _T("Help"));
-
 			return TRUE;
 		}
 		case WM_COMMAND : 

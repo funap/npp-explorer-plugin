@@ -72,9 +72,6 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 			/* set discription */
 			TCHAR	szBuffer[256];
 
-			/* change language previously to avoid change of dynamic text*/
-			NLChangeDialog(_hInst, _hParent, _hSelf, _T("FavProp"));
-
 			_stprintf(szBuffer, _T("%s:"), _pDesc);
 			::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
 
@@ -145,9 +142,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, (LPARAM)_pElem);
 				TreeView_SelectItem(_hTreeCtrl, hItem);
 
-				if (!NLGetText(_hInst, _hParent, _T("Details"), _szDetails, 20)) {
-					_tcscpy(_szDetails, _T("Details %s"));
-				}
+				_tcscpy(_szDetails, _T("Details %s"));
 				_stprintf(szBuffer, _szDetails, _T("<<"));
 				::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), szBuffer);
 			}
@@ -291,8 +286,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 					}
 					else
 					{
-						if (NLMessageBox(_hInst, _hParent, _T("MsgBox AllFields"), MB_OK) == FALSE)
-							::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
+						::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
 					}
 					break;
 				}
