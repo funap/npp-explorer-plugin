@@ -17,7 +17,6 @@
 
 //#include "..\..\resource.h"
 #include "ToolBar.h"
-#include "SysMsg.h"
 
 const int WS_TOOLBARSTYLE = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS |TBSTYLE_FLAT | CCS_TOP | BTNS_AUTOSIZE | CCS_NOPARENTALIGN | CCS_NORESIZE | CCS_NODIVIDER;
 
@@ -138,7 +137,16 @@ void ToolBar::reset(bool create)
 
 	if (!_hSelf)
 	{
-		systemMessage(TEXT("System Err"));
+		LPVOID lpMsgBuf;
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			::GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+			(LPTSTR)&lpMsgBuf,
+			0,
+			NULL);// Process any inserts in lpMsgBuf.
+		MessageBox(NULL, (LPTSTR)lpMsgBuf, L"System Err", MB_OK | MB_ICONSTOP);
+		::LocalFree(lpMsgBuf);
 		throw int(9);
 	}
 

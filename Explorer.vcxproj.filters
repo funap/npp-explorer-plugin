@@ -75,9 +75,6 @@
     <ClCompile Include="src\Explorer\QuickOpenDialog.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\Explorer\SysMsg.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="src\Explorer\ToolBar.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -167,9 +164,6 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\StringUtil.h">
-      <Filter>Header</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Explorer\SysMsg.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\ToolBar.h">

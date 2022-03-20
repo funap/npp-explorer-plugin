@@ -35,7 +35,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "QuickOpenDialog.h"
 #include "OptionDialog.h"
 #include "HelpDialog.h"
-#include "SysMsg.h"
 
 
 #define SHGFI_OVERLAYINDEX 0x000000040

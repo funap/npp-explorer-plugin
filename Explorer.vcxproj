@@ -263,7 +263,6 @@
     </ClCompile>
     <ClCompile Include="src\Explorer\PropDlg.cpp" />
     <ClCompile Include="src\Explorer\QuickOpenDialog.cpp" />
-    <ClCompile Include="src\Explorer\SysMsg.cpp" />
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
     <ClCompile Include="src\Explorer\TreeHelperClass.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
@@ -296,7 +295,6 @@
     <ClInclude Include="src\Explorer\QuickOpenDialog.h" />
     <ClInclude Include="src\Explorer\resource.h" />
     <ClInclude Include="src\Explorer\StringUtil.h" />
-    <ClInclude Include="src\Explorer\SysMsg.h" />
     <ClInclude Include="src\Explorer\ToolBar.h" />
     <ClInclude Include="src\Explorer\TreeHelperClass.h" />
     <ClInclude Include="src\Explorer\URLCtrl.h" />
