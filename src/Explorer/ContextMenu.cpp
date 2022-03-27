@@ -655,7 +655,6 @@ int ContextMenu::GetPIDLCount (LPCITEMIDLIST pidl)
  */
 void ContextMenu::Rename(void)
 {
-	extern HINSTANCE	g_hInst;
 	NewDlg				dlg;
 	TCHAR				newFirstElement[MAX_PATH];
 	TCHAR				szNewName[MAX_PATH];
@@ -675,7 +674,7 @@ void ContextMenu::Rename(void)
 
 	(_tcsrchr(newFirstElement, '\\')[1]) = 0;
 
-	dlg.init(g_hInst, _hWndNpp);
+	dlg.init(_hInst, _hWndNpp);
 	if (dlg.doDialog(szNewName, szComment) == TRUE)
 	{
 		_tcscat(newFirstElement, szNewName);
@@ -685,7 +684,6 @@ void ContextMenu::Rename(void)
 
 void ContextMenu::newFile(void)
 {
-	extern HINSTANCE	g_hInst;
 	NewDlg				dlg;
 	BOOL				bLeave		= FALSE;
 	TCHAR				szFileName[MAX_PATH];
@@ -693,7 +691,7 @@ void ContextMenu::newFile(void)
 
 	szFileName[0] = '\0';
 
-	dlg.init(g_hInst, _hWndNpp);
+	dlg.init(_hInst, _hWndNpp);
 	while (bLeave == FALSE)
 	{
 		if (dlg.doDialog(szFileName, szComment) == TRUE)
@@ -715,7 +713,6 @@ void ContextMenu::newFile(void)
 
 void ContextMenu::newFolder(void)
 {
-	extern HINSTANCE	g_hInst;
 	NewDlg				dlg;
 	BOOL				bLeave		= FALSE;
 	TCHAR				szFolderName[MAX_PATH];
@@ -723,7 +720,7 @@ void ContextMenu::newFolder(void)
 
 	szFolderName[0] = '\0';
 
-	dlg.init(g_hInst, _hWndNpp);
+	dlg.init(_hInst, _hWndNpp);
 	while (bLeave == FALSE)
 	{
 		if (dlg.doDialog(szFolderName, szComment) == TRUE)
