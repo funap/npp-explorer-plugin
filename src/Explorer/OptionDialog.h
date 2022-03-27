@@ -31,10 +31,9 @@ class OptionDlg : public StaticDialog
 public:
 	OptionDlg() : StaticDialog() {};
     
-    void init(HINSTANCE hInst, NppData nppData)
+    void init(HINSTANCE hInst, HWND hParent)
 	{
-		_nppData = nppData;
-		Window::init(hInst, nppData._nppHandle);
+		Window::init(hInst, hParent);
 	};
 
 	INT_PTR doDialog(ExProp *prop);
@@ -51,7 +50,6 @@ protected :
 
 private:
 	/* Handles */
-	NppData			_nppData;
     HWND			_HSource;
 	LOGFONT			_logfont;
 

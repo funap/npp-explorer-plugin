@@ -195,10 +195,9 @@ ExplorerDialog::~ExplorerDialog(void)
 }
 
 
-void ExplorerDialog::init(HINSTANCE hInst, NppData nppData, ExProp *prop)
+void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, ExProp *prop)
 {
-	_nppData = nppData;
-	DockingDlgInterface::init(hInst, nppData._nppHandle);
+	DockingDlgInterface::init(hInst, hParent);
 
 	_pExProp = prop;
 	_FileList.initProp(prop);
@@ -307,7 +306,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 							GetFolderPathName(hItem, strPathName);
 
 							cm.SetObjects(strPathName);
-							cm.ShowContextMenu(_hInst, _nppData._nppHandle, _hSelf, pt);
+							cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt);
 
 							::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
 							::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
@@ -670,10 +669,10 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 					if (::PathIsDirectory(pszFilePath) != FALSE) {
 						SelectItem(pszFilePath);
 					} else {
-						::SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)pszFilePath);
+						::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszFilePath);
 					}
 				} else {
-					::SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)pszShortcutPath);
+					::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszShortcutPath);
 				}
 			}
 			return TRUE;
@@ -693,7 +692,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 			pt.y = GET_Y_LPARAM(dwpos);
 
 			cm.SetObjects(files);
-			cm.ShowContextMenu(_hInst, _nppData._nppHandle, _hSelf, pt, wParam == FALSE);
+			cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt, wParam == FALSE);
 
 			::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
 			::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);

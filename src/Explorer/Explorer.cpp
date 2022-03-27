@@ -88,7 +88,7 @@ CONST WCHAR FontFaceName[]		= L"FontFaceName";
 /* global values */
 HMODULE				hShell32;
 NppData				nppData;
-HANDLE				g_hModule;
+HINSTANCE			g_hInst;
 HWND				g_HSource;
 INT					g_docCnt = 0;
 TCHAR				g_currentFile[MAX_PATH];
@@ -164,11 +164,11 @@ std::vector<std::wstring>		g_vStrCurrentFiles;
 
 void initializeFonts();
 
-BOOL APIENTRY DllMain( HANDLE hModule, 
+BOOL APIENTRY DllMain(HINSTANCE	hInst,
                        DWORD  reasonForCall, 
                        LPVOID lpReserved )
 {
-	g_hModule = hModule;
+	g_hInst = hInst;
 
     switch (reasonForCall)
     {
@@ -193,14 +193,14 @@ BOOL APIENTRY DllMain( HANDLE hModule,
 
 			/* set image list and icon */
 			ghImgList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 6, 30);
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_FOLDER)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_FILE)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_WEB)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_SESSION)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_GROUP)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_PARENTFOLDER)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_WARN_SESSION)));
-			ImageList_AddIcon(ghImgList, ::LoadIcon((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDI_MISSING_FILE)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_FOLDER)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_FILE)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_WEB)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_SESSION)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_GROUP)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_PARENTFOLDER)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_WARN_SESSION)));
+			ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_MISSING_FILE)));
 
 			break;
 		}	
@@ -303,11 +303,11 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 	initializeFonts();
 
 	/* initial dialogs */
-	explorerDlg.init((HINSTANCE)g_hModule, nppData, &exProp);
-	favesDlg.init((HINSTANCE)g_hModule, nppData, szLastElement, &exProp);
-	quickOpenDlg.init((HINSTANCE)g_hModule, NppInterface::getWindow(), & exProp);
-	optionDlg.init((HINSTANCE)g_hModule, nppData);
-	helpDlg.init((HINSTANCE)g_hModule, nppData);
+	explorerDlg	.init(g_hInst, nppData._nppHandle, &exProp);
+	favesDlg	.init(g_hInst, nppData._nppHandle, szLastElement, &exProp);
+	quickOpenDlg.init(g_hInst, nppData._nppHandle, & exProp);
+	optionDlg	.init(g_hInst, nppData._nppHandle);
+	helpDlg		.init(g_hInst, nppData._nppHandle);
 
 	/* Subclassing for Notepad */
 	wndProcNotepad = (WNDPROC)::SetWindowLongPtr(nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
@@ -345,24 +345,22 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 	if (notifyCode->nmhdr.hwndFrom == nppData._nppHandle) {
 		if (notifyCode->nmhdr.code == NPPN_TBMODIFICATION) {
 			/* change menu language */
-			const HINSTANCE& hInst = reinterpret_cast<const HINSTANCE>(g_hModule);
-
 			if (NppInterface::isSupportFluentUI()) {
-				g_TBExplorerWithDarkMode.hToolbarBmp			= (HBITMAP)	::LoadImage(hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				g_TBExplorerWithDarkMode.hToolbarIcon			= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				g_TBExplorerWithDarkMode.hToolbarIconDarkMode	= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBExplorerWithDarkMode.hToolbarBmp			= (HBITMAP)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBExplorerWithDarkMode.hToolbarIcon			= (HICON)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBExplorerWithDarkMode.hToolbarIconDarkMode	= (HICON)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_TBExplorerWithDarkMode);
 
-				g_TBFavesWithDarkMode.hToolbarBmp			= (HBITMAP)	::LoadImage(hInst, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				g_TBFavesWithDarkMode.hToolbarIcon			= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-				g_TBFavesWithDarkMode.hToolbarIconDarkMode	= (HICON)	::LoadImage(hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBFavesWithDarkMode.hToolbarBmp			= (HBITMAP)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBFavesWithDarkMode.hToolbarIcon			= (HICON)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBFavesWithDarkMode.hToolbarIconDarkMode	= (HICON)	::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE), IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_TBFavesWithDarkMode);
 			}
 			else {
-				g_TBExplorer.hToolbarBmp	= (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBExplorer.hToolbarBmp	= (HBITMAP)::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_DEPRECATED, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_TBExplorer);
 
-				g_TBFaves.hToolbarBmp		= (HBITMAP)::LoadImage((HINSTANCE)g_hModule, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+				g_TBFaves.hToolbarBmp		= (HBITMAP)::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_FAVES), IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
 				::SendMessage(nppData._nppHandle, NPPM_ADDTOOLBARICON_DEPRECATED, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_TBFaves);
 			}
 		}

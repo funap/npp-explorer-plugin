@@ -61,7 +61,7 @@ public:
 	FavesDialog(void);
 	~FavesDialog(void);
 
-    void init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentPath, ExProp *prop);
+    void init(HINSTANCE hInst, HWND hParent, LPTSTR pCurrentPath, ExProp *prop);
 
 	virtual void redraw(void) {
 		::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
@@ -148,7 +148,6 @@ protected:
 
 private:
 	/* Handles */
-	NppData					_nppData;
 	tTbData					_data;
 
 	/* control process */

@@ -99,11 +99,10 @@ FavesDialog::~FavesDialog(void)
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, NppData nppData, LPTSTR pCurrentElement, ExProp *prop)
+void FavesDialog::init(HINSTANCE hInst, HWND hParent, LPTSTR pCurrentElement, ExProp *prop)
 {
-	_nppData = nppData;
 	_pExProp = prop;
-	DockingDlgInterface::init(hInst, nppData._nppHandle);
+	DockingDlgInterface::init(hInst, hParent);
 
 	_pCurrentElement  = pCurrentElement;
 
@@ -1640,7 +1639,7 @@ void FavesDialog::ReadSettings(void)
 
 				TCHAR	szBOM = 0xFEFF;
 				if (data[0] != szBOM) {
-					::MessageBox(_nppData._nppHandle, _T("Error in file 'Favorites.dat'"), _T("Error"), MB_OK | MB_ICONERROR);
+					::MessageBox(_hParent, _T("Error in file 'Favorites.dat'"), _T("Error"), MB_OK | MB_ICONERROR);
 				}
 				else {
 					ptr = data + 1;

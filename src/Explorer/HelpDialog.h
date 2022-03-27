@@ -33,10 +33,9 @@ class HelpDlg : public StaticDialog
 public:
 	HelpDlg() : StaticDialog() {};
     
-    void init(HINSTANCE hInst, NppData nppData)
+    void init(HINSTANCE hInst, HWND hParent)
 	{
-		_nppData = nppData;
-		Window::init(hInst, nppData._nppHandle);
+		Window::init(hInst, hParent);
 	};
 
    	void doDialog();
@@ -54,7 +53,6 @@ private:
 	void setVersionString();
 
 	/* Handles */
-	NppData			_nppData;
     HWND			_HSource;
 	
 	/* for eMail */

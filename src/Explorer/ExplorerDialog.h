@@ -60,7 +60,7 @@ public:
 	ExplorerDialog(void);
 	~ExplorerDialog(void);
 
-    void init(HINSTANCE hInst, NppData nppData, ExProp *prop);
+    void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
 
 	virtual void redraw(void) {
 		/* possible new imagelist -> update the window */
@@ -148,7 +148,6 @@ protected:
 
 private:
 	/* Handles */
-	NppData					_nppData;
 	tTbData					_data;
 	BOOL					_bStartupFinish;
 	HANDLE					_hExploreVolumeThread;
