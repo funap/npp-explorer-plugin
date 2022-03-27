@@ -99,12 +99,10 @@ FavesDialog::~FavesDialog(void)
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, HWND hParent, LPTSTR pCurrentElement, ExProp *prop)
+void FavesDialog::init(HINSTANCE hInst, HWND hParent, ExProp *prop)
 {
 	_pExProp = prop;
 	DockingDlgInterface::init(hInst, hParent);
-
-	_pCurrentElement  = pCurrentElement;
 
 	/* init database */
 	ReadSettings();

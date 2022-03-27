@@ -61,7 +61,7 @@ public:
 	FavesDialog(void);
 	~FavesDialog(void);
 
-    void init(HINSTANCE hInst, HWND hParent, LPTSTR pCurrentPath, ExProp *prop);
+    void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
 
 	virtual void redraw(void) {
 		::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
@@ -160,8 +160,6 @@ private:
 	BOOL					_isCut;
 	HTREEITEM				_hTreeCutCopy;
 	
-	LPTSTR					_pCurrentElement;
-
 	ToolBar					_ToolBar;
 	ReBar					_Rebar;
 

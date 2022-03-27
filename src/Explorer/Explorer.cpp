@@ -304,8 +304,8 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 
 	/* initial dialogs */
 	explorerDlg	.init(g_hInst, nppData._nppHandle, &exProp);
-	favesDlg	.init(g_hInst, nppData._nppHandle, szLastElement, &exProp);
-	quickOpenDlg.init(g_hInst, nppData._nppHandle, & exProp);
+	favesDlg	.init(g_hInst, nppData._nppHandle, &exProp);
+	quickOpenDlg.init(g_hInst, nppData._nppHandle, &exProp);
 	optionDlg	.init(g_hInst, nppData._nppHandle);
 	helpDlg		.init(g_hInst, nppData._nppHandle);
 
