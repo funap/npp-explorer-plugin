@@ -37,59 +37,61 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define LVIS_SELANDFOC	(LVIS_SELECTED|LVIS_FOCUSED)
 
+namespace {
 
-static HWND		hWndServer		= NULL;
-static HHOOK	hookMouse		= NULL;
+	HWND	hWndServer	= nullptr;
+	HHOOK	hookMouse	= nullptr;
 
-static LPCTSTR cColumns[] = {
-	_T("Name"),
-	_T("Ext."),
-	_T("Size"),
-	_T("Date")
-};
+	LPCTSTR cColumns[] = {
+		_T("Name"),
+		_T("Ext."),
+		_T("Size"),
+		_T("Date")
+	};
 
-namespace SubItem {
-	constexpr int Name      = 0;
-	constexpr int Extension = 1;
-	constexpr int Size      = 2;
-	constexpr int Date      = 3;
-}
+	constexpr UINT_PTR LIST_SUBCLASS_ID = 0;
+	constexpr UINT_PTR HEADER_SUBCLASS_ID = 0;
 
-static LRESULT CALLBACK hookProcMouse(INT nCode, WPARAM wParam, LPARAM lParam)
-{
-    if (nCode >= 0) {
-		switch (wParam)
-		{
-		case WM_MOUSEMOVE:
-		case WM_NCMOUSEMOVE:
-			::PostMessage(hWndServer, (UINT)wParam, 0, 0);
-			break;
-		case WM_LBUTTONUP:
-		case WM_NCLBUTTONUP:
-			::PostMessage(hWndServer, (UINT)wParam, 0, 0);
-			return TRUE;
-		default: 
-			break;
-		}
+	namespace SubItem {
+		constexpr int Name = 0;
+		constexpr int Extension = 1;
+		constexpr int Size = 2;
+		constexpr int Date = 3;
 	}
-	return ::CallNextHookEx(hookMouse, nCode, wParam, lParam);
-}
 
+	static LRESULT CALLBACK hookProcMouse(INT nCode, WPARAM wParam, LPARAM lParam)
+	{
+		if (nCode >= 0) {
+			switch (wParam)
+			{
+			case WM_MOUSEMOVE:
+			case WM_NCMOUSEMOVE:
+				::PostMessage(hWndServer, (UINT)wParam, 0, 0);
+				break;
+			case WM_LBUTTONUP:
+			case WM_NCLBUTTONUP:
+				::PostMessage(hWndServer, (UINT)wParam, 0, 0);
+				return TRUE;
+			default:
+				break;
+			}
+		}
+		return ::CallNextHookEx(hookMouse, nCode, wParam, lParam);
+	}
 
-DWORD WINAPI FileOverlayThread(LPVOID lpParam)
-{
-	FileList	*pFileList	= (FileList*)lpParam;
-	pFileList->UpdateOverlayIcon();
-	::ExitThread(0);
-	return 0;
+	DWORD WINAPI FileOverlayThread(LPVOID lpParam)
+	{
+		FileList* pFileList = (FileList*)lpParam;
+		pFileList->UpdateOverlayIcon();
+		::ExitThread(0);
+		return 0;
+	}
 }
 
 
 FileList::FileList(void)
 	: _hHeader(nullptr)
 	, _hImlListSys(nullptr)
-	, _hDefaultListProc(nullptr)
-	, _hDefaultHeaderProc(nullptr)
 	, _pExProp(nullptr)
 	, _hImlParent(nullptr)
 	, _hEvent{}
@@ -156,8 +158,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	ListView_SetCallbackMask(_hSelf, LVIS_OVERLAYMASK);
 
 	/* subclass list control */
-	lpFileListClass = this;
-	_hDefaultListProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(_hSelf, GWLP_WNDPROC, (LONG_PTR)wndDefaultListProc));
+	SetWindowSubclass(_hSelf, wndDefaultListProc, LIST_SUBCLASS_ID, (DWORD_PTR)this);
 
 	/* set image list and icon */
 	_hImlParent = GetSmallImageList(FALSE);
@@ -166,7 +167,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 
 	/* get header control and subclass it */
 	hWndServer = _hHeader = ListView_GetHeader(_hSelf);
-	_hDefaultHeaderProc = reinterpret_cast<WNDPROC>(::SetWindowLongPtr(_hHeader, GWLP_WNDPROC, (LONG_PTR)wndDefaultHeaderProc));
+	SetWindowSubclass(_hHeader, wndDefaultHeaderProc, HEADER_SUBCLASS_ID, (DWORD_PTR)this);
 
 	/* set here the columns */
 	SetColumns();
@@ -199,7 +200,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	{
 	case WM_GETDLGCODE:
 	{
-		return DLGC_WANTALLKEYS | ::CallWindowProc(_hDefaultListProc, hwnd, Message, wParam, lParam);
+		return DLGC_WANTALLKEYS | ::DefSubclassProc(hwnd, Message, wParam, lParam);
 	}
 	case WM_CHAR:
 	{
@@ -312,6 +313,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 
 		_vDirStack.clear();
 		_vFileList.clear();
+		::RemoveWindowSubclass(hwnd, wndDefaultListProc, LIST_SUBCLASS_ID);
 		break;
 	}
 	case WM_TIMER:
@@ -431,7 +433,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		break;
 	}
 	
-	return ::CallWindowProc(_hDefaultListProc, hwnd, Message, wParam, lParam);
+	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
 }
 
 /****************************************************************************
@@ -488,11 +490,14 @@ LRESULT FileList::runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 		}
 		break;
 	}
+	case WM_DESTROY:
+		::RemoveWindowSubclass(hwnd, wndDefaultHeaderProc, HEADER_SUBCLASS_ID);
+		break;
 	default:
 		break;
 	}
 
-	return ::CallWindowProc(_hDefaultHeaderProc, hwnd, Message, wParam, lParam);
+	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
 }
 
 void FileList::DrawDivider(UINT x)
@@ -548,6 +553,17 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 				ReadArrayToList(str, lvItem.iItem ,lvItem.iSubItem);
 				lvItem.pszText		= str;
 				lvItem.cchTextMax	= (int)_tcslen(str);
+			}
+			if (lvItem.mask & LVIF_IMAGE && !_vFileList[lvItem.iItem].isParent) {
+				INT iIcon;
+				INT iOverlay;
+				BOOL isHidden;
+				ReadIconToList(lvItem.iItem, &iIcon, &iOverlay, &isHidden);
+				lvItem.iImage = iIcon;
+				lvItem.state = INDEXTOOVERLAYMASK(iOverlay);
+			}
+			if (lvItem.mask & LVIF_STATE && _vFileList[lvItem.iItem].isHidden) {
+				lvItem.state |= LVIS_CUT;
 			}
 			break;
 		}
@@ -626,165 +642,34 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			UpdateSelItems();
 			break;
 		}
-		case NM_CUSTOMDRAW:
-		{
-			static TCHAR text[MAX_PATH];
-
+		case NM_CUSTOMDRAW: {
 			LPNMLVCUSTOMDRAW lpCD = (LPNMLVCUSTOMDRAW)lParam;
-
-			switch (lpCD->nmcd.dwDrawStage)
-			{
+			switch (lpCD->nmcd.dwDrawStage) {
 			case CDDS_PREPAINT:
-			{
-				SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+				::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+				return TRUE;
+			case CDDS_ITEMPREPAINT: {
+				auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+				if (index >= static_cast<INT>(_uMaxFolders)) {
+					std::wstring strFilePath = _pExProp->szCurrentPath + _vFileList[index].strNameExt;
+					if (IsFileOpen(strFilePath.c_str()) == TRUE) {
+						::SelectObject(lpCD->nmcd.hdc, _pExProp->underlineFont);
+						::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
+					}
+				}
+				if (_vFileList[index].isParent) {
+					::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYPOSTPAINT);
+				}
 				return TRUE;
 			}
-			case CDDS_ITEMPREPAINT:
-			{
-				SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYSUBITEMDRAW);
+			case CDDS_ITEMPOSTPAINT: {
+				auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+				RECT rc {};
+				ListView_GetSubItemRect(_hSelf, index, lpCD->iSubItem, LVIR_ICON, &rc);
+				UINT state = ListView_GetItemState(_hSelf, index, LVIS_SELECTED);
+				bool isSelected = ((state & LVIS_SELECTED) ? (::GetFocus() == _hSelf) : ((state & LVIS_DROPHILITED) == LVIS_DROPHILITED));
+				ImageList_Draw(_hImlParent, ICON_PARENT, lpCD->nmcd.hdc, rc.left, rc.top, ILD_NORMAL | (isSelected ? ILD_SELECTED : 0));
 				return TRUE;
-			}
-			case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
-			{
-				switch (lpCD->iSubItem) {
-				case SubItem::Name:
-				{
-					COLORREF bgColor = ListView_GetBkColor(_hSelf);
-					COLORREF fgColor = ListView_GetTextColor(_hSelf);
-
-					UINT	iItem		= (UINT)lpCD->nmcd.dwItemSpec;
-					RECT	rc			= {0};
-					RECT	rcDc		= {0};
-
-					/* get state of element */
-					UINT state = ListView_GetItemState(_hSelf, iItem, 0xFF);
-					bool isSelected = ((state & LVIS_SELECTED) ? (::GetFocus() == _hSelf) : ((state & LVIS_DROPHILITED) == LVIS_DROPHILITED));
-
-					/* get window rect */
-					::GetWindowRect(_hSelf, &rcDc);
-
-					/* create memory DC for flicker free paint */
-					HDC		hMemDc = ::CreateCompatibleDC(lpCD->nmcd.hdc);
-					HBITMAP	hBmp = ::CreateCompatibleBitmap(lpCD->nmcd.hdc, rcDc.right - rcDc.left, rcDc.bottom - rcDc.top);
-					HBITMAP hOldBmp = (HBITMAP)::SelectObject(hMemDc, hBmp);
-
-					/* get text rect */
-					ListView_GetSubItemRect(_hSelf, iItem, lpCD->iSubItem, LVIR_LABEL, &rc);
-
-					/* draw background color of item */
-					HBRUSH	hBrush = NULL;
-					if (state & (LVIS_SELECTED | LVIS_DROPHILITED)) {
-						hBrush = ::CreateSolidBrush(::GetSysColor(isSelected ? COLOR_HIGHLIGHT : COLOR_BTNFACE));
-						::FillRect(hMemDc, &rc, hBrush);
-						::DeleteObject(hBrush);
-						hBrush = NULL;
-					}
-					else {
-						hBrush = ::CreateSolidBrush(bgColor);
-						::FillRect(hMemDc, &rc, hBrush);
-					}
-
-					/* set transparent mode */
-					::SetBkMode(hMemDc, TRANSPARENT);
-
-					/* calculate correct position */
-					static RECT	rcName = {0};
-					if (lpCD->iSubItem == 0) {
-						ListView_GetItemText(_hSelf, iItem, 0, text, MAX_PATH);
-						if (_pExProp->bAddExtToName == TRUE) {
-							ListView_GetSubItemRect(_hSelf, iItem, 1, LVIR_LABEL, &rcName);
-							rcName.left = rc.left;
-						}
-						else {
-							rcName = rc;
-						}
-						rcName.left += 2;
-					}
-
-					/* get correct font */
-					HFONT	hOldFont = NULL;
-					if (iItem >= _uMaxFolders) {
-						std::wstring	strFilePath = _pExProp->szCurrentPath + _vFileList[iItem].strNameExt;
-						if (IsFileOpen(strFilePath.c_str()) == TRUE) {
-							hOldFont = (HFONT)::SelectObject(hMemDc, _pExProp->underlineFont);
-						}
-					}
-					if (hOldFont == NULL) {
-						hOldFont = (HFONT)::SelectObject(hMemDc, _pExProp->defaultFont);
-					}
-
-					/* set font color */
-					if (state & (LVIS_SELECTED | LVIS_DROPHILITED)) {
-						::SetTextColor(hMemDc, ::GetSysColor(isSelected ? COLOR_HIGHLIGHTTEXT : COLOR_BTNTEXT));
-					}
-					else {
-						::SetTextColor(hMemDc, fgColor);
-					}
-
-					/* draw text to memory */
-					::DrawText(hMemDc, text, (int)_tcslen(text), &rcName, DT_LEFT | DT_SINGLELINE | DT_VCENTER | DT_END_ELLIPSIS | DT_NOPREFIX);
-
-					/* blit text */
-					::BitBlt(lpCD->nmcd.hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hMemDc, rc.left, rc.top, SRCCOPY);
-
-					/* blit icon sequence */
-					if (lpCD->iSubItem == 0) {
-						/* get icon position */
-						ListView_GetSubItemRect(_hSelf, iItem, 0, LVIR_ICON, &rc);
-
-						/* clear background */
-						::FillRect(hMemDc, &rc, hBrush);
-
-						/* first is parent up icon, second folder and file icons with overlay */
-						if ((iItem == 0) && (_vFileList.size() != 0) && (_vFileList[0].isParent == TRUE)) {
-							ImageList_Draw(_hImlParent, ICON_PARENT, hMemDc, rc.left, rc.top, ILD_NORMAL | (isSelected ? ILD_SELECTED : 0));
-						}
-						else {
-							INT			iIcon = 0;
-							INT			iOverlay = 0;
-							BOOL		isHidden = FALSE;
-							COLORREF	rgbFg = (isSelected == TRUE ? CLR_DEFAULT : CLR_NONE);
-							UINT		fStyle = (isSelected == TRUE ? ILD_SELECTED : ILD_NORMAL);
-
-							/* get current list, read info and draw icon */
-							HIMAGELIST	hImgLstCur = (_pExProp->bUseSystemIcons ? _hImlListSys : _hImlParent);
-							ReadIconToList(iItem, &iIcon, &iOverlay, &isHidden);
-
-							fStyle = (isHidden == TRUE ? ILD_BLEND : fStyle);
-							ImageList_DrawEx(hImgLstCur, iIcon, hMemDc, rc.left, rc.top, 0, 0, CLR_NONE, rgbFg, fStyle | INDEXTOOVERLAYMASK(iOverlay));
-						}
-						/* blit icon */
-						::BitBlt(lpCD->nmcd.hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hMemDc, rc.left, rc.top, SRCCOPY);
-					}
-
-					::SelectObject(hMemDc, hOldBmp);
-					::SelectObject(hMemDc, hOldFont);
-					::DeleteObject(hBrush);
-					::DeleteObject(hBmp);
-					::DeleteDC(hMemDc);
-
-					::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
-					return TRUE;
-				}
-				case SubItem::Extension:
-				case SubItem::Size:
-				case SubItem::Date:
-				{
-					RECT rc = { 0 };
-					ListView_GetSubItemRect(_hSelf, lpCD->nmcd.dwItemSpec, lpCD->iSubItem, LVIR_BOUNDS, &rc);
-
-					// Erase Background
-					COLORREF	bgColor	= ListView_GetBkColor(_hSelf);
-					HBRUSH		hBrush	= ::CreateSolidBrush(bgColor);
-					::FillRect(lpCD->nmcd.hdc, &rc, hBrush);
-					::DeleteObject(hBrush);
-
-					::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_DODEFAULT);
-					return TRUE;
-				}
-				default:
-					return FALSE;
-				}
 			}
 			default:
 				return FALSE;

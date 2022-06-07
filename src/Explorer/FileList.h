@@ -37,8 +37,6 @@ struct StaInfo {
 };
 
 
-static class FileList*	lpFileListClass	= NULL;
-
 /* pattern for column resize by mouse */
 static const WORD DotPattern[] = 
 {
@@ -46,21 +44,21 @@ static const WORD DotPattern[] =
 };
 
 struct FileListData {
-	BOOL			isParent;
-	INT				iIcon;
-	INT				iOverlay;
-	BOOL			isHidden;
-	BOOL			isDirectory;
-	std::wstring	strName;
-	std::wstring	strExt;
-	std::wstring	strSize;
-	std::wstring	strDate;
+	BOOL			isParent{};
+	INT				iIcon{};
+	INT				iOverlay{};
+	BOOL			isHidden{};
+	BOOL			isDirectory{};
+	std::wstring	strName{};
+	std::wstring	strExt{};
+	std::wstring	strSize{};
+	std::wstring	strDate{};
 	/* not visible, only for sorting */
-	std::wstring	strNameExt;
-	INT64			i64Size;
-	INT64			i64Date;
+	std::wstring	strNameExt{};
+	INT64			i64Size{};
+	INT64			i64Date{};
 	/* not visible, remember state */
-	UINT			state;
+	UINT			state{};
 };
 
 
@@ -85,6 +83,7 @@ public:
 	virtual void destroy() {};
 	virtual void redraw(void) {
 		_hImlListSys = GetSmallImageList(_pExProp->bUseSystemIcons);
+		ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
 		SetColumns();
 		Window::redraw();
 	};
@@ -110,14 +109,16 @@ protected:
 
 	/* Subclassing list control */
 	LRESULT runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (lpFileListClass->runListProc(hwnd, Message, wParam, lParam));
+	static LRESULT CALLBACK wndDefaultListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+		auto* target = reinterpret_cast<FileList*>(dwRefData);
+		return (target->runListProc(hwnd, Message, wParam, lParam));
 	};
 
 	/* Subclassing header control */
 	LRESULT runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (lpFileListClass->runHeaderProc(hwnd, Message, wParam, lParam));
+	static LRESULT CALLBACK wndDefaultHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+		auto* target = reinterpret_cast<FileList*>(dwRefData);
+		return (target->runHeaderProc(hwnd, Message, wParam, lParam));
 	};
 
 	void ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlayed, LPBOOL pbHidden);
@@ -183,8 +184,6 @@ private:	/* for thread */
 private:
 	HWND						_hHeader;
 	HIMAGELIST					_hImlListSys;
-	WNDPROC						_hDefaultListProc;
-	WNDPROC						_hDefaultHeaderProc;
 
 	ExProp*						_pExProp;
 
