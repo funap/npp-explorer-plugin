@@ -23,186 +23,153 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
-#include <tchar.h>
 
 #include "PluginInterface.h"
 #include "Notepad_plus_rc.h"
 #include "FileFilter.h"
 
-#include <TCHAR.H>
 #include <vector>
 #include <string>
 
 
-#define DOCKABLE_EXPLORER_INDEX		0
-#define DOCKABLE_FAVORTIES_INDEX	1
+constexpr INT DOCKABLE_EXPLORER_INDEX   = 0;
+constexpr INT DOCKABLE_FAVORTIES_INDEX  = 1;
 
 
 extern enum winVer gWinVersion;
 
-/************* some global defines ********************/
+constexpr CHAR SHORTCUT_ALL     = 0x01;
+constexpr CHAR SHORTCUT_DELETE  = 0x04;
+constexpr CHAR SHORTCUT_COPY    = 0x03;
+constexpr CHAR SHORTCUT_PASTE   = 0x16;
+constexpr CHAR SHORTCUT_CUT     = 0x18;
+constexpr CHAR SHORTCUT_REFRESH = 0x12;
 
-#define DND_SCR_TIMEOUT		200
-
-constexpr CHAR SHORTCUT_ALL		= 0x01;
-constexpr CHAR SHORTCUT_DELETE	= 0x04;
-constexpr CHAR SHORTCUT_COPY	= 0x03;
-constexpr CHAR SHORTCUT_PASTE	= 0x16;
-constexpr CHAR SHORTCUT_CUT		= 0x18;
-constexpr CHAR SHORTCUT_REFRESH	= 0x12;
-
-/******************** faves ***************************/
-
-constexpr INT ICON_FOLDER		= 0;
-constexpr INT ICON_FILE			= 1;
-constexpr INT ICON_WEB			= 2;
-constexpr INT ICON_SESSION		= 3;
-constexpr INT ICON_GROUP		= 4;
-constexpr INT ICON_PARENT		= 5;
-constexpr INT ICON_WARN_SESSION	= 6;
-constexpr INT ICON_MISSING_FILE	= 7;
+constexpr INT ICON_FOLDER       = 0;
+constexpr INT ICON_FILE         = 1;
+constexpr INT ICON_WEB          = 2;
+constexpr INT ICON_SESSION      = 3;
+constexpr INT ICON_GROUP        = 4;
+constexpr INT ICON_PARENT       = 5;
+constexpr INT ICON_WARN_SESSION = 6;
+constexpr INT ICON_MISSING_FILE = 7;
 
 enum FavesElements {
-	FAVES_FOLDERS = 0,
-	FAVES_FILES,
-	FAVES_WEB,
-	FAVES_SESSIONS,
-	FAVES_ITEM_MAX
+    FAVES_FOLDERS = 0,
+    FAVES_FILES,
+    FAVES_WEB,
+    FAVES_SESSIONS,
+    FAVES_ITEM_MAX,
 };
 
-constexpr UINT FAVES_PARAM					= 0x0000000F;
-constexpr UINT FAVES_PARAM_MAIN				= 0x00000010;
-constexpr UINT FAVES_PARAM_GROUP			= 0x00000020;
-constexpr UINT FAVES_PARAM_LINK				= 0x00000040;
-constexpr UINT FAVES_PARAM_SESSION_CHILD	= 0x00000080;
-constexpr UINT FAVES_PARAM_EXPAND			= 0x00000100;
-constexpr UINT FAVES_PARAM_USERIMAGE		= 0x00000200;
+constexpr UINT FAVES_PARAM                  = 0x0000000F;
+constexpr UINT FAVES_PARAM_MAIN             = 0x00000010;
+constexpr UINT FAVES_PARAM_GROUP            = 0x00000020;
+constexpr UINT FAVES_PARAM_LINK             = 0x00000040;
+constexpr UINT FAVES_PARAM_SESSION_CHILD    = 0x00000080;
+constexpr UINT FAVES_PARAM_EXPAND           = 0x00000100;
+constexpr UINT FAVES_PARAM_USERIMAGE        = 0x00000200;
 
 struct ItemElement {
-	UINT						uParam		= 0;
-	std::wstring				name		= std::wstring();
-	std::wstring				link		= std::wstring();
-	std::vector<ItemElement>	vElements	= std::vector<ItemElement>();
+    UINT                        uParam      = 0;
+    std::wstring                name        = std::wstring();
+    std::wstring                link        = std::wstring();
+    std::vector<ItemElement>    vElements   = std::vector<ItemElement>();
 };
-typedef ItemElement* PELEM;
 
-typedef std::vector<ItemElement>::iterator		ELEM_ITR;
-
-
-/********************************************************/
-
-/* see in notepad sources */
-#define TCN_TABDROPPED (TCN_FIRST - 10)
-#define TCN_TABDROPPEDOUTSIDE (TCN_FIRST - 11)
-#define TCN_TABDELETE (TCN_FIRST - 12)
-
-
-/********************************************************/
-
-
-
+using PELEM     = ItemElement*;
+using ELEM_ITR = std::vector<ItemElement>::iterator;
 
 enum VarExNppExec {
-	VAR_FULL_PATH,
-	VAR_ROOT_PATH,
-	VAR_PARENT_FULL_DIR,
-	VAR_PARENT_DIR,
-	VAR_FULL_FILE,
-	VAR_FILE_NAME,
-	VAR_FILE_EXT,
-	VAR_UNKNOWN
+    VAR_FULL_PATH,
+    VAR_ROOT_PATH,
+    VAR_PARENT_FULL_DIR,
+    VAR_PARENT_DIR,
+    VAR_FULL_FILE,
+    VAR_FILE_NAME,
+    VAR_FILE_EXT,
+    VAR_UNKNOWN,
 };
-
-
-/********************************************************/
 
 enum DevType {
-	DEVT_DRIVE,
-	DEVT_DIRECTORY,
-	DEVT_FILE
-} ;
-
-
-enum SizeFmt {
-	SFMT_BYTES,
-	SFMT_KBYTE,
-	SFMT_DYNAMIC,
-	SFMT_DYNAMIC_EX,
-	SFMT_MAX
-} ;
-
-
-enum DateFmt {
-	DFMT_ENG,
-	DFMT_GER,
-	DFMT_MAX
+    DEVT_DRIVE,
+    DEVT_DIRECTORY,
+    DEVT_FILE,
 };
 
+enum SizeFmt {
+    SFMT_BYTES,
+    SFMT_KBYTE,
+    SFMT_DYNAMIC,
+    SFMT_DYNAMIC_EX,
+    SFMT_MAX,
+};
+
+enum DateFmt {
+    DFMT_ENG,
+    DFMT_GER,
+    DFMT_MAX,
+};
 
 struct DrvMap {
-	TCHAR	cDrv;
-	UINT	pos;
+    TCHAR   cDrv;
+    UINT    pos;
 };
 
 enum ScDir {
-	SCR_OUTSIDE,
-	SCR_UP,
-	SCR_DOWN
+    SCR_OUTSIDE,
+    SCR_UP,
+    SCR_DOWN,
 };
 
 struct NppExecScripts {
-	TCHAR			szScriptName[MAX_PATH]	= {};
-	TCHAR			szArguments[MAX_PATH]	= {};
+    WCHAR   szScriptName[MAX_PATH] {};
+    WCHAR   szArguments[MAX_PATH]  {};
 };
 
 struct NppExecProp {
-	TCHAR			szAppName[MAX_PATH]		= {};
-	TCHAR			szScriptPath[MAX_PATH]	= {};
-	std::vector<NppExecScripts>	vNppExecScripts;
+    WCHAR   szAppName[MAX_PATH]    {};
+    WCHAR   szScriptPath[MAX_PATH] {};
+    std::vector<NppExecScripts> vNppExecScripts;
 };
 
 struct CphProgram {
-	TCHAR			szAppName[MAX_PATH]		= {};
+    WCHAR   szAppName[MAX_PATH]    {};
 };
 
 struct ExProp{
-	/* pointer to global current path */
-	TCHAR						szCurrentPath[MAX_PATH]	= {};
-	LOGFONT						logfont					= {};
-	HFONT						defaultFont				= nullptr;
-	HFONT						underlineFont			= nullptr;
-	INT							iSplitterPos			= 0;
-	INT							iSplitterPosHorizontal	= 0;
-	BOOL						bAscending				= false;
-	INT							iSortPos				= 0;
-	INT							iColumnPosName			= 0;
-	INT							iColumnPosExt			= 0;
-	INT							iColumnPosSize			= 0;
-	INT							iColumnPosDate			= 0;
-	BOOL						bShowHidden				= false;
-	BOOL						bViewBraces				= false;
-	BOOL						bViewLong				= false;
-	BOOL						bAddExtToName			= false;
-	BOOL						bAutoUpdate				= false;
-	BOOL						bAutoNavigate			= false;
-	SizeFmt						fmtSize					= SizeFmt::SFMT_BYTES;
-	DateFmt						fmtDate					= DateFmt::DFMT_ENG;
-	std::vector<std::wstring>	vStrFilterHistory;
-	FileFilter					fileFilter;
-	UINT						uTimeout				= 0;
-	BOOL						bUseSystemIcons			= false;
-	NppExecProp					nppExecProp;
-	CphProgram					cphProgram;
-	SIZE_T						maxHistorySize			= 0;
+    /* pointer to global current path */
+    WCHAR                       szCurrentPath[MAX_PATH] {};
+    LOGFONT                     logfont                 {};
+    HFONT                       defaultFont             = nullptr;
+    HFONT                       underlineFont           = nullptr;
+    INT                         iSplitterPos            = 0;
+    INT                         iSplitterPosHorizontal  = 0;
+    BOOL                        bAscending              = false;
+    INT                         iSortPos                = 0;
+    INT                         iColumnPosName          = 0;
+    INT                         iColumnPosExt           = 0;
+    INT                         iColumnPosSize          = 0;
+    INT                         iColumnPosDate          = 0;
+    BOOL                        bShowHidden             = false;
+    BOOL                        bViewBraces             = false;
+    BOOL                        bViewLong               = false;
+    BOOL                        bAddExtToName           = false;
+    BOOL                        bAutoUpdate             = false;
+    BOOL                        bAutoNavigate           = false;
+    SizeFmt                     fmtSize                 = SizeFmt::SFMT_BYTES;
+    DateFmt                     fmtDate                 = DateFmt::DFMT_ENG;
+    std::vector<std::wstring>   vStrFilterHistory       {};
+    FileFilter                  fileFilter              {};
+    UINT                        uTimeout                = 0;
+    BOOL                        bUseSystemIcons         = false;
+    NppExecProp                 nppExecProp             {};
+    CphProgram                  cphProgram              {};
+    SIZE_T                      maxHistorySize          = 0;
 };
-
-
-
-LRESULT ScintillaMsg(UINT message, WPARAM wParam = 0, LPARAM lParam = 0);
 
 void loadSettings(void);
 void saveSettings(void);
-void initMenu(void);
 
 void toggleExplorerDialog(void);
 void toggleFavesDialog(void);
@@ -222,9 +189,6 @@ void openHelpDlg(void);
 void openTerminal(void);
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-
-#define	ALLOW_PARENT_SEL	1
 
 BOOL VolumeNameExists(LPTSTR rootDrive, LPTSTR volumeName);
 bool IsValidFileName(LPTSTR pszFileName);
