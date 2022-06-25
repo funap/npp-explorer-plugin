@@ -286,10 +286,6 @@ IDB_TB_EXPLORER         BITMAP                  "res\\explore.bmp"
 
 IDB_EX_FOLDERUSER       BITMAP                  "res\\folderUser.bmp"
 
-IDB_SORTUP              BITMAP                  "res\\SortUp.bmp"
-
-IDB_SORTDOWN            BITMAP                  "res\\SortDown.bmp"
-
 
 /////////////////////////////////////////////////////////////////////////////
 //

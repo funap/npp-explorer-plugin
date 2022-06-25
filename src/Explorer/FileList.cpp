@@ -26,21 +26,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <windows.h>
 #include <algorithm>
 
-#ifndef LVM_SETSELECTEDCOLUMN
-#define LVM_SETSELECTEDCOLUMN (LVM_FIRST + 140)
-#endif
-
-#ifndef WH_MOUSE_LL
-#define WH_MOUSE_LL 14
-#endif
-
-
 #define LVIS_SELANDFOC	(LVIS_SELECTED|LVIS_FOCUSED)
 
 namespace {
-
-	HWND	hWndServer	= nullptr;
-	HHOOK	hookMouse	= nullptr;
 
 	LPCTSTR cColumns[] = {
 		_T("Name"),
@@ -57,26 +45,6 @@ namespace {
 		constexpr int Extension = 1;
 		constexpr int Size = 2;
 		constexpr int Date = 3;
-	}
-
-	static LRESULT CALLBACK hookProcMouse(INT nCode, WPARAM wParam, LPARAM lParam)
-	{
-		if (nCode >= 0) {
-			switch (wParam)
-			{
-			case WM_MOUSEMOVE:
-			case WM_NCMOUSEMOVE:
-				::PostMessage(hWndServer, (UINT)wParam, 0, 0);
-				break;
-			case WM_LBUTTONUP:
-			case WM_NCLBUTTONUP:
-				::PostMessage(hWndServer, (UINT)wParam, 0, 0);
-				return TRUE;
-			default:
-				break;
-			}
-		}
-		return ::CallNextHookEx(hookMouse, nCode, wParam, lParam);
 	}
 
 	DWORD WINAPI FileOverlayThread(LPVOID lpParam)
@@ -97,11 +65,6 @@ FileList::FileList(void)
 	, _hEvent{}
 	, _hOverThread(nullptr)
 	, _hSemaphore(nullptr)
-	, _bmpSortUp(nullptr)
-	, _bmpSortDown(nullptr)
-	, _iMouseTrackItem(0)
-	, _lMouseTrackPos(0)
-	, _iBltPos(0)
 	, _uMaxFolders(0)
 	, _uMaxElements(0)
 	, _uMaxElementsOld(0)
@@ -143,12 +106,6 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	DWORD	dwFlags	= 0;
 	_hOverThread = ::CreateThread(NULL, 0, FileOverlayThread, this, 0, &dwFlags);
 
-	/* load sort bitmaps */
-	if (gWinVersion < WV_XP) {
-		_bmpSortUp	 = (HBITMAP)::LoadImage(hInst, MAKEINTRESOURCE(IDB_SORTUP), IMAGE_BITMAP, 0, 0, LR_LOADMAP3DCOLORS);
-		_bmpSortDown = (HBITMAP)::LoadImage(hInst, MAKEINTRESOURCE(IDB_SORTDOWN), IMAGE_BITMAP, 0, 0, LR_LOADMAP3DCOLORS);
-	}
-
 	/* keep sure to support virtual list with icons */
 	LONG_PTR	style = ::GetWindowLongPtr(_hSelf, GWL_STYLE);
 	::SetWindowLongPtr(_hSelf, GWL_STYLE, style | LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS);
@@ -166,7 +123,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
 
 	/* get header control and subclass it */
-	hWndServer = _hHeader = ListView_GetHeader(_hSelf);
+	_hHeader = ListView_GetHeader(_hSelf);
 	SetWindowSubclass(_hHeader, wndDefaultHeaderProc, HEADER_SUBCLASS_ID, (DWORD_PTR)this);
 
 	/* set here the columns */
@@ -289,11 +246,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	}
 	case WM_DESTROY:
 	{
-		if (gWinVersion < WV_XP) {
-			::DeleteObject(_bmpSortUp);
-			::DeleteObject(_bmpSortDown);
-		}
-
 		ImageList_Destroy(_hImlParent);
 
 		if (_hSemaphore) {
@@ -445,48 +397,12 @@ LRESULT FileList::runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 	{
 	case WM_LBUTTONUP:
 	{
-		if (_lMouseTrackPos != 0) {
-			POINT	pt	= {0};
-			::GetCursorPos(&pt);
-
-			/* erase divider line */
-			DrawDivider(_iBltPos);
-			_iBltPos		= 0;
-
-			/* recalc position */
-			INT iWidth = ListView_GetColumnWidth(_hSelf, _iMouseTrackItem) - (_lMouseTrackPos - pt.x);
-			ListView_SetColumnWidth(_hSelf, _iMouseTrackItem, iWidth);
-			::RedrawWindow(_hSelf, NULL, NULL, TRUE);
-
-			_lMouseTrackPos = 0;
-
-			/* update here the header column width */
-			_pExProp->iColumnPosName = ListView_GetColumnWidth(_hSelf, 0);
-			_pExProp->iColumnPosExt  = ListView_GetColumnWidth(_hSelf, 1);
-			if (_pExProp->bViewLong == TRUE) {
-				_pExProp->iColumnPosSize = ListView_GetColumnWidth(_hSelf, 2);
-				_pExProp->iColumnPosDate = ListView_GetColumnWidth(_hSelf, 3);
-			}
-
-			if (hookMouse) {
-				::UnhookWindowsHookEx(hookMouse);
-				hookMouse = NULL;
-			}
-		}
-		break;
-	}
-	case WM_MOUSEMOVE:
-	{
-		if (_lMouseTrackPos != 0) {
-			POINT	pt		= {0};
-			::GetCursorPos(&pt);
-			::ScreenToClient(_hSelf, &pt);
-
-			if (_iBltPos != 0) {
-				DrawDivider(_iBltPos);
-			}
-			DrawDivider(pt.x);
-			_iBltPos = pt.x;
+		/* update here the header column width */
+		_pExProp->iColumnPosName = ListView_GetColumnWidth(_hSelf, 0);
+		_pExProp->iColumnPosExt  = ListView_GetColumnWidth(_hSelf, 1);
+		if (_pExProp->bViewLong == TRUE) {
+			_pExProp->iColumnPosSize = ListView_GetColumnWidth(_hSelf, 2);
+			_pExProp->iColumnPosDate = ListView_GetColumnWidth(_hSelf, 3);
 		}
 		break;
 	}
@@ -498,39 +414,6 @@ LRESULT FileList::runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
 	}
 
 	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
-}
-
-void FileList::DrawDivider(UINT x)
-{
-	UINT		posTop		= 0;
-	RECT		rc			= {0};
-	HDC			hDc			= ::GetWindowDC(_hSelf);
-	HBITMAP		hBm			= NULL;
-	HBRUSH		hBrush		= NULL;
-	HANDLE		hBrushOrig	= NULL;
-
-	/* get hight of header */
-	Header_GetItemRect(_hHeader, 0, &rc);
-	posTop = rc.bottom;
-
-	/* set clip rect */
-	::GetClientRect(_hSelf, &rc);
-	::IntersectClipRect(hDc, rc.left, posTop + 2, rc.right, rc.bottom);
-
-	/* Create a brush with the appropriate bitmap pattern to draw our drag rectangle */
-	hBm = ::CreateBitmap(8, 8, 1, 1, DotPattern);
-	hBrush = ::CreatePatternBrush(hBm);
-
-	::SetBrushOrgEx(hDc, rc.left, rc.top, 0);
-	hBrushOrig = ::SelectObject(hDc, hBrush);
-
-	/* draw devider line */
-	::PatBlt(hDc, x, rc.top, 1, rc.bottom, PATINVERT);
-
-	/* destroy resources */
-	::SelectObject(hDc, hBrushOrig);
-	::DeleteObject(hBrush);
-	::DeleteObject(hBm);
 }
 
 /****************************************************************************
@@ -673,79 +556,6 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			}
 			default:
 				return FALSE;
-			}
-			break;
-		}
-		default:
-			break;
-		}
-	}
-	else if (nmhdr->hwndFrom == _hHeader)
-	{
-		switch (nmhdr->code)
-		{
-		case HDN_BEGINTRACK:
-		{
-			/* activate static change of column size */
-			POINT	pt	= {0};
-			::GetCursorPos(&pt);
-			_lMouseTrackPos = pt.x;
-			_iMouseTrackItem = ((LPNMHEADER)lParam)->iItem;
-			SetWindowLongPtr(_hParent, DWLP_MSGRESULT, TRUE);
-
-			/* start hooking */
-			if (gWinVersion < WV_NT) {
-				hookMouse = ::SetWindowsHookEx(WH_MOUSE, (HOOKPROC)hookProcMouse, _hInst, 0);
-			} 
-			else {
-				hookMouse = ::SetWindowsHookEx(WH_MOUSE_LL, (HOOKPROC)hookProcMouse, _hInst, 0);
-			}
-
-			if (!hookMouse) {
-				DWORD dwError = ::GetLastError();
-				TCHAR  str[128];
-				::wsprintf(str, _T("GetLastError() returned %lu"), dwError);
-				::MessageBox(NULL, str, _T("SetWindowsHookEx(MOUSE) failed"), MB_OK | MB_ICONERROR);
-			}
-
-			return TRUE;
-		}
-		case HDN_ITEMCHANGING:
-		{
-			/* avoid resize when double click */
-			LPNMHEADER	pnmh = (LPNMHEADER)lParam;
-
-			UINT uWidth = ListView_GetColumnWidth(_hSelf, pnmh->iItem);
-			if ((_pExProp->bAddExtToName == TRUE) && (_lMouseTrackPos == 0) && 
-				(pnmh->iItem == 0) && (pnmh->pitem->cxy != uWidth) && (pnmh->pitem->cxy != 0)) {
-				TCHAR	pszItemText[MAX_PATH];
-				HDC		hDc			= ::GetDC(_hSelf);
-				SIZE	size		= {0};
-				INT		iWidthMax	= 0;
-
-				/* get font length */
-				HFONT hOldFont = (HFONT)::SelectObject(hDc, _pExProp->defaultFont);
-
-				for (UINT i = 0; i < _uMaxElements; i++) {
-					if ((i < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
-						_stprintf(pszItemText, _T("[%s]"), _vFileList[i].strName.c_str());
-					}
-					else {
-						_tcscpy(pszItemText, _vFileList[i].strName.c_str());
-					}
-					::GetTextExtentPoint32(hDc, pszItemText, (int)_tcslen(pszItemText), &size);
-
-					if (iWidthMax < size.cx) {
-						iWidthMax = size.cx;
-					}
-				}
-				::SelectObject(hDc, hOldFont);
-				_lMouseTrackPos = -1;
-				ListView_SetColumnWidth(_hSelf, 0, iWidthMax + 24);
-				_lMouseTrackPos = 0;
-					
-				SetWindowLongPtr(_hParent, DWLP_MSGRESULT, TRUE);
-				return TRUE;
 			}
 			break;
 		}
@@ -1157,30 +967,19 @@ void FileList::SetColumns(void)
 
 void FileList::SetOrder(void)
 {
-	HDITEM	hdItem		= {0};
-	UINT	uMaxHeader	= Header_GetItemCount(_hHeader);
+    HDITEM	hdItem		= {0};
+    UINT	uMaxHeader	= Header_GetItemCount(_hHeader);
 
-	for (UINT i = 0; i < uMaxHeader; i++) {
-		hdItem.mask	= HDI_FORMAT;
-		Header_GetItem(_hHeader, i, &hdItem);
+    for (UINT i = 0; i < uMaxHeader; i++) {
+        hdItem.mask	= HDI_FORMAT;
+        Header_GetItem(_hHeader, i, &hdItem);
 
-		if (gWinVersion < WV_XP) {
-			hdItem.mask &= ~HDI_BITMAP;
-			hdItem.fmt  &= ~(HDF_BITMAP | HDF_BITMAP_ON_RIGHT);
-			if (i == _pExProp->iSortPos) {
-				hdItem.mask |= HDI_BITMAP;
-				hdItem.fmt  |= (HDF_BITMAP | HDF_BITMAP_ON_RIGHT);
-				hdItem.hbm   = _pExProp->bAscending ? _bmpSortUp : _bmpSortDown;
-			}
-		}
-		else {
-			hdItem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
-			if (i == _pExProp->iSortPos) {
-				hdItem.fmt |= _pExProp->bAscending ? HDF_SORTUP : HDF_SORTDOWN;
-			}
-		}
-		Header_SetItem(_hHeader, i, &hdItem);
-	}
+        hdItem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
+        if (i == _pExProp->iSortPos) {
+            hdItem.fmt |= _pExProp->bAscending ? HDF_SORTUP : HDF_SORTDOWN;
+        }
+        Header_SetItem(_hHeader, i, &hdItem);
+    }
 }
 
 /*********************************************************************************

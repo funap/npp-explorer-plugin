@@ -36,8 +36,6 @@ constexpr INT DOCKABLE_EXPLORER_INDEX   = 0;
 constexpr INT DOCKABLE_FAVORTIES_INDEX  = 1;
 
 
-extern enum winVer gWinVersion;
-
 constexpr CHAR SHORTCUT_ALL     = 0x01;
 constexpr CHAR SHORTCUT_DELETE  = 0x04;
 constexpr CHAR SHORTCUT_COPY    = 0x03;

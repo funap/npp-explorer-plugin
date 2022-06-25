@@ -237,6 +237,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="src\Explorer\res\leftright.cur" />
+    <None Include="src\Explorer\res\updown.cur" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\Explorer\ComboOrgi.cpp" />
@@ -308,6 +310,38 @@
     <ClInclude Include="src\NppPlugin\include\Scintilla.h" />
     <ClInclude Include="src\NppPlugin\include\StaticDialog.h" />
     <ClInclude Include="src\NppPlugin\include\Window.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\Explorer\res\explore.bmp" />
+    <Image Include="src\Explorer\res\explore.ico" />
+    <Image Include="src\Explorer\res\file.ico" />
+    <Image Include="src\Explorer\res\findFile.bmp" />
+    <Image Include="src\Explorer\res\fluent_explorer.ico" />
+    <Image Include="src\Explorer\res\fluent_explorer_dark.ico" />
+    <Image Include="src\Explorer\res\fluent_faves.ico" />
+    <Image Include="src\Explorer\res\fluent_faves_dark.ico" />
+    <Image Include="src\Explorer\res\folder.ico" />
+    <Image Include="src\Explorer\res\folderGo.bmp" />
+    <Image Include="src\Explorer\res\folderUser.bmp" />
+    <Image Include="src\Explorer\res\group.ico" />
+    <Image Include="src\Explorer\res\Heart.bmp" />
+    <Image Include="src\Explorer\res\Heart.ico" />
+    <Image Include="src\Explorer\res\linkDelete.bmp" />
+    <Image Include="src\Explorer\res\linkEdit.bmp" />
+    <Image Include="src\Explorer\res\linkNew.bmp" />
+    <Image Include="src\Explorer\res\linkNewFile.bmp" />
+    <Image Include="src\Explorer\res\linkNewFolder.bmp" />
+    <Image Include="src\Explorer\res\missingfile.ico" />
+    <Image Include="src\Explorer\res\newFile.bmp" />
+    <Image Include="src\Explorer\res\newFolder.bmp" />
+    <Image Include="src\Explorer\res\parent.ico" />
+    <Image Include="src\Explorer\res\redo.bmp" />
+    <Image Include="src\Explorer\res\session.ico" />
+    <Image Include="src\Explorer\res\terminal.bmp" />
+    <Image Include="src\Explorer\res\undo.bmp" />
+    <Image Include="src\Explorer\res\update.bmp" />
+    <Image Include="src\Explorer\res\warnsession.ico" />
+    <Image Include="src\Explorer\res\web.ico" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

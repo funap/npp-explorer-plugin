@@ -33,8 +33,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "StringUtil.h"
 
 
-extern winVer gWinVersion;
-
 static ToolBarButtonUnit toolBarIcons[] = {
 	{IDM_EX_EXPLORER,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_TB_EXPLORER, 0},
 

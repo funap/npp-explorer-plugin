@@ -135,9 +135,6 @@ ExProp              exProp;
 /* for subclassing */
 WNDPROC             wndProcNotepad      = nullptr;
 
-/* win version */
-winVer              gWinVersion         = winVer::WV_UNKNOWN;
-
 /* own image list variables */
 std::vector<DrvMap> gvDrvMap;
 HIMAGELIST          ghImgList           = nullptr;
@@ -215,9 +212,6 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 
     /* stores notepad data */
     g_nppData   = notpadPlusData;
-
-    /* get windows version */
-    gWinVersion = (winVer)::SendMessage(g_nppData._nppHandle, NPPM_GETWINDOWSVERSION, 0, 0);
 
     /* load data */
     loadSettings();

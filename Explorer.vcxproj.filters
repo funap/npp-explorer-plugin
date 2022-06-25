@@ -2,6 +2,12 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <None Include="cpp.hint" />
+    <None Include="src\Explorer\res\leftright.cur">
+      <Filter>Resource</Filter>
+    </None>
+    <None Include="src\Explorer\res\updown.cur">
+      <Filter>Resource</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Source">
@@ -205,5 +211,97 @@
     <ClInclude Include="src\NppPlugin\include\Window.h">
       <Filter>Header\NppPlugin</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="src\Explorer\res\explore.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\explore.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\file.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\findFile.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\fluent_explorer.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\fluent_explorer_dark.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\fluent_faves.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\fluent_faves_dark.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\folder.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\folderGo.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\folderUser.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\group.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\Heart.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\Heart.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\linkDelete.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\linkEdit.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\linkNew.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\linkNewFile.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\linkNewFolder.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\missingfile.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\newFile.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\newFolder.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\parent.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\redo.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\session.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\terminal.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\undo.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\update.bmp">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\warnsession.ico">
+      <Filter>Resource</Filter>
+    </Image>
+    <Image Include="src\Explorer\res\web.ico">
+      <Filter>Resource</Filter>
+    </Image>
   </ItemGroup>
 </Project>

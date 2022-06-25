@@ -124,7 +124,6 @@ protected:
 	void ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlayed, LPBOOL pbHidden);
 	void ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem);
 
-	void DrawDivider(UINT x);
 	void UpdateList(void);
 	void SetColumns(void);
 	void SetOrder(void);
@@ -194,13 +193,6 @@ private:
 	HANDLE						_hEvent[FL_EVT_MAX];
 	HANDLE						_hOverThread;
 	HANDLE						_hSemaphore;
-
-	/* header values */
-	HBITMAP						_bmpSortUp;
-	HBITMAP						_bmpSortDown;
-	INT							_iMouseTrackItem;
-	LONG						_lMouseTrackPos;
-	INT							_iBltPos;
 
 	/* stores the path here for sorting		*/
 	/* Note: _vFolder will not be sorted    */
