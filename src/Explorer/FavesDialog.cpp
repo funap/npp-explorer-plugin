@@ -438,12 +438,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 		_data.hIconTab = nullptr;
 
 		_ToolBar.destroy();
-
-		/* destroy duplicated handle when we are on W2k machine */
-		if (gWinVersion >= WV_W2K) {
-			ImageList_Destroy(_hImageListSys);
-			_hImageListSys = nullptr;
-		}
 		break;
 	case EXM_OPENLINK:
 		OpenLink(_peOpenLink);
