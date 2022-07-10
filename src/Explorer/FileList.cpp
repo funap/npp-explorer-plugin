@@ -25,6 +25,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <windows.h>
 #include <algorithm>
+#include <sstream>
+#include <array>
+#include <cmath>
 
 #define LVIS_SELANDFOC	(LVIS_SELECTED|LVIS_FOCUSED)
 
@@ -858,7 +861,7 @@ void FileList::UpdateList(void)
 			return lhs.isDirectory > rhs.isDirectory;
 		}
 		else {
-			const int resultNameExt = lhs.strNameExt.compare(rhs.strNameExt);
+			const int resultNameExt = _wcsicmp(lhs.strNameExt.c_str(), rhs.strNameExt.c_str());
 			INT64 result = 0;
 
 			if (lhs.isDirectory && rhs.isDirectory) {
@@ -1198,117 +1201,63 @@ BOOL FileList::FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos
 }
 
 
-void FileList::GetSize(INT64 size, std::wstring & str)
+void FileList::GetSize(INT64 fileSize, std::wstring & str)
 {
-	TCHAR	TEMP[MAX_PATH];
+    constexpr std::array<const WCHAR*, 4> SIZE_UNITS{ L"bytes", L"KB", L"MB", L"GB"};
 
-	switch (_pExProp->fmtSize) {
-	case SFMT_BYTES:
-	{
-		_stprintf(TEMP, _T("%03I64d"), size % 1000);
-		size /= 1000;
-		str = TEMP;
+    auto displayFileSize = static_cast<double>(fileSize);
+    int iSizeIndex = 0;
 
-		while (size)
-		{
-			_stprintf(TEMP, _T("%03I64d."), size % 1000);
-			size /= 1000;
-			str = TEMP + str;
-		}
+    switch (_pExProp->fmtSize) {
+    case SFMT_BYTES:
+        iSizeIndex = 0;
+        break;
+    case SFMT_KBYTE:
+        iSizeIndex = 1;
+        if (fileSize != 0) {
+            displayFileSize += 1023.0;
+            displayFileSize /= 1024.0;
+        }
+        break;
+    default:
+        while ((iSizeIndex < SIZE_UNITS.size() - 1) && (displayFileSize / 1024.0) >= 1) {
+            displayFileSize /= 1024.0;
+            iSizeIndex++;
+        }
+        break;
+    }
 
-		break;
-	}
-	case SFMT_KBYTE:
-	{
-		size /= 1024;
-		_stprintf(TEMP, _T("%03I64d"), size % 1000);
-		size /= 1000;
-		str = TEMP;
+    int precision = 0;
+    if (_pExProp->fmtSize == SFMT_DYNAMIC_EX) {
+        if (iSizeIndex == 0) {
+            precision = 0;
+        }
+        else {
+            if (displayFileSize < 10) {
+                precision = 2;
+            }
+            else if (displayFileSize < 100) {
+                precision = 1;
+            }
+            else {
+                precision = 0;
+            }
+        }
+    }
 
-		while (size)
-		{
-			_stprintf(TEMP, _T("%03I64d."), size % 1000);
-			size /= 1000;
-			str = TEMP + str;
-		}
+    // If a precision is set, the value is automatically rounded.
+    // Therefore, if the least significant digit to be rounded is greater than 0.5, the value should be less than 0.5.
+    auto least = static_cast<int>((displayFileSize - static_cast<int>(displayFileSize)) * std::pow(10.0, precision + 1));
+    if (least >= 5) {
+        displayFileSize -= 5.0 * std::pow(10.0, -(precision + 1));
+    }
 
-		str = str + _T(" kB");
+    std::wstringstream ss;
+    ss.imbue(std::locale(""));
+    ss.precision(precision);
+    ss << std::fixed << displayFileSize << L" " << SIZE_UNITS.at(iSizeIndex);
 
-		break;
-	}
-	case SFMT_DYNAMIC:
-	{
-		INT i	= 0;
-
-		str	= _T("000");
-
-		for (i = 0; (i < 3) && (size != 0); i++)
-		{
-			_stprintf(TEMP, _T("%03I64d"), size % 1024);
-			size /= 1024;
-			str = TEMP;
-		}
-
-		while (size)
-		{
-			_stprintf(TEMP, _T("%03I64d."), size % 1000);
-			size /= 1000;
-			str = TEMP + str;
-		}
-
-		switch (i)
-		{
-			case 0:
-			case 1: str = str + _T(" b"); break;
-			case 2: str = str + _T(" k"); break;
-			default: str = str + _T(" M"); break;
-		}
-		break;
-	}
-	case SFMT_DYNAMIC_EX:
-	{
-		INT		i		= 0;
-		INT64	comma	= 0;
-
-		str = _T("000");
-
-		for (i = 0; (i < 3) && (size != 0); i++)
-		{
-			if (i < 1)
-				_stprintf(TEMP, _T("%03I64d"), size);
-			else
-				_stprintf(TEMP, _T("%03I64d,%I64d"), size % 1024, comma);
-			comma = (size % 1024) / 100;
-			size /= 1024;
-			str = TEMP;
-		}
-
-		while (size)
-		{
-			_stprintf(TEMP, _T("%03I64d."), size % 1000);
-			size /= 1000;
-			str = TEMP + str;
-		}
-
-		switch (i)
-		{
-			case 0:
-			case 1: str = str + _T(" b"); break;
-			case 2: str = str + _T(" k"); break;
-			default: str = str + _T(" M"); break;
-		}
-		break;
-	}
-	default:
-		break;
-	}
-
-	for (INT i = 0; i < 2; i++) {
-		if (str[i] == '0')
-			str[i] = ' ';
-		else
-			break;
-	}
+    str = ss.str();
 }
 
 void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
