@@ -1463,32 +1463,34 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 		/* disabled detection of TVN_SELCHANGED notification */
 		_isSelNotifyEnable = FALSE;
 
-		// mount the root path if it is unmounted
-		do {
-			GetItemText(hItem, szItemName, MAX_PATH);
+        if (PathIsNetworkPath(szLongPath)) {
+            // mount the root path if it is unmounted
+            do {
+                GetItemText(hItem, szItemName, MAX_PATH);
 
-			// truncate item name if we are in root
-			if (('A' <= szItemName[0]) && (szItemName[0] <= 'Z')) {
-				szItemName[2] = '\0';
-			}
+                // truncate item name if we are in root
+                if (('A' <= szItemName[0]) && (szItemName[0] <= 'Z')) {
+                    szItemName[2] = '\0';
+                }
 
-			// compare path names
-			_stprintf(TEMP, _T("%s%s\\"), szCurrPath, szItemName);
-			iTempLen = _tcslen(TEMP);
+                // compare path names
+                _stprintf(TEMP, _T("%s%s\\"), szCurrPath, szItemName);
+                iTempLen = _tcslen(TEMP);
 
-			if (_tcsnicmp(szLongPath, TEMP, iTempLen) == 0) {
-				// allready mounted
-				break;
-			}
-			hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT); 
-			if (hItem == nullptr) {
-				// szLongPath is not mounted, add root item
-				WCHAR root[MAX_PATH] = {};
-				wcsncpy_s(root, szLongPath, MAX_PATH);
-				::PathStripToRoot(root);
-				InsertChildFolder(root, TVI_ROOT, TVI_LAST, 1);
-			}
-		} while (hItem != nullptr);
+                if (_tcsnicmp(szLongPath, TEMP, iTempLen) == 0) {
+                    // allready mounted
+                    break;
+                }
+                hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT);
+                if (hItem == nullptr) {
+                    // szLongPath is not mounted, add root item
+                    WCHAR root[MAX_PATH] = {};
+                    wcsncpy_s(root, szLongPath, MAX_PATH);
+                    ::PathStripToRoot(root);
+                    InsertChildFolder(root, TVI_ROOT, TVI_LAST, 1);
+                }
+            } while (hItem != nullptr);
+        }
 
 		// expand select item
 		hItem = TreeView_GetRoot(_hTreeCtrl);
