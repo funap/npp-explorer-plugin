@@ -861,7 +861,7 @@ void FileList::UpdateList(void)
 			return lhs.isDirectory > rhs.isDirectory;
 		}
 		else {
-			const int resultNameExt = _wcsicmp(lhs.strNameExt.c_str(), rhs.strNameExt.c_str());
+			const int resultNameExt = ::StrCmpLogicalW(lhs.strNameExt.c_str(), rhs.strNameExt.c_str());
 			INT64 result = 0;
 
 			if (lhs.isDirectory && rhs.isDirectory) {
