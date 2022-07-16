@@ -153,7 +153,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
         /* Set shortcuts */
         funcItem[0]._pShKey = new ShortcutKey{ true, true, true, 'E' };
         funcItem[1]._pShKey = new ShortcutKey{ true, true, true, 'V' };
-        funcItem[2]._pShKey = new ShortcutKey{ false, true, false, 'P' };
+        funcItem[2]._pShKey = new ShortcutKey{ true, false, false, 'P' };
 
         /* set image list and icon */
         ghImgList = ImageList_Create(16, 16, ILC_COLOR32 | ILC_MASK, 6, 30);
