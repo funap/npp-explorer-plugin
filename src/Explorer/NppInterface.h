@@ -39,6 +39,7 @@ public:
 	static std::wstring	getSelectedText();
 	static COLORREF		getEditorDefaultForegroundColor();
 	static COLORREF		getEditorDefaultBackgroundColor();
+    static COLORREF     getEditorCurrentLineBackgroundColor();
 	static void         setFocusToCurrentEdit();
 	static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
 	static std::wstring getCurrentDirectory();

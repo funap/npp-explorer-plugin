@@ -273,10 +273,18 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         }
         break;
     case NPPN_READY:
+        exProp.themeColors.bgColor = NppInterface::getEditorDefaultBackgroundColor();
+        exProp.themeColors.fgColor = NppInterface::getEditorDefaultForegroundColor();
+        exProp.themeColors.selectedColor = NppInterface::getEditorCurrentLineBackgroundColor();
+
         explorerDlg.initFinish();
         favesDlg.initFinish();
         break;
     case NPPN_WORDSTYLESUPDATED:
+        exProp.themeColors.bgColor = NppInterface::getEditorDefaultBackgroundColor();
+        exProp.themeColors.fgColor = NppInterface::getEditorDefaultForegroundColor();
+        exProp.themeColors.selectedColor = NppInterface::getEditorCurrentLineBackgroundColor();
+
         explorerDlg.UpdateColors();
         favesDlg.UpdateColors();
         break;

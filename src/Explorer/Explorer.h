@@ -135,6 +135,12 @@ struct CphProgram {
     WCHAR   szAppName[MAX_PATH]    {};
 };
 
+struct ThemeColors {
+    COLORREF bgColor{ RGB(0xFF,0xFF,0xFF) };
+    COLORREF fgColor{ RGB(0x00,0x00,0x00) };
+    COLORREF selectedColor{ RGB(0x80,0x80,0x80) };
+};
+
 struct ExProp{
     /* pointer to global current path */
     WCHAR                       szCurrentPath[MAX_PATH] {};
@@ -164,6 +170,7 @@ struct ExProp{
     NppExecProp                 nppExecProp             {};
     CphProgram                  cphProgram              {};
     SIZE_T                      maxHistorySize          = 0;
+    ThemeColors                 themeColors             {};
 };
 
 void loadSettings(void);

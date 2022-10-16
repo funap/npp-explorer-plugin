@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <shlobj.h>
+#include <uxtheme.h>
+#include <Vsstyle.h>
 
 #include "Explorer.h"
 #include "ExplorerDialog.h"
@@ -121,7 +123,10 @@ void FavesDialog::doDialog(bool willBeShown)
 		_data.dlgID			= DOCKABLE_FAVORTIES_INDEX;
 		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&_data);
 
-		/* Update "Add current..." icons */
+        // NPP steals CustomDraw, so it SubClassifies itself.
+        SetWindowSubclass(_hSelf, dlgProcSub, 'dlg', reinterpret_cast<DWORD_PTR>(this));
+
+        /* Update "Add current..." icons */
 		NotifyNewFile();
 		ExpandElementsRecursive(TVI_ROOT);
 	}
@@ -285,88 +290,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 				}
 				break;
 			}
-			case NM_CUSTOMDRAW: {
-				LPNMTVCUSTOMDRAW lpCD = (LPNMTVCUSTOMDRAW) lParam;
-
-				switch (lpCD->nmcd.dwDrawStage) {
-					case CDDS_PREPAINT:
-						SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
-						return TRUE;
-					case CDDS_ITEMPREPAINT: {
-						HTREEITEM	hItem		= (HTREEITEM)lpCD->nmcd.dwItemSpec;
-						PELEM		pElem		= (PELEM)GetParam(hItem);
-
-						if (pElem) {
-							if ((pElem->uParam & FAVES_FILES) && (pElem->uParam & FAVES_PARAM_LINK)) {
-								if (IsFileOpen(pElem->link) == TRUE) {
-									::SelectObject(lpCD->nmcd.hdc, _pExProp->underlineFont);
-								}
-							}
-						}
-
-						SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, CDRF_NOTIFYPOSTPAINT);
-						return TRUE;
-					}
-					case CDDS_ITEMPOSTPAINT: {
-						HTREEITEM	hItem		= (HTREEITEM)lpCD->nmcd.dwItemSpec;
-						PELEM		pElem		= (PELEM)GetParam(hItem);
-						BOOL		bUserImage	= FALSE;
-
-						if (pElem) {
-							bUserImage = ((pElem->uParam & FAVES_PARAM_USERIMAGE) == FAVES_PARAM_USERIMAGE);
-						}
-
-						if ((_pExProp->bUseSystemIcons == FALSE) || (bUserImage == TRUE)) {
-							RECT	rc			= {0};
-							RECT	rcDc		= {0};
-
-							/* get window rect */
-							::GetWindowRect(_hTreeCtrl, &rcDc);
-
-							HDC		hMemDc		= ::CreateCompatibleDC(lpCD->nmcd.hdc);
-							HBITMAP	hBmp		= ::CreateCompatibleBitmap(lpCD->nmcd.hdc, rcDc.right - rcDc.left, rcDc.bottom - rcDc.top);
-							HBITMAP hOldBmp		= (HBITMAP)::SelectObject(hMemDc, hBmp);
-							
-							COLORREF	bgColor 	= TreeView_GetBkColor(_hTreeCtrl);
-							HBRUSH		hBrush		= ::CreateSolidBrush(bgColor);
-
-							/* get item info */
-							INT		iIcon		= 0;
-							INT		iSelected	= 0;
-							INT		iOverlay	= 0;
-							GetItemIcons(hItem, &iIcon, &iSelected, &iOverlay);
-
-							/* get item rect */
-							TreeView_GetItemRect(_hTreeCtrl, hItem, &rc, TRUE);
-
-							rc.left -= 19;
-							rc.right = rc.left + 16;
-
-							/* set transparent mode */
-							::SetBkMode(hMemDc, TRANSPARENT);
-
-							::FillRect(hMemDc, &rc, hBrush);
-							ImageList_Draw(_hImageList, iIcon, hMemDc, rc.left, rc.top, ILD_NORMAL);
-
-							/* blit text */
-							::BitBlt(lpCD->nmcd.hdc, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, hMemDc, rc.left, rc.top, SRCCOPY);
-
-							::SelectObject(hMemDc, hOldBmp);
-							::DeleteObject(hBrush);
-							::DeleteObject(hBmp);
-							::DeleteDC(hMemDc);
-						}
-
-						::SelectObject(lpCD->nmcd.hdc, _pExProp->defaultFont);
-
-						SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, CDRF_SKIPDEFAULT);
-						return TRUE;
-					}
-					default:
-						return FALSE;
-				}
-				break;
-			}
 			default:
 				break;
 			}
@@ -448,6 +371,87 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 	return FALSE;
 }
 
+LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    if (Message == WM_NOTIFY) {
+        LPNMHDR nmhdr = reinterpret_cast<LPNMHDR>(lParam);
+        if ((NM_CUSTOMDRAW == nmhdr->code) && (nmhdr->hwndFrom == _hTreeCtrl)) {
+            LPNMTVCUSTOMDRAW cd = (LPNMTVCUSTOMDRAW)lParam;
+
+            static HTHEME theme;
+            switch (cd->nmcd.dwDrawStage) {
+            case CDDS_PREPAINT:
+                theme = OpenThemeData(nmhdr->hwndFrom, L"TreeView");
+                return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
+            case CDDS_ITEMPREPAINT: {
+                HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
+
+                // background
+                const auto bkColor = (cd->nmcd.uItemState & CDIS_SELECTED) ? _pExProp->themeColors.selectedColor
+                                    : (cd->nmcd.uItemState & CDIS_HOT)     ? _pExProp->themeColors.selectedColor
+                                                                           : _pExProp->themeColors.bgColor;
+                const auto brush = ::CreateSolidBrush(bkColor);
+                ::FillRect(cd->nmcd.hdc, &cd->nmcd.rc, brush);
+                ::DeleteObject(brush);
+
+                // [+]/[-] signs
+                RECT glyphRect{};
+                TVGETITEMPARTRECTINFO info{
+                    .hti = hItem,
+                    .prc = &glyphRect,
+                    .partID = TVGIPR_BUTTON
+                };
+                if (TRUE == SendMessage(nmhdr->hwndFrom, TVM_GETITEMPARTRECT, 0, (LPARAM)&info)) {
+                    BOOL isExpand = (TreeView_GetItemState(nmhdr->hwndFrom, hItem, TVIS_EXPANDED) & TVIS_EXPANDED) ? TRUE : FALSE;
+                    const INT glyphStates = isExpand ? GLPS_OPENED : GLPS_CLOSED;
+                    DrawThemeBackground(theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, &glyphRect, &glyphRect);
+                }
+
+                // Text & Icon
+                RECT textRect{};
+                TreeView_GetItemRect(nmhdr->hwndFrom, hItem, &textRect, TRUE);
+                TCHAR textBuffer[MAX_PATH]{};
+                TVITEM tvi = {
+                    .mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
+                    .hItem = hItem,
+                    .pszText = textBuffer,
+                    .cchTextMax = MAX_PATH,
+                };
+                if (TRUE == TreeView_GetItem(nmhdr->hwndFrom, &tvi)) {
+                    const auto elem = reinterpret_cast<PELEM>(GetParam(hItem));
+                    if (elem && (elem->uParam & FAVES_FILES) && (elem->uParam & FAVES_PARAM_LINK)) {
+                        if (IsFileOpen(elem->link) == TRUE) {
+                            ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
+                        }
+                    }
+                    SetBkMode(cd->nmcd.hdc, TRANSPARENT);
+                    SetTextColor(cd->nmcd.hdc, _pExProp->themeColors.fgColor);
+                    ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
+                    ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
+                        
+                    const INT top = textRect.top + (textRect.bottom - textRect.top) / 2 - GetSystemMetrics(SM_CYSMICON) / 2;
+                    const INT left = textRect.left - GetSystemMetrics(SM_CXSMICON) - GetSystemMetrics(SM_CXEDGE);
+                    if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->uParam & FAVES_PARAM_USERIMAGE))) {
+                        ImageList_Draw(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
+                    }
+                    else {
+                        ImageList_Draw(_hImageListSys, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
+                    }
+                    return CDRF_SKIPDEFAULT;
+                }
+                return CDRF_NOTIFYPOSTPAINT;
+            }
+            case CDDS_POSTPAINT:
+                CloseThemeData(theme);
+                break;
+            default:
+                break;
+            }
+        }
+    }
+    return DefSubclassProc(hwnd, Message, wParam, lParam);
+}
+
 LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
 	switch (Message) {
@@ -489,11 +493,11 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 		}
 		break;
 	}
-	default:
+    default:
 		break;
 	}
 	
-	return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
+	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
 }
 
 BOOL FavesDialog::OpenTreeViewItem(const HTREEITEM hItem)
@@ -558,9 +562,8 @@ void FavesDialog::tb_cmd(UINT message)
 
 void FavesDialog::InitialDialog(void)
 {
-	/* subclass tree */
-	::SetWindowLongPtr(_hTreeCtrl, GWLP_USERDATA, (LONG_PTR)this);
-	_hDefaultTreeProc = (WNDPROC)::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultTreeProc);
+    /* subclass tree */
+    ::SetWindowSubclass(_hTreeCtrl, wndDefaultTreeProc, 'tree', reinterpret_cast<DWORD_PTR>(this));
 
 	/* Load Image List */
 	_hImageListSys	= GetSmallImageList(TRUE);
@@ -579,9 +582,11 @@ void FavesDialog::InitialDialog(void)
 	_Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);
 
 	/* add new items in list and make reference to items */
+    SendMessage(_hTreeCtrl, WM_SETREDRAW, FALSE, 0);
 	for (UINT i = 0; i < FAVES_ITEM_MAX; i++) {
 		UpdateLink(InsertItem(cFavesItemNames[i], i, i, 0, 0, TVI_ROOT, TVI_LAST, !_vDB[i].vElements.empty(), (LPARAM)&_vDB[i]));
 	}
+    SendMessage(_hTreeCtrl, WM_SETREDRAW, TRUE, 0);
 }
 
 void FavesDialog::SetFont(const HFONT font)
@@ -1838,12 +1843,9 @@ void FavesDialog::SaveElementTreeRecursive(PELEM pElem, HANDLE hFile)
 
 void FavesDialog::UpdateColors()
 {
-	COLORREF fgColor = NppInterface::getEditorDefaultForegroundColor();
-	COLORREF bgColor = NppInterface::getEditorDefaultBackgroundColor();
-
 	if (nullptr != _hTreeCtrl) {
-		TreeView_SetBkColor(_hTreeCtrl, bgColor);
-		TreeView_SetTextColor(_hTreeCtrl, fgColor);
+		TreeView_SetBkColor(_hTreeCtrl, _pExProp->themeColors.bgColor);
+		TreeView_SetTextColor(_hTreeCtrl, _pExProp->themeColors.fgColor);
 		::InvalidateRect(_hTreeCtrl, nullptr, TRUE);
 	}
 }

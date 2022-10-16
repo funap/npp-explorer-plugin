@@ -139,11 +139,15 @@ protected:
 	BOOL OpenTreeViewItem(const HTREEITEM hItem);
 
 protected:
+    LRESULT CustomDrawProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK dlgProcSub(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+        return reinterpret_cast<FavesDialog*>(dwRefData)->CustomDrawProc(hwnd, message, wParam, lParam);
+    };
 
 	/* Subclassing tree */
 	LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((FavesDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runTreeProc(hwnd, Message, wParam, lParam));
+	static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+		return reinterpret_cast<FavesDialog*>(dwRefData)->runTreeProc(hwnd, message, wParam, lParam);
 	};
 
 private:

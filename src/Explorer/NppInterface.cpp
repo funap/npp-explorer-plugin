@@ -24,6 +24,8 @@
 
 #include "NppInterface.h"
 
+#include "Scintilla.h"
+
 #include "Notepad_plus_rc.h"
 
 NppData NppInterface::_nppData;
@@ -72,6 +74,11 @@ COLORREF NppInterface::getEditorDefaultForegroundColor()
 COLORREF NppInterface::getEditorDefaultBackgroundColor()
 {
 	return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
+}
+
+COLORREF NppInterface::getEditorCurrentLineBackgroundColor()
+{
+    return static_cast<COLORREF>(::SendMessage(_nppData._scintillaMainHandle, SCI_GETELEMENTCOLOUR, SC_ELEMENT_CARET_LINE_BACK, 0));
 }
 
 void NppInterface::setFocusToCurrentEdit()

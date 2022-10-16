@@ -2339,18 +2339,15 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 
 void ExplorerDialog::UpdateColors()
 {
-	COLORREF bgColor = NppInterface::getEditorDefaultBackgroundColor();
-	COLORREF fgColor = NppInterface::getEditorDefaultForegroundColor();
-
 	if (NULL != _hTreeCtrl) {
-		TreeView_SetBkColor(_hTreeCtrl, bgColor);
-		TreeView_SetTextColor(_hTreeCtrl, fgColor);
+		TreeView_SetBkColor(_hTreeCtrl, _pExProp->themeColors.bgColor);
+		TreeView_SetTextColor(_hTreeCtrl, _pExProp->themeColors.fgColor);
 		::InvalidateRect(_hTreeCtrl, NULL, TRUE);
 	}
 
 	if (NULL != _hListCtrl) {
-		ListView_SetBkColor(_hListCtrl, bgColor);
-		ListView_SetTextColor(_hListCtrl, fgColor);
+		ListView_SetBkColor(_hListCtrl, _pExProp->themeColors.bgColor);
+		ListView_SetTextColor(_hListCtrl, _pExProp->themeColors.fgColor);
 		ListView_SetTextBkColor(_hListCtrl, CLR_NONE);
 		::InvalidateRect(_hListCtrl, NULL, TRUE);
 	}
