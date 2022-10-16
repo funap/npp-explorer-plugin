@@ -1206,7 +1206,7 @@ void FileList::GetSize(INT64 fileSize, std::wstring & str)
     constexpr std::array<const WCHAR*, 4> SIZE_UNITS{ L"bytes", L"KB", L"MB", L"GB"};
 
     auto displayFileSize = static_cast<double>(fileSize);
-    int iSizeIndex = 0;
+    size_t iSizeIndex = 0;
 
     switch (_pExProp->fmtSize) {
     case SFMT_BYTES:
