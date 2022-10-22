@@ -142,6 +142,7 @@ HIMAGELIST          ghImgList           = nullptr;
 /* current open docs */
 std::vector<std::wstring>   g_openedFilePaths;
 
+void UpdateThemeColor();
 void initializeFonts();
 
 BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
@@ -273,18 +274,12 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         }
         break;
     case NPPN_READY:
-        exProp.themeColors.bgColor = NppInterface::getEditorDefaultBackgroundColor();
-        exProp.themeColors.fgColor = NppInterface::getEditorDefaultForegroundColor();
-        exProp.themeColors.selectedColor = NppInterface::getEditorCurrentLineBackgroundColor();
-
+        UpdateThemeColor();
         explorerDlg.initFinish();
         favesDlg.initFinish();
         break;
     case NPPN_WORDSTYLESUPDATED:
-        exProp.themeColors.bgColor = NppInterface::getEditorDefaultBackgroundColor();
-        exProp.themeColors.fgColor = NppInterface::getEditorDefaultForegroundColor();
-        exProp.themeColors.selectedColor = NppInterface::getEditorCurrentLineBackgroundColor();
-
+        UpdateThemeColor();
         explorerDlg.UpdateColors();
         favesDlg.UpdateColors();
         break;
@@ -302,6 +297,18 @@ extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam
 extern "C" __declspec(dllexport) BOOL isUnicode()
 {
     return TRUE;
+}
+
+void UpdateThemeColor()
+{
+    exProp.themeColors.bgColor          = NppInterface::getEditorDefaultBackgroundColor();
+    exProp.themeColors.fgColor          = NppInterface::getEditorDefaultForegroundColor();
+    exProp.themeColors.selectedColor    = NppInterface::getEditorCurrentLineBackgroundColor();
+
+    if (exProp.themeColors.fgColor == exProp.themeColors.selectedColor) {
+        constexpr COLORREF DEFAULT_SELECTED_COLOR = 0xffe8cc;
+        exProp.themeColors.selectedColor = DEFAULT_SELECTED_COLOR;
+    }
 }
 
 void initializeFonts()
