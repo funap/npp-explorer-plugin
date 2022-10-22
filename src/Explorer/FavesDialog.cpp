@@ -124,6 +124,7 @@ void FavesDialog::doDialog(bool willBeShown)
 		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&_data);
 
         // NPP steals CustomDraw, so it SubClassifies itself.
+        SetWindowTheme(_hTreeCtrl, L"Explorer", nullptr);
         SetWindowSubclass(_hSelf, dlgProcSub, 'dlg', reinterpret_cast<DWORD_PTR>(this));
 
         /* Update "Add current..." icons */
@@ -378,17 +379,17 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         if ((NM_CUSTOMDRAW == nmhdr->code) && (nmhdr->hwndFrom == _hTreeCtrl)) {
             LPNMTVCUSTOMDRAW cd = (LPNMTVCUSTOMDRAW)lParam;
 
-            static HTHEME theme;
+            static HTHEME s_theme = nullptr;
             switch (cd->nmcd.dwDrawStage) {
             case CDDS_PREPAINT:
-                theme = OpenThemeData(nmhdr->hwndFrom, L"TreeView");
+                s_theme = OpenThemeData(nmhdr->hwndFrom, L"TreeView");
                 return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
             case CDDS_ITEMPREPAINT: {
                 HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
 
                 // background
                 const auto bkColor = (cd->nmcd.uItemState & CDIS_SELECTED) ? _pExProp->themeColors.selectedColor
-                                    : (cd->nmcd.uItemState & CDIS_HOT)     ? _pExProp->themeColors.selectedColor
+                                   : (cd->nmcd.uItemState & CDIS_HOT)      ? _pExProp->themeColors.selectedColor
                                                                            : _pExProp->themeColors.bgColor;
                 const auto brush = ::CreateSolidBrush(bkColor);
                 ::FillRect(cd->nmcd.hdc, &cd->nmcd.rc, brush);
@@ -403,8 +404,15 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 };
                 if (TRUE == SendMessage(nmhdr->hwndFrom, TVM_GETITEMPARTRECT, 0, (LPARAM)&info)) {
                     BOOL isExpand = (TreeView_GetItemState(nmhdr->hwndFrom, hItem, TVIS_EXPANDED) & TVIS_EXPANDED) ? TRUE : FALSE;
-                    const INT glyphStates = isExpand ? GLPS_OPENED : GLPS_CLOSED;
-                    DrawThemeBackground(theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, &glyphRect, &glyphRect);
+                    const int glyphStates = isExpand ? GLPS_OPENED : GLPS_CLOSED;
+
+                    SIZE glythSize;
+                    GetThemePartSize(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, nullptr, THEMESIZE::TS_DRAW, &glythSize);
+
+                    glyphRect.top       += ((glyphRect.bottom - glyphRect.top) - glythSize.cy) / 2;
+                    glyphRect.bottom    = glyphRect.top + glythSize.cy;
+                    glyphRect.right     = glyphRect.left + glythSize.cx;
+                    DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, &glyphRect, nullptr);
                 }
 
                 // Text & Icon
@@ -442,7 +450,8 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 return CDRF_NOTIFYPOSTPAINT;
             }
             case CDDS_POSTPAINT:
-                CloseThemeData(theme);
+                CloseThemeData(s_theme);
+                s_theme = nullptr;
                 break;
             default:
                 break;
