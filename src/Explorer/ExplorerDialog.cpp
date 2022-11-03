@@ -53,10 +53,6 @@ int DebugPrintf(LPCTSTR format, ...)
 	return len;
 }
 
-
-BOOL	DEBUG_ON		= FALSE;
-#define DEBUG_FLAG(x)	if(DEBUG_ON == TRUE) DEBUG(x);
-
 #ifndef CSIDL_PROFILE
 #define CSIDL_PROFILE (0x0028)
 #endif
