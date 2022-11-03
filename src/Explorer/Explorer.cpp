@@ -536,6 +536,7 @@ void clearFilter(void)
 void openOptionDlg(void)
 {
     if (optionDlg.doDialog(&exProp) == IDOK) {
+        saveSettings();
         initializeFonts();
         explorerDlg.SetFont(exProp.defaultFont);
         favesDlg.SetFont(exProp.defaultFont);
