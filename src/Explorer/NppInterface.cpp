@@ -52,15 +52,15 @@ std::wstring NppInterface::getSelectedText()
 	::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
 	HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
 
-	INT charLength = (INT)::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, 0) - 1;
+	INT charLength = (INT)::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, 0);
 	if (0 < charLength) {
 		std::string selectedTextA;
 		selectedTextA.resize(charLength);
 		::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, (LPARAM)&selectedTextA[0]);
-		INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, nullptr, 0);
+		INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), selectedTextA.size(), nullptr, 0);
 		selectedTextW.resize(wideCharLength);
-		::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, &selectedTextW[0], wideCharLength);
-	}
+		::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), selectedTextA.size(), selectedTextW.data(), selectedTextW.size());
+    }
 
 	return selectedTextW;
 }
