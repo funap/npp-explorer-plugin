@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "PluginInterface.h"
+#include "../NppPlugin/PluginInterface.h"
 
 class NppInterface
 {

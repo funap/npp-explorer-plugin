@@ -29,7 +29,7 @@
 #include <filesystem>
 
 #include "Explorer.h"
-#include "StaticDialog.h"
+#include "../NppPlugin/DockingFeature/StaticDialog.h"
 #include "ExplorerResource.h"
 #include "DirectoryIndex.h"
 

@@ -268,7 +268,7 @@
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
     <ClCompile Include="src\Explorer\TreeHelperClass.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
-    <ClCompile Include="src\NppPlugin\StaticDialog.cpp" />
+    <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Explorer\ExplorerDialog.rc" />

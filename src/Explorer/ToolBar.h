@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include "Window.h"
-#include "Notepad_plus_msgs.h"
+#include "../NppPlugin/DockingFeature/Window.h"
+#include "../NppPlugin/Notepad_plus_msgs.h"
 #include "ImageListSet.h"
 
 #define REBAR_BAR_TOOLBAR		0

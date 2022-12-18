@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerResource.h"
 #include "NewDlg.h"
-#include "window.h"
+#include "../NppPlugin/DockingFeature/Window.h"
 
 #include <shlobj.h>
 #include <commctrl.h>

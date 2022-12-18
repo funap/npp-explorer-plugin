@@ -21,7 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <windows.h>
 #include <commctrl.h>
-#include "StaticDialog.h"
+#include "../NppPlugin/DockingFeature/StaticDialog.h"
 #include "Explorer.h"
 #include "FileDlg.h"
 #include "ExplorerResource.h"

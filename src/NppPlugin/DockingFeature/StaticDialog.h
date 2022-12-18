@@ -18,7 +18,7 @@
 #pragma once
 
 #include "Window.h"
-#include "Notepad_plus_msgs.h"
+#include "../Notepad_plus_msgs.h"
 
 enum class PosAlign { left, right, top, bottom };
 

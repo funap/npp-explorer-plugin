@@ -24,8 +24,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <windowsx.h>
 #include <commctrl.h>
 
-#include "PluginInterface.h"
-#include "Notepad_plus_rc.h"
+#include "../NppPlugin/PluginInterface.h"
+#include "../NppPlugin/Notepad_plus_rc.h"
 #include "FileFilter.h"
 
 #include <vector>

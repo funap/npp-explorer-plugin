@@ -22,7 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerResource.h"
 #include "ToolBar.h"
-#include "window.h"
+#include "../NppPlugin/DockingFeature/Window.h"
 #include "DragDropImpl.h"
 
 #include <commctrl.h>

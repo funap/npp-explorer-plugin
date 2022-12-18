@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 #include "FavesDialog.h"
-#include "nppexec_msgs.h"
+#include "../NppPlugin/nppexec_msgs.h"
 #include "NppInterface.h"
 
 /* global explorer params */
