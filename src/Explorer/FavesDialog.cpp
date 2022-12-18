@@ -113,17 +113,19 @@ void FavesDialog::doDialog(bool willBeShown)
 {
     if (!isCreated())
 	{
-		create(&_data);
+        tTbData data{};
+        create(&data);
 
-		// define the default docking behaviour
-		_data.uMask			= DWS_DF_CONT_LEFT | DWS_ICONTAB;
-		_tcscpy(_data.pszName, _T("Favorites"));
-		_data.hIconTab		= (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_HEART), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
-		_data.pszModuleName	= getPluginFileName();
-		_data.dlgID			= DOCKABLE_FAVORTIES_INDEX;
-		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&_data);
+        // define the default docking behaviour
+        data.pszName = _T("Favorites");
+        data.dlgID = DOCKABLE_FAVORTIES_INDEX;
+        data.uMask = DWS_DF_CONT_LEFT | DWS_ICONTAB;
+        data.hIconTab = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_HEART), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+        data.pszModuleName = getPluginFileName();
 
-        // NPP steals CustomDraw, so it SubClassifies itself.
+        ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
+
+        // NPP steals CustomDraw, so SubClassifies itself.
         SetWindowTheme(_hTreeCtrl, L"Explorer", nullptr);
         SetWindowSubclass(_hSelf, dlgProcSub, 'dlg', reinterpret_cast<DWORD_PTR>(this));
 
@@ -355,10 +357,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 	case WM_DESTROY:
 		SaveSettings();
 		_vDB.clear();
-
-		::DestroyIcon(_data.hIconTab);
-		_data.hIconTab = nullptr;
-
 		_ToolBar.destroy();
 		break;
 	case EXM_OPENLINK:

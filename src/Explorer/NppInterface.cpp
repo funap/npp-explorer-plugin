@@ -25,8 +25,7 @@
 #include "NppInterface.h"
 
 #include "../NppPlugin/Scintilla.h"
-
-#include "../NppPlugin/Notepad_plus_rc.h"
+#include "../NppPlugin/menuCmdID.h"
 
 NppData NppInterface::_nppData;
 

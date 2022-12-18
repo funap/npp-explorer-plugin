@@ -204,16 +204,17 @@ void ExplorerDialog::doDialog(bool willBeShown)
 {
     if (!isCreated())
 	{
-		create(&_data);
+        // define the default docking behaviour
+        tTbData data{};
+        create(&data);
+        data.pszName = _T("Explorer");
+        data.dlgID = DOCKABLE_EXPLORER_INDEX;
+        data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
+        data.hIconTab = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_EXPLORE), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+        data.pszAddInfo = _pExProp->szCurrentPath;
+        data.pszModuleName = getPluginFileName();
 
-		// define the default docking behaviour
-		_data.uMask			= DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
-		_tcscpy(_data.pszName, _T("Explorer"));
-		_data.pszAddInfo	= _pExProp->szCurrentPath;
-		_data.hIconTab		= (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_EXPLORE), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
-		_data.pszModuleName	= getPluginFileName();
-		_data.dlgID			= DOCKABLE_EXPLORER_INDEX;
-		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&_data);
+		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
 	}
 	else if (willBeShown)
 	{
@@ -535,7 +536,6 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 		{
 			TCHAR	szLastFilter[MAX_PATH];
 
-			::DestroyIcon(_data.hIconTab);
 			_pExProp->vStrFilterHistory = _ComboFilter.getComboList();
 			_ComboFilter.getText(szLastFilter, MAX_PATH);
 			if (_tcslen(szLastFilter) != 0)

@@ -151,9 +151,6 @@ protected:
 	};
 
 private:
-	/* Handles */
-	tTbData					_data;
-
 	/* control process */
 	WNDPROC					_hDefaultTreeProc;
 

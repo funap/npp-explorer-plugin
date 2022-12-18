@@ -148,7 +148,6 @@ protected:
 
 private:
 	/* Handles */
-	tTbData					_data;
 	BOOL					_bStartupFinish;
 	HANDLE					_hExploreVolumeThread;
 	HTREEITEM				_hItemExpand;
