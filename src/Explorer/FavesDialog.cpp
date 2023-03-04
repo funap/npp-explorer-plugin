@@ -388,12 +388,15 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
 
                 // background
-                const auto bkColor = (cd->nmcd.uItemState & CDIS_SELECTED) ? _pExProp->themeColors.selectedColor
-                                   : (cd->nmcd.uItemState & CDIS_HOT)      ? _pExProp->themeColors.selectedColor
-                                                                           : _pExProp->themeColors.bgColor;
-                const auto brush = ::CreateSolidBrush(bkColor);
-                ::FillRect(cd->nmcd.hdc, &cd->nmcd.rc, brush);
-                ::DeleteObject(brush);
+                auto maskedItemState = cd->nmcd.uItemState & (CDIS_FOCUS | CDIS_SELECTED | CDIS_HOT);
+                int itemState   = maskedItemState == (CDIS_FOCUS | CDIS_SELECTED | CDIS_HOT)   ? TREIS_HOTSELECTED
+                                : maskedItemState == (CDIS_FOCUS | CDIS_SELECTED)              ? TREIS_SELECTED
+                                : maskedItemState == (CDIS_FOCUS | CDIS_HOT)                   ? TREIS_HOT
+                                : maskedItemState == (CDIS_SELECTED)                           ? TREIS_SELECTEDNOTFOCUS
+                                : TREIS_NORMAL;
+                if (itemState != TREIS_NORMAL) {
+                    DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_TREEITEM, itemState, &cd->nmcd.rc, &cd->nmcd.rc);
+                }
 
                 // [+]/[-] signs
                 RECT glyphRect{};
