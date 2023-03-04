@@ -255,13 +255,17 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
     case NPPN_FILEOPENED:
         UpdateDocs();
         break;
-    case NPPN_TBMODIFICATION: 
-        g_explorerIcons.hToolbarBmp            = (HBITMAP)  ::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER),                  IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-        g_explorerIcons.hToolbarIcon           = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER),           IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-        g_explorerIcons.hToolbarIconDarkMode   = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE),  IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-        g_favesIcons.hToolbarBmp               = (HBITMAP)  ::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_FAVES),                     IMAGE_BITMAP, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-        g_favesIcons.hToolbarIcon              = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES),              IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
-        g_favesIcons.hToolbarIconDarkMode      = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE),     IMAGE_ICON, 0, 0, (LR_DEFAULTSIZE | LR_LOADMAP3DCOLORS));
+    case NPPN_TBMODIFICATION: {
+        SIZE smallIconSize = {
+            .cx = GetSystemMetrics(SM_CXSMICON),
+            .cy = GetSystemMetrics(SM_CYSMICON),
+        };
+        g_explorerIcons.hToolbarBmp            = (HBITMAP)  ::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_EXPLORER),                  IMAGE_BITMAP,   smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
+        g_explorerIcons.hToolbarIcon           = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER),           IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
+        g_explorerIcons.hToolbarIconDarkMode   = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE),  IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
+        g_favesIcons.hToolbarBmp               = (HBITMAP)  ::LoadImage(g_hInst, MAKEINTRESOURCE(IDB_TB_FAVES),                     IMAGE_BITMAP,   smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
+        g_favesIcons.hToolbarIcon              = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES),              IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
+        g_favesIcons.hToolbarIconDarkMode      = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE),     IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
 
         /* change menu language */
         if (NppInterface::isSupportFluentUI()) {
@@ -273,6 +277,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
             ::SendMessage(g_nppData._nppHandle, NPPM_ADDTOOLBARICON_DEPRECATED, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_favesIcons);
         }
         break;
+    }
     case NPPN_READY:
         UpdateThemeColor();
         explorerDlg.initFinish();
