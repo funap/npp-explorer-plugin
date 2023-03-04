@@ -328,14 +328,16 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 	case WM_SIZE:
 	case WM_MOVE: {
 		RECT rc = {};
+        /* set position of toolbar */
+        getClientRect(rc);
+        _ToolBar.reSizeTo(rc);
+        _Rebar.reSizeTo(rc);
 
-		/* set position of toolbar */
-		getClientRect(rc);
-		_Rebar.reSizeTo(rc);
+        auto toolBarHeight = _ToolBar.getHeight();
 
 		/* set position of tree control */
-		rc.top    += 26;
-		rc.bottom -= 26;
+		rc.top    += toolBarHeight;
+		rc.bottom -= toolBarHeight;
 		::SetWindowPos(_hTreeCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
 		break;

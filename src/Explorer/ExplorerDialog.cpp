@@ -413,22 +413,25 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				_ToolBar.reSizeTo(rc);
 				_Rebar.reSizeTo(rc);
 
+                auto toolBarHeight = _ToolBar.getHeight();
+                auto filterHeight  = GetSystemMetrics(SM_CYSMSIZE);
+
 				/* set position of tree control */
 				getClientRect(rc);
-				rc.top    += 26;
+				rc.top    += toolBarHeight;
 				rc.bottom  = splitterPos;
 				::SetWindowPos(_hTreeCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
 				/* set splitter */
 				getClientRect(rc);
-				rc.top	   = (splitterPos + 26);
+				rc.top	   = (splitterPos + toolBarHeight);
 				rc.bottom  = 6;
 				::SetWindowPos(_hSplitterCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
 				/* set position of list control */
 				getClientRect(rc);
-				rc.top	   = (splitterPos + 32);
-				rc.bottom -= (splitterPos + 32 + 22);
+				rc.top	   = (splitterPos + toolBarHeight + 6);
+				rc.bottom -= (splitterPos + toolBarHeight + 6 + filterHeight);
 				::SetWindowPos(_hListCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
 				/* set position of filter controls */
@@ -438,16 +441,16 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				/* set position of static text */
 				hWnd = ::GetDlgItem(_hSelf, IDC_STATIC_FILTER);
 				::GetWindowRect(hWnd, &rcWnd);
-				rc.top	     = rcBuff.bottom - 18;
-				rc.bottom    = 12;
+				rc.top	     = rcBuff.bottom - filterHeight + 6;
+				rc.bottom    = filterHeight;
 				rc.left     += 2;
 				rc.right     = rcWnd.right - rcWnd.left;
 				::SetWindowPos(hWnd, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 				rcBuff.left = rc.right + 4;
 
 				/* set position of combo */
-				rc.top		 = rcBuff.bottom - 21;
-				rc.bottom	 = 20;
+				rc.top		 = rcBuff.bottom - filterHeight + 1;
+				rc.bottom	 = filterHeight;
 				rc.left		 = rcBuff.left;
 				rc.right	 = rcBuff.right - rcBuff.left;
 				::SetWindowPos(_hFilter, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);				
@@ -466,10 +469,13 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				_ToolBar.reSizeTo(rc);
 				_Rebar.reSizeTo(rc);
 
+                auto toolBarHeight = _ToolBar.getHeight();
+                auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
+
 				/* set position of tree control */
 				getClientRect(rc);
-				rc.top    += 26;
-				rc.bottom -= 26 + 22;
+				rc.top    += toolBarHeight;
+				rc.bottom -= toolBarHeight + filterHeight;
 				rc.right   = splitterPos;
 				::SetWindowPos(_hTreeCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
@@ -480,8 +486,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				/* set position of static text */
 				hWnd = ::GetDlgItem(_hSelf, IDC_STATIC_FILTER);
 				::GetWindowRect(hWnd, &rcWnd);
-				rc.top	     = rcBuff.bottom - 18;
-				rc.bottom    = 12;
+				rc.top	     = rcBuff.bottom - filterHeight + 6;
+				rc.bottom    = filterHeight;
 				rc.left     += 2;
 				rc.right     = rcWnd.right - rcWnd.left;
 				::SetWindowPos(hWnd, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
@@ -489,8 +495,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				rcBuff.left = rc.right + 4;
 
 				/* set position of combo */
-				rc.top		 = rcBuff.bottom - 21;
-				rc.bottom	 = 20;
+				rc.top		 = rcBuff.bottom - filterHeight + 6;
+				rc.bottom	 = filterHeight;
 				rc.left		 = rcBuff.left;
 				rc.right	 = splitterPos - rcBuff.left;
 				::SetWindowPos(_hFilter, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);

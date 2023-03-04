@@ -25,7 +25,7 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
 {
 	Window::init(hInst, hPere);
 	_state = type;
-	int iconSize = (_state == TB_LARGE?32:16);
+	int iconSize = GetSystemMetrics(SM_CYSMICON);
 
 	_toolBarIcons.init(buttonUnitArray, arraySize);
 	_toolBarIcons.create(_hInst, iconSize);
@@ -80,7 +80,7 @@ void ToolBar::destroy()
 	::DestroyWindow(_hSelf);
 	_hSelf = NULL;
 	_toolBarIcons.destroy();
-};
+}
 
 int ToolBar::getWidth() const
 {
@@ -172,11 +172,10 @@ void ToolBar::reset(bool create)
 	if (create) {	//if the toolbar has been recreated, readd the buttons
 		SIZE_T nrBtnToAdd = _nrButtons;
 		_nrCurrentButtons = nrBtnToAdd;
-		WORD btnSize = (_state == TB_LARGE?32:16);
-		::SendMessage(_hSelf, TB_SETBUTTONSIZE , (WPARAM)0, (LPARAM)MAKELONG (btnSize, btnSize));
+		WORD btnSize = GetSystemMetrics(SM_CYSMICON);
 		::SendMessage(_hSelf, TB_ADDBUTTONS, (WPARAM)nrBtnToAdd, (LPARAM)_pTBB);
-	}
-	::SendMessage(_hSelf, TB_AUTOSIZE, 0, 0);
+        ::SendMessage(_hSelf, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(btnSize, btnSize));
+    }
 
 	if (_pRebar) {
 		_rbBand.hwndChild	= getHSelf();
