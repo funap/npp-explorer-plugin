@@ -443,7 +443,11 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                     const INT top = textRect.top + (textRect.bottom - textRect.top) / 2 - GetSystemMetrics(SM_CYSMICON) / 2;
                     const INT left = textRect.left - GetSystemMetrics(SM_CXSMICON) - GetSystemMetrics(SM_CXEDGE);
                     if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->uParam & FAVES_PARAM_USERIMAGE))) {
-                        ImageList_Draw(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
+                        SIZE iconSize = {
+                            .cx = GetSystemMetrics(SM_CXSMICON),
+                            .cy = GetSystemMetrics(SM_CYSMICON),
+                        };
+                        ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
                     }
                     else {
                         ImageList_Draw(_hImageListSys, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
