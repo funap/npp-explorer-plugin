@@ -388,12 +388,14 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
 
                 // background
-                auto maskedItemState = cd->nmcd.uItemState & (CDIS_FOCUS | CDIS_SELECTED | CDIS_HOT);
-                int itemState   = maskedItemState == (CDIS_FOCUS | CDIS_SELECTED | CDIS_HOT)   ? TREIS_HOTSELECTED
-                                : maskedItemState == (CDIS_FOCUS | CDIS_SELECTED)              ? TREIS_SELECTED
-                                : maskedItemState == (CDIS_FOCUS | CDIS_HOT)                   ? TREIS_HOT
-                                : maskedItemState == (CDIS_SELECTED)                           ? TREIS_SELECTEDNOTFOCUS
+                auto maskedItemState = cd->nmcd.uItemState & (CDIS_SELECTED | CDIS_HOT);
+                int itemState   = maskedItemState == (CDIS_SELECTED | CDIS_HOT) ? TREIS_HOTSELECTED
+                                : maskedItemState == CDIS_SELECTED              ? TREIS_SELECTED
+                                : maskedItemState == CDIS_HOT                   ? TREIS_HOT
                                 : TREIS_NORMAL;
+                if ((itemState == TREIS_SELECTED) && (nmhdr->hwndFrom != GetFocus())) {
+                    itemState = TREIS_SELECTEDNOTFOCUS;
+                }
                 if (itemState != TREIS_NORMAL) {
                     DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_TREEITEM, itemState, &cd->nmcd.rc, &cd->nmcd.rc);
                 }
@@ -439,14 +441,14 @@ LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                     SetTextColor(cd->nmcd.hdc, _pExProp->themeColors.fgColor);
                     ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
                     ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
-                        
-                    const INT top = textRect.top + (textRect.bottom - textRect.top) / 2 - GetSystemMetrics(SM_CYSMICON) / 2;
-                    const INT left = textRect.left - GetSystemMetrics(SM_CXSMICON) - GetSystemMetrics(SM_CXEDGE);
+
+                    const SIZE iconSize = {
+                        .cx = GetSystemMetrics(SM_CXSMICON),
+                        .cy = GetSystemMetrics(SM_CYSMICON),
+                    };
+                    const INT top = (textRect.top + textRect.bottom - iconSize.cy) / 2;
+                    const INT left = textRect.left - iconSize.cx - GetSystemMetrics(SM_CXEDGE);
                     if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->uParam & FAVES_PARAM_USERIMAGE))) {
-                        SIZE iconSize = {
-                            .cx = GetSystemMetrics(SM_CXSMICON),
-                            .cy = GetSystemMetrics(SM_CYSMICON),
-                        };
                         ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
                     }
                     else {
