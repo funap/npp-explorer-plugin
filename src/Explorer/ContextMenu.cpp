@@ -799,16 +799,22 @@ void ContextMenu::openPrompt(void)
 
 void ContextMenu::addToFaves()
 {
-	/* test if only one file is selected */
-	if (_strArray.size() > 1)
-	{
-		::MessageBox(_hWndNpp, _T("Only one file could be added!"), _T("Error"), MB_OK);
-	}
-	else
-	{
-		extern FavesDialog	favesDlg;
-		BOOL isFolder = ('\\' == _strArray[0].back());
-		favesDlg.AddToFavorties(isFolder, (LPTSTR)_strArray[0].c_str());
+    extern FavesDialog	favesDlg;
+
+    /* test if only one file is selected */
+	if (_strArray.size() > 1) {
+        const BOOL isFolder = ('\\' == _strArray[0].back());
+        for (auto&& path : _strArray) {
+            if (isFolder != ('\\' == path.back())) {
+                ::MessageBox(_hWndNpp, _T("Files and folders cannot be added at the same time!"), _T("Error"), MB_OK);
+                return;
+            }
+        }
+        favesDlg.AddToFavorties(isFolder, std::move(_strArray));
+    }
+	else {
+        BOOL isFolder = ('\\' == _strArray[0].back());
+		favesDlg.AddToFavorties(isFolder, _strArray[0].data());
 	}
 }
 

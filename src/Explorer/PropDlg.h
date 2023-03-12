@@ -49,7 +49,7 @@ public:
     virtual void destroy() {};
 
 	void setTreeElements(PELEM pElem, INT iUserImagePos, BOOL bWithLink = FALSE);
-	std::vector<std::wstring> getGroupPath(void) const;
+    PELEM getSelectedElem(void) const;
 
 protected :
 	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
@@ -66,6 +66,6 @@ private:
 	BOOL						_seeDetails;
 	PELEM						_pElem;
 	INT							_iUImgPos;
-	std::vector<std::wstring>	_groupPath;
+    PELEM                    	_selectedElem;
 	TCHAR						_szDetails[20];
 };

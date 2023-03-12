@@ -77,7 +77,8 @@ public:
    	void doDialog(bool willBeShown = true);
 
 	void AddToFavorties(BOOL isFolder, LPTSTR szLink);
-	void SaveSession(void);
+    void AddToFavorties(BOOL isFolder, std::vector<std::wstring>&& paths);
+    void SaveSession(void);
 	void NotifyNewFile(void);
 
 	void initFinish(void) {
@@ -95,9 +96,7 @@ protected:
 
 	void InitialDialog(void);
 
-	HTREEITEM GetTreeItem(const std::vector<std::wstring> &groupPath) const;
-	PELEM GetElementPointer(const std::vector<std::wstring> &groupPath);
-	void CopyItem(HTREEITEM hItem);
+    void CopyItem(HTREEITEM hItem);
 	void CutItem(HTREEITEM hItem);
 	void PasteItem(HTREEITEM hItem);
 
@@ -108,6 +107,8 @@ protected:
 	void DeleteItem(HTREEITEM hItem);
 
 	void DuplicateRecursive(PELEM pTarget, PELEM pSource);
+
+    void RefreshTree(HTREEITEM parentItem);
 
 	void OpenContext(HTREEITEM hItem, POINT pt);
 	BOOL DoesNameNotExist(HTREEITEM hItem, HTREEITEM hCurrItem, LPTSTR name);

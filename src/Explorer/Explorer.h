@@ -72,7 +72,7 @@ struct ItemElement {
     UINT                        uParam      = 0;
     std::wstring                name        = std::wstring();
     std::wstring                link        = std::wstring();
-    std::vector<ItemElement>    vElements   = std::vector<ItemElement>();
+    std::vector<ItemElement>    children    = std::vector<ItemElement>();
 };
 
 using PELEM     = ItemElement*;

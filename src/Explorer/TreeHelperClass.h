@@ -40,17 +40,19 @@ public:
 
 protected:
 	std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
-	HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, LPARAM lParam = NULL);
-	BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, LPARAM lParam = NULL, BOOL delChildren = TRUE);
+	HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, void* lParam = NULL);
+	BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, void* lParam = NULL, BOOL delChildren = TRUE);
 	void DeleteChildren(HTREEITEM parentItem);
 	BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
 	std::wstring GetItemText(HTREEITEM hItem) const;
-	LPARAM GetParam(HTREEITEM hItem);
-	void SetParam(HTREEITEM hItem, LPARAM lParam);
+    void* GetParam(HTREEITEM hItem);
+	void SetParam(HTREEITEM hItem, void* lParam);
 	BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);
 	void SetItemIcons(HTREEITEM hItem, INT icon, INT selected, INT overlay);
 	BOOL IsItemExpanded(HTREEITEM hItem);
 	INT GetChildrenCount(HTREEITEM item);
+
+    HTREEITEM FindTreeItemByParam(const void* param);
 
 protected:
 	HWND				_hTreeCtrl;

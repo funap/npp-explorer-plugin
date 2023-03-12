@@ -31,7 +31,7 @@ HTREEITEM TreeHelper::InsertItem(const std::wstring &itemName,
 								 HTREEITEM hParent, 
 								 HTREEITEM hInsertAfter, 
 								 BOOL haveChildren, 
-								 LPARAM lParam)
+								 void* lParam)
 {
 	auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
 	itemName.copy(szItemName.get(), MAX_PATH);
@@ -45,7 +45,7 @@ HTREEITEM TreeHelper::InsertItem(const std::wstring &itemName,
 	tvis.item.iImage		 = nImage;
 	tvis.item.iSelectedImage = nSelectedImage;
 	tvis.item.cChildren		 = haveChildren;
-	tvis.item.lParam		 = lParam;
+	tvis.item.lParam		 = reinterpret_cast<LPARAM>(lParam);
 
 	if (nOverlayedImage != 0)
 	{
@@ -82,7 +82,7 @@ BOOL TreeHelper::UpdateItem(HTREEITEM hItem,
 							INT nOverlayedImage, 
 							BOOL bHidden,
 							BOOL haveChildren,
-							LPARAM lParam,
+							void* lParam,
 							BOOL delChildren)
 {
 	auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
@@ -96,7 +96,7 @@ BOOL TreeHelper::UpdateItem(HTREEITEM hItem,
 	item.iImage			 = nImage;
 	item.iSelectedImage	 = nSelectedImage;
 	item.cChildren		 = haveChildren;
-	item.lParam			 = lParam;
+	item.lParam			 = reinterpret_cast<LPARAM>(lParam);
 
 	/* update overlay icon in any case */
 	item.state			 = INDEXTOOVERLAYMASK(nOverlayedImage);
@@ -148,7 +148,7 @@ std::wstring TreeHelper::GetItemText(HTREEITEM hItem) const
 	return std::wstring(buffer.get());
 }
 
-LPARAM TreeHelper::GetParam(HTREEITEM hItem)
+void* TreeHelper::GetParam(HTREEITEM hItem)
 {
 	TVITEM			tvi;
 	tvi.mask		= TVIF_PARAM;
@@ -157,17 +157,17 @@ LPARAM TreeHelper::GetParam(HTREEITEM hItem)
 	
 	TreeView_GetItem(_hTreeCtrl, &tvi);
 
-	return tvi.lParam;
+	return reinterpret_cast<void*>(tvi.lParam);
 }
 
-void TreeHelper::SetParam(HTREEITEM hItem, LPARAM lParam)
+void TreeHelper::SetParam(HTREEITEM hItem, void* lParam)
 {
 	TVITEM		item;
 
 	ZeroMemory(&item, sizeof(TVITEM));
 	item.hItem			 = hItem;
 	item.mask			 = TVIF_PARAM;
-	item.lParam			 = lParam;
+	item.lParam			 = reinterpret_cast<LPARAM>(lParam);
 
 	TreeView_SetItem(_hTreeCtrl, &item);
 }
@@ -245,4 +245,27 @@ std::vector<std::wstring> TreeHelper::GetItemPathFromRoot(HTREEITEM currentItem)
 
 	std::reverse(std::begin(result), std::end(result));
 	return result;
+}
+
+HTREEITEM TreeHelper::FindTreeItemByParam(const void* param)
+{
+    auto FindTreeItemByParamRecursive = [&](const auto& self, HTREEITEM item) -> HTREEITEM {
+        while (item != nullptr) {
+            if (param == GetParam(item)) {
+                return item;
+            }
+
+            HTREEITEM hChildItem = TreeView_GetChild(_hTreeCtrl, item);
+            HTREEITEM hFoundItem = self(self, hChildItem);
+            if (hFoundItem != nullptr) {
+                return hFoundItem;
+            }
+
+            item = TreeView_GetNextSibling(_hTreeCtrl, item);
+        }
+        return nullptr;
+    };
+
+    HTREEITEM root = TreeView_GetRoot(_hTreeCtrl);
+    return FindTreeItemByParamRecursive(FindTreeItemByParamRecursive, root);
 }

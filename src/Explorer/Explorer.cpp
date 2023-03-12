@@ -968,7 +968,7 @@ void UpdateCurrUsedDocs(LPTSTR* pFiles, UINT numFiles)
 BOOL IsFileOpen(const std::wstring &filePath)
 {
     for (const auto &openedFilePath : g_openedFilePaths) {
-        if (_tcsicmp(openedFilePath.c_str(), filePath.c_str()) == 0) {
+        if (openedFilePath == filePath) {
             return TRUE;
         }
     }

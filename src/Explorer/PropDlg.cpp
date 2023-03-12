@@ -46,7 +46,7 @@ PropDlg::PropDlg()
 	, _seeDetails(FALSE)
 	, _pElem(nullptr)
 	, _iUImgPos(0)
-	, _groupPath{}
+	, _selectedElem{}
 	, _szDetails{}
 {
 }
@@ -76,21 +76,33 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 			::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
 
 			/* if name is not defined extract from link */
-			_tcscpy(szBuffer, _pLink);
-			if ((_pName[0] == '\0') && (szBuffer[0] != '\0')) {
-				if (szBuffer[_tcslen(szBuffer)-1] == '\\') {
-					szBuffer[_tcslen(szBuffer)-1] = '\0';
-				}
-				if (szBuffer[_tcslen(szBuffer)-1] == ':') {
-					_tcscpy(_pName, szBuffer);
-				} else {
-					_tcscpy(_pName, (_tcsrchr(szBuffer, '\\')+1));
-				}
-			}
+            if (_pName && _pLink) {
+                _tcscpy(szBuffer, _pLink);
+                if ((_pName[0] == '\0') && (szBuffer[0] != '\0')) {
+                    if (szBuffer[_tcslen(szBuffer) - 1] == '\\') {
+                        szBuffer[_tcslen(szBuffer) - 1] = '\0';
+                    }
+                    if (szBuffer[_tcslen(szBuffer) - 1] == ':') {
+                        _tcscpy(_pName, szBuffer);
+                    }
+                    else {
+                        _tcscpy(_pName, (_tcsrchr(szBuffer, '\\') + 1));
+                    }
+                }
+            }
+            else {
+                ::EnableWindow(::GetDlgItem(_hSelf, IDC_EDIT_NAME), FALSE);
+                ::EnableWindow(::GetDlgItem(_hSelf, IDC_EDIT_LINK), FALSE);
+                ::EnableWindow(::GetDlgItem(_hSelf, IDC_BTN_OPENDLG), FALSE);
+            }
 
-			/* set name and link */
-			::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NAME), _pName);
-			::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+            /* set name and link */
+            if (_pName){
+                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NAME), _pName);
+            }
+            if (_pLink) {
+                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+            }
 
 			SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NAME));
 			_hTreeCtrl = ::GetDlgItem(_hSelf, IDC_TREE_SELECT);
@@ -135,11 +147,11 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				/* set image list */
 				::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-				BOOL canExpand = std::any_of(_pElem->vElements.begin(), _pElem->vElements.end(), [](const auto &elem) {
+				BOOL canExpand = std::any_of(_pElem->children.begin(), _pElem->children.end(), [](const auto &elem) {
 					return FAVES_PARAM_GROUP == (elem.uParam & FAVES_PARAM_GROUP);
 				});
 
-				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, (LPARAM)_pElem);
+				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _pElem);
 				TreeView_SelectItem(_hTreeCtrl, hItem);
 
 				_tcscpy(_szDetails, _T("Details %s"));
@@ -271,23 +283,31 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 				}
 				case IDOK:
 				{
-					UINT	lengthName	= (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
-					UINT	lengthLink	= (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
+                    if (_pName && _pLink) {
+                        UINT	lengthName = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
+                        UINT	lengthLink = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
 
-					SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
-					SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
+                        SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
+                        SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
 
-					if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0))
-					{
-						_groupPath = GetItemPathFromRoot(TreeView_GetSelection(_hTreeCtrl));
-
-						::EndDialog(_hSelf, TRUE);
-						return TRUE;
-					}
-					else
-					{
-						::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
-					}
+                        if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0))
+                        {
+                            auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
+                            _selectedElem = (PELEM)GetParam(selectedItem);
+                            ::EndDialog(_hSelf, TRUE);
+                            return TRUE;
+                        }
+                        else
+                        {
+                            ::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
+                        }
+                    }
+                    else {
+                        auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
+                        _selectedElem = (PELEM)GetParam(selectedItem);
+                        ::EndDialog(_hSelf, TRUE);
+                        return TRUE;
+                    }
 					break;
 				}
 				default:
@@ -417,9 +437,9 @@ void PropDlg::setTreeElements(PELEM pElem, INT iUImgPos, BOOL bWithLink)
 	_seeDetails = TRUE;
 }
 
-std::vector<std::wstring> PropDlg::getGroupPath(void) const
+PELEM PropDlg::getSelectedElem(void) const
 {
-	return _groupPath;
+	return _selectedElem;
 }
 
 void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
@@ -437,9 +457,9 @@ void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
 	if (parentElement != NULL)
 	{
 		/* update elements in parent tree */
-		for (SIZE_T i = 0; i < parentElement->vElements.size(); i++)
+		for (SIZE_T i = 0; i < parentElement->children.size(); i++)
 		{
-			PELEM	pElem	= &parentElement->vElements[i];
+			PELEM	pElem	= &parentElement->children[i];
 
 			/* get root */
 			root = pElem->uParam & FAVES_PARAM;
@@ -449,22 +469,22 @@ void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
 
 			if (pElem->uParam & FAVES_PARAM_GROUP)
 			{
-				if (pElem->vElements.size() != 0)
+				if (pElem->children.size() != 0)
 				{
-					if ((pElem->vElements[0].uParam & FAVES_PARAM_GROUP) || (_bWithLink == TRUE))
+					if ((pElem->children[0].uParam & FAVES_PARAM_GROUP) || (_bWithLink == TRUE))
 					{
 						haveChildren = TRUE;
 					}
 				}
 				/* add new item */
-				pCurrentItem = InsertItem(pElem->name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
+				pCurrentItem = InsertItem(pElem->name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, pElem);
 			}
 
 			if ((pElem->uParam & FAVES_PARAM_LINK) && (_bWithLink == TRUE))
 			{
 				/* add new item */
 				ExtractIcons(pElem->name.c_str(), NULL, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-				pCurrentItem = InsertItem(pElem->name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, (LPARAM)pElem);
+				pCurrentItem = InsertItem(pElem->name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, pElem);
 			}
 		}
 	}
