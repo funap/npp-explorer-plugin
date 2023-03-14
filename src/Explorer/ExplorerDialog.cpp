@@ -1958,7 +1958,7 @@ void ExplorerDialog::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem
 
 		/* sort data */
 		std::sort(folders.begin(), folders.end(), [](const auto &lhs, const auto &rhs) {
-			return lhs.name < rhs.name;
+            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
 		});
 
 		/* update tree */
@@ -2056,7 +2056,9 @@ void ExplorerDialog::DrawChildren(HTREEITEM parentItem)
 		::FindClose(hFind);
 
 		/* sort data */
-		std::sort(vFolderList.begin(), vFolderList.end());
+        std::sort(vFolderList.begin(), vFolderList.end(), [](const std::wstring& lhs, const std::wstring& rhs) {
+            return ::StrCmpLogicalW(lhs.c_str(), rhs.c_str()) < 0;
+        });
 
 		for (const auto& folder : vFolderList) {
 			if (InsertChildFolder(folder.c_str(), parentItem) == NULL) {
