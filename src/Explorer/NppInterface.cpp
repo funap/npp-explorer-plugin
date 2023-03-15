@@ -57,9 +57,9 @@ std::wstring NppInterface::getSelectedText()
 		std::string selectedTextA;
 		selectedTextA.resize(charLength);
 		::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, (LPARAM)&selectedTextA[0]);
-		INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), selectedTextA.size(), nullptr, 0);
+		INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, nullptr, 0);
 		selectedTextW.resize(wideCharLength);
-		::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), selectedTextA.size(), selectedTextW.data(), selectedTextW.size());
+		::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, selectedTextW.data(), wideCharLength);
     }
 
 	return selectedTextW;
