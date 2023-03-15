@@ -982,22 +982,30 @@ void FavesDialog::EditItem(HTREEITEM hItem)
 
 			PropDlg		dlgProp;
 			dlgProp.init(_hInst, _hParent);
-			while (isOk == FALSE) {
-				if (dlgProp.doDialog(pszName, pszLink, pszDesc, MapPropDlg(root)) == TRUE) {
-					/* test if name not exist and link exist */
-					if (DoesNameNotExist(hParentItem, hItem, pszName) == TRUE) {
-						isOk = DoesLinkExist(pszLink, root);
-					}
+            dlgProp.setTreeElements(&_vDB[root], ICON_FILE);
+			if (dlgProp.doDialog(pszName, pszLink, pszDesc, MapPropDlg(root)) == TRUE) {
+                auto groupElem = dlgProp.getSelectedElem();
+                auto selectedGroup = FindTreeItemByParam(groupElem);
+                if (hParentItem != selectedGroup) {
+                    std::erase_if(groupElem->children, [pElem](const auto& elem) {
+                        return &elem == pElem;
+                    });
 
-					if (isOk == TRUE) {
-						pElem->name = pszName;
-						pElem->link = pszLink;
-					}
-				}
-				else {
-					break;
-				}
-			}
+                    ItemElement	element;
+                    element.name = pszName;
+                    element.link = pszLink;
+                    element.uParam = FAVES_PARAM_LINK | root;
+
+                    groupElem->children.push_back(std::move(element));
+
+                    auto item = FindTreeItemByParam(groupElem);
+                    RefreshTree(item);
+                }
+                else {
+                    pElem->name = pszName;
+                    pElem->link = pszLink;
+                }
+            }
 		}
 
 		/* update text of item */
