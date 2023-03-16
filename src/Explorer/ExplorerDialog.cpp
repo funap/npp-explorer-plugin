@@ -899,7 +899,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 					::KillTimer(_hTreeCtrl, EXT_SCROLLLISTUP);
 					_isScrolling = FALSE;
 				} else {
-					::SendMessage(_hTreeCtrl, 277, 0, NULL);				
+					::SendMessage(_hTreeCtrl, WM_VSCROLL, SB_LINEUP, NULL);
 				}
 				return FALSE;
 			}
@@ -913,7 +913,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 					::KillTimer(_hTreeCtrl, EXT_SCROLLLISTDOWN);
 					_isScrolling = FALSE;
 				} else {
-					::SendMessage(_hTreeCtrl, 277, 1, NULL);
+					::SendMessage(_hTreeCtrl, WM_VSCROLL, SB_LINEDOWN, NULL);
 				}
 				return FALSE;
 			}
