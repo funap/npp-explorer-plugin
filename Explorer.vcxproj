@@ -154,7 +154,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "D:\Applications\Notepad++x64\plugins\Explorer</Command>
+      <Command>copy /Y "$(TargetPath)" "C:\Program Files\Notepad++\plugins\Explorer"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -248,6 +248,7 @@
     <ClCompile Include="src\Explorer\Explorer.cpp" />
     <ClCompile Include="src\Explorer\ExplorerDialog.cpp" />
     <ClCompile Include="src\Explorer\FavesDialog.cpp" />
+    <ClCompile Include="src\Explorer\FavesModel.cpp" />
     <ClCompile Include="src\Explorer\FileDlg.cpp" />
     <ClCompile Include="src\Explorer\FileFilter.cpp" />
     <ClCompile Include="src\Explorer\FileList.cpp" />
@@ -283,6 +284,7 @@
     <ClInclude Include="src\Explorer\ExplorerDialog.h" />
     <ClInclude Include="src\Explorer\ExplorerResource.h" />
     <ClInclude Include="src\Explorer\FavesDialog.h" />
+    <ClInclude Include="src\Explorer\FavesModel.h" />
     <ClInclude Include="src\Explorer\FileDlg.h" />
     <ClInclude Include="src\Explorer\FileFilter.h" />
     <ClInclude Include="src\Explorer\FileList.h" />

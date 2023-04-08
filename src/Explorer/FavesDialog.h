@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
-
+#include "FavesModel.h"
 
 enum MenuID {
 	FM_NEWLINK = 1,
@@ -106,34 +106,29 @@ protected:
 	void EditItem(HTREEITEM hItem);
 	void DeleteItem(HTREEITEM hItem);
 
-	void DuplicateRecursive(PELEM pTarget, PELEM pSource);
-
     void RefreshTree(HTREEITEM parentItem);
 
 	void OpenContext(HTREEITEM hItem, POINT pt);
-	BOOL DoesNameNotExist(HTREEITEM hItem, HTREEITEM hCurrItem, LPTSTR name);
-	BOOL DoesLinkExist(LPTSTR link, int root);
-	void OpenLink(PELEM pElem);
+	BOOL DoesLinkExist(LPTSTR link, FavesType root);
+	void OpenLink(FavesItemPtr pElem);
 	void UpdateLink(HTREEITEM hItem);
 	void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
-
-	void SortElementList(std::vector<ItemElement> & parentElement);
 
 	void DrawSessionChildren(HTREEITEM hItem);
 
 	void ReadSettings(void);
-	void ReadElementTreeRecursive(ELEM_ITR elem_itr, LPTSTR* ptr);
+	void ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr);
 
 	void SaveSettings(void);
-	void SaveElementTreeRecursive(PELEM pElem, HANDLE hFile);
+	void SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile);
 
 	void ExpandElementsRecursive(HTREEITEM hItem);
 
 	LinkDlg MapPropDlg(int root) {
 		switch (root) {
-			case FAVES_FOLDERS:		return LinkDlg::FOLDER;
-			case FAVES_FILES:		return LinkDlg::FILE;
-			case FAVES_SESSIONS:	return LinkDlg::FILE;
+			case FAVES_FOLDER:		return LinkDlg::FOLDER;
+			case FAVES_FILE:		return LinkDlg::FILE;
+			case FAVES_SESSION:	return LinkDlg::FILE;
 			default: return LinkDlg::NONE;
 		}
 	};
@@ -161,14 +156,14 @@ private:
 
 	BOOL					_isCut;
 	HTREEITEM				_hTreeCutCopy;
-	
+
 	ToolBar					_ToolBar;
 	ReBar					_Rebar;
 
 	BOOL					_addToSession;
-	PELEM					_peOpenLink;
+	FavesItemPtr				_peOpenLink;
 	ExProp*					_pExProp;
 
 	/* database */
-	std::vector<ItemElement>	_vDB;
+    FavesModel              _model;
 };

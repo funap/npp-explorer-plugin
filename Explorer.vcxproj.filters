@@ -93,8 +93,9 @@
     <ClCompile Include="src\Explorer\pch.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\NppPlugin\StaticDialog.cpp">
-      <Filter>Source\NppPlugin</Filter>
+    <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
+    <ClCompile Include="src\Explorer\FavesModel.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -210,6 +211,9 @@
     </ClInclude>
     <ClInclude Include="src\NppPlugin\include\Window.h">
       <Filter>Header\NppPlugin</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FavesModel.h">
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

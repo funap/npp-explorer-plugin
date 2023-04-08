@@ -23,59 +23,63 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 #include <shlobj.h>
 
+namespace {
+constexpr WCHAR STR_DETAILS_HIDE[] = L"Details <<";
+constexpr WCHAR STR_DETAILS_SHOW[] = L"Details >>";
+}
 
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp
 static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pData)
 {
-	if (uMsg == BFFM_INITIALIZED)
-		::SendMessage(hwnd, BFFM_SETSELECTION, TRUE, pData);
-	return 0;
+    if (uMsg == BFFM_INITIALIZED)
+        ::SendMessage(hwnd, BFFM_SETSELECTION, TRUE, pData);
+    return 0;
 };
 
 
 PropDlg::PropDlg()
-	: StaticDialog()
-	, TreeHelper()
-	, _pName(nullptr)
-	, _pLink(nullptr)
-	, _pDesc(nullptr)
-	, _linkDlg(LinkDlg::NONE)
-	, _fileMustExist(FALSE)
-	, _bWithLink(FALSE)
-	, _seeDetails(FALSE)
-	, _pElem(nullptr)
-	, _iUImgPos(0)
-	, _selectedElem{}
-	, _szDetails{}
+    : StaticDialog()
+    , TreeHelper()
+    , _pName(nullptr)
+    , _pLink(nullptr)
+    , _pDesc(nullptr)
+    , _linkDlg(LinkDlg::NONE)
+    , _fileMustExist(FALSE)
+    , _bWithLink(FALSE)
+    , _seeDetails(FALSE)
+    , _root(nullptr)
+    , _iUImgPos(0)
+    , _selectedGroup(nullptr)
 {
 }
 
+PropDlg::~PropDlg()
+{
+}
 
 INT_PTR PropDlg::doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg, BOOL fileMustExist)
 {
-	_pName			= pName;
-	_pLink			= pLink;
-	_pDesc			= pDesc;
-	_linkDlg		= linkDlg;
-	_fileMustExist	= fileMustExist;
-	return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_PROP_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
+    _pName          = pName;
+    _pLink          = pLink;
+    _pDesc          = pDesc;
+    _linkDlg        = linkDlg;
+    _fileMustExist  = fileMustExist;
+    return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_PROP_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
 }
 
 
 INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	switch (Message) 
-	{
-		case WM_INITDIALOG:
-		{
-			/* set discription */
-			TCHAR	szBuffer[256];
+    switch (Message) {
+        case WM_INITDIALOG: {
+            /* set discription */
+            TCHAR szBuffer[256];
 
-			_stprintf(szBuffer, _T("%s:"), _pDesc);
-			::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
+            _stprintf(szBuffer, _T("%s:"), _pDesc);
+            ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
 
-			/* if name is not defined extract from link */
+            /* if name is not defined extract from link */
             if (_pName && _pLink) {
                 _tcscpy(szBuffer, _pLink);
                 if ((_pName[0] == '\0') && (szBuffer[0] != '\0')) {
@@ -104,388 +108,324 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                 ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
             }
 
-			SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NAME));
-			_hTreeCtrl = ::GetDlgItem(_hSelf, IDC_TREE_SELECT);
+            SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NAME));
+            _hTreeCtrl = ::GetDlgItem(_hSelf, IDC_TREE_SELECT);
 
-			goToCenter();
+            goToCenter();
 
-			if (_linkDlg == LinkDlg::NONE)
-			{
-				RECT	rcName, rcLink;
+            if (_linkDlg == LinkDlg::NONE) {
+                RECT rcName, rcLink;
 
-				::ShowWindow(::GetDlgItem(_hSelf, IDC_BTN_OPENDLG), SW_HIDE);
-				::GetWindowRect(::GetDlgItem(_hSelf, IDC_EDIT_NAME), &rcName);
-				::GetWindowRect(::GetDlgItem(_hSelf, IDC_EDIT_LINK), &rcLink);
+                ::ShowWindow(::GetDlgItem(_hSelf, IDC_BTN_OPENDLG), SW_HIDE);
+                ::GetWindowRect(::GetDlgItem(_hSelf, IDC_EDIT_NAME), &rcName);
+                ::GetWindowRect(::GetDlgItem(_hSelf, IDC_EDIT_LINK), &rcLink);
 
-				rcLink.right = rcName.right;
+                rcLink.right = rcName.right;
 
-				ScreenToClient(_hSelf, &rcLink);
-				::SetWindowPos(::GetDlgItem(_hSelf, IDC_EDIT_LINK), NULL, rcLink.left, rcLink.top, rcLink.right-rcLink.left, rcLink.bottom-rcLink.top, SWP_NOZORDER);
-			}
+                ScreenToClient(_hSelf, &rcLink);
+                ::SetWindowPos(::GetDlgItem(_hSelf, IDC_EDIT_LINK), nullptr, rcLink.left, rcLink.top, rcLink.right-rcLink.left, rcLink.bottom-rcLink.top, SWP_NOZORDER);
+            }
 
-			if (_seeDetails == FALSE)
-			{
-				RECT	rc	= {0};
+            if (_seeDetails == FALSE) {
+                RECT rc = {0};
 
-				::DestroyWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT));
-				::DestroyWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT));
-				::DestroyWindow(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS));
+                ::DestroyWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT));
+                ::DestroyWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT));
+                ::DestroyWindow(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS));
 
-				/* resize window */
-				::GetWindowRect(_hSelf, &rc);
-				rc.top		+= 74;
-				rc.bottom	-= 74;
+                /* resize window */
+                ::GetWindowRect(_hSelf, &rc);
+                rc.top      += 74;
+                rc.bottom   -= 74;
 
-				/* resize window and keep sure to resize correct */
-				::SetWindowPos(_hSelf, NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
-			}
-			else
-			{
-				/* get current icon offset */
-				UINT	iIconPos	= _pElem->uParam & FAVES_PARAM;
+                /* resize window and keep sure to resize correct */
+                ::SetWindowPos(_hSelf, nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+            }
+            else {
+                /* get current icon offset */
+                UINT iIconPos = _root->Type();
 
-				/* set image list */
-				::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
+                /* set image list */
+                ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-				BOOL canExpand = std::any_of(_pElem->children.begin(), _pElem->children.end(), [](const auto &elem) {
-					return FAVES_PARAM_GROUP == (elem.uParam & FAVES_PARAM_GROUP);
-				});
+                BOOL canExpand = std::any_of(_root->m_children.begin(), _root->m_children.end(), [](const auto &elem) {
+                    return elem->IsGroup();
+                });
 
-				HTREEITEM hItem = InsertItem(_pElem->name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _pElem);
-				TreeView_SelectItem(_hTreeCtrl, hItem);
+                HTREEITEM hItem = InsertItem(_root->m_name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _root);
 
-				_tcscpy(_szDetails, _T("Details %s"));
-				_stprintf(szBuffer, _szDetails, _T("<<"));
-				::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), szBuffer);
-			}
+                SendMessage(_hTreeCtrl, WM_SETREDRAW, FALSE, 0);
+                ExpandTreeView(hItem);
+                SendMessage(_hTreeCtrl, WM_SETREDRAW, TRUE, 0);
 
-			break;
-		}
-		case WM_COMMAND : 
-		{
-			switch (LOWORD(wParam))
-			{
-				case IDC_BUTTON_DETAILS:
-				{
-					RECT	rc	= {0};
-					TCHAR	szBuffer[20];
+                if (_selectedGroup) {
+                    hItem = FindTreeItemByParam(_selectedGroup);
+                }
+                TreeView_SelectItem(_hTreeCtrl, hItem);
 
-					/* toggle visibility state */
-					_seeDetails ^= TRUE;
+                ::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), L"Details <<");
+            }
+            break;
+        }
+        case WM_COMMAND : {
+            switch (LOWORD(wParam)) {
+            case IDC_BUTTON_DETAILS: {
+                RECT    rc    = {0};
 
-					/* resize window */
-					::GetWindowRect(_hSelf, &rc);
+                /* toggle visibility state */
+                _seeDetails ^= TRUE;
 
-					if (_seeDetails == FALSE)
-					{
-						::ShowWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT), SW_HIDE);
-						::ShowWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT), SW_HIDE);
+                /* resize window */
+                ::GetWindowRect(_hSelf, &rc);
 
-						_stprintf(szBuffer, _szDetails, _T(">>"));
-						::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), szBuffer);
+                if (_seeDetails == FALSE) {
+                    ::ShowWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT), SW_HIDE);
+                    ::ShowWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT), SW_HIDE);
 
-						rc.bottom	-= 148;
-					}
-					else
-					{
-						::ShowWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT), SW_SHOW);
-						::ShowWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT), SW_SHOW);
+                    ::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), STR_DETAILS_SHOW);
 
-						_stprintf(szBuffer, _szDetails, _T("<<"));
-						::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), szBuffer);
+                    rc.bottom -= 148;
+                }
+                else {
+                    ::ShowWindow(::GetDlgItem(_hSelf, IDC_TREE_SELECT), SW_SHOW);
+                    ::ShowWindow(::GetDlgItem(_hSelf, IDC_STATIC_SELECT), SW_SHOW);
 
-						rc.bottom	+= 148;
-					}
+                    ::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), STR_DETAILS_HIDE);
 
-					::SetWindowPos(_hSelf, NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
-					break;
-				}
-				case IDC_BTN_OPENDLG:
-				{
-					if (_linkDlg == LinkDlg::FOLDER)
-					{
-						// This code was copied and slightly modifed from:
-						// http://www.bcbdev.com/faqs/faq62.htm
+                    rc.bottom += 148;
+                }
 
-						// SHBrowseForFolder returns a PIDL. The memory for the PIDL is
-						// allocated by the shell. Eventually, we will need to free this
-						// memory, so we need to get a pointer to the shell malloc COM
-						// object that will free the PIDL later on.
-						LPMALLOC pShellMalloc = 0;
-						if (::SHGetMalloc(&pShellMalloc) == NO_ERROR)
-						{
-							// If we were able to get the shell malloc object,
-							// then proceed by initializing the BROWSEINFO stuct
-							BROWSEINFO info;
-							ZeroMemory(&info, sizeof(info));
-							info.hwndOwner			= _hParent;
-							info.pidlRoot			= NULL;
-							info.pszDisplayName		= (LPTSTR)new TCHAR[MAX_PATH];
-							info.lpszTitle			= _T("Select a folder:");
-							info.ulFlags			= BIF_RETURNONLYFSDIRS;
-							info.lpfn				= BrowseCallbackProc;
-							info.lParam				= (LPARAM)_pLink;
+                ::SetWindowPos(_hSelf, nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+                break;
+            }
+            case IDC_BTN_OPENDLG: {
+                if (_linkDlg == LinkDlg::FOLDER) {
+                    // This code was copied and slightly modifed from:
+                    // http://www.bcbdev.com/faqs/faq62.htm
 
-							// Execute the browsing dialog.
-							LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
+                    // SHBrowseForFolder returns a PIDL. The memory for the PIDL is
+                    // allocated by the shell. Eventually, we will need to free this
+                    // memory, so we need to get a pointer to the shell malloc COM
+                    // object that will free the PIDL later on.
+                    LPMALLOC pShellMalloc = nullptr;
+                    if (::SHGetMalloc(&pShellMalloc) == NO_ERROR) {
+                        // If we were able to get the shell malloc object,
+                        // then proceed by initializing the BROWSEINFO stuct
+                        BROWSEINFO info;
+                        ZeroMemory(&info, sizeof(info));
+                        info.hwndOwner      = _hParent;
+                        info.pidlRoot       = nullptr;
+                        info.pszDisplayName = (LPTSTR)new TCHAR[MAX_PATH];
+                        info.lpszTitle      = _T("Select a folder:");
+                        info.ulFlags        = BIF_RETURNONLYFSDIRS;
+                        info.lpfn           = BrowseCallbackProc;
+                        info.lParam         = (LPARAM)_pLink;
 
-							// pidl will be null if they cancel the browse dialog.
-							// pidl will be not null when they select a folder.
-							if (pidl) 
-							{
-								// Try to convert the pidl to a display string.
-								// Return is true if success.
-								if (::SHGetPathFromIDList(pidl, _pLink))
-								{
-									// Set edit control to the directory path.
-									::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
-								}
-								pShellMalloc->Free(pidl);
-							}
-							pShellMalloc->Release();
-							delete [] info.pszDisplayName;
-						}
-					}
-					else
-					{
-						LPTSTR	pszLink	= NULL;
+                        // Execute the browsing dialog.
+                        LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
 
-						FileDlg dlg(_hInst, _hParent);
-
-						dlg.setDefFileName(_pLink);
-						if (_tcsstr(_pDesc, _T("Session")) != NULL)
-							dlg.setExtFilter(_T("Session file"), _T(".session"), NULL);
-						dlg.setExtFilter(_T("All types"), _T(".*"), NULL);
-						
-						if (_fileMustExist == TRUE)
-						{
-							pszLink = dlg.doSaveDlg();
-						}
-						else
-						{
-							pszLink = dlg.doOpenSingleFileDlg();
-						}
-
-						if (pszLink != NULL)
-						{
-							// Set edit control to the directory path.
-							_tcscpy(_pLink, pszLink);
-							::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
-						}
-					}
-					
-					break;
-				}
-				case IDCANCEL:
-				{
-					::EndDialog(_hSelf, FALSE);
-					return TRUE;
-				}
-				case IDOK:
-				{
-                    if (_pName && _pLink) {
-                        UINT	lengthName = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
-                        UINT	lengthLink = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
-
-                        SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
-                        SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
-
-                        if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0))
-                        {
-                            auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
-                            _selectedElem = (PELEM)GetParam(selectedItem);
-                            ::EndDialog(_hSelf, TRUE);
-                            return TRUE;
+                        // pidl will be nullptr if they cancel the browse dialog.
+                        // pidl will be not nullptr when they select a folder.
+                        if (pidl) {
+                            // Try to convert the pidl to a display string.
+                            // Return is true if success.
+                            if (::SHGetPathFromIDList(pidl, _pLink)) {
+                                // Set edit control to the directory path.
+                                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+                            }
+                            pShellMalloc->Free(pidl);
                         }
-                        else
-                        {
-                            ::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
-                        }
+                        pShellMalloc->Release();
+                        delete [] info.pszDisplayName;
+                    }
+                }
+                else {
+                    LPTSTR  pszLink = nullptr;
+                    FileDlg dlg(_hInst, _hParent);
+
+                    dlg.setDefFileName(_pLink);
+                    if (_tcsstr(_pDesc, _T("Session")) != nullptr) {
+                        dlg.setExtFilter(_T("Session file"), _T(".session"), nullptr);
+                    }
+                    dlg.setExtFilter(_T("All types"), _T(".*"), nullptr);
+
+                    if (_fileMustExist == TRUE) {
+                        pszLink = dlg.doSaveDlg();
                     }
                     else {
+                        pszLink = dlg.doOpenSingleFileDlg();
+                    }
+
+                    if (pszLink != nullptr) {
+                        // Set edit control to the directory path.
+                        _tcscpy(_pLink, pszLink);
+                        ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+                    }
+                }
+                break;
+            }
+            case IDCANCEL: {
+                ::EndDialog(_hSelf, FALSE);
+                return TRUE;
+            }
+            case IDOK: {
+                if (_pName && _pLink) {
+                    UINT lengthName = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
+                    UINT lengthLink = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
+
+                    SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
+                    SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
+
+                    if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0)) {
                         auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
-                        _selectedElem = (PELEM)GetParam(selectedItem);
+                        _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
                         ::EndDialog(_hSelf, TRUE);
                         return TRUE;
                     }
-					break;
-				}
-				default:
-					break;
-			}
-			break;
-		}
-		case WM_SIZE:
-		{
-			RECT	rc		= {0};
-			RECT	rcMain	= {0};
+                    else {
+                        ::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
+                    }
+                }
+                else {
+                    auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
+                    _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
+                    ::EndDialog(_hSelf, TRUE);
+                    return TRUE;
+                }
+                break;
+            }
+            default:
+                break;
+            }
+            break;
+        }
+        case WM_SIZE: {
+            RECT    rc        = {0};
+            RECT    rcMain    = {0};
 
-			/* get main window size */
-			::GetWindowRect(_hSelf, &rcMain);
+            /* get main window size */
+            ::GetWindowRect(_hSelf, &rcMain);
 
-			/* resize static box */
-			::GetWindowRect(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), &rc);
-			rc.bottom	= rcMain.bottom - 46;
-			ScreenToClient(_hSelf, &rc);
-			::SetWindowPos(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+            /* resize static box */
+            ::GetWindowRect(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), &rc);
+            rc.bottom   = rcMain.bottom - 46;
+            ScreenToClient(_hSelf, &rc);
+            ::SetWindowPos(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
 
-			/* set position of OK button */
-			::GetWindowRect(::GetDlgItem(_hSelf, IDOK), &rc);
-			rc.top		= rcMain.bottom - 36;
-			rc.bottom	= rcMain.bottom - 12;
-			ScreenToClient(_hSelf, &rc);
-			::SetWindowPos(::GetDlgItem(_hSelf, IDOK), NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+            /* set position of OK button */
+            ::GetWindowRect(::GetDlgItem(_hSelf, IDOK), &rc);
+            rc.top      = rcMain.bottom - 36;
+            rc.bottom   = rcMain.bottom - 12;
+            ScreenToClient(_hSelf, &rc);
+            ::SetWindowPos(::GetDlgItem(_hSelf, IDOK), nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
 
-			/* set position of CANCEL button */
-			::GetWindowRect(::GetDlgItem(_hSelf, IDCANCEL), &rc);
-			rc.top		= rcMain.bottom - 36;
-			rc.bottom	= rcMain.bottom - 12;
-			ScreenToClient(_hSelf, &rc);
-			::SetWindowPos(::GetDlgItem(_hSelf, IDCANCEL), NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+            /* set position of CANCEL button */
+            ::GetWindowRect(::GetDlgItem(_hSelf, IDCANCEL), &rc);
+            rc.top      = rcMain.bottom - 36;
+            rc.bottom   = rcMain.bottom - 12;
+            ScreenToClient(_hSelf, &rc);
+            ::SetWindowPos(::GetDlgItem(_hSelf, IDCANCEL), nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
 
-			/* set position of DETAILS button */
-			::GetWindowRect(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), &rc);
-			rc.top		= rcMain.bottom - 36;
-			rc.bottom	= rcMain.bottom - 12;
-			ScreenToClient(_hSelf, &rc);
-			::SetWindowPos(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), NULL, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
-			break;
-		}
-		case WM_NOTIFY:
-		{
-			LPNMHDR		nmhdr = (LPNMHDR)lParam;
+            /* set position of DETAILS button */
+            ::GetWindowRect(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), &rc);
+            rc.top      = rcMain.bottom - 36;
+            rc.bottom   = rcMain.bottom - 12;
+            ScreenToClient(_hSelf, &rc);
+            ::SetWindowPos(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), nullptr, rc.left, rc.top, rc.right-rc.left, rc.bottom-rc.top, SWP_NOZORDER);
+            break;
+        }
+        case WM_NOTIFY: {
+            LPNMHDR nmhdr = (LPNMHDR)lParam;
+            if (nmhdr->hwndFrom == _hTreeCtrl) {
+                switch (nmhdr->code) {
+                case TVN_SELCHANGED: {
+                    /* only when link params are also viewed */
+                    if (_bWithLink == TRUE) {
+                        HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
 
-			if (nmhdr->hwndFrom == _hTreeCtrl)
-			{
-				switch (nmhdr->code)
-				{
-					case TVN_ITEMEXPANDING:
-					{
-						DWORD			dwpos = ::GetMessagePos();
-						TVHITTESTINFO	ht;
-						HTREEITEM		hItem;
+                        if (hItem != nullptr) {
+                            FavesItemPtr pElem = (FavesItemPtr)GetParam(hItem);
 
-						ht.pt.x = GET_X_LPARAM(dwpos);
-						ht.pt.y = GET_Y_LPARAM(dwpos);
-
-						::ScreenToClient(_hTreeCtrl, &ht.pt);
-
-						hItem = TreeView_HitTest(_hTreeCtrl, &ht);
-
-						if (hItem != NULL)
-						{
-							if (!TreeView_GetChild(_hTreeCtrl, hItem))
-							{
-								DrawChildrenOfItem(hItem);
-							}
-						}
-						break;
-					}
-					case TVN_SELCHANGED:
-					{
-						/* only when link params are also viewed */
-						if (_bWithLink == TRUE)
-						{
-							HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
-
-							if (hItem != NULL)
-							{
-								PELEM	pElem = (PELEM)GetParam(hItem);
-
-								if (pElem != NULL)
-								{
-									if (pElem->uParam & FAVES_PARAM_LINK)
-									{
-										::SetDlgItemText(_hSelf, IDC_EDIT_NAME, pElem->name.c_str());
-										::SetDlgItemText(_hSelf, IDC_EDIT_LINK, pElem->link.c_str());
-									}
-									else
-									{
-										::SetDlgItemText(_hSelf, IDC_EDIT_NAME, _T(""));
-										::SetDlgItemText(_hSelf, IDC_EDIT_LINK, _T(""));
-									}
-								}
-							}
-						}
-						break;
-					}
-					default:
-						break;
-				}
-			}
-			break;
-		}
-		case WM_DESTROY :
-		{
-			/* deregister this dialog */
-			::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, (LPARAM)_hSelf);
-			break;
-		}
-		default:
-			break;
-	}
-	return FALSE;
+                            if (pElem != nullptr) {
+                                if (pElem->IsLink()) {
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_NAME, pElem->Name().data());
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_LINK, pElem->Link().data());
+                                }
+                                else {
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_NAME, _T(""));
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_LINK, _T(""));
+                                }
+                            }
+                        }
+                    }
+                    break;
+                }
+                default:
+                    break;
+                }
+            }
+            break;
+        }
+        case WM_DESTROY: {
+            /* deregister this dialog */
+            ::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, (LPARAM)_hSelf);
+            break;
+        }
+        default:
+            break;
+    }
+    return FALSE;
 }
 
-void PropDlg::setTreeElements(PELEM pElem, INT iUImgPos, BOOL bWithLink)
+void PropDlg::setRoot(FavesItemPtr pElem, INT iUImgPos, BOOL bWithLink)
 {
-	_pElem		= pElem;
-	_iUImgPos	= iUImgPos;
-	_bWithLink	= bWithLink;
+    _root   = pElem;
+    _iUImgPos   = iUImgPos;
+    _bWithLink  = bWithLink;
 
-	/* do not destroy items */
-	_seeDetails = TRUE;
+    /* do not destroy items */
+    _seeDetails = TRUE;
 }
 
-PELEM PropDlg::getSelectedElem(void) const
+FavesItemPtr PropDlg::getSelectedGroup(void) const
 {
-	return _selectedElem;
+    return _selectedGroup;
 }
 
-void PropDlg::DrawChildrenOfItem(HTREEITEM hParentItem)
+void PropDlg::setSelectedGroup(FavesItemPtr group)
 {
-	INT			iIconNormal		= 0;
-	INT			iIconSelected	= 0;
-	INT			iIconOverlayed	= 0;
-	BOOL		haveChildren	= FALSE;
-	INT			root			= 0;
-	HTREEITEM	pCurrentItem	= TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
+    _selectedGroup = group;
+}
 
-	/* get element list */
-	PELEM		parentElement	= (PELEM)GetParam(hParentItem);
+void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
+{
+    FavesItemPtr parent = (FavesItemPtr)GetParam(hParentItem);
+    if (parent == nullptr) {
+        return;
+    }
 
-	if (parentElement != NULL)
-	{
-		/* update elements in parent tree */
-		for (SIZE_T i = 0; i < parentElement->children.size(); i++)
-		{
-			PELEM	pElem	= &parentElement->children[i];
+    for (auto&& child : parent->m_children) {
+        BOOL haveChildren = FALSE;
+        if (child->IsGroup()) {
+            if (!child->m_children.empty()) {
+                if (child->m_children[0]->IsGroup() || (_bWithLink == TRUE)) {
+                    haveChildren = TRUE;
+                }
+            }
+            // add new item
+            HTREEITEM pCurrentItem = InsertItem(child->m_name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            ExpandTreeView(pCurrentItem);
+        }
 
-			/* get root */
-			root = pElem->uParam & FAVES_PARAM;
-
-			/* initialize children */
-			haveChildren		= FALSE;
-
-			if (pElem->uParam & FAVES_PARAM_GROUP)
-			{
-				if (pElem->children.size() != 0)
-				{
-					if ((pElem->children[0].uParam & FAVES_PARAM_GROUP) || (_bWithLink == TRUE))
-					{
-						haveChildren = TRUE;
-					}
-				}
-				/* add new item */
-				pCurrentItem = InsertItem(pElem->name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, pElem);
-			}
-
-			if ((pElem->uParam & FAVES_PARAM_LINK) && (_bWithLink == TRUE))
-			{
-				/* add new item */
-				ExtractIcons(pElem->name.c_str(), NULL, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-				pCurrentItem = InsertItem(pElem->name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, pElem);
-			}
-		}
-	}
+        if (child->IsLink() && (_bWithLink == TRUE)) {
+            // add new item
+            INT iIconNormal     = 0;
+            INT iIconSelected   = 0;
+            INT iIconOverlayed  = 0;
+            ExtractIcons(child->m_name.c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            HTREEITEM pCurrentItem = InsertItem(child->m_name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            ExpandTreeView(pCurrentItem);
+        }
+    }
+    TreeView_Expand(_hTreeCtrl, hParentItem, TVE_EXPAND);
 }

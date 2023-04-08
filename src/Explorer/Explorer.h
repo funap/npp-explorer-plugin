@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <vector>
 #include <string>
-
+#include <memory>
 
 constexpr INT DOCKABLE_EXPLORER_INDEX   = 0;
 constexpr INT DOCKABLE_FAVORTIES_INDEX  = 1;
@@ -51,32 +51,6 @@ constexpr INT ICON_GROUP        = 4;
 constexpr INT ICON_PARENT       = 5;
 constexpr INT ICON_WARN_SESSION = 6;
 constexpr INT ICON_MISSING_FILE = 7;
-
-enum FavesElements {
-    FAVES_FOLDERS = 0,
-    FAVES_FILES,
-    FAVES_WEB,
-    FAVES_SESSIONS,
-    FAVES_ITEM_MAX,
-};
-
-constexpr UINT FAVES_PARAM                  = 0x0000000F;
-constexpr UINT FAVES_PARAM_MAIN             = 0x00000010;
-constexpr UINT FAVES_PARAM_GROUP            = 0x00000020;
-constexpr UINT FAVES_PARAM_LINK             = 0x00000040;
-constexpr UINT FAVES_PARAM_SESSION_CHILD    = 0x00000080;
-constexpr UINT FAVES_PARAM_EXPAND           = 0x00000100;
-constexpr UINT FAVES_PARAM_USERIMAGE        = 0x00000200;
-
-struct ItemElement {
-    UINT                        uParam      = 0;
-    std::wstring                name        = std::wstring();
-    std::wstring                link        = std::wstring();
-    std::vector<ItemElement>    children    = std::vector<ItemElement>();
-};
-
-using PELEM     = ItemElement*;
-using ELEM_ITR = std::vector<ItemElement>::iterator;
 
 enum VarExNppExec {
     VAR_FULL_PATH,
