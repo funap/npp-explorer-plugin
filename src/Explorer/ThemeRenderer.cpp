@@ -126,14 +126,12 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
             ListView_SetTextColor(hwnd, self->m_colors.text);
             ListView_SetTextBkColor(hwnd, CLR_NONE);
             ::SetWindowTheme(hwnd, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
-
-//            InvalidateRect(hwnd, nullptr, false);
         }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
 }
 
-LRESULT ThemeRenderer::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CALLBACK ThemeRenderer::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
     switch (uIdSubclass) {
     case REBAR_SUBCLASS_ID:
