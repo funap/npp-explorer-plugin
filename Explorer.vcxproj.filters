@@ -16,14 +16,14 @@
     <Filter Include="Resource">
       <UniqueIdentifier>{9b87ff09-c82f-4add-b01a-e178b6f8647c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source\NppPlugin">
+      <UniqueIdentifier>{f71ab500-8c79-47c1-af4e-e4132d0358c6}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Header">
       <UniqueIdentifier>{923ca7ce-8984-4f53-95ce-29c9c2ef765a}</UniqueIdentifier>
     </Filter>
     <Filter Include="Header\NppPlugin">
       <UniqueIdentifier>{a59b1228-3978-491a-bd09-80b2500a7c7b}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source\NppPlugin">
-      <UniqueIdentifier>{f71ab500-8c79-47c1-af4e-e4132d0358c6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -95,6 +95,9 @@
     </ClCompile>
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
     <ClCompile Include="src\Explorer\FavesModel.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ThemeRenderer.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -213,6 +216,12 @@
       <Filter>Header\NppPlugin</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\FavesModel.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ThemeRenderer.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\Graphics.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

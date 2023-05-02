@@ -1,18 +1,18 @@
 /*
   The MIT License (MIT)
-  
+
   Copyright (c) 2019 funap
-  
+
   Permission is hereby granted, free of charge, to any person obtaining a copy
   of this software and associated documentation files (the "Software"), to deal
   in the Software without restriction, including without limitation the rights
   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
   copies of the Software, and to permit persons to whom the Software is
   furnished to do so, subject to the following conditions:
-  
+
   The above copyright notice and this permission notice shall be included in
   all copies or substantial portions of the Software.
-  
+
   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,6 +26,7 @@
 
 #include "../NppPlugin/Scintilla.h"
 #include "../NppPlugin/menuCmdID.h"
+#include <stdexcept>
 
 NppData NppInterface::_nppData;
 
@@ -78,6 +79,52 @@ COLORREF NppInterface::getEditorDefaultBackgroundColor()
 COLORREF NppInterface::getEditorCurrentLineBackgroundColor()
 {
     return static_cast<COLORREF>(::SendMessage(_nppData._scintillaMainHandle, SCI_GETELEMENTCOLOUR, SC_ELEMENT_CARET_LINE_BACK, 0));
+}
+
+BOOL NppInterface::IsDarkMode()
+{
+    return static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_ISDARKMODEENABLED, 0, 0));;
+}
+
+NppColors NppInterface::GetColors()
+{
+    if (IsDarkMode()) {
+        NppColors colors;
+        auto success = static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_GETDARKMODECOLORS, sizeof(colors), reinterpret_cast<LPARAM>(&colors)));
+        if (!success) {
+            // default dark colors;
+            return {
+                .background         = 0x202020,
+                .softerBackground   = 0x404040,
+                .hotBackground      = 0x404040,
+                .pureBackground     = 0x202020,
+                .errorBackground    = 0x0000B0,
+                .text               = 0xE0E0E0,
+                .darkerText         = 0xC0C0C0,
+                .disabledText       = 0x808080,
+                .linkText           = 0x00FFFF,
+                .edge               = 0x646464,
+                .hotEdge            = 0x9B9B9B,
+                .disabledEdge       = 0x484848,
+            };
+        }
+        return colors;
+    }
+    // default colors;
+    return {
+        .background         = ::GetSysColor(COLOR_WINDOW),
+        .softerBackground   = ::GetSysColor(COLOR_3DFACE),
+        .hotBackground      = ::GetSysColor(COLOR_HIGHLIGHT),
+        .pureBackground     = ::GetSysColor(COLOR_WINDOW),
+        .errorBackground    = ::GetSysColor(COLOR_WINDOW),
+        .text               = ::GetSysColor(COLOR_WINDOWTEXT),
+        .darkerText         = ::GetSysColor(COLOR_HIGHLIGHTTEXT),
+        .disabledText       = ::GetSysColor(COLOR_GRAYTEXT),
+        .linkText           = ::GetSysColor(COLOR_HOTLIGHT),
+        .edge               = ::GetSysColor(COLOR_INACTIVEBORDER),
+        .hotEdge            = ::GetSysColor(COLOR_ACTIVEBORDER),
+        .disabledEdge       = ::GetSysColor(COLOR_INACTIVEBORDER),
+    };
 }
 
 void NppInterface::setFocusToCurrentEdit()

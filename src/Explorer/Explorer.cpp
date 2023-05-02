@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "QuickOpenDialog.h"
 #include "OptionDialog.h"
 #include "HelpDialog.h"
+#include "ThemeRenderer.h"
 
 
 WCHAR       configPath[MAX_PATH];
@@ -142,6 +143,8 @@ HIMAGELIST          ghImgList           = nullptr;
 /* current open docs */
 std::vector<std::wstring>   g_openedFilePaths;
 
+void loadSettings();
+void saveSettings();
 void UpdateThemeColor();
 void initializeFonts();
 
@@ -151,6 +154,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
 
     switch (reasonForCall) {
     case DLL_PROCESS_ATTACH:
+
         /* Set shortcuts */
         funcItem[0]._pShKey = new ShortcutKey{ true, true, true, 'E' };
         funcItem[1]._pShKey = new ShortcutKey{ true, true, true, 'V' };
@@ -194,6 +198,8 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
         ::DeleteObject(g_favesIcons.hToolbarBmp);
         ::DestroyIcon(g_favesIcons.hToolbarIcon);
         ::DestroyIcon(g_favesIcons.hToolbarIconDarkMode);
+
+        ThemeRenderer::Destory();
         break;
 
     case DLL_THREAD_ATTACH:
@@ -218,6 +224,9 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     loadSettings();
     initializeFonts();
 
+    Colors colors{};
+    ThemeRenderer::Create(false, colors);
+
     /* initial dialogs */
     explorerDlg .init(g_hInst, g_nppData._nppHandle, &exProp);
     favesDlg    .init(g_hInst, g_nppData._nppHandle, &exProp);
@@ -227,7 +236,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 
     /* Subclassing for Notepad */
     wndProcNotepad = (WNDPROC)::SetWindowLongPtr(g_nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
-    }
+}
 
 extern "C" __declspec(dllexport) LPCTSTR getName()
 {
@@ -285,8 +294,6 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         break;
     case NPPN_WORDSTYLESUPDATED:
         UpdateThemeColor();
-        explorerDlg.UpdateColors();
-        favesDlg.UpdateColors();
         break;
     default:
         break;
@@ -306,14 +313,18 @@ extern "C" __declspec(dllexport) BOOL isUnicode()
 
 void UpdateThemeColor()
 {
-    exProp.themeColors.bgColor          = NppInterface::getEditorDefaultBackgroundColor();
-    exProp.themeColors.fgColor          = NppInterface::getEditorDefaultForegroundColor();
-    exProp.themeColors.selectedColor    = NppInterface::getEditorCurrentLineBackgroundColor();
+    auto isDarkMode = NppInterface::IsDarkMode();
+    auto nppColors = NppInterface::GetColors();
 
-    if (exProp.themeColors.fgColor == exProp.themeColors.selectedColor) {
-        constexpr COLORREF DEFAULT_SELECTED_COLOR = 0xffe8cc;
-        exProp.themeColors.selectedColor = DEFAULT_SELECTED_COLOR;
-    }
+    Colors colors{
+        .base = nppColors.background,
+        .text = nppColors.text,
+        .bg = NppInterface::getEditorDefaultBackgroundColor(),
+        .fg = NppInterface::getEditorDefaultForegroundColor(),
+        .selected_bg = nppColors.hotBackground,
+        .selected_fg = nppColors.darkerText,
+    };
+    ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
 }
 
 void initializeFonts()
@@ -357,7 +368,7 @@ void loadSettings(void)
         HANDLE  hFile           = nullptr;
         BYTE    bom[]           = {0xFF, 0xFE};
         DWORD   dwByteWritten   = 0;
-            
+
         if (hFile != INVALID_HANDLE_VALUE) {
             hFile = ::CreateFile(iniFilePath, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
             ::WriteFile(hFile, bom, sizeof(bom), &dwByteWritten, nullptr);
@@ -626,9 +637,9 @@ bool IsValidFileName(LPTSTR pszFileName)
 
 bool IsValidFolder(const WIN32_FIND_DATA & Find)
 {
-    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && 
+    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
         (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden) &&
-            (_tcscmp(Find.cFileName, _T(".")) != 0) && 
+            (_tcscmp(Find.cFileName, _T(".")) != 0) &&
             (_tcscmp(Find.cFileName, _T("..")) != 0) &&
             (Find.cFileName[0] != '?'))
         return true;
@@ -638,7 +649,7 @@ bool IsValidFolder(const WIN32_FIND_DATA & Find)
 
 bool IsValidParentFolder(const WIN32_FIND_DATA & Find)
 {
-    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && 
+    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
         (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden) &&
             (_tcscmp(Find.cFileName, _T(".")) != 0) &&
             (Find.cFileName[0] != '?'))
@@ -649,7 +660,7 @@ bool IsValidParentFolder(const WIN32_FIND_DATA & Find)
 
 bool IsValidFile(const WIN32_FIND_DATA & Find)
 {
-    if (!(Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) && 
+    if (!(Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
         (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden))
         return true;
 
@@ -748,18 +759,18 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
         /* get drive icon in any case correct */
         if (type == DEVT_DRIVE) {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
-            SHGetFileInfo(TEMP, 
+            SHGetFileInfo(TEMP,
                 -1,
-                &sfi, 
-                sizeof(SHFILEINFO), 
+                &sfi,
+                sizeof(SHFILEINFO),
                 SHGFI_ICON | SHGFI_SMALLICON | stOverlay);
             ::DestroyIcon(sfi.hIcon);
 
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
-            SHGetFileInfo(TEMP, 
-                FILE_ATTRIBUTE_NORMAL, 
-                &sfi, 
-                sizeof(SHFILEINFO), 
+            SHGetFileInfo(TEMP,
+                FILE_ATTRIBUTE_NORMAL,
+                &sfi,
+                sizeof(SHFILEINFO),
                 SHGFI_ICON | SHGFI_SMALLICON | stOverlay | SHGFI_USEFILEATTRIBUTES);
 
             /* find drive icon in own image list */
@@ -808,10 +819,10 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
 
             if (type == DEVT_DRIVE) {
                 ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
-                SHGetFileInfo(TEMP, 
-                    FILE_ATTRIBUTE_NORMAL, 
-                    &sfi, 
-                    sizeof(SHFILEINFO), 
+                SHGetFileInfo(TEMP,
+                    FILE_ATTRIBUTE_NORMAL,
+                    &sfi,
+                    sizeof(SHFILEINFO),
                     SHGFI_ICON | SHGFI_SMALLICON | stOverlay | SHGFI_USEFILEATTRIBUTES);
                 ::DestroyIcon(sfi.hIcon);
             }
@@ -835,10 +846,10 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
         if (type == DEVT_DIRECTORY)
         {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
-            SHGetFileInfo(TEMP, 
+            SHGetFileInfo(TEMP,
                 0,
-                &sfi, 
-                sizeof(SHFILEINFO), 
+                &sfi,
+                sizeof(SHFILEINFO),
                 SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
             ::DestroyIcon(sfi.hIcon);
 
@@ -860,10 +871,10 @@ HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, i
 
     // Get a pointer to the IShellLink interface
     hRes = CoCreateInstance(CLSID_ShellLink,
-                            nullptr, 
+                            nullptr,
                             CLSCTX_INPROC_SERVER,
                             IID_IShellLink,
-                            (void**)&ipShellLink); 
+                            (void**)&ipShellLink);
 
     if (hRes == S_OK) {
         // Get a pointer to the IPersistFile interface
@@ -873,11 +884,11 @@ HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, i
         hRes = ipPersistFile->Load(shortcutPath.c_str(), STGM_READ);
         if (hRes == S_OK) {
             // Try to find the target of a shortcut, even if it has been moved or renamed
-            hRes = ipShellLink->Resolve(nullptr, SLR_UPDATE); 
+            hRes = ipShellLink->Resolve(nullptr, SLR_UPDATE);
             if (hRes == S_OK) {
                 // Get the path to the shortcut target
                 WCHAR szPath[MAX_PATH];
-                hRes = ipShellLink->GetPath(szPath, MAX_PATH, nullptr, SLGP_RAWPATH); 
+                hRes = ipShellLink->GetPath(szPath, MAX_PATH, nullptr, SLGP_RAWPATH);
                 if (hRes == S_OK) {
                     _tcsncpy(lpszFilePath, szPath, maxBuf);
 
@@ -887,9 +898,9 @@ HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, i
                         }
                     }
                 }
-            } 
-        } 
-    } 
+            }
+        }
+    }
 
     return hRes;
 }

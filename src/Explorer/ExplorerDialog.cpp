@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "NppInterface.h"
 #include "StringUtil.h"
 #include "resource.h"
+#include "ThemeRenderer.h"
 
 int DebugPrintf(LPCTSTR format, ...)
 {
@@ -215,6 +216,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
         data.pszModuleName = getPluginFileName();
 
 		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
+        ThemeRenderer::Instance().Register(_hSelf);
 	}
 	else if (willBeShown)
 	{
@@ -226,8 +228,6 @@ void ExplorerDialog::doDialog(bool willBeShown)
 			::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 0, NULL);
 		}
 	}
-
-	UpdateColors();
 	display(willBeShown);
 }
 
@@ -512,24 +512,6 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				rc.left      = splitterPos + 6;
 				rc.right    -= rc.left;
 				::SetWindowPos(_hListCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
-			}
-			break;
-		}
-		case WM_DRAWITEM:
-		{
-			DRAWITEMSTRUCT*	pDrawItemStruct	= (DRAWITEMSTRUCT *)lParam;
-
-			if (pDrawItemStruct->hwndItem == _hSplitterCtrl)
-			{
-				RECT		rc		= pDrawItemStruct->rcItem;
-				HDC			hDc		= pDrawItemStruct->hDC;
-				HBRUSH		bgbrush	= ::CreateSolidBrush(::GetSysColor(COLOR_BTNFACE));
-
-				/* fill background */
-				::FillRect(hDc, &rc, bgbrush);
-
-				::DeleteObject(bgbrush);
-				return TRUE;
 			}
 			break;
 		}
@@ -2339,20 +2321,4 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 		}
 	}
 	return true;
-}
-
-void ExplorerDialog::UpdateColors()
-{
-	if (NULL != _hTreeCtrl) {
-		TreeView_SetBkColor(_hTreeCtrl, _pExProp->themeColors.bgColor);
-		TreeView_SetTextColor(_hTreeCtrl, _pExProp->themeColors.fgColor);
-		::InvalidateRect(_hTreeCtrl, NULL, TRUE);
-	}
-
-	if (NULL != _hListCtrl) {
-		ListView_SetBkColor(_hListCtrl, _pExProp->themeColors.bgColor);
-		ListView_SetTextColor(_hListCtrl, _pExProp->themeColors.fgColor);
-		ListView_SetTextBkColor(_hListCtrl, CLR_NONE);
-		::InvalidateRect(_hListCtrl, NULL, TRUE);
-	}
 }

@@ -83,9 +83,7 @@ public:
 
 	void initFinish(void) {
 		::SendMessage(_hSelf, WM_SIZE, 0, 0);
-		UpdateColors();
 	};
-	void UpdateColors();
 	void SetFont(const HFONT font);
 protected:
 
@@ -135,11 +133,6 @@ protected:
 	BOOL OpenTreeViewItem(const HTREEITEM hItem);
 
 protected:
-    LRESULT CustomDrawProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK dlgProcSub(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
-        return reinterpret_cast<FavesDialog*>(dwRefData)->CustomDrawProc(hwnd, message, wParam, lParam);
-    };
-
 	/* Subclassing tree */
 	LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 	static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {

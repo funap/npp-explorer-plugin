@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <uxtheme.h>
 #include <Vsstyle.h>
+#include <Vssym32.h>
 #include <sstream>
 #include <functional>
 
@@ -35,7 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "resource.h"
 #include "NppInterface.h"
 #include "StringUtil.h"
-
+#include "ThemeRenderer.h"
 
 static ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_EXPLORER,           IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_TB_EXPLORER,        0},
@@ -102,22 +103,18 @@ void FavesDialog::doDialog(bool willBeShown)
         // define the default docking behaviour
         data.pszName        = _T("Favorites");
         data.dlgID          = DOCKABLE_FAVORTIES_INDEX;
-        data.uMask          = DWS_DF_CONT_LEFT | DWS_ICONTAB;
+        data.uMask          = DWS_DF_CONT_LEFT | DWS_ICONTAB | DWS_USEOWNDARKMODE;
         data.hIconTab       = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_HEART), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName  = getPluginFileName();
 
         ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
 
-        // NPP steals CustomDraw, so SubClassifies itself.
-        SetWindowTheme(_hTreeCtrl, L"Explorer", nullptr);
-        SetWindowSubclass(_hSelf, dlgProcSub, 'dlg', reinterpret_cast<DWORD_PTR>(this));
+        ThemeRenderer::Instance().Register(_hSelf);
 
         /* Update "Add current..." icons */
         NotifyNewFile();
         ExpandElementsRecursive(TVI_ROOT);
     }
-
-    UpdateColors();
     display(willBeShown);
 }
 
@@ -163,6 +160,99 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
 
         if (nmhdr->hwndFrom == _hTreeCtrl) {
             switch (nmhdr->code) {
+            case NM_CUSTOMDRAW: {
+                static HTHEME s_theme = nullptr;
+                LPNMTVCUSTOMDRAW cd = (LPNMTVCUSTOMDRAW)lParam;
+                switch (cd->nmcd.dwDrawStage) {
+                case CDDS_PREPAINT:
+                    s_theme = OpenThemeData(nmhdr->hwndFrom, L"TreeView");
+                    SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, (LONG)CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT);
+                    return TRUE;
+                case CDDS_ITEMPREPAINT: {
+                    HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
+
+                    // background
+                    auto maskedItemState = cd->nmcd.uItemState & (CDIS_SELECTED | CDIS_HOT);
+                    int itemState = maskedItemState == (CDIS_SELECTED | CDIS_HOT) ? TREIS_HOTSELECTED
+                        : maskedItemState == CDIS_SELECTED ? TREIS_SELECTED
+                        : maskedItemState == CDIS_HOT ? TREIS_HOT
+                        : TREIS_NORMAL;
+                    if ((itemState == TREIS_SELECTED) && (nmhdr->hwndFrom != GetFocus())) {
+                        itemState = TREIS_SELECTEDNOTFOCUS;
+                    }
+                    if (itemState != TREIS_NORMAL) {
+                        DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_TREEITEM, itemState, &cd->nmcd.rc, &cd->nmcd.rc);
+                    }
+
+                    // [+]/[-] signs
+                    RECT glyphRect{};
+                    TVGETITEMPARTRECTINFO info{
+                        .hti = hItem,
+                        .prc = &glyphRect,
+                        .partID = TVGIPR_BUTTON
+                    };
+                    if (TRUE == SendMessage(nmhdr->hwndFrom, TVM_GETITEMPARTRECT, 0, (LPARAM)&info)) {
+                        BOOL isExpanded = (TreeView_GetItemState(nmhdr->hwndFrom, hItem, TVIS_EXPANDED) & TVIS_EXPANDED) ? TRUE : FALSE;
+                        const int glyphStates = isExpanded ? GLPS_OPENED : GLPS_CLOSED;
+
+                        SIZE glythSize;
+                        GetThemePartSize(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, nullptr, THEMESIZE::TS_DRAW, &glythSize);
+
+                        glyphRect.top += ((glyphRect.bottom - glyphRect.top) - glythSize.cy) / 2;
+                        glyphRect.bottom = glyphRect.top + glythSize.cy;
+                        glyphRect.right = glyphRect.left + glythSize.cx;
+                        DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, &glyphRect, nullptr);
+                    }
+
+                    // Text & Icon
+                    RECT textRect{};
+                    TreeView_GetItemRect(nmhdr->hwndFrom, hItem, &textRect, TRUE);
+                    TCHAR textBuffer[MAX_PATH]{};
+                    TVITEM tvi = {
+                        .mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
+                        .hItem = hItem,
+                        .pszText = textBuffer,
+                        .cchTextMax = MAX_PATH,
+                    };
+                    if (TRUE == TreeView_GetItem(nmhdr->hwndFrom, &tvi)) {
+                        const auto elem = reinterpret_cast<FavesItemPtr>(GetParam(hItem));
+                        if (elem && (elem->Type() == FAVES_FILE) && elem->IsLink()) {
+                            if (IsFileOpen(elem->Link()) == TRUE) {
+                                ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
+                            }
+                        }
+                        SetBkMode(cd->nmcd.hdc, TRANSPARENT);
+
+                        COLORREF textColor = TreeView_GetTextColor(nmhdr->hwndFrom);
+                        SetTextColor(cd->nmcd.hdc, textColor);
+                        ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
+                        ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
+
+                        const SIZE iconSize = {
+                            .cx = GetSystemMetrics(SM_CXSMICON),
+                            .cy = GetSystemMetrics(SM_CYSMICON),
+                        };
+                        const INT top = (textRect.top + textRect.bottom - iconSize.cy) / 2;
+                        const INT left = textRect.left - iconSize.cx - GetSystemMetrics(SM_CXEDGE);
+                        if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->uParam & FAVES_PARAM_USERIMAGE)))) {
+                            ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
+                        }
+                        else {
+                            ImageList_Draw(_hImageListSys, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
+                        }
+                    }
+                    SetWindowLongPtr(_hSelf, DWLP_MSGRESULT, (LONG)CDRF_SKIPDEFAULT);
+                    return TRUE;
+                }
+                case CDDS_POSTPAINT:
+                    CloseThemeData(s_theme);
+                    s_theme = nullptr;
+                    break;
+                default:
+                    break;
+                }
+                break;
+            }
             case NM_RCLICK: {
                 DWORD dwpos = ::GetMessagePos();
                 POINT pt = {
@@ -346,104 +436,6 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     }
 
     return FALSE;
-}
-
-LRESULT FavesDialog::CustomDrawProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
-{
-    if (Message == WM_NOTIFY) {
-        LPNMHDR nmhdr = reinterpret_cast<LPNMHDR>(lParam);
-        if ((NM_CUSTOMDRAW == nmhdr->code) && (nmhdr->hwndFrom == _hTreeCtrl)) {
-            LPNMTVCUSTOMDRAW cd = (LPNMTVCUSTOMDRAW)lParam;
-
-            static HTHEME s_theme = nullptr;
-            switch (cd->nmcd.dwDrawStage) {
-            case CDDS_PREPAINT:
-                s_theme = OpenThemeData(nmhdr->hwndFrom, L"TreeView");
-                return CDRF_NOTIFYITEMDRAW | CDRF_NOTIFYPOSTPAINT;
-            case CDDS_ITEMPREPAINT: {
-                HTREEITEM   hItem = reinterpret_cast<HTREEITEM>(cd->nmcd.dwItemSpec);
-
-                // background
-                auto maskedItemState = cd->nmcd.uItemState & (CDIS_SELECTED | CDIS_HOT);
-                int itemState   = maskedItemState == (CDIS_SELECTED | CDIS_HOT) ? TREIS_HOTSELECTED
-                                : maskedItemState == CDIS_SELECTED              ? TREIS_SELECTED
-                                : maskedItemState == CDIS_HOT                   ? TREIS_HOT
-                                : TREIS_NORMAL;
-                if ((itemState == TREIS_SELECTED) && (nmhdr->hwndFrom != GetFocus())) {
-                    itemState = TREIS_SELECTEDNOTFOCUS;
-                }
-                if (itemState != TREIS_NORMAL) {
-                    DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_TREEITEM, itemState, &cd->nmcd.rc, &cd->nmcd.rc);
-                }
-
-                // [+]/[-] signs
-                RECT glyphRect{};
-                TVGETITEMPARTRECTINFO info{
-                    .hti = hItem,
-                    .prc = &glyphRect,
-                    .partID = TVGIPR_BUTTON
-                };
-                if (TRUE == SendMessage(nmhdr->hwndFrom, TVM_GETITEMPARTRECT, 0, (LPARAM)&info)) {
-                    BOOL isExpanded = (TreeView_GetItemState(nmhdr->hwndFrom, hItem, TVIS_EXPANDED) & TVIS_EXPANDED) ? TRUE : FALSE;
-                    const int glyphStates = isExpanded ? GLPS_OPENED : GLPS_CLOSED;
-
-                    SIZE glythSize;
-                    GetThemePartSize(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, nullptr, THEMESIZE::TS_DRAW, &glythSize);
-
-                    glyphRect.top       += ((glyphRect.bottom - glyphRect.top) - glythSize.cy) / 2;
-                    glyphRect.bottom    = glyphRect.top + glythSize.cy;
-                    glyphRect.right     = glyphRect.left + glythSize.cx;
-                    DrawThemeBackground(s_theme, cd->nmcd.hdc, TVP_GLYPH, glyphStates, &glyphRect, nullptr);
-                }
-
-                // Text & Icon
-                RECT textRect{};
-                TreeView_GetItemRect(nmhdr->hwndFrom, hItem, &textRect, TRUE);
-                TCHAR textBuffer[MAX_PATH]{};
-                TVITEM tvi = {
-                    .mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
-                    .hItem = hItem,
-                    .pszText = textBuffer,
-                    .cchTextMax = MAX_PATH,
-                };
-                if (TRUE == TreeView_GetItem(nmhdr->hwndFrom, &tvi)) {
-                    const auto elem = reinterpret_cast<FavesItemPtr>(GetParam(hItem));
-                    if (elem && (elem->Type() == FAVES_FILE) && elem->IsLink()) {
-                        if (IsFileOpen(elem->Link()) == TRUE) {
-                            ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
-                        }
-                    }
-                    SetBkMode(cd->nmcd.hdc, TRANSPARENT);
-                    SetTextColor(cd->nmcd.hdc, _pExProp->themeColors.fgColor);
-                    ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
-                    ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
-
-                    const SIZE iconSize = {
-                        .cx = GetSystemMetrics(SM_CXSMICON),
-                        .cy = GetSystemMetrics(SM_CYSMICON),
-                    };
-                    const INT top = (textRect.top + textRect.bottom - iconSize.cy) / 2;
-                    const INT left = textRect.left - iconSize.cx - GetSystemMetrics(SM_CXEDGE);
-                    if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->uParam & FAVES_PARAM_USERIMAGE)))) {
-                        ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
-                    }
-                    else {
-                        ImageList_Draw(_hImageListSys, tvi.iImage, cd->nmcd.hdc, left, top, ILD_TRANSPARENT);
-                    }
-                    return CDRF_SKIPDEFAULT;
-                }
-                return CDRF_NOTIFYPOSTPAINT;
-            }
-            case CDDS_POSTPAINT:
-                CloseThemeData(s_theme);
-                s_theme = nullptr;
-                break;
-            default:
-                break;
-            }
-        }
-    }
-    return DefSubclassProc(hwnd, Message, wParam, lParam);
 }
 
 LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
@@ -1627,14 +1619,5 @@ void FavesDialog::SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile)
             temp = StringUtil::format(L"\tLink=%s\n\n", child->Link().c_str());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
         }
-    }
-}
-
-void FavesDialog::UpdateColors()
-{
-    if (nullptr != _hTreeCtrl) {
-        TreeView_SetBkColor(_hTreeCtrl, _pExProp->themeColors.bgColor);
-        TreeView_SetTextColor(_hTreeCtrl, _pExProp->themeColors.fgColor);
-        ::InvalidateRect(_hTreeCtrl, nullptr, TRUE);
     }
 }
