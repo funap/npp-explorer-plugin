@@ -170,6 +170,8 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
         ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_PARENTFOLDER)));
         ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_WARN_SESSION)));
         ImageList_AddIcon(ghImgList, ::LoadIcon(g_hInst, MAKEINTRESOURCE(IDI_MISSING_FILE)));
+
+        ThemeRenderer::Create();
         break;
     case DLL_PROCESS_DETACH:
         /* save settings */
@@ -224,8 +226,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     loadSettings();
     initializeFonts();
 
-    Colors colors{};
-    ThemeRenderer::Create(false, colors);
+    UpdateThemeColor();
 
     /* initial dialogs */
     explorerDlg .init(g_hInst, g_nppData._nppHandle, &exProp);
@@ -317,7 +318,7 @@ void UpdateThemeColor()
     auto nppColors = NppInterface::GetColors();
 
     Colors colors{
-        .base = nppColors.background,
+        .face = nppColors.background,
         .text = nppColors.text,
         .bg = NppInterface::getEditorDefaultBackgroundColor(),
         .fg = NppInterface::getEditorDefaultForegroundColor(),

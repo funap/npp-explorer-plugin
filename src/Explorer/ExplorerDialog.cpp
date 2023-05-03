@@ -119,11 +119,11 @@ static ToolBarButtonUnit toolBarIcons[] = {
 
 	{IDM_EX_PREV,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_PREV, TBSTYLE_DROPDOWN},
 	{IDM_EX_NEXT,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_NEXT, TBSTYLE_DROPDOWN},
-	 
+
 	//-------------------------------------------------------------------------------------//
 	{0,						IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
 	//-------------------------------------------------------------------------------------//
-	 
+
 	{IDM_EX_FILE_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FILENEW, 0},
 	{IDM_EX_FOLDER_NEW,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FOLDERNEW, 0},
 	{IDM_EX_SEARCH_FIND,	IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_FIND, 0},
@@ -138,7 +138,7 @@ static ToolBarButtonUnit toolBarIcons[] = {
 	{IDM_EX_UPDATE,			IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON,		IDI_SEPARATOR_ICON, IDB_EX_UPDATE, 0}
 };
 
-/** 
+/**
  *	Note: On change, keep sure to change order of IDM_EX_... also
  */
 static LPCTSTR szToolTip[23] = {
@@ -234,7 +234,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
 
 INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	switch (Message) 
+	switch (Message)
 	{
 		case WM_INITDIALOG:
 		{
@@ -257,7 +257,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
 				return TRUE;
 			}
-			
+
 			if ((HWND)lParam == _ToolBar.getHSelf())
 			{
 				tb_cmd(LOWORD(wParam));
@@ -370,13 +370,13 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 			}
 			else if (nmhdr->code == TTN_GETDISPINFO)
 			{
-				LPTOOLTIPTEXT lpttt; 
+				LPTOOLTIPTEXT lpttt;
 
-				lpttt = (LPTOOLTIPTEXT)nmhdr; 
-				lpttt->hinst = _hInst; 
-				
+				lpttt = (LPTOOLTIPTEXT)nmhdr;
+				lpttt->hinst = _hInst;
 
-				// Specify the resource identifier of the descriptive 
+
+				// Specify the resource identifier of the descriptive
 				// text for the given button.
 				int resId = int(lpttt->hdr.idFrom);
 				lpttt->lpszText = const_cast<LPTSTR>(GetNameStrFromCmd(resId));
@@ -453,7 +453,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				rc.bottom	 = filterHeight;
 				rc.left		 = rcBuff.left;
 				rc.right	 = rcBuff.right - rcBuff.left;
-				::SetWindowPos(_hFilter, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);				
+				::SetWindowPos(_hFilter, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 			}
 			else
 			{
@@ -608,8 +608,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 						*_tcsrchr(folderPathName, '\\') = '\0';
 						szInList = _tcsrchr(folderPathName, '\\');
 
-						/* 
-						 * if pointer of szInList is smaller as pointer of 
+						/*
+						 * if pointer of szInList is smaller as pointer of
 						 * folderPathName, it seems to be a root folder and break
 						 */
 						if (szInList < folderPathName)
@@ -904,7 +904,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 		default:
 			break;
 	}
-	
+
 	return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
 }
 
@@ -971,7 +971,7 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
 			if (_isLeftButtonDown == TRUE)
 			{
 				POINT	pt;
-				
+
 				::GetCursorPos(&pt);
 
 				if (_iDockedPos < CONT_TOP)
@@ -1004,7 +1004,7 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
 		default:
 			break;
 	}
-	
+
 	return ::CallWindowProc(_hDefaultSplitterProc, hwnd, Message, wParam, lParam);
 }
 
@@ -1079,7 +1079,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 
 						GetFolderPathName(TreeView_GetSelection(_hTreeCtrl), pszNewFile);
 						_tcscat(pszNewFile, szFileName);
-						
+
 						::CloseHandle(::CreateFile(pszNewFile, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 						::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszNewFile);
 
@@ -1112,7 +1112,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 
 						GetFolderPathName(TreeView_GetSelection(_hTreeCtrl), pszNewFolder);
 						_tcscat(pszNewFolder, szFolderName);
-						
+
 						if (::CreateDirectory(pszNewFolder, NULL) == FALSE) {
 							::MessageBox(_hParent, _T("Folder couldn't be created."), _T("Error"), MB_OK);
 						}
@@ -1158,7 +1158,7 @@ void ExplorerDialog::tb_not(LPNMTOOLBAR lpnmtb)
 	INT			i = 0;
 	LPTSTR		*pszPathes;
 	INT			iElements	= 0;
-		
+
 	_FileList.ToggleStackRec();
 
 	/* get element cnt */
@@ -1222,7 +1222,7 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 	::GetCursorPos(&pt);
 	::SetCursorPos(pt.x, pt.y);
 
-	switch(event)	
+	switch(event)
 	{
 		case EID_INIT :
 		{
@@ -1358,12 +1358,12 @@ void ExplorerDialog::InitialDialog(void)
 	::RegisterDragDrop(_hTreeCtrl, this);
 
 	/* create the supported formats */
-	FORMATETC fmtetc	= {0}; 
-	fmtetc.cfFormat		= CF_HDROP; 
-	fmtetc.dwAspect		= DVASPECT_CONTENT; 
-	fmtetc.lindex		= -1; 
+	FORMATETC fmtetc	= {0};
+	fmtetc.cfFormat		= CF_HDROP;
+	fmtetc.dwAspect		= DVASPECT_CONTENT;
+	fmtetc.lindex		= -1;
 	fmtetc.tymed		= TYMED_HGLOBAL;
-	AddSuportedFormat(_hTreeCtrl, fmtetc); 
+	AddSuportedFormat(_hTreeCtrl, fmtetc);
 
 	// key binding
 	_FileList.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
@@ -1491,7 +1491,7 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
 			_stprintf(TEMP, _T("%s%s\\"), szCurrPath, szItemName);
 			iTempLen = _tcslen(TEMP);
 
-			if (_tcsnicmp(szLongPath, TEMP, iTempLen) == 0) 
+			if (_tcsnicmp(szLongPath, TEMP, iTempLen) == 0)
 			{
 				/* set current selected path */
 				_tcscpy(szCurrPath, TEMP);
@@ -1709,7 +1709,7 @@ void ExplorerDialog::onPaste(void)
 	TCHAR	pszFilesTo[MAX_PATH];
 	GetFolderPathName(TreeView_GetSelection(_hTreeCtrl), pszFilesTo);
 
-	if (hEffect[0] == 2) { 
+	if (hEffect[0] == 2) {
 		doPaste(pszFilesTo, hFiles, DROPEFFECT_MOVE);
 	} else if (hEffect[0] == 5) {
 		doPaste(pszFilesTo, hFiles, DROPEFFECT_COPY);
@@ -2183,7 +2183,7 @@ void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UI
 	if (NULL == lpDropFileStruct) {
 		GlobalFree(hDrop);
 		return;
-	}				
+	}
 	::ZeroMemory(lpDropFileStruct, bufsz);
 
 	lpDropFileStruct->pFiles = sizeof(DROPFILES);
@@ -2197,10 +2197,10 @@ void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UI
 	GlobalUnlock(hDrop);
 
 	/* Init the supported format */
-	FORMATETC fmtetc	= {0}; 
-	fmtetc.cfFormat		= CF_HDROP; 
-	fmtetc.dwAspect		= DVASPECT_CONTENT; 
-	fmtetc.lindex		= -1; 
+	FORMATETC fmtetc	= {0};
+	fmtetc.cfFormat		= CF_HDROP;
+	fmtetc.dwAspect		= DVASPECT_CONTENT;
+	fmtetc.lindex		= -1;
 	fmtetc.tymed		= TYMED_HGLOBAL;
 
 	/* Init the medium used */

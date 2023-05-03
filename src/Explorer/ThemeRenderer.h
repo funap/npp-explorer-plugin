@@ -33,12 +33,24 @@
 
 struct Colors
 {
-    COLORREF base = ::GetSysColor(COLOR_3DFACE);
+    COLORREF face = ::GetSysColor(COLOR_3DFACE);
     COLORREF text = ::GetSysColor(COLOR_WINDOWTEXT);
     COLORREF bg = 0;
     COLORREF fg = 0;
     COLORREF selected_bg = 0;
     COLORREF selected_fg = 0;
+};
+
+struct Brushs
+{
+    Brush face;
+    Brush text;
+    Brush bg;
+    Brush fg;
+    Brush hot;
+    Brush selected;
+    Brush hotSelected;
+    Brush selectedNotFocus;
 };
 
 class ThemeRenderer
@@ -54,7 +66,7 @@ public:
     ThemeRenderer& operator=(ThemeRenderer&&)       = delete;
 
 
-    static void Create(BOOL isDarkMode, Colors colors);
+    static void Create();
     static void Destory();
 
     static ThemeRenderer& Instance();
@@ -67,12 +79,14 @@ public:
 private:
     static LRESULT CALLBACK DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
+    LRESULT WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     BOOL    m_isDarkMode;
     Colors  m_colors;
-    Brush   m_baseBrush;
+    Brushs  m_brushs;
     std::set<HWND>  m_windows;
 };
 
