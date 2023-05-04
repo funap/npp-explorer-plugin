@@ -136,8 +136,14 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
         }
         else if (className == WC_TREEVIEW) {
             TreeView_SetBkColor(childWindow, self->m_colors.bg);
-            TreeView_SetTextColor(childWindow, self->m_colors.text);
+            TreeView_SetTextColor(childWindow, self->m_colors.fg);
             ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
+        }
+        else if (className == WC_LISTVIEW) {
+            ListView_SetBkColor(childWindow, self->m_colors.bg);
+            ListView_SetTextColor(childWindow, self->m_colors.fg);
+            ListView_SetTextBkColor(childWindow, CLR_NONE);
+            ::InvalidateRect(childWindow, NULL, TRUE);
         }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
