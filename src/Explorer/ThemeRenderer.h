@@ -33,12 +33,14 @@
 
 struct Colors
 {
-    COLORREF face = ::GetSysColor(COLOR_3DFACE);
-    COLORREF text = ::GetSysColor(COLOR_WINDOWTEXT);
-    COLORREF bg = 0;
-    COLORREF fg = 0;
-    COLORREF selected_bg = 0;
-    COLORREF selected_fg = 0;
+    COLORREF face               = ::GetSysColor(COLOR_3DFACE);
+    COLORREF text               = ::GetSysColor(COLOR_WINDOWTEXT);
+    COLORREF bg                 = RGB(0xff, 0xff, 0xff);
+    COLORREF fg                 = RGB(0x00, 0x00, 0x00);
+    COLORREF hot                = RGB(0xd8, 0xe6, 0xf2);
+    COLORREF selected           = RGB(0xc0, 0xdc, 0xf3);
+    COLORREF hotSelected        = RGB(0xc0, 0xdc, 0xf3);
+    COLORREF selectedNotFocus   = RGB(0xcc, 0xcc, 0xcc);
 };
 
 struct Brushs

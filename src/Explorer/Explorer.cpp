@@ -314,7 +314,19 @@ extern "C" __declspec(dllexport) BOOL isUnicode()
 
 void UpdateThemeColor()
 {
-    auto isDarkMode = NppInterface::IsDarkMode();
+    auto IsDarkColor = [](COLORREF rgb) -> bool {
+        uint8_t r = GetRValue(rgb);
+        uint8_t g = GetGValue(rgb);
+        uint8_t b = GetBValue(rgb);
+        float brightness = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255.0f;
+        if (brightness < 0.5f) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    };
+
     auto nppColors = NppInterface::GetColors();
 
     Colors colors{
@@ -322,9 +334,8 @@ void UpdateThemeColor()
         .text = nppColors.text,
         .bg = NppInterface::getEditorDefaultBackgroundColor(),
         .fg = NppInterface::getEditorDefaultForegroundColor(),
-        .selected_bg = nppColors.hotBackground,
-        .selected_fg = nppColors.darkerText,
     };
+    auto isDarkMode = IsDarkColor(colors.bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
 }
 

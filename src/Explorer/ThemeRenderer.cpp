@@ -79,21 +79,13 @@ void ThemeRenderer::SetTheme(BOOL isDarkMode, Colors colors)
 {
     m_isDarkMode = isDarkMode;
     m_colors     = colors;
+
     m_brushs.face.CreateSolidBrush(colors.face);
     m_brushs.bg.CreateSolidBrush(colors.bg);
-
-    if (isDarkMode) {
-        m_brushs.hot.CreateSolidBrush(RGB(0x4d, 0x4d, 0x4d));
-        m_brushs.hotSelected.CreateSolidBrush(RGB(0x77, 0x77, 0x77));
-        m_brushs.selected.CreateSolidBrush(RGB(0x33, 0x33, 0x33));
-        m_brushs.selectedNotFocus.CreateSolidBrush(RGB(0x33, 0x33, 0x33));
-    }
-    else {
-        m_brushs.hot.CreateSolidBrush(RGB(0xd8, 0xe6, 0xf2));
-        m_brushs.hotSelected.CreateSolidBrush(RGB(0xc0, 0xdc, 0xf3));
-        m_brushs.selected.CreateSolidBrush(RGB(0xc0, 0xdc, 0xf3));
-        m_brushs.selectedNotFocus.CreateSolidBrush(RGB(0xcc, 0xcc, 0xcc));
-    }
+    m_brushs.hot.CreateSolidBrush(colors.hot);
+    m_brushs.hotSelected.CreateSolidBrush(colors.hotSelected);
+    m_brushs.selected.CreateSolidBrush(colors.selected);
+    m_brushs.selectedNotFocus.CreateSolidBrush(colors.selectedNotFocus);
 
     for (auto hwnd : m_windows) {
         ApplyTheme(hwnd);
@@ -129,7 +121,7 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
         if (className == TOOLBARCLASSNAME) {
             COLORSCHEME scheme{
                 .dwSize          = sizeof(COLORSCHEME),
-                .clrBtnHighlight = self->m_colors.selected_bg,
+                .clrBtnHighlight = self->m_colors.selected,
                 .clrBtnShadow    = self->m_colors.face,
             };
             ::SendMessage(childWindow, TB_SETCOLORSCHEME, 0, reinterpret_cast<LPARAM>(&scheme));

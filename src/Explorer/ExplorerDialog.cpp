@@ -215,8 +215,8 @@ void ExplorerDialog::doDialog(bool willBeShown)
         data.pszAddInfo = _pExProp->szCurrentPath;
         data.pszModuleName = getPluginFileName();
 
-		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
         ThemeRenderer::Instance().Register(_hSelf);
+		::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
 	}
 	else if (willBeShown)
 	{
