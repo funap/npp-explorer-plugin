@@ -27,7 +27,7 @@
 #define VERSION_MAJOR               1
 #define VERSION_MINOR               8
 #define VERSION_REVISION            2
-#define VERSION_BUILD               22
+#define VERSION_BUILD               23
 
 #define _STR(x) #x
 #define STR(x) _STR(x)
