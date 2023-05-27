@@ -942,7 +942,7 @@ void FavesDialog::DeleteItem(HTREEITEM hItem)
         return;
     }
 
-    if (pElem->m_parent->Type() == FAVES_SESSION) {
+    if ((pElem->Root()->Type() == FAVES_SESSION) && (pElem->Type() == FAVES_FILE)) {
         return;
     }
 
