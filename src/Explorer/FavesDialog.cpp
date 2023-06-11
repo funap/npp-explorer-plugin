@@ -658,7 +658,6 @@ void FavesDialog::RefreshTree(HTREEITEM item)
 void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
 {
     PropDlg     dlgProp;
-    HTREEITEM   hItem   = nullptr;
     FavesType   type    = (isFolder ? FAVES_FOLDER : FAVES_FILE);
     LPTSTR      pszName = (LPTSTR)new TCHAR[MAX_PATH];
     LPTSTR      pszLink = (LPTSTR)new TCHAR[MAX_PATH];
@@ -1480,8 +1479,6 @@ void FavesDialog::ReadSettings(void)
 
 void FavesDialog::ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr)
 {
-    UINT defaultParam = 0;
-
     while (1) {
         if (*ptr == nullptr) {
             /* reached end of file -> leave */
@@ -1560,7 +1557,6 @@ void FavesDialog::ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LP
 void FavesDialog::SaveSettings(void)
 {
     extern TCHAR configPath[MAX_PATH];
-    FavesItemPtr pElem        = nullptr;
     LPTSTR       saveFilePath = (LPTSTR)new TCHAR[MAX_PATH];
     DWORD        hasWritten   = 0;
     HANDLE       hFile        = nullptr;
@@ -1593,7 +1589,6 @@ void FavesDialog::SaveSettings(void)
 void FavesDialog::SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile)
 {
     DWORD        hasWritten = 0;
-    FavesItemPtr pElemItr   = nullptr;
 
     /* delete elements of child items */
     for (auto&& child : pElem->m_children) {
