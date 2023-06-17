@@ -23,6 +23,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <commctrl.h>
 #include <shlobj.h>
 #include <commdlg.h>
+#include <Shlwapi.h>
 
 #include "Explorer.h"
 #include "StringUtil.h"
@@ -86,7 +87,7 @@ INT_PTR OptionDlg::doDialog(ExProp *prop)
 
 INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
-	switch (Message) 
+	switch (Message)
 	{
 		case WM_INITDIALOG:
 		{
@@ -101,13 +102,13 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 				::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_ADDSTRING, 0, (LPARAM)pszDateFmt[i]);
 			}
 			::SendDlgItemMessage(_hSelf, IDC_EDIT_TIMEOUT, EM_LIMITTEXT, 5, 0);
-			
+
 			SetParams();
 			LongUpdate();
 
 			break;
 		}
-		case WM_COMMAND : 
+		case WM_COMMAND :
 		{
 			switch (LOWORD(wParam))
 			{
@@ -145,7 +146,7 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 
 						// pidl will be null if they cancel the browse dialog.
 						// pidl will be not null when they select a folder.
-						if (pidl) 
+						if (pidl)
 						{
 							// Try to convert the pidl to a display string.
 							// Return is true if success.
@@ -178,8 +179,8 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 					}
 					::PathAppend(szExampleScriptPath, _T("Goto path.exec"));
 
-					HANDLE	hFile = ::CreateFile(szExampleScriptPath, 
-						GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 
+					HANDLE	hFile = ::CreateFile(szExampleScriptPath,
+						GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
 						NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
 
 					::WriteFile(hFile, szBOM, sizeof(szBOM), &dwByteWritten, NULL);
@@ -196,7 +197,7 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 					cf.hwndOwner = _hSelf;
 					cf.lpLogFont = &_logfont;
 					cf.Flags = CF_INITTOLOGFONTSTRUCT | CF_SCREENFONTS | CF_NOVERTFONTS | CF_NOSCRIPTSEL;
-					
+
 					ChooseFont(&cf);
 					::SetDlgItemText(_hSelf, IDC_BTN_CHOOSEFONT, _logfont.lfFaceName);
 					break;
