@@ -1921,19 +1921,20 @@ void ExplorerDialog::UpdateChildren(LPCTSTR pszParentPath, HTREEITEM hParentItem
 	WIN32_FIND_DATA			findData = { 0 };
 	HANDLE					hFind = nullptr;
 	if ((hFind = ::FindFirstFile(searchPath.c_str(), &findData)) != INVALID_HANDLE_VALUE) {
-		struct Folder {
-			std::wstring	name;
-			DWORD			attributes;
+        struct Folder {
+            std::wstring	name;
+            DWORD			attributes;
+            Folder(const WCHAR* fileName, DWORD fileAttributes)
+                : name(fileName)
+                , attributes(fileAttributes) {
+            }
 		};
 		std::vector<Folder>		folders;
 
 		/* find folders */
 		do {
 			if (::IsValidFolder(findData) == TRUE) {
-				Folder folder;
-				folder.name			= findData.cFileName;
-				folder.attributes	= findData.dwFileAttributes;
-				folders.push_back(folder);
+                folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
 			}
 		} while (::FindNextFile(hFind, &findData));
 		::FindClose(hFind);
@@ -2113,7 +2114,7 @@ void ExplorerDialog::NotifyNewFile(void)
 {
 	if (isCreated())
 	{
-		TCHAR	TEMP[MAX_PATH];
+        TCHAR	TEMP[MAX_PATH]{};
 		::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
 		_ToolBar.enable(IDM_EX_GO_TO_FOLDER, (_tcslen(TEMP) != 0));
 	}
