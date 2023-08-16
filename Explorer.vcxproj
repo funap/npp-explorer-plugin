@@ -232,7 +232,7 @@
       <Culture>0x0407</Culture>
     </ResourceCompile>
     <PostBuildEvent>
-      <Command>copy "$(TargetPath)" "D:\Applications\Notepad++x64\plugins\Explorer</Command>
+      <Command>copy /Y "$(TargetPath)" "C:\Program Files\Notepad++\plugins\Explorer"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -243,7 +243,7 @@
   <ItemGroup>
     <ClCompile Include="src\Explorer\ComboOrgi.cpp" />
     <ClCompile Include="src\Explorer\ContextMenu.cpp" />
-    <ClCompile Include="src\Explorer\DirectoryIndex.cpp" />
+    <ClCompile Include="src\Explorer\DirectoryReader.cpp" />
     <ClCompile Include="src\Explorer\DragDropImpl.cpp" />
     <ClCompile Include="src\Explorer\Explorer.cpp" />
     <ClCompile Include="src\Explorer\ExplorerDialog.cpp" />
@@ -252,6 +252,7 @@
     <ClCompile Include="src\Explorer\FileDlg.cpp" />
     <ClCompile Include="src\Explorer\FileFilter.cpp" />
     <ClCompile Include="src\Explorer\FileList.cpp" />
+    <ClCompile Include="src\Explorer\FileSystemWatcher.cpp" />
     <ClCompile Include="src\Explorer\FuzzyMatcher.cpp" />
     <ClCompile Include="src\Explorer\HelpDialog.cpp" />
     <ClCompile Include="src\Explorer\ImageListSet.cpp" />
@@ -279,7 +280,7 @@
   <ItemGroup>
     <ClInclude Include="src\Explorer\ComboOrgi.h" />
     <ClInclude Include="src\Explorer\ContextMenu.h" />
-    <ClInclude Include="src\Explorer\DirectoryIndex.h" />
+    <ClInclude Include="src\Explorer\DirectoryReader.h" />
     <ClInclude Include="src\Explorer\DragDropImpl.h" />
     <ClInclude Include="src\Explorer\Explorer.h" />
     <ClInclude Include="src\Explorer\ExplorerDialog.h" />
@@ -289,6 +290,7 @@
     <ClInclude Include="src\Explorer\FileDlg.h" />
     <ClInclude Include="src\Explorer\FileFilter.h" />
     <ClInclude Include="src\Explorer\FileList.h" />
+    <ClInclude Include="src\Explorer\FileSystemWatcher.h" />
     <ClInclude Include="src\Explorer\FuzzyMatcher.h" />
     <ClInclude Include="src\Explorer\HelpDialog.h" />
     <ClInclude Include="src\Explorer\ImageListSet.h" />
@@ -306,15 +308,17 @@
     <ClInclude Include="src\Explorer\URLCtrl.h" />
     <ClInclude Include="src\Explorer\version.h" />
     <ClInclude Include="src\Explorer\Graphics.h" />
-    <ClInclude Include="src\NppPlugin\include\Docking.h" />
-    <ClInclude Include="src\NppPlugin\include\DockingDlgInterface.h" />
-    <ClInclude Include="src\NppPlugin\include\Notepad_plus_msgs.h" />
-    <ClInclude Include="src\NppPlugin\include\Notepad_plus_rc.h" />
-    <ClInclude Include="src\NppPlugin\include\nppexec_msgs.h" />
-    <ClInclude Include="src\NppPlugin\include\PluginInterface.h" />
-    <ClInclude Include="src\NppPlugin\include\Scintilla.h" />
-    <ClInclude Include="src\NppPlugin\include\StaticDialog.h" />
-    <ClInclude Include="src\NppPlugin\include\Window.h" />
+    <ClInclude Include="src\NppPlugin\DockingFeature\Docking.h" />
+    <ClInclude Include="src\NppPlugin\DockingFeature\DockingDlgInterface.h" />
+    <ClInclude Include="src\NppPlugin\DockingFeature\dockingResource.h" />
+    <ClInclude Include="src\NppPlugin\DockingFeature\StaticDialog.h" />
+    <ClInclude Include="src\NppPlugin\DockingFeature\Window.h" />
+    <ClInclude Include="src\NppPlugin\menuCmdID.h" />
+    <ClInclude Include="src\NppPlugin\Notepad_plus_msgs.h" />
+    <ClInclude Include="src\NppPlugin\nppexec_msgs.h" />
+    <ClInclude Include="src\NppPlugin\PluginInterface.h" />
+    <ClInclude Include="src\NppPlugin\Scintilla.h" />
+    <ClInclude Include="src\NppPlugin\Sci_Position.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="src\Explorer\res\explore.bmp" />

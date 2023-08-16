@@ -23,38 +23,28 @@
 */
 #pragma once
 
-#include <vector>
 #include <filesystem>
 #include <thread>
+#include <functional>
 
-class DirectoryIndexListener
+class DirectoryReader
 {
 public:
-	virtual void onIndexBuildCompleted() const = 0;
-	virtual void onIndexBuildCanceled() const = 0;
-};
-
-class DirectoryIndex
-{
-public:
-	DirectoryIndex();
-	~DirectoryIndex();
-	void setListener(const DirectoryIndexListener* listener);
-	void init(const std::filesystem::path& basePath);
-	void build();
-	bool buildTaskRecursive(const std::filesystem::path& path);
-	void cancel();
-
-	const std::vector<std::filesystem::path>& GetFileIndex();
-	const std::filesystem::path& GetCurrentDir();
-	bool isIndexing();
-
-
+    DirectoryReader();
+    ~DirectoryReader();
+    using ReadDirCallback = std::function<void(const std::filesystem::path& path)>;
+    using ReadDirFinCallback = std::function<void()>;
+    void ReadDir(const std::filesystem::path& rootPath, ReadDirCallback readDirCallback, ReadDirFinCallback readDirFinCallback);
+    void Cancel();
+    const std::filesystem::path& GetRootPath() const;
+    bool IsReading() const;
 private:
-	bool								_needsStop;
-	bool								_indexed;
-	const DirectoryIndexListener*		_listener;
-	std::vector<std::filesystem::path>	_fileIndex;
-	std::filesystem::path				_currentDirectory;
-	std::thread							_workerThread;
+    bool                    _needsStop;
+    bool                    _reading;
+    std::filesystem::path   _rootPath;
+    std::thread             _workerThread;
+    ReadDirCallback         _readDirCallback;
+    ReadDirFinCallback      _readDirFinCallback;
+
+    bool ReadDirRecursive(const std::filesystem::path& path);
 };

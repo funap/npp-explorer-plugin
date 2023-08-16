@@ -126,12 +126,13 @@ int FuzzyMatcher::CalculateScore(wchar_t patternChar, const std::wstring_view &t
     int score = 0;
 
     constexpr int CHARACTER_MATCH_BONUS     = 1;
-    constexpr int SAME_CASE_BONUS           = 3;
-    constexpr int FIRST_LETTER_BONUS        = 13;
+    constexpr int SAME_CASE_BONUS           = 1;
+    constexpr int FIRST_LETTER_BONUS        = 8;
     constexpr int CONSECUTIVE_MATCH_BONUS   = 5;
     constexpr int START_OF_EXTENSION_BONUS  = 3;
-    constexpr int CAMEL_CASE_BONUS          = 10;
-    constexpr int SEPARATOR_BONUS           = 10;
+    constexpr int CAMEL_CASE_BONUS          = 4;
+    constexpr int SEPARATOR_BONUS           = 4;
+    constexpr int DIRECTORY_SEPARATOR_BONUS = 5;
 
     const wchar_t patternLowerChar = std::towlower(patternChar);
     const wchar_t targetLowerChar = std::towlower(target[targetIndex]);
@@ -153,6 +154,9 @@ int FuzzyMatcher::CalculateScore(wchar_t patternChar, const std::wstring_view &t
     }
     else {
         switch (target[targetIndex - 1]) {
+        case '\\':
+            score += DIRECTORY_SEPARATOR_BONUS;
+            break;
         case ' ':
         case '_':
             score += SEPARATOR_BONUS;

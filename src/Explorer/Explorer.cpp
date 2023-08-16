@@ -568,6 +568,7 @@ void openOptionDlg(void)
         initializeFonts();
         explorerDlg.SetFont(exProp.defaultFont);
         favesDlg.SetFont(exProp.defaultFont);
+        quickOpenDlg.SetFont(exProp.defaultFont);
 
         explorerDlg.redraw();
         favesDlg.redraw();
@@ -581,7 +582,7 @@ void openHelpDlg(void)
 
 void openQuickOpenDlg(void)
 {
-    quickOpenDlg.setCurrentPath(exProp.szCurrentPath);
+    quickOpenDlg.setRootPath(exProp.szCurrentPath);
     quickOpenDlg.show();
 }
 
