@@ -73,6 +73,7 @@ private:
 	void	openFileInOtherView(void);
 	void	openFileInNewInstance(void);
 	void	openPrompt(void);
+    void    setRootDirectory();
 	void	addToFaves(void);
 	void	addRelativePathsCB(void);
 	void	addFullPathsCB(void);

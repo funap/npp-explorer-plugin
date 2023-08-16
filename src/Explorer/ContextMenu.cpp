@@ -55,6 +55,7 @@ namespace {
 		CTX_OPEN_DIFF_VIEW,
 		CTX_OPEN_NEW_INST,
 		CTX_OPEN_CMD,
+        CTX_SET_AS_ROOT_DIR,
 		CTX_ADD_TO_FAVES,
 		CTX_RELATIVE_PATH,
 		CTX_FULL_PATH,
@@ -292,6 +293,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 		::DestroyMenu(hMenuNppExec);
 	}
 	::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, _T("Open Command Window Here"));
+	::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_DIR, _T("Set as root directory"));
 
 	::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, _T("Add to 'Favorites'..."));
@@ -427,6 +429,9 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 	case CTX_OPEN_CMD:
 		openPrompt();
 		break;
+    case CTX_SET_AS_ROOT_DIR:
+        setRootDirectory();
+        break;
 	case CTX_ADD_TO_FAVES:
 		addToFaves();
 		break;
@@ -797,6 +802,20 @@ void ContextMenu::openPrompt(void)
 	}
 }
 
+void ContextMenu::setRootDirectory()
+{
+    auto path = _strArray[0];
+
+    // remove file name
+    if (path.at(path.size() - 1) != '\\') {
+        SIZE_T pos = path.rfind(_T("\\"), path.size() - 1);
+        if (std::wstring::npos != pos) {
+            path.erase(pos, path.size());
+        }
+    }
+
+    exProp.rootDirectry = path;
+}
 void ContextMenu::addToFaves()
 {
     extern FavesDialog	favesDlg;

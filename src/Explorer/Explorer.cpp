@@ -582,7 +582,12 @@ void openHelpDlg(void)
 
 void openQuickOpenDlg(void)
 {
-    quickOpenDlg.setRootPath(exProp.szCurrentPath);
+    if (!exProp.rootDirectry.empty()) {
+        quickOpenDlg.setRootPath(exProp.rootDirectry);
+    }
+    else {
+        quickOpenDlg.setRootPath(exProp.szCurrentPath);
+    }
     quickOpenDlg.show();
 }
 

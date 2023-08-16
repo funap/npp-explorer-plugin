@@ -111,6 +111,7 @@ struct CphProgram {
 struct ExProp{
     /* pointer to global current path */
     WCHAR                       szCurrentPath[MAX_PATH] {};
+    std::wstring                rootDirectry            {};
     LOGFONT                     logfont                 {};
     HFONT                       defaultFont             = nullptr;
     HFONT                       underlineFont           = nullptr;
