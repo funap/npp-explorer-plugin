@@ -51,6 +51,7 @@ constexpr WCHAR Faves[]             = L"Faves";
 
 /* section Explorer */
 constexpr WCHAR LastPath[]          = L"LastPath";
+constexpr WCHAR RootFolder[]        = L"RootFolder";
 constexpr WCHAR SplitterPos[]       = L"SplitterPos";
 constexpr WCHAR SplitterPosHor[]    = L"SplitterPosHor";
 constexpr WCHAR SortAsc[]           = L"SortAsc";
@@ -389,7 +390,9 @@ void loadSettings(void)
         }
     }
 
+    WCHAR temp[MAX_PATH]{};
     ::GetPrivateProfileString(Explorer, LastPath, _T("C:\\"), exProp.szCurrentPath, MAX_PATH, iniFilePath);
+    ::GetPrivateProfileString(Explorer, RootFolder, L"", temp, MAX_PATH, iniFilePath); exProp.rootFolder.assign(temp);
     exProp.iSplitterPos             = ::GetPrivateProfileInt(Explorer, SplitterPos, 120, iniFilePath);
     exProp.iSplitterPosHorizontal   = ::GetPrivateProfileInt(Explorer, SplitterPosHor, 200, iniFilePath);
     exProp.bAscending               = ::GetPrivateProfileInt(Explorer, SortAsc, TRUE, iniFilePath);
@@ -458,6 +461,7 @@ void saveSettings(void)
     WCHAR temp[256]{};
 
     ::WritePrivateProfileString(Explorer, LastPath, exProp.szCurrentPath, iniFilePath);
+    ::WritePrivateProfileString(Explorer, RootFolder, exProp.rootFolder.c_str(), iniFilePath);
     ::WritePrivateProfileString(Explorer, SplitterPos, _itot(exProp.iSplitterPos, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, SplitterPosHor, _itot(exProp.iSplitterPosHorizontal, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, SortAsc, _itot(exProp.bAscending, temp, 10), iniFilePath);
@@ -531,8 +535,8 @@ void gotoUserFolder(void)
 void gotoRootFolder(void)
 {
     explorerDlg.doDialog();
-    if (!exProp.rootDirectory.empty()) {
-        explorerDlg.gotoFileLocation(exProp.rootDirectory);
+    if (!exProp.rootFolder.empty()) {
+        explorerDlg.gotoFileLocation(exProp.rootFolder);
     }
 }
 
@@ -591,8 +595,8 @@ void openHelpDlg(void)
 
 void openQuickOpenDlg(void)
 {
-    if (!exProp.rootDirectory.empty()) {
-        quickOpenDlg.setRootPath(exProp.rootDirectory);
+    if (!exProp.rootFolder.empty()) {
+        quickOpenDlg.setRootPath(exProp.rootFolder);
     }
     else {
         quickOpenDlg.setRootPath(exProp.szCurrentPath);

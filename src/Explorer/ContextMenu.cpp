@@ -297,7 +297,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	}
 	::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, _T("Open Command Window Here"));
 	::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_FOLDER, _T("Set as Root Folder"));
-    if (!exProp.rootDirectory.empty()) {
+    if (!exProp.rootFolder.empty()) {
         ::AppendMenu(hMainMenu, MF_STRING, CTX_GO_TO_ROOT_FOLDER, _T("Go to Root Folder"));
         ::AppendMenu(hMainMenu, MF_STRING, CTX_CLEAR_ROOT_FOLDER, _T("Clear Root Folder"));
     }
@@ -827,18 +827,18 @@ void ContextMenu::setRootFolder()
         }
     }
 
-    exProp.rootDirectory = path;
+    exProp.rootFolder = path;
 }
 
 void ContextMenu::gotoRootFolder()
 {
     extern ExplorerDialog explorerDlg;
-    explorerDlg.gotoFileLocation(exProp.rootDirectory);
+    explorerDlg.gotoFileLocation(exProp.rootFolder);
 }
 
 void ContextMenu::clearRootFolder()
 {
-    exProp.rootDirectory.clear();
+    exProp.rootFolder.clear();
 }
 
 
