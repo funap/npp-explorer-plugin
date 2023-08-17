@@ -149,6 +149,7 @@ void openQuickOpenDlg(void);
 void gotoPath(void);
 void gotoUserFolder(void);
 void gotoCurrentFolder(void);
+void gotoRootFolder(void);
 void gotoCurrentFile(void);
 void showExplorerDialogOnFolder(void);
 void showExplorerDialogOnFile(void);

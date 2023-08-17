@@ -96,15 +96,16 @@ FuncItem            funcItem[] = {
 /*  4 */{ L"Go to &Path...",                  gotoPath,                   0,       false,   nullptr},
 /*  5 */{ L"Go to &User Folder",              gotoUserFolder,             0,       false,   nullptr},
 /*  6 */{ L"Go to &Current Folder",           gotoCurrentFolder,          0,       false,   nullptr},
-/*  7 */{ L"&Go to Current File",             gotoCurrentFile,            0,       false,   nullptr},
-/*  8 */{ L"Show Explo&rer (Focus on folder)",showExplorerDialogOnFolder, 0,       false,   nullptr},
-/*  9 */{ L"Show E&xplorer (Focus on file)",  showExplorerDialogOnFile,   0,       false,   nullptr},
-/* 10 */{ L"Show Fa&vorites",                 showFavesDialog,            0,       false,   nullptr},
-/* 11 */{ L"C&lear Filter",                   clearFilter,                0,       false,   nullptr},
-/* 12 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/* 13 */{ L"Explorer &Options...",            openOptionDlg,              0,       false,   nullptr},
-/* 14 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/* 15 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
+/*  7 */{ L"Go to &Root Folder",              gotoRootFolder,             0,       false,   nullptr},
+/*  8 */{ L"&Go to Current File",             gotoCurrentFile,            0,       false,   nullptr},
+/*  9 */{ L"&Show Explorer (Focus on folder)",showExplorerDialogOnFolder, 0,       false,   nullptr},
+/* 10 */{ L"Show E&xplorer (Focus on file)",  showExplorerDialogOnFile,   0,       false,   nullptr},
+/* 11 */{ L"Show Fa&vorites",                 showFavesDialog,            0,       false,   nullptr},
+/* 12 */{ L"C&lear Filter",                   clearFilter,                0,       false,   nullptr},
+/* 13 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 14 */{ L"Explorer &Options...",            openOptionDlg,              0,       false,   nullptr},
+/* 15 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 16 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
 };
 
 /* see in notepad sources */
@@ -525,6 +526,14 @@ void gotoUserFolder(void)
 {
     explorerDlg.doDialog();
     explorerDlg.gotoUserFolder();
+}
+
+void gotoRootFolder(void)
+{
+    explorerDlg.doDialog();
+    if (!exProp.rootDirectory.empty()) {
+        explorerDlg.gotoFileLocation(exProp.rootDirectory);
+    }
 }
 
 void gotoCurrentFolder(void)
