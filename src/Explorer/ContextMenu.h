@@ -39,7 +39,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 struct __declspec(uuid("000214e6-0000-0000-c000-000000000046")) IShellFolder;
 
-class ContextMenu  
+class ContextMenu
 {
 public:
 	ContextMenu();
@@ -73,7 +73,9 @@ private:
 	void	openFileInOtherView(void);
 	void	openFileInNewInstance(void);
 	void	openPrompt(void);
-    void    setRootDirectory();
+    void    setRootFolder();
+    void    gotoRootFolder();
+    void    clearRootFolder();
 	void	addToFaves(void);
 	void	addRelativePathsCB(void);
 	void	addFullPathsCB(void);
@@ -90,7 +92,7 @@ private:
 	SIZE_T					_nItems;
 	BOOL					_bDelete;
 	IShellFolder*			_psfFolder;
-	LPITEMIDLIST*			_pidlArray;	
+	LPITEMIDLIST*			_pidlArray;
 
 	IContextMenu2*			_contextMenu2;
 	IContextMenu3*			_contextMenu3;

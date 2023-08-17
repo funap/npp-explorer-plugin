@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <Shlwapi.h>
 
 #include "Explorer.h"
+#include "ExplorerDialog.h"
 #include "FavesDialog.h"
 #include "../NppPlugin/nppexec_msgs.h"
 #include "NppInterface.h"
@@ -55,7 +56,9 @@ namespace {
 		CTX_OPEN_DIFF_VIEW,
 		CTX_OPEN_NEW_INST,
 		CTX_OPEN_CMD,
-        CTX_SET_AS_ROOT_DIR,
+        CTX_SET_AS_ROOT_FOLDER,
+        CTX_GO_TO_ROOT_FOLDER,
+        CTX_CLEAR_ROOT_FOLDER,
 		CTX_ADD_TO_FAVES,
 		CTX_RELATIVE_PATH,
 		CTX_FULL_PATH,
@@ -106,7 +109,7 @@ LPCONTEXTMENU ContextMenu::GetContextMenu()
 {
 	LPCONTEXTMENU contextMenu = nullptr;
 	LPCONTEXTMENU contextMenu1 = nullptr;
-	
+
 	// first we retrieve the normal IContextMenu interface (every object should have it)
 	_psfFolder->GetUIObjectOf(NULL, (UINT)_nItems, (LPCITEMIDLIST *) _pidlArray, IID_IContextMenu, NULL, (void**) &contextMenu1);
 
@@ -126,7 +129,7 @@ LPCONTEXTMENU ContextMenu::GetContextMenu()
 			contextMenu = contextMenu1;
 		}
 	}
-	
+
 	return contextMenu;
 }
 
@@ -138,7 +141,7 @@ LRESULT CALLBACK ContextMenu::defaultHookWndProc(HWND hWnd, UINT message, WPARAM
 
 LRESULT CALLBACK ContextMenu::HookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	switch (message) { 
+	switch (message) {
 		case WM_MENUCHAR:	// only supported by IContextMenu3
 			if (_contextMenu3)
 			{
@@ -226,7 +229,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	ci.internalMsg		= NPEM_GETVERDWORD;
 	ci.info				= &dwExecVer;
 	::SendMessage(hWndNpp, NPPM_MSGTOPLUGIN, (WPARAM)exProp.nppExecProp.szAppName, (LPARAM)&ci);
-	
+
 	/* get acivity state of NppExec */
 	ci.srcModuleName	= PathFindFileName(szPath);
 	ci.internalMsg		= NPEM_GETSTATE;
@@ -273,7 +276,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 
 		if (hFind != INVALID_HANDLE_VALUE)
 		{
-			do 
+			do
 			{
 				::AppendMenu(hMenuNppExec, MF_STRING | (dwExecState == NPE_STATEREADY ? 0 : MF_DISABLED), CTX_START_SCRIPT + _strNppScripts.size(), Find.cFileName);
 				_strNppScripts.push_back(Find.cFileName);
@@ -293,7 +296,11 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 		::DestroyMenu(hMenuNppExec);
 	}
 	::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, _T("Open Command Window Here"));
-	::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_DIR, _T("Set as root directory"));
+	::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_FOLDER, _T("Set as Root Folder"));
+    if (!exProp.rootDirectory.empty()) {
+        ::AppendMenu(hMainMenu, MF_STRING, CTX_GO_TO_ROOT_FOLDER, _T("Go to Root Folder"));
+        ::AppendMenu(hMainMenu, MF_STRING, CTX_CLEAR_ROOT_FOLDER, _T("Clear Root Folder"));
+    }
 
 	::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, _T("Add to 'Favorites'..."));
@@ -375,7 +382,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	else {
 		HandleCustomCommand(idCommand);
 	}
-	
+
 	::DestroyMenu(hShellMenu);
 	::DestroyMenu(hMenuNppExec);
 	::DestroyMenu(hMainMenu);
@@ -429,8 +436,14 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 	case CTX_OPEN_CMD:
 		openPrompt();
 		break;
-    case CTX_SET_AS_ROOT_DIR:
-        setRootDirectory();
+    case CTX_SET_AS_ROOT_FOLDER:
+        setRootFolder();
+        break;
+    case CTX_GO_TO_ROOT_FOLDER:
+        gotoRootFolder();
+        break;
+    case CTX_CLEAR_ROOT_FOLDER:
+        clearRootFolder();
         break;
 	case CTX_ADD_TO_FAVES:
 		addToFaves();
@@ -460,7 +473,7 @@ void ContextMenu::SetObjects(const std::wstring &strObject)
 	// only one object is passed
 	std::vector<std::wstring>	strArray;
 	strArray.push_back(strObject);	// create a CStringArray with one element
-	
+
 	SetObjects (strArray);			// and pass it to SetObjects (vector<string> strArray)
 									// for further processing
 }
@@ -478,7 +491,7 @@ void ContextMenu::SetObjects(const std::vector<std::wstring> &strArray)
 	_psfFolder = NULL;
 	FreePIDLArray (_pidlArray);
 	_pidlArray = NULL;
-	
+
 	// get IShellFolder interface of Desktop (root of shell namespace)
 	IShellFolder * psfDesktop = NULL;
 	SHGetDesktopFolder (&psfDesktop);	// needed to obtain full qualified pidl
@@ -503,7 +516,7 @@ void ContextMenu::SetObjects(const std::vector<std::wstring> &strArray)
 		// now we have the IShellFolder interface to the parent folder specified in the first element in strArray
 		// since we assume that all objects are in the same folder (as it's stated in the MSDN)
 		// we now have the IShellFolder interface to every objects parent folder
-		
+
 		IShellFolder * psfFolder = NULL;
 		_nItems = strArray.size();
 		for (SIZE_T i = 0; i < _nItems; i++) {
@@ -557,7 +570,7 @@ LPITEMIDLIST ContextMenu::CopyPIDL (LPCITEMIDLIST pidl, int cb)
 
 
 UINT ContextMenu::GetPIDLSize (LPCITEMIDLIST pidl)
-{  
+{
 	if (!pidl) {
 		return 0;
 	}
@@ -578,7 +591,7 @@ HRESULT ContextMenu::SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **p
 	if (!pidl || !ppv) {
 		return E_POINTER;
 	}
-	
+
 	int nCount = GetPIDLCount (pidl);
 	if (nCount == 0) {	// desktop pidl of invalid pidl
 		return E_POINTER;
@@ -600,7 +613,7 @@ HRESULT ContextMenu::SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **p
 	LPITEMIDLIST pidlParent = NULL;
 	pidlParent = CopyPIDL (pidl, (int)(pRel - (LPBYTE) pidl));
 	IShellFolder * psfFolder = NULL;
-	
+
 	if ((hr = psfDesktop->BindToObject (pidlParent, NULL, __uuidof (psfFolder), (void **) &psfFolder)) != S_OK) {
 		free (pidlParent);
 		psfDesktop->Release ();
@@ -623,7 +636,7 @@ LPBYTE ContextMenu::GetPIDLPos (LPCITEMIDLIST pidl, int nPos)
 	if (!pidl)
 		return 0;
 	int nCount = 0;
-	
+
 	BYTE * pCur = (BYTE *) pidl;
 	while (((LPCITEMIDLIST) pCur)->mkid.cb) {
 		if (nCount == nPos) {
@@ -705,7 +718,7 @@ void ContextMenu::newFile(void)
 			if (IsValidFileName(szFileName))
 			{
 				std::wstring newFile = _strFirstElement + szFileName;
-				
+
 				::CloseHandle(::CreateFile(newFile.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 				::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)newFile.c_str());
 				bLeave = TRUE;
@@ -802,7 +815,7 @@ void ContextMenu::openPrompt(void)
 	}
 }
 
-void ContextMenu::setRootDirectory()
+void ContextMenu::setRootFolder()
 {
     auto path = _strArray[0];
 
@@ -814,8 +827,21 @@ void ContextMenu::setRootDirectory()
         }
     }
 
-    exProp.rootDirectry = path;
+    exProp.rootDirectory = path;
 }
+
+void ContextMenu::gotoRootFolder()
+{
+    extern ExplorerDialog explorerDlg;
+    explorerDlg.gotoFileLocation(exProp.rootDirectory);
+}
+
+void ContextMenu::clearRootFolder()
+{
+    exProp.rootDirectory.clear();
+}
+
+
 void ContextMenu::addToFaves()
 {
     extern FavesDialog	favesDlg;
@@ -1000,7 +1026,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
 					{
 						::MessageBox(_hWndNpp, _T("NppExec currently in use!"), _T("Error"), MB_OK);
 					}
-					
+
 					delete [] pszArg;
 				}
 				delete [] pszData;
@@ -1019,28 +1045,28 @@ bool ContextMenu::Str2CB(LPCTSTR str2cpy)
 {
 	if (!str2cpy)
 		return false;
-		
-	if (!::OpenClipboard(_hWndNpp)) 
-		return false; 
-		
-	::EmptyClipboard();
-	
-	HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, _tcslen(str2cpy) * 2 + 2);
-	
-	if (hglbCopy == NULL) 
-	{ 
-		::CloseClipboard(); 
-		return false; 
-	} 
 
-	// Lock the handle and copy the text to the buffer. 
+	if (!::OpenClipboard(_hWndNpp))
+		return false;
+
+	::EmptyClipboard();
+
+	HGLOBAL hglbCopy = ::GlobalAlloc(GMEM_MOVEABLE, _tcslen(str2cpy) * 2 + 2);
+
+	if (hglbCopy == NULL)
+	{
+		::CloseClipboard();
+		return false;
+	}
+
+	// Lock the handle and copy the text to the buffer.
 	LPTSTR pStr = (LPTSTR)::GlobalLock(hglbCopy);
 	if (pStr) {
 	_tcscpy(pStr, str2cpy);
-	::GlobalUnlock(hglbCopy); 
+	::GlobalUnlock(hglbCopy);
 	}
 
-	// Place the handle on the clipboard. 
+	// Place the handle on the clipboard.
 	::SetClipboardData(CF_UNICODETEXT, hglbCopy);
 	::CloseClipboard();
 	return true;

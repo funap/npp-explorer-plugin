@@ -582,8 +582,8 @@ void openHelpDlg(void)
 
 void openQuickOpenDlg(void)
 {
-    if (!exProp.rootDirectry.empty()) {
-        quickOpenDlg.setRootPath(exProp.rootDirectry);
+    if (!exProp.rootDirectory.empty()) {
+        quickOpenDlg.setRootPath(exProp.rootDirectory);
     }
     else {
         quickOpenDlg.setRootPath(exProp.szCurrentPath);
