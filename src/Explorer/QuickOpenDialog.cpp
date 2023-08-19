@@ -78,9 +78,9 @@ class QuickOpenEntry {
 public:
     QuickOpenEntry() = delete;
     explicit QuickOpenEntry(const std::wstring& path)
-        : _rerativePath(path.substr(s_rootPath.size()))
+        : _relativePath(path.substr(s_rootPath.size()))
         , _score(0)
-        , _matchs()
+        , _matches()
         , _matchType(MATCH_TYPE::INIT)
     {
     }
@@ -91,17 +91,17 @@ public:
 
     std::wstring_view FileName() const
     {
-        std::wstring_view result(_rerativePath);
+        std::wstring_view result(_relativePath);
         size_t lastSlashPos = result.find_last_of(L"/\\");
         if (lastSlashPos != std::wstring_view::npos) {
             return result.substr(lastSlashPos + 1);
         }
-        return _rerativePath;
+        return _relativePath;
     }
 
     const std::wstring& RelativePath() const
     {
-        return _rerativePath;
+        return _relativePath;
     }
 
     void Rename(const std::wstring& oldName, const std::wstring& newName)
@@ -110,14 +110,14 @@ public:
         std::string::size_type pos = path.find(oldName);
         if (pos == 0) {
             path.replace(pos, oldName.length(), newName);
-            _rerativePath = path.substr(s_rootPath.size());
+            _relativePath = path.substr(s_rootPath.size());
         }
     }
 
     std::wstring FullPath() const
     {
         std::wstring fullPath = s_rootPath;
-        fullPath.append(_rerativePath);
+        fullPath.append(_relativePath);
         return fullPath;
     }
 
@@ -128,18 +128,18 @@ public:
         NO_MATCH,
     };
 
-    void SetScore(MATCH_TYPE type, int score, std::vector<size_t>&& matchs)
+    void SetScore(MATCH_TYPE type, int score, std::vector<size_t>&& matches)
     {
         _matchType = type;
         _score = score;
-        _matchs = std::move(matchs);
+        _matches = std::move(matches);
     }
 
-    void ClearScore()
+    void InitScore()
     {
         _matchType = MATCH_TYPE::INIT;
         _score = 0;
-        _matchs.clear();;
+        _matches.clear();
     }
 
     MATCH_TYPE MatchType() const
@@ -153,7 +153,7 @@ public:
 
     std::vector<size_t> Matches() const
     {
-        return _matchs;
+        return _matches;
     }
 
     static void SetRootPath(const std::wstring& rootPath)
@@ -163,9 +163,9 @@ public:
 
 private:
     static std::wstring s_rootPath;
-    std::wstring        _rerativePath;
+    std::wstring        _relativePath;
     int                 _score;
-    std::vector<size_t> _matchs;
+    std::vector<size_t> _matches;
     MATCH_TYPE          _matchType;
 };
 std::wstring QuickOpenEntry::s_rootPath;
@@ -174,23 +174,24 @@ std::wstring QuickOpenEntry::s_rootPath;
 class QuickOpenModel {
 public:
     QuickOpenModel()
-        : _cancelled(false)
-        , _refleshResult(false)
-        , _revision(0)
+        : _condition{}
     {
     }
 
     ~QuickOpenModel()
     {
-        CancelSearch();
+        StopSearchThread();
     }
 
     void RootPath(const std::wstring& rootPath)
     {
-        CancelSearch();
-        ClearResults();
+        StopSearchThread();
         ClearEntries();
-        _query.reset();
+        {
+            std::unique_lock<std::mutex> lock(_conditionMtx);
+            _condition.query.reset();
+            _condition.revision++;
+        }
         QuickOpenEntry::SetRootPath(rootPath);
     }
 
@@ -203,7 +204,7 @@ public:
 
         {
             std::unique_lock<std::mutex> lock(_conditionMtx);
-            _revision++;
+            _condition.revision++;
         }
         _searchCond.notify_one();
     }
@@ -217,6 +218,7 @@ public:
             });
             // file was removed
             if (it != _entries.end()) {
+                (*it)->InitScore();
                 _entries.erase(it);
             }
             // directory was removed
@@ -224,6 +226,7 @@ public:
                 std::wstring dirName = path + L"\\";
                 for (auto it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(dirName)) {
+                        (*it)->InitScore();
                         it = _entries.erase(it);
                     }
                     else {
@@ -231,20 +234,11 @@ public:
                     }
                 }
             }
-            for (auto& file : _entries) {
-                file->ClearScore();
-            }
-
-            {
-                std::lock_guard<std::mutex> lock(_weakResultsMtx);
-                _weakResults.clear();
-            }
         }
 
         {
-            std::unique_lock<std::mutex> lock(_conditionMtx);
-            _revision++;
-            _refleshResult = true;
+            std::lock_guard<std::mutex> lock(_conditionMtx);
+            _condition.revision++;
         }
         _searchCond.notify_one();
     }
@@ -259,6 +253,7 @@ public:
             // file name was changed
             if (it != _entries.end()) {
                 (*it)->Rename(oldPath, newPath);
+                (*it)->InitScore();
             }
             // directory name was changed
             else {
@@ -267,43 +262,34 @@ public:
                 for (auto it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(oldDirName)) {
                         (*it)->Rename(oldDirName, newDirName);
+                        (*it)->InitScore();
                     }
                     else {
                         ++it;
                     }
                 }
             }
-            for (auto& file : _entries) {
-                file->ClearScore();
-            }
         }
 
         {
-            std::unique_lock<std::mutex> lock(_conditionMtx);
-            _revision++;
-            _refleshResult = true;
+            std::lock_guard<std::mutex> lock(_conditionMtx);
+            _condition.revision++;
         }
         _searchCond.notify_one();
     }
 
     using SearchCallback = std::function<void()>;
-    void Search(const std::wstring& query, SearchCallback callback)
+    void Search(const std::wstring& query)
     {
-        if (_query.has_value() && (query == _query.value())) {
-            return;
-        }
-        _query = query;
-
-        CancelSearch();
-
         {
-            std::lock_guard<std::mutex> lock(_entriesMtx);
-            for (auto& file : _entries) {
-                file->ClearScore();
+            std::lock_guard<std::mutex> lock(_conditionMtx);
+            if (_condition.query.has_value() && (query == _condition.query.value())) {
+                return;
             }
+            _condition.query = query;
+            _condition.revision++;
         }
-
-        StartSearch(query, callback);
+        _searchCond.notify_one();
     }
 
     std::vector<std::shared_ptr<QuickOpenEntry>> GetResults()
@@ -319,12 +305,23 @@ public:
         return results;
     }
 
-    void CancelSearch()
+    void StartSearchThread(SearchCallback callback)
+    {
+        StopSearchThread();
+        {
+            std::lock_guard<std::mutex> lock(_conditionMtx);
+            _condition.revision = 0;
+            _condition.stop = false;
+        }
+        _searchThread = std::thread(&QuickOpenModel::Run, this, callback);
+    }
+
+    void StopSearchThread()
     {
         {
-            std::unique_lock<std::mutex> lock(_conditionMtx);
-            _cancelled = true;
-            _revision++;
+            std::lock_guard<std::mutex> lock(_conditionMtx);
+            _condition.stop = true;
+            _condition.revision++;
         }
         _searchCond.notify_one();
 
@@ -333,129 +330,128 @@ public:
         }
     }
 private:
-    void StartSearch(const std::wstring& query, SearchCallback callback)
-    {
-        {
-            std::unique_lock<std::mutex> lock(_conditionMtx);
-            _cancelled = false;
-            _revision++;
-        }
-        _searchThread = std::thread(&QuickOpenModel::Run, this, query, callback);
-    }
-
     void ClearEntries()
     {
-        std::lock_guard<std::mutex> lock(_entriesMtx);
-        _entries.clear();
+        {
+            std::lock_guard<std::mutex> lock(_weakResultsMtx);
+            _weakResults.clear();
+        }
+        {
+            std::lock_guard<std::mutex> lock(_entriesMtx);
+            _entries.clear();
+        }
     }
 
-    void ClearResults()
-    {
-        std::lock_guard<std::mutex> lock(_weakResultsMtx);
-        _weakResults.clear();
-    }
-
-    struct Snapshot {
-        int                                 revision{};
-        std::vector<std::shared_ptr<QuickOpenEntry>> entries{};
-    };
-    Snapshot GetSnapshot()
+    std::vector<std::shared_ptr<QuickOpenEntry>> GetInitEntries()
     {
         std::lock_guard<std::mutex> lock(_entriesMtx);
-        Snapshot snapshot;
-        snapshot.revision = _revision;
-        snapshot.entries.reserve(_entries.size());
+        std::vector<std::shared_ptr<QuickOpenEntry>> entries;
+        entries.reserve(_entries.size());
         for (auto& entry : _entries) {
-            if (QuickOpenEntry::MATCH_TYPE::INIT == entry->MatchType()) {
-                snapshot.entries.push_back(entry);
+            if (entry->MatchType() == QuickOpenEntry::MATCH_TYPE::INIT) {
+                entries.push_back(entry);
             }
         }
-        return snapshot;
+        return entries;
     }
 
-    void Run(std::wstring query, SearchCallback callback)
+    std::vector<std::shared_ptr<QuickOpenEntry>> GetScoredEntries()
     {
-        bool updated = true;
+        std::lock_guard<std::mutex> lock(_entriesMtx);
+        std::vector<std::shared_ptr<QuickOpenEntry>> entries;
+        entries.reserve(_entries.size());
+        for (auto& entry : _entries) {
+            if (entry->Score() > 0) {
+                entries.push_back(entry);
+            }
+        }
+        return entries;
+    }
+
+    void Run(SearchCallback callback)
+    {
         int revision = 0;
-        std::vector<std::weak_ptr<QuickOpenEntry>> results;
+        std::wstring query;
+        std::vector<std::shared_ptr<QuickOpenEntry>> results;
         try {
             while (true) {
-                auto snapshot = GetSnapshot();
-                auto revision = snapshot.revision;
-                results.reserve(snapshot.entries.size());
+                {
+                    std::unique_lock<std::mutex> lock(_conditionMtx);
+                    _searchCond.wait(lock, [&] { return revision != _condition.revision; });
+                    revision = _condition.revision;
+                    if (_condition.stop) {
+                        break;
+                    }
+                    if (!_condition.query.value_or(std::wstring()).starts_with(query)) {
+                        std::lock_guard<std::mutex> lock(_entriesMtx);
+                        for (auto& entry : _entries) {
+                            entry->InitScore();
+                        }
+                        results.clear();
+                    }
+                    else {
+                        for (auto& entry : results) {
+                            entry->InitScore();
+                        }
+                    }
+                    query = _condition.query.value_or(std::wstring());
+                }
 
+                auto newEntries = GetInitEntries();
                 if (query.empty()) {
                     std::lock_guard<std::mutex> lock(_entriesMtx);
-                    for (auto entry : snapshot.entries) {
-                        entry->SetScore(QuickOpenEntry::MATCH_TYPE::NO_MATCH, 0, {});
-                        results.push_back(entry);
+                    for (auto& entry : newEntries) {
+                        entry->SetScore(QuickOpenEntry::MATCH_TYPE::NO_MATCH, 1, {});
                     }
-                    updated = true;
                 }
                 else {
                     FuzzyMatcher matcher(query);
-                    for (auto entry : snapshot.entries) {
-                        if (_cancelled) {
-                            break;
+                    for (auto& entry : newEntries) {
+                        {
+                            std::lock_guard<std::mutex> lock(_conditionMtx);
+                            if (_condition.stop) {
+                                break;
+                            }
                         }
 
-                        std::vector<size_t> matchs;
-                        int score = matcher.ScoreMatch(entry->FileName(), &matchs);
+                        std::vector<size_t> matches;
+                        int score = matcher.ScoreMatch(entry->FileName(), &matches);
                         if (0 < score) {
-                            std::lock_guard<std::mutex> lock(_entriesMtx);
-                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::FILE, score | 1 << 30, std::move(matchs));
-                            results.push_back(entry);
-                            updated = true;
+                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::FILE, score | 1 << 30, std::move(matches));
                             continue;
                         }
 
-                        score = matcher.ScoreMatch(entry->RelativePath(), &matchs);
+                        score = matcher.ScoreMatch(entry->RelativePath(), &matches);
                         if (0 < score) {
-                            std::lock_guard<std::mutex> lock(_entriesMtx);
-                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::PATH, score, std::move(matchs));
-                            results.push_back(entry);
-                            updated = true;
+                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::PATH, score, std::move(matches));
                             continue;
                         }
+
+                        entry->SetScore(QuickOpenEntry::MATCH_TYPE::NO_MATCH, 0, std::move(matches));
+                   }
+                }
+
+                results = GetScoredEntries();
+                {
+                    std::lock_guard<std::mutex> lock(_conditionMtx);
+                    if (_condition.stop) {
+                        break;
                     }
                 }
-
-                if (updated) {
-                    {
-                        std::lock_guard<std::mutex> lock(_entriesMtx);
-                        std::sort(results.begin(), results.end(), [](const auto& lhs, const auto& rhs) {
-                            auto a = lhs.lock();
-                            auto b = rhs.lock();
-                            if (!a || !b) {
-                                return false;
-                            }
-                            if (a->Score() == b->Score()) {
-                                return ::StrCmpLogicalW(a->RelativePath().c_str(), b->RelativePath().c_str()) < 0;
-                            }
-                            return a->Score() > b->Score();
-                        });
+                {
+                    std::lock_guard<std::mutex> lock(_entriesMtx);
+                    std::sort(results.begin(), results.end(), [](const auto& lhs, const auto& rhs) {
+                        return lhs->Score() > rhs->Score();
+                    });
+                }
+                {
+                    std::lock_guard<std::mutex> lock(_weakResultsMtx);
+                    _weakResults.clear();
+                    for (auto& result : results) {
+                        _weakResults.push_back(result);
                     }
-
-                    {
-                        std::lock_guard<std::mutex> lock(_weakResultsMtx);
-                        _weakResults = results;
-                    }
-
-                    callback();
-                    updated = false;
                 }
-                // Reduce the reference counter
-                snapshot.entries.clear();
-
-                std::unique_lock<std::mutex> lock(_conditionMtx);
-                _searchCond.wait(lock, [&] { return revision != _revision; });
-                if (_cancelled) {
-                    break;
-                }
-                if (_refleshResult) {
-                    _refleshResult = false;
-                    results.clear();
-                }
+                callback();
             }
         }
         catch (...) {
@@ -463,16 +459,18 @@ private:
         }
         return;
     }
-    bool                                        _cancelled;
-    bool                                        _refleshResult;
-    int                                         _revision;
-    std::optional<std::wstring>                 _query;
+    struct Condition {
+        int                         revision{0};
+        bool                        stop{false};
+        std::optional<std::wstring> query;
+    };
     std::list<std::shared_ptr<QuickOpenEntry>>  _entries;
     std::mutex                                  _entriesMtx;
     std::vector<std::weak_ptr<QuickOpenEntry>>  _weakResults;
     std::mutex                                  _weakResultsMtx;
     std::thread                                 _searchThread;
     std::mutex                                  _conditionMtx;
+    Condition                                   _condition;
     std::condition_variable                     _searchCond;
 };
 
@@ -549,8 +547,13 @@ void QuickOpenDlg::show()
     if (!selectedText.empty()) {
         ::Edit_SetText(_hWndEdit, selectedText.c_str());
     }
+    _model->StartSearchThread([this]() {
+        PostMessage(_hSelf, WM_UPDATE_RUSULT_LIST, 0, 0);
+    });
+
     updateQuery();
     updateResultList();
+
 
     setDefaultPosition();
     display(true);
@@ -564,6 +567,7 @@ void QuickOpenDlg::show()
 
 void QuickOpenDlg::close()
 {
+    _model->StopSearchThread();
     ::KillTimer(_hSelf, SCAN_QUERY);
     ::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
     display(false);
@@ -836,9 +840,7 @@ void QuickOpenDlg::updateQuery()
         removeWhitespaces(query);
     }
 
-    _model->Search(query, [this]() {
-        PostMessage(_hSelf, WM_UPDATE_RUSULT_LIST, 0, 0);
-    });
+    _model->Search(query);
 }
 
 void QuickOpenDlg::updateResultList()
