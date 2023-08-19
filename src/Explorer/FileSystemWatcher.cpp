@@ -171,5 +171,6 @@ void FileSystemWatcher::Run(std::wstring directory)
         }
     }
 
+    CloseHandle(hEvent);
     CloseHandle(hDir);
 }
