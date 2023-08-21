@@ -25,7 +25,9 @@
 #include "QuickOpenDialog.h"
 
 #include <cwctype>
+#include <execution>
 
+#include <shlwapi.h>
 #include <windowsx.h>
 
 #include "FuzzyMatcher.h"
@@ -382,7 +384,13 @@ private:
                     if (_condition.stop) {
                         break;
                     }
-                    if (!_condition.query.value_or(std::wstring()).starts_with(query)) {
+                    if (query.empty()) {
+                        std::lock_guard<std::mutex> lock(_entriesMtx);
+                        for (auto& entry : _entries) {
+                            entry->InitScore();
+                        }
+                    }
+                    else if (!_condition.query.value_or(std::wstring()).starts_with(query)) {
                         std::lock_guard<std::mutex> lock(_entriesMtx);
                         for (auto& entry : _entries) {
                             entry->InitScore();
@@ -440,7 +448,10 @@ private:
                 }
                 {
                     std::lock_guard<std::mutex> lock(_entriesMtx);
-                    std::sort(results.begin(), results.end(), [](const auto& lhs, const auto& rhs) {
+                    std::sort(std::execution::par, results.begin(), results.end(), [](const auto& lhs, const auto& rhs) {
+                        if (lhs->Score() == rhs->Score()) {
+                            return ::StrCmpLogicalW(lhs->RelativePath().c_str(), rhs->RelativePath().c_str()) < 0;
+                        }
                         return lhs->Score() > rhs->Score();
                     });
                 }
