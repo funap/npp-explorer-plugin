@@ -43,7 +43,7 @@ struct Colors
     COLORREF selectedNotFocus   = RGB(0xcc, 0xcc, 0xcc);
 };
 
-struct Brushs
+struct Brushes
 {
     Brush face;
     Brush text;
@@ -69,7 +69,7 @@ public:
 
 
     static void Create();
-    static void Destory();
+    static void Destroy();
 
     static ThemeRenderer& Instance();
 
@@ -88,7 +88,7 @@ private:
 
     BOOL    m_isDarkMode;
     Colors  m_colors;
-    Brushs  m_brushs;
+    Brushes m_brushes;
     std::set<HWND>  m_windows;
 };
 

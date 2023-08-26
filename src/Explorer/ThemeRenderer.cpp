@@ -47,7 +47,7 @@ ThemeRenderer* ThemeRenderer::s_instance = nullptr;
 ThemeRenderer::ThemeRenderer()
     : m_isDarkMode(false)
     , m_colors()
-    , m_brushs()
+    , m_brushes()
     , m_windows()
 {
 }
@@ -63,7 +63,7 @@ void ThemeRenderer::Create()
     }
 }
 
-void ThemeRenderer::Destory()
+void ThemeRenderer::Destroy()
 {
     delete s_instance;
     s_instance = nullptr;
@@ -80,12 +80,12 @@ void ThemeRenderer::SetTheme(BOOL isDarkMode, Colors colors)
     m_isDarkMode = isDarkMode;
     m_colors     = colors;
 
-    m_brushs.face.CreateSolidBrush(colors.face);
-    m_brushs.bg.CreateSolidBrush(colors.bg);
-    m_brushs.hot.CreateSolidBrush(colors.hot);
-    m_brushs.hotSelected.CreateSolidBrush(colors.hotSelected);
-    m_brushs.selected.CreateSolidBrush(colors.selected);
-    m_brushs.selectedNotFocus.CreateSolidBrush(colors.selectedNotFocus);
+    m_brushes.face.CreateSolidBrush(colors.face);
+    m_brushes.bg.CreateSolidBrush(colors.bg);
+    m_brushes.hot.CreateSolidBrush(colors.hot);
+    m_brushes.hotSelected.CreateSolidBrush(colors.hotSelected);
+    m_brushes.selected.CreateSolidBrush(colors.selected);
+    m_brushes.selectedNotFocus.CreateSolidBrush(colors.selectedNotFocus);
 
     for (auto hwnd : m_windows) {
         ApplyTheme(hwnd);
@@ -162,7 +162,7 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushs.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.face);
         return TRUE;
     }
     case WM_NCDESTROY:
@@ -179,7 +179,7 @@ LRESULT ThemeRenderer::RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushs.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.face);
         return TRUE;
     }
     case WM_NCDESTROY:
@@ -196,7 +196,7 @@ LRESULT ThemeRenderer::ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushs.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.face);
         return TRUE;
     }
     case WM_NCDESTROY:

@@ -203,7 +203,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
         ::DestroyIcon(g_favesIcons.hToolbarIcon);
         ::DestroyIcon(g_favesIcons.hToolbarIconDarkMode);
 
-        ThemeRenderer::Destory();
+        ThemeRenderer::Destroy();
         break;
 
     case DLL_THREAD_ATTACH:
