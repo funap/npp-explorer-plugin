@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerDialog.h"
 #include "FavesDialog.h"
+#include "QuickOpenDialog.h"
 #include "../NppPlugin/nppexec_msgs.h"
 #include "NppInterface.h"
 
@@ -64,7 +65,8 @@ namespace {
 		CTX_FULL_PATH,
 		CTX_FULL_FILES,
 		CTX_GOTO_SCRIPT_PATH,
-		CTX_START_SCRIPT
+		CTX_START_SCRIPT,
+        CTX_QUICK_OPEN
 	};
 
 	struct OBJECT_DATA {
@@ -302,6 +304,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
         ::AppendMenu(hMainMenu, MF_STRING, CTX_CLEAR_ROOT_FOLDER, _T("Clear Root Folder"));
     }
 
+    ::AppendMenu(hMainMenu, MF_STRING, CTX_QUICK_OPEN, _T("Quick Open..."));
 	::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
 	::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, _T("Add to 'Favorites'..."));
 	std::wstring currentDirectory = NppInterface::getCurrentDirectory();
@@ -412,6 +415,9 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 {
 	switch (idCommand)
 	{
+	case CTX_QUICK_OPEN:
+		quickOpen();
+		break;
 	case CTX_RENAME:
 		Rename();
 		break;
@@ -698,6 +704,23 @@ void ContextMenu::Rename(void)
 		_tcscat(newFirstElement, szNewName);
 		::MoveFile(_strFirstElement.c_str(), newFirstElement);
 	}
+}
+
+void ContextMenu::quickOpen(void)
+{
+    auto path = _strArray[0];
+
+    // remove file name
+    if (path.at(path.size() - 1) != '\\') {
+        SIZE_T pos = path.rfind(_T("\\"), path.size() - 1);
+        if (std::wstring::npos != pos) {
+            path.erase(pos, path.size());
+        }
+    }
+
+    extern QuickOpenDlg quickOpenDlg;
+    quickOpenDlg.setRootPath(path);
+    quickOpenDlg.show();
 }
 
 void ContextMenu::newFile(void)
