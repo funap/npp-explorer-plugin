@@ -66,6 +66,7 @@ private:
 
 	/* notepad functions */
 	void	Rename(void);
+	void	quickOpen(void);
 	void	newFile(void);
 	void	newFolder(void);
 	void	findInFiles(void);
