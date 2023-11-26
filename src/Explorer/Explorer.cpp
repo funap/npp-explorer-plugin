@@ -681,11 +681,9 @@ bool IsValidFolder(const WIN32_FIND_DATA & Find)
 bool IsValidParentFolder(const WIN32_FIND_DATA & Find)
 {
     if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-        (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden) &&
-            (_tcscmp(Find.cFileName, _T(".")) != 0) &&
-            (Find.cFileName[0] != '?'))
+        (_tcscmp(Find.cFileName, _T("..")) == 0)) {
         return true;
-
+    }
     return false;
 }
 
