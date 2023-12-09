@@ -37,6 +37,8 @@ namespace {
     constexpr UINT WM_UPDATE_RUSULT_LIST = WM_USER + 1;
     constexpr UINT_PTR SCAN_QUERY    = 1;
     constexpr UINT_PTR UPDATE_PROGRESSBAR   = 2;
+    constexpr UINT_PTR EDIT_SUBCLASS_ID = 1;
+    constexpr UINT_PTR LISTVIEW_SUBCLASS_ID = 2;
 
     UINT getDpiForWindow(HWND hWnd) {
         UINT dpi = 96;
@@ -137,11 +139,10 @@ public:
         _matches = std::move(matches);
     }
 
-    void InitScore()
+    void ResetScore()
     {
         _matchType = MATCH_TYPE::INIT;
         _score = 0;
-        _matches.clear();
     }
 
     MATCH_TYPE MatchType() const
@@ -153,7 +154,7 @@ public:
         return _score;
     }
 
-    std::vector<size_t> Matches() const
+    const std::vector<size_t> Matches() const
     {
         return _matches;
     }
@@ -220,7 +221,7 @@ public:
             });
             // file was removed
             if (it != _entries.end()) {
-                (*it)->InitScore();
+                (*it)->ResetScore();
                 _entries.erase(it);
             }
             // directory was removed
@@ -228,7 +229,7 @@ public:
                 std::wstring dirName = path + L"\\";
                 for (auto it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(dirName)) {
-                        (*it)->InitScore();
+                        (*it)->ResetScore();
                         it = _entries.erase(it);
                     }
                     else {
@@ -255,7 +256,7 @@ public:
             // file name was changed
             if (it != _entries.end()) {
                 (*it)->Rename(oldPath, newPath);
-                (*it)->InitScore();
+                (*it)->ResetScore();
             }
             // directory name was changed
             else {
@@ -264,7 +265,7 @@ public:
                 for (auto it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(oldDirName)) {
                         (*it)->Rename(oldDirName, newDirName);
-                        (*it)->InitScore();
+                        (*it)->ResetScore();
                     }
                     else {
                         ++it;
@@ -280,7 +281,6 @@ public:
         _searchCond.notify_one();
     }
 
-    using SearchCallback = std::function<void()>;
     void Search(const std::wstring& query)
     {
         {
@@ -307,6 +307,7 @@ public:
         return results;
     }
 
+    using SearchCallback = std::function<void()>;
     void StartSearchThread(SearchCallback callback)
     {
         StopSearchThread();
@@ -344,7 +345,7 @@ private:
         }
     }
 
-    std::vector<std::shared_ptr<QuickOpenEntry>> GetInitEntries()
+    std::vector<std::shared_ptr<QuickOpenEntry>> GetUnscoredEntries()
     {
         std::lock_guard<std::mutex> lock(_entriesMtx);
         std::vector<std::shared_ptr<QuickOpenEntry>> entries;
@@ -373,7 +374,7 @@ private:
     void Run(SearchCallback callback)
     {
         int revision = 0;
-        std::wstring query;
+        std::wstring query = _condition.query.value_or(std::wstring());;
         std::vector<std::shared_ptr<QuickOpenEntry>> results;
         try {
             while (true) {
@@ -384,37 +385,39 @@ private:
                     if (_condition.stop) {
                         break;
                     }
-                    if (query.empty()) {
+
+                    // If the query is the same, do not recalculate the scores.
+                    if (_condition.query.value_or(std::wstring()).compare(query) == 0) {
+                        ;
+                    }
+                    // When characters are added to the query, inherit the narrowed-down results.
+                    else if (_condition.query.value_or(std::wstring()).starts_with(query)) {
                         std::lock_guard<std::mutex> lock(_entriesMtx);
-                        for (auto& entry : _entries) {
-                            entry->InitScore();
+                        for (auto& entry : results) {
+                            entry->ResetScore();
                         }
                     }
-                    else if (!_condition.query.value_or(std::wstring()).starts_with(query)) {
+                    // Otherwise, recalculate all scores.
+                    else {
                         std::lock_guard<std::mutex> lock(_entriesMtx);
                         for (auto& entry : _entries) {
-                            entry->InitScore();
+                            entry->ResetScore();
                         }
                         results.clear();
-                    }
-                    else {
-                        for (auto& entry : results) {
-                            entry->InitScore();
-                        }
                     }
                     query = _condition.query.value_or(std::wstring());
                 }
 
-                auto newEntries = GetInitEntries();
+                auto entries = GetUnscoredEntries();
                 if (query.empty()) {
                     std::lock_guard<std::mutex> lock(_entriesMtx);
-                    for (auto& entry : newEntries) {
+                    for (auto& entry : entries) {
                         entry->SetScore(QuickOpenEntry::MATCH_TYPE::NO_MATCH, 1, {});
                     }
                 }
                 else {
                     FuzzyMatcher matcher(query);
-                    for (auto& entry : newEntries) {
+                    for (auto& entry : entries) {
                         {
                             std::lock_guard<std::mutex> lock(_conditionMtx);
                             if (_condition.stop) {
@@ -492,7 +495,6 @@ QuickOpenDlg::QuickOpenDlg()
     , _query()
     , _results()
     , _layout{}
-    , _defaultEditProc(nullptr)
     , _hWndResult(nullptr)
     , _hWndEdit(nullptr)
     , _pExProp(nullptr)
@@ -565,7 +567,6 @@ void QuickOpenDlg::show()
     updateQuery();
     updateResultList();
 
-
     setDefaultPosition();
     display(true);
     ::PostMessage(_hSelf, WM_NEXTDLGCTL, (WPARAM)_hWndEdit, TRUE);
@@ -603,8 +604,10 @@ void QuickOpenDlg::SetFont(HFONT font)
     _layout.itemMargin      = ::MulDiv(3, dpi, USER_DEFAULT_SCREEN_DPI);
     _layout.itemMarginLeft  = ::MulDiv(7, dpi, USER_DEFAULT_SCREEN_DPI);
     _layout.itemTextHeight  = textMetric.tmHeight;
-    const int height = (_layout.itemTextHeight + _layout.itemMargin) * 2;
-    ::SendMessage(_hWndResult, LB_SETITEMHEIGHT, 0, height);
+
+    // Deliberately reconfigure for WM_MEASUREITEM.
+    ListView_SetView(_hWndResult, LV_VIEW_TILE);
+    ListView_SetView(_hWndResult, LVS_REPORT);
 }
 
 void QuickOpenDlg::setDefaultPosition()
@@ -724,6 +727,22 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         updateResultList();
         ret = TRUE;
         break;
+    case WM_MEASUREITEM:
+        if ((UINT)wParam == IDC_LIST_RESULTS) {
+            LPMEASUREITEMSTRUCT lpmis = (LPMEASUREITEMSTRUCT)lParam;
+            lpmis->itemHeight = (_layout.itemTextHeight + _layout.itemMargin) * 2;
+            return TRUE;
+        }
+        break;
+    case WM_NOTIFY:
+        if ((UINT)wParam == IDC_LIST_RESULTS) {
+            if (((LPNMHDR)lParam)->code == NM_DBLCLK) {
+                openSelectedItem();
+                close();
+                return TRUE;
+            }
+        }
+        break;
     case WM_DRAWITEM:
         if ((UINT)wParam == IDC_LIST_RESULTS) {
             return onDrawItem(reinterpret_cast<LPDRAWITEMSTRUCT>(lParam));
@@ -734,12 +753,12 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         case SCAN_QUERY:
             ::KillTimer(_hSelf, SCAN_QUERY);
             updateQuery();
-            if (_directoryReader.IsReading()) {
-                ::SetTimer(_hSelf, SCAN_QUERY, 1000, nullptr);
-            }
             ret = TRUE;
             break;
         case UPDATE_PROGRESSBAR:
+            if (!_directoryReader.IsReading()) {
+                ::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
+            }
             ::InvalidateRect(_hSelf, &_progressBarRect, false);
             ::UpdateWindow(_hSelf);
             ret = TRUE;
@@ -791,11 +810,6 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
             close();
             ret = TRUE;
             break;
-        case IDC_LIST_RESULTS:
-            if (LBN_DBLCLK != HIWORD(wParam)) {
-                break;
-            }
-            [[fallthrough]];
         case IDOK:
         {
             openSelectedItem();
@@ -809,13 +823,17 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         break;
     case WM_INITDIALOG:
     {
-        _hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
         _hWndEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
+        _hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
 
         SetFont(_pExProp->defaultFont);
-        ::SetWindowLongPtr(_hWndEdit, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
-        _defaultEditProc = (WNDPROC)::SetWindowLongPtr(_hWndEdit, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(wndDefaultEditProc));
 
+        ListView_SetExtendedListViewStyle(_hWndResult, LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT);
+        LVCOLUMN column{};
+        ListView_InsertColumn(_hWndResult, 0, &column);
+
+        ::SetWindowSubclass(_hWndEdit, DefaultSubclassProc, EDIT_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
+        ::SetWindowSubclass(_hWndResult, DefaultSubclassProc, LISTVIEW_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
         GetClientRect(_hSelf, &_progressBarRect);
         _progressBarRect.top = 2;
         _progressBarRect.bottom = _progressBarRect.top + 2;
@@ -824,11 +842,6 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
     case WM_DESTROY:
         _directoryReader.Cancel();
         _filesystemWatcher.Stop();
-
-        if (_defaultEditProc) {
-            ::SetWindowLongPtr(_hWndEdit, GWLP_WNDPROC, (LONG_PTR)_defaultEditProc);
-            _defaultEditProc = nullptr;
-        }
         break;
     case WM_ACTIVATE:
         if (_shouldAutoClose && (WA_INACTIVE == LOWORD(wParam))) {
@@ -857,18 +870,38 @@ void QuickOpenDlg::updateQuery()
 void QuickOpenDlg::updateResultList()
 {
     _results = _model->GetResults();
-    const auto cursel = max(::SendMessage(_hWndResult, LB_GETCURSEL, 0, 0), 0);
-    ::SendMessage(_hWndResult, LB_SETCOUNT, _results.size(), 0);
-    ::SendMessage(_hWndResult, LB_SETCURSEL, cursel, 0);
+    ::SendMessage(_hWndResult, WM_SETREDRAW, FALSE, 0);
+    ListView_SetItemCountEx(_hWndResult, _results.size(), LVSICF_NOSCROLL);
+    ListView_SetColumnWidth(_hWndResult, 0, LVSCW_AUTOSIZE_USEHEADER);
+    if (0 == ListView_GetSelectedCount(_hWndResult)) {
+        ListView_SetItemState(_hWndResult, 0, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+    }
+    ::SendMessage(_hWndResult, WM_SETREDRAW, TRUE, 0);
 }
 
-LRESULT APIENTRY QuickOpenDlg::wndDefaultEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+void QuickOpenDlg::openSelectedItem() const
 {
-    QuickOpenDlg *dlg = (QuickOpenDlg *)(::GetWindowLongPtr(hWnd, GWLP_USERDATA));
-    return dlg->runEditProc(hWnd, uMsg, wParam, lParam);
+    const int index = ListView_GetSelectionMark(_hWndResult);
+    if (0 <= index) {
+        if (static_cast<SIZE_T>(index) < _results.size()) {
+            NppInterface::doOpen(_results[index]->FullPath());
+        }
+    }
 }
 
-LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK QuickOpenDlg::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+{
+    switch (uIdSubclass) {
+    case EDIT_SUBCLASS_ID:
+        return reinterpret_cast<QuickOpenDlg*>(dwRefData)->EditProc(hWnd, uMsg, wParam, lParam);
+    case LISTVIEW_SUBCLASS_ID:
+        return reinterpret_cast<QuickOpenDlg*>(dwRefData)->ListViewProc(hWnd, uMsg, wParam, lParam);
+    default:
+        break;
+    }
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+LRESULT APIENTRY QuickOpenDlg::EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
     case WM_KEYDOWN:
@@ -901,18 +934,27 @@ LRESULT APIENTRY QuickOpenDlg::runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, 
             break;
         }
         break;
+    case WM_NCDESTROY:
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, EDIT_SUBCLASS_ID);
+        break;
+
     default:
         break;
     }
-    return ::CallWindowProc(_defaultEditProc, hWnd, uMsg, wParam, lParam);
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
 
-void QuickOpenDlg::openSelectedItem() const
+LRESULT QuickOpenDlg::ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    const int index = (int)::SendDlgItemMessage(_hSelf, IDC_LIST_RESULTS, LB_GETCURSEL, 0, 0);
-    if (0 <= index) {
-        if (static_cast<SIZE_T>(index) < _results.size()) {
-            NppInterface::doOpen(_results[index]->FullPath());
-        }
+    switch (uMsg) {
+    case WM_SETFOCUS:
+        SetFocus(_hWndEdit);
+        break;
+    case WM_NCDESTROY:
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, LISTVIEW_SUBCLASS_ID);
+        break;
+    default:
+        break;
     }
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }

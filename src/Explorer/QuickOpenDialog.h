@@ -51,8 +51,9 @@ public:
 private:
     BOOL onDrawItem(LPDRAWITEMSTRUCT drawItem);
     INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
-    static LRESULT APIENTRY wndDefaultEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-    LRESULT APIENTRY runEditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    LRESULT APIENTRY ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT APIENTRY EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     void openSelectedItem() const;
     void setDefaultPosition();
@@ -72,7 +73,6 @@ private:
     std::vector<std::shared_ptr<QuickOpenEntry>>    _results;
 
     Layout              _layout;
-    WNDPROC             _defaultEditProc;
     HWND                _hWndResult;
     HWND                _hWndEdit;
     ExProp*             _pExProp;
