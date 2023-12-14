@@ -143,7 +143,7 @@ protected:
 	std::wstring GetFolderPathName(HTREEITEM currentItem) const;
 
 	BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
-
+    void ShowContextMenu(HTREEITEM item);
 private:
 	/* Handles */
 	BOOL					_bStartupFinish;
@@ -153,7 +153,7 @@ private:
 	/* control process */
 	WNDPROC					_hDefaultTreeProc;
 	WNDPROC					_hDefaultSplitterProc;
-	
+
 	/* some status values */
 	BOOL					_bOldRectInitilized;
 	BOOL					_isSelNotifyEnable;

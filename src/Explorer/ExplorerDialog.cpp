@@ -795,6 +795,18 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			}
 			break;
 		}
+        case WM_KEYUP:
+            if ((VK_RETURN == wParam) && (0x8000 & ::GetKeyState(VK_CONTROL))) {
+                HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+                ShowContextMenu(hItem);
+                return TRUE;
+            }
+            else if (VK_APPS == wParam) {
+                HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+                ShowContextMenu(hItem);
+                return TRUE;
+            }
+            break;
 		case WM_KEYDOWN:
 		{
 			if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000))
@@ -827,6 +839,15 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			}
 			break;
 		}
+        case WM_SYSKEYUP:
+            if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
+                if (wParam == VK_F10) {
+                    HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+                    ShowContextMenu(hItem);
+                    return TRUE;
+                }
+            }
+            break;
 		case EXM_QUERYDROP:
 		{
 			TVHITTESTINFO	ht		= {0};
@@ -2322,4 +2343,23 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 		}
 	}
 	return true;
+}
+
+void ExplorerDialog::ShowContextMenu(HTREEITEM item)
+{
+    if (item != nullptr) {
+        RECT rect;
+        TreeView_GetItemRect(_hTreeCtrl, item, &rect, TRUE);
+        ClientToScreen(_hTreeCtrl, &rect);
+        POINT pt{
+            .x = rect.right,
+            .y = rect.top,
+        };
+
+        ContextMenu cm;
+        auto strPathName = GetFolderPathName(item);
+        cm.SetObjects(strPathName);
+        cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt);
+    }
+    return;
 }

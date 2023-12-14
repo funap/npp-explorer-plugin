@@ -133,7 +133,7 @@ protected:
 	void QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending);
 	void QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending);
 
-	void onRMouseBtn();
+	void ShowContextMenu();
 	void onLMouseBtnDbl();
 
 	void onSelectItem(TCHAR charkey);

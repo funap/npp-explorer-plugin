@@ -102,7 +102,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	_hSemaphore = ::CreateSemaphore(NULL, 1, 1, NULL);
 
 	/* create events for thread */
-	for (INT i = 0; i < FL_EVT_MAX; i++) 
+	for (INT i = 0; i < FL_EVT_MAX; i++)
 		_hEvent[i] = ::CreateEvent(NULL, FALSE, FALSE, NULL);
 
 	/* create thread */
@@ -136,12 +136,12 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 	::RegisterDragDrop(_hSelf, this);
 
 	/* create the supported formats */
-	FORMATETC fmtetc	= {0}; 
-	fmtetc.cfFormat		= CF_HDROP; 
-	fmtetc.dwAspect		= DVASPECT_CONTENT; 
-	fmtetc.lindex		= -1; 
+	FORMATETC fmtetc	= {0};
+	fmtetc.cfFormat		= CF_HDROP;
+	fmtetc.dwAspect		= DVASPECT_CONTENT;
+	fmtetc.lindex		= -1;
 	fmtetc.tymed		= TYMED_HGLOBAL;
-	AddSuportedFormat(_hSelf, fmtetc); 
+	AddSuportedFormat(_hSelf, fmtetc);
 }
 
 void FileList::initProp(ExProp* prop)
@@ -171,22 +171,22 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		case SHORTCUT_CUT:
 			onCut();
 			return TRUE;
-		case SHORTCUT_COPY:  
-			onCopy(); 
+		case SHORTCUT_COPY:
+			onCopy();
 			return TRUE;
-		case SHORTCUT_PASTE: 
-			onPaste();	
+		case SHORTCUT_PASTE:
+			onPaste();
 			return TRUE;
-		case SHORTCUT_ALL: 
-			onSelectAll(); 
+		case SHORTCUT_ALL:
+			onSelectAll();
 			return TRUE;
-		case SHORTCUT_DELETE: 
+		case SHORTCUT_DELETE:
 			onDelete();
 			return TRUE;
 		case SHORTCUT_REFRESH:
 			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
 			return TRUE;
-		default: 
+		default:
 			if (_onCharHandler) {
 				BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
 				if (handled) {
@@ -216,6 +216,16 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+    case WM_KEYUP:
+        if ((VK_RETURN == wParam) && (0x8000 & ::GetKeyState(VK_CONTROL))) {
+            ShowContextMenu();
+            return TRUE;
+        }
+        else if (VK_APPS == wParam) {
+            ShowContextMenu();
+            return TRUE;
+        }
+        break;
 	case WM_SYSKEYDOWN:
 	{
 		if ((0x80 & ::GetKeyState(VK_MENU)) == 0x80) {
@@ -230,6 +240,14 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		}
 		break;
 	}
+    case WM_SYSKEYUP:
+        if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
+            if (wParam == VK_F10) {
+                ShowContextMenu();
+                return TRUE;
+            }
+        }
+        break;
 	case WM_MOUSEMOVE:
 	{
 		LVHITTESTINFO	hittest			= {0};
@@ -283,7 +301,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			RECT	rc		= {0};
 			Header_GetItemRect(_hHeader, 0, &rc);
 
-			UINT	iItem	= ListView_GetTopIndex(_hSelf);		
+			UINT	iItem	= ListView_GetTopIndex(_hSelf);
 			ScDir	scrDir	= GetScrollDirection(_hSelf, rc.bottom - rc.top);
 
 			if ((scrDir != SCR_UP) || (iItem == 0) || (!m_bAllowDrop)) {
@@ -321,7 +339,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		if (iPos < _uMaxElements) {
 			/* test if overlay icon is need to be updated and if it's changed do a redraw */
 			if (_vFileList[iPos].iOverlay == 0) {
-				ExtractIcons(_pExProp->szCurrentPath, _vFileList[iPos].strNameExt.c_str(), 
+				ExtractIcons(_pExProp->szCurrentPath, _vFileList[iPos].strNameExt.c_str(),
 					type, &iIcon, &iSelected, &_vFileList[iPos].iOverlay);
 			}
 
@@ -359,8 +377,8 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		ListView_SubItemHitTest(_hSelf, &hittest);
 
 		for (UINT i = 0; i < _uMaxFolders; i++) {
-			ListView_SetItemState(_hSelf, i, 
-				i == hittest.iItem ? LVIS_DROPHILITED : 0, 
+			ListView_SetItemState(_hSelf, i,
+				i == hittest.iItem ? LVIS_DROPHILITED : 0,
 				LVIS_DROPHILITED);
 		}
 
@@ -387,7 +405,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	default:
 		break;
 	}
-	
+
 	return ::DefSubclassProc(hwnd, Message, wParam, lParam);
 }
 
@@ -459,7 +477,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			for (UINT i = 0; i < _uMaxElements; i++) {
 				_vFileList[i].state = ListView_GetItemState(_hSelf, i, LVIS_FOCUSED | LVIS_SELECTED);
 			}
-				
+
 			INT iPos  = ((LPNMLISTVIEW)lParam)->iSubItem;
 
 			if (iPos != _pExProp->iSortPos)
@@ -508,7 +526,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 		}
 		case NM_RCLICK:
 		{
-			onRMouseBtn();
+			ShowContextMenu();
 			break;
 		}
 		case LVN_BEGINDRAG:
@@ -611,7 +629,7 @@ void FileList::UpdateOverlayIcon(void)
 					LIST_UNLOCK();
 				}
 				i++;
-			} 
+			}
 			else {
 				::SetEvent(_hEvent[FL_EVT_INT]);
 			}
@@ -628,7 +646,7 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
 	DevType		type			= (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
 	if (_vFileList[iItem].iIcon == -1) {
-		ExtractIcons(_pExProp->szCurrentPath, _vFileList[iItem].strNameExt.c_str(), 
+		ExtractIcons(_pExProp->szCurrentPath, _vFileList[iItem].strNameExt.c_str(),
 			type, &_vFileList[iItem].iIcon, &iIconSelected, NULL);
 	}
 	*piIcon		= _vFileList[iItem].iIcon;
@@ -963,11 +981,6 @@ void FileList::SetColumns(void)
 	SetOrder();
 }
 
-#ifndef HDF_SORTDOWN
-#define HDF_SORTDOWN	0x0200
-#define HDF_SORTUP		0x0400
-#endif
-
 void FileList::SetOrder(void)
 {
     HDITEM	hdItem		= {0};
@@ -987,8 +1000,8 @@ void FileList::SetOrder(void)
 
 /*********************************************************************************
  *	User interactions
- */ 
-void FileList::onRMouseBtn(void)
+ */
+void FileList::ShowContextMenu(void)
 {
 	std::vector<std::wstring>	data;
 	BOOL						isParent = FALSE;
@@ -1123,7 +1136,7 @@ void FileList::onPaste(void)
 		ErrorMessage(::GetLastError());
 		return;
 	}
-	if (hEffect[0] == 2) { 
+	if (hEffect[0] == 2) {
 		doPaste(_pExProp->szCurrentPath, hFiles, DROPEFFECT_MOVE);
 	}
 	else if (hEffect[0] == 5) {
@@ -1487,7 +1500,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	if (NULL == lpDropFileStruct) {
 		GlobalFree(hDrop);
 		return;
-	}				
+	}
 	::ZeroMemory(lpDropFileStruct, bufsz);
 
 	lpDropFileStruct->pFiles = sizeof(DROPFILES);
@@ -1513,10 +1526,10 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	GlobalUnlock(hDrop);
 
 	/* Init the supported format */
-	FORMATETC fmtetc	= {0}; 
-	fmtetc.cfFormat		= CF_HDROP; 
-	fmtetc.dwAspect		= DVASPECT_CONTENT; 
-	fmtetc.lindex		= -1; 
+	FORMATETC fmtetc	= {0};
+	fmtetc.cfFormat		= CF_HDROP;
+	fmtetc.dwAspect		= DVASPECT_CONTENT;
+	fmtetc.lindex		= -1;
 	fmtetc.tymed		= TYMED_HGLOBAL;
 
 	/* Init the medium used */
