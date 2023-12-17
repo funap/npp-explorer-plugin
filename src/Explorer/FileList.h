@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "Explorer.h"
+#include "ExplorerContext.h"
 #include "ExplorerResource.h"
 #include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/Window.h"
@@ -30,6 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <shellapi.h>
 #include <functional>
+#include <optional>
 
 struct StaInfo {
 	std::wstring				strPath;
@@ -38,7 +40,7 @@ struct StaInfo {
 
 
 /* pattern for column resize by mouse */
-static const WORD DotPattern[] = 
+static const WORD DotPattern[] =
 {
 	0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 };
@@ -65,9 +67,10 @@ struct FileListData {
 class FileList : public Window, public CIDropTarget
 {
 public:
-	FileList(void);
+	FileList(void) = delete;
+    explicit FileList(ExplorerContext* context);
 	~FileList(void);
-	
+
 	void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
 	void initProp(ExProp* prop);
 
@@ -133,7 +136,7 @@ protected:
 	void QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending);
 	void QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending);
 
-	void ShowContextMenu();
+	void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
 	void onLMouseBtnDbl();
 
 	void onSelectItem(TCHAR charkey);
@@ -212,7 +215,7 @@ private:
 	BOOL							_isStackRec;
 	std::vector<StaInfo>			_vDirStack;
 	std::vector<StaInfo>::iterator	_itrPos;
-    
+
 	ToolBar*					_pToolBar;
 	UINT						_idRedo;
 	UINT						_idUndo;
@@ -222,4 +225,5 @@ private:
 	BOOL						_isDnDStarted;
 
 	std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)>		_onCharHandler;
+    ExplorerContext*            _context;
 };

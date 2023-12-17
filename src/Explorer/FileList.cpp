@@ -59,8 +59,7 @@ namespace {
 	}
 }
 
-
-FileList::FileList(void)
+FileList::FileList(ExplorerContext *context)
 	: _hHeader(nullptr)
 	, _hImlListSys(nullptr)
 	, _pExProp(nullptr)
@@ -85,6 +84,7 @@ FileList::FileList(void)
 	, _isScrolling(FALSE)
 	, _isDnDStarted(FALSE)
 	, _onCharHandler(nullptr)
+    , _context(context)
 {
 }
 
@@ -217,12 +217,16 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		break;
 	}
     case WM_KEYUP:
-        if ((VK_RETURN == wParam) && (0x8000 & ::GetKeyState(VK_CONTROL))) {
-            ShowContextMenu();
-            return TRUE;
-        }
-        else if (VK_APPS == wParam) {
-            ShowContextMenu();
+        if (VK_APPS == wParam) {
+            int index = ListView_GetSelectionMark(_hSelf);
+            RECT rect;
+            ListView_GetItemRect(_hSelf, index, &rect, LVIR_ICON);
+            ClientToScreen(_hSelf, &rect);
+            POINT screenLocation = {
+                .x = rect.right,
+                .y = rect.bottom,
+            };
+            ShowContextMenu(screenLocation);
             return TRUE;
         }
         break;
@@ -526,7 +530,12 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 		}
 		case NM_RCLICK:
 		{
-			ShowContextMenu();
+            DWORD pos = ::GetMessagePos();
+            POINT screenLocation = {
+                .x = GET_X_LPARAM(pos),
+                .y = GET_Y_LPARAM(pos),
+            };
+            ShowContextMenu(screenLocation);
 			break;
 		}
 		case LVN_BEGINDRAG:
@@ -1001,35 +1010,49 @@ void FileList::SetOrder(void)
 /*********************************************************************************
  *	User interactions
  */
-void FileList::ShowContextMenu(void)
+void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
 {
-	std::vector<std::wstring>	data;
-	BOOL						isParent = FALSE;
+    if (!screenLocation.has_value()) {
+        int index = ListView_GetSelectionMark(_hSelf);
+        RECT rect;
+        ListView_GetItemRect(_hSelf, index, &rect, LVIR_ICON);
+        ClientToScreen(_hSelf, &rect);
+        screenLocation = {
+            .x = rect.right,
+            .y = rect.bottom,
+        };
+    }
 
-	/* create data */
-	for (UINT uList = 0; uList < _uMaxElements; uList++) {
-		if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
-			if (uList == 0) {
-				if (_tcsicmp(_vFileList[0].strName.c_str(), _T("..")) == 0) {
-					ListView_SetItemState(_hSelf, uList, 0, 0xFF);
-					isParent = TRUE;
-					continue;
-				}
-			}
+    bool isParent = false;
+    std::vector<std::wstring> paths;
 
-			if (uList < _uMaxFolders) {
-				data.push_back(_pExProp->szCurrentPath + _vFileList[uList].strName + _T("\\"));
-			}
-			else {
-				data.push_back(_pExProp->szCurrentPath + _vFileList[uList].strNameExt);
-			}
-		}
-	}
+    /* create data */
+    for (UINT uList = 0; uList < _uMaxElements; uList++) {
+        if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
+            if (uList == 0) {
+                if (_vFileList[0].strName == L"..") {
+                    ListView_SetItemState(_hSelf, uList, 0, 0xFF);
+                    isParent = true;
+                    continue;
+                }
+            }
 
-	if (data.size() == 0) {
-		data.push_back(_pExProp->szCurrentPath);
-	}
-	::SendMessage(_hParent, EXM_RIGHTCLICK, isParent && (data.size() == 1), (LPARAM)&data);
+            if (uList < _uMaxFolders) {
+                paths.push_back(_pExProp->szCurrentPath + _vFileList[uList].strName + _T("\\"));
+            }
+            else {
+                paths.push_back(_pExProp->szCurrentPath + _vFileList[uList].strNameExt);
+            }
+        }
+    }
+
+    if (paths.size() == 0) {
+        paths.push_back(_pExProp->szCurrentPath);
+    }
+
+    const auto hasStandardMenu = !(isParent && (paths.size() == 1));
+
+    _context->ShowContextMenu(screenLocation.value(), paths, hasStandardMenu);
 }
 
 void FileList::onLMouseBtnDbl(void)

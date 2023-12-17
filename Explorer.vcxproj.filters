@@ -235,6 +235,9 @@
     <ClInclude Include="src\Explorer\DirectoryReader.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerContext.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="src\Explorer\res\explore.bmp">

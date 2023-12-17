@@ -283,6 +283,7 @@
     <ClInclude Include="src\Explorer\DirectoryReader.h" />
     <ClInclude Include="src\Explorer\DragDropImpl.h" />
     <ClInclude Include="src\Explorer\Explorer.h" />
+    <ClInclude Include="src\Explorer\ExplorerContext.h" />
     <ClInclude Include="src\Explorer\ExplorerDialog.h" />
     <ClInclude Include="src\Explorer\ExplorerResource.h" />
     <ClInclude Include="src\Explorer\FavesDialog.h" />

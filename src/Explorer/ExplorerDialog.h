@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlwapi.h>
 
 #include "Explorer.h"
+#include "ExplorerContext.h"
 #include "ExplorerResource.h"
 
 enum EventID {
@@ -54,7 +55,7 @@ struct GetVolumeInfo {
 };
 
 
-class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget
+class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget, public ExplorerContext
 {
 public:
 	ExplorerDialog(void);
@@ -96,8 +97,8 @@ public:
 
 	void SetFont(const HFONT font);
 public:
-	virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect);
-
+	bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
+    void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
 protected:
 
 	/* Subclassing tree */
@@ -143,7 +144,6 @@ protected:
 	std::wstring GetFolderPathName(HTREEITEM currentItem) const;
 
 	BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
-    void ShowContextMenu(HTREEITEM item);
 private:
 	/* Handles */
 	BOOL					_bStartupFinish;

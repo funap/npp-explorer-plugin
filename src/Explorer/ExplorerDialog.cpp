@@ -54,10 +54,6 @@ int DebugPrintf(LPCTSTR format, ...)
 	return len;
 }
 
-#ifndef CSIDL_PROFILE
-#define CSIDL_PROFILE (0x0028)
-#endif
-
 HANDLE g_hEvent[EID_MAX]	= {NULL};
 HANDLE g_hThread			= NULL;
 
@@ -166,7 +162,9 @@ LPCTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
 
 
 
-ExplorerDialog::ExplorerDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
+ExplorerDialog::ExplorerDialog(void)
+    : DockingDlgInterface(IDD_EXPLORER_DLG)
+    , _FileList(this)
 {
 	_hDefaultTreeProc		= NULL;
 	_hDefaultSplitterProc	= NULL;
@@ -279,37 +277,25 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				}
 			}
 			else if (nmhdr->hwndFrom == _hTreeCtrl) {
-				switch (nmhdr->code)
-				{
-					case NM_RCLICK:
-					{
-						ContextMenu		cm;
-						POINT			pt		= {0};
-						TVHITTESTINFO	ht		= {0};
-						DWORD			dwpos	= ::GetMessagePos();
-						HTREEITEM		hItem	= NULL;
+                switch (nmhdr->code) {
+                    case NM_RCLICK: {
+                        const DWORD pos = ::GetMessagePos();
+                        const POINT pt {
+                            .x = GET_X_LPARAM(pos),
+                            .y = GET_Y_LPARAM(pos),
+                        };
+                        TVHITTESTINFO ht {
+                            .pt = pt
+                        };
+                        ::ScreenToClient(_hTreeCtrl, &ht.pt);
 
-						pt.x = GET_X_LPARAM(dwpos);
-						pt.y = GET_Y_LPARAM(dwpos);
-
-						ht.pt = pt;
-						::ScreenToClient(_hTreeCtrl, &ht.pt);
-
-						hItem = TreeView_HitTest(_hTreeCtrl, &ht);
-						if (hItem != NULL)
-						{
-							TCHAR	strPathName[MAX_PATH];
-
-							GetFolderPathName(hItem, strPathName);
-
-							cm.SetObjects(strPathName);
-							cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt);
-
-							::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
-							::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
-						}
-						return TRUE;
-					}
+                        const HTREEITEM item = TreeView_HitTest(_hTreeCtrl, &ht);
+                        if (item != nullptr) 	{
+                            const auto path = GetFolderPathName(item);
+                            ShowContextMenu(pt, {path});
+                        }
+                        return TRUE;
+                    }
 					case TVN_SELCHANGED:
 					{
 						if (_isSelNotifyEnable == TRUE)
@@ -661,27 +647,6 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 			}
 			return TRUE;
 		}
-		case EXM_RIGHTCLICK:
-		{
-			ContextMenu					cm;
-			POINT						pt				= {0};
-			std::vector<std::wstring>	files			= *((std::vector<std::wstring>*)lParam);
-			HTREEITEM					hItem			= TreeView_GetSelection(_hTreeCtrl);
-			DWORD						dwpos			= ::GetMessagePos();
-			TCHAR						folderPathName[MAX_PATH];
-
-			GetFolderPathName(hItem, folderPathName);
-
-			pt.x = GET_X_LPARAM(dwpos);
-			pt.y = GET_Y_LPARAM(dwpos);
-
-			cm.SetObjects(files);
-			cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt, wParam == FALSE);
-
-			::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
-			::SetTimer(_hSelf, EXT_UPDATEACTIVATEPATH, 200, NULL);
-			return TRUE;
-		}
 		case EXM_UPDATE_PATH :
 		{
 			UpdatePath();
@@ -796,14 +761,17 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			break;
 		}
         case WM_KEYUP:
-            if ((VK_RETURN == wParam) && (0x8000 & ::GetKeyState(VK_CONTROL))) {
-                HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
-                ShowContextMenu(hItem);
-                return TRUE;
-            }
-            else if (VK_APPS == wParam) {
-                HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
-                ShowContextMenu(hItem);
+            if (VK_APPS == wParam) {
+                HTREEITEM item = TreeView_GetSelection(_hTreeCtrl);
+                RECT rect{};
+                TreeView_GetItemRect(_hTreeCtrl, item, &rect, TRUE);
+                ::ClientToScreen(_hTreeCtrl, &rect);
+                const POINT pt{
+                    .x = rect.right,
+                    .y = rect.bottom,
+                };
+                const auto path = GetFolderPathName(item);
+                ShowContextMenu(pt, {path});
                 return TRUE;
             }
             break;
@@ -842,8 +810,16 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         case WM_SYSKEYUP:
             if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
                 if (wParam == VK_F10) {
-                    HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
-                    ShowContextMenu(hItem);
+                    HTREEITEM item = TreeView_GetSelection(_hTreeCtrl);
+                    RECT rect{};
+                    TreeView_GetItemRect(_hTreeCtrl, item, &rect, TRUE);
+                    ::ClientToScreen(_hTreeCtrl, &rect);
+                    const POINT pt{
+                        .x = rect.right,
+                        .y = rect.bottom,
+                    };
+                    const auto path = GetFolderPathName(item);
+                    ShowContextMenu(pt, {path});
                     return TRUE;
                 }
             }
@@ -2345,21 +2321,9 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 	return true;
 }
 
-void ExplorerDialog::ShowContextMenu(HTREEITEM item)
+void ExplorerDialog::ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu)
 {
-    if (item != nullptr) {
-        RECT rect;
-        TreeView_GetItemRect(_hTreeCtrl, item, &rect, TRUE);
-        ClientToScreen(_hTreeCtrl, &rect);
-        POINT pt{
-            .x = rect.right,
-            .y = rect.top,
-        };
-
-        ContextMenu cm;
-        auto strPathName = GetFolderPathName(item);
-        cm.SetObjects(strPathName);
-        cm.ShowContextMenu(_hInst, _hParent, _hSelf, pt);
-    }
-    return;
+    ContextMenu cm;
+    cm.SetObjects(paths);
+    cm.ShowContextMenu(_hInst, _hParent, _hSelf, screenLocation, hasStandardMenu);
 }

@@ -66,7 +66,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define	IDM_EX_GO_TO_FOLDER				(IDM_TOOLBAR + 8)
 	#define	IDM_EX_GO_TO_USER				(IDM_TOOLBAR + 9)
 	#define IDM_EX_UPDATE					(IDM_TOOLBAR + 10)
-	
+
 	#define	IDM_EX_EXPLORER					(IDM_TOOLBAR + 11)
 	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 12)
 	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 13)
@@ -101,11 +101,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_STATIC_NAME                 (IDD_PROP_DLG + 8)
 	#define IDC_STATIC_LINK                 (IDD_PROP_DLG + 9)
 	#define IDC_BTN_CHOOSEFONT              (IDD_PROP_DLG + 10)
-                                        
+
 #define		IDD_QUICK_OPEN_DLG   30630
 	#define IDC_EDIT_SEARCH					(IDD_QUICK_OPEN_DLG + 1)
 	#define IDC_LIST_RESULTS				(IDD_QUICK_OPEN_DLG + 2)
-                                       
+
 #define		IDD_OPTION_DLG   30650
 	#define IDC_CHECK_BRACES                (IDD_OPTION_DLG + 1)
 	#define IDC_CHECK_AUTO                  (IDD_OPTION_DLG + 2)
@@ -135,7 +135,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_EDIT_HISTORYSIZE			(IDD_OPTION_DLG + 26)
 	#define IDC_STATIC_HISTORY				(IDD_OPTION_DLG + 27)
 
-#define    IDD_HELP_DLG	     30700         
+#define    IDD_HELP_DLG	     30700
     #define IDC_EMAIL_LINK                  (IDD_HELP_DLG + 1)
 	#define IDC_NPP_PLUGINS_URL				(IDD_HELP_DLG + 2)
 	#define IDC_STATIC_AUTHOR               (IDD_HELP_DLG + 3)
@@ -157,7 +157,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define EXM_CHANGECOMBO					(EXX_MESSAGES + 1)
 	#define EXM_OPENDIR						(EXX_MESSAGES + 2)
 	#define EXM_OPENFILE					(EXX_MESSAGES + 3)
-	#define EXM_RIGHTCLICK					(EXX_MESSAGES + 4)
 	#define EXM_UPDATE_PATH					(EXX_MESSAGES + 5)
 	#define EXM_UPDATE_OVERICON				(EXX_MESSAGES + 6)
 	#define EXM_QUERYDROP					(EXX_MESSAGES + 7)
