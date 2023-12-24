@@ -98,6 +98,11 @@ public:
 	void SetFont(const HFONT font);
 public:
 	bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
+    void NavigateBack() override;
+    void NavigateForward() override;
+    void NavigateTo(const std::wstring& path) override;
+    void Open(const std::wstring& path) override;
+    void Refresh() override;
     void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
 protected:
 

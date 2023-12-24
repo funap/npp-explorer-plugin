@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <dbt.h>
 #include <algorithm>
+#include <filesystem>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -569,87 +570,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 		}
 		case EXM_OPENDIR:
 		{
-			if (_tcslen((LPTSTR)lParam) != 0)
-			{
-				TCHAR		folderPathName[MAX_PATH]	= _T("\0");
-				TCHAR		folderChildPath[MAX_PATH]	= _T("\0");
-
-				LPTSTR		szInList		= NULL;
-				HTREEITEM	hItem			= TreeView_GetSelection(_hTreeCtrl);
-
-				_tcscpy(folderPathName, (LPTSTR)lParam);
-
-				if (((folderPathName[1] != ':') && (folderPathName[2] != '\\')) &&
-					((folderPathName[0] != '\\') &&(folderPathName[1] != '\\')))
-				{
-					/* get current folder path */
-					GetFolderPathName(hItem, folderPathName);
-					_stprintf(folderPathName, _T("%s%s\\"), folderPathName, (LPTSTR)lParam);
-
-					/* test if selected parent folder */
-					if (_tcscmp((LPTSTR)lParam, _T("..")) == 0)
-					{
-						/* if so get the parent folder name and the current one */
-						*_tcsrchr(folderPathName, '\\') = '\0';
-						*_tcsrchr(folderPathName, '\\') = '\0';
-						szInList = _tcsrchr(folderPathName, '\\');
-
-						/*
-						 * if pointer of szInList is smaller as pointer of
-						 * folderPathName, it seems to be a root folder and break
-						 */
-						if (szInList < folderPathName)
-							break;
-
-						_tcscpy(folderChildPath, &szInList[1]);
-						szInList[1] = '\0';
-					}
-				}
-
-				/* if last char no backslash, add one */
-				if (folderPathName[_tcslen(folderPathName)-1] != '\\')
-					_tcscat(folderPathName, _T("\\"));
-
-				/* select item */
-				SelectItem(folderPathName);
-
-				/* set position of selection */
-				if (folderChildPath[0] != '\0') {
-					_FileList.SelectFolder(folderChildPath);
-				} else {
-					_FileList.SelectFolder(_T(".."));
-				}
-			}
-			return TRUE;
-		}
-		case EXM_OPENFILE:
-		{
-			if (_tcslen((LPTSTR)lParam) != 0)
-			{
-				TCHAR		pszFilePath[MAX_PATH];
-				TCHAR		pszShortcutPath[MAX_PATH];
-				HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
-
-				/* get current folder path */
-				GetFolderPathName(hItem, pszFilePath);
-				_stprintf(pszShortcutPath, _T("%s%s"), pszFilePath, (LPTSTR)lParam);
-
-				/* open possible link */
-				if (ResolveShortCut(pszShortcutPath, pszFilePath, MAX_PATH) == S_OK) {
-					if (::PathIsDirectory(pszFilePath) != FALSE) {
-						SelectItem(pszFilePath);
-					} else {
-						::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszFilePath);
-					}
-				} else {
-					::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszShortcutPath);
-				}
-			}
-			return TRUE;
-		}
-		case EXM_UPDATE_PATH :
-		{
-			UpdatePath();
+            NavigateTo((LPTSTR)lParam);
 			return TRUE;
 		}
 		case EXM_USER_ICONBAR:
@@ -794,19 +715,16 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 			break;
 		}
 		case WM_SYSKEYDOWN:
-		{
-			if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000)
-			{
-				if (wParam == VK_LEFT) {
-					tb_cmd(IDM_EX_PREV);
-					return TRUE;
-				} else if (wParam == VK_RIGHT) {
-					tb_cmd(IDM_EX_NEXT);
-					return TRUE;
-				}
-			}
-			break;
-		}
+            if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000) {
+                if (wParam == VK_LEFT) {
+                    NavigateBack();
+                    return TRUE;
+                } else if (wParam == VK_RIGHT) {
+                    NavigateForward();
+                    return TRUE;
+                }
+            }
+            break;
         case WM_SYSKEYUP:
             if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
                 if (wParam == VK_F10) {
@@ -1009,52 +927,12 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 {
 	switch (message)
 	{
-		case IDM_EX_PREV:
-		{
-			TCHAR			pszPath[MAX_PATH];
-			BOOL			dirValid	= TRUE;
-			BOOL			selected	= TRUE;
-			std::vector<std::wstring>	vStrItems;
-
-			_FileList.ToggleStackRec();
-
-			do {
-				if (dirValid = _FileList.GetPrevDir(pszPath, vStrItems))
-					selected = SelectItem(pszPath);
-			} while (dirValid && (selected == FALSE));
-
-			if (selected == FALSE)
-				_FileList.GetNextDir(pszPath, vStrItems);
-
-			if (vStrItems.size() != 0)
-				_FileList.SetItems(vStrItems);
-
-			_FileList.ToggleStackRec();
-			break;
-		}
-		case IDM_EX_NEXT:
-		{
-			TCHAR			pszPath[MAX_PATH];
-			BOOL			dirValid	= TRUE;
-			BOOL			selected	= TRUE;
-			std::vector<std::wstring>	vStrItems;
-
-			_FileList.ToggleStackRec();
-
-			do {
-				if (dirValid = _FileList.GetNextDir(pszPath, vStrItems))
-					selected = SelectItem(pszPath);
-			} while (dirValid && (selected == FALSE));
-
-			if (selected == FALSE)
-				_FileList.GetPrevDir(pszPath, vStrItems);
-
-			if (vStrItems.size() != 0)
-				_FileList.SetItems(vStrItems);
-
-			_FileList.ToggleStackRec();
-			break;
-		}
+        case IDM_EX_PREV:
+            NavigateBack();
+            break;
+        case IDM_EX_NEXT:
+            NavigateForward();
+            break;
 		case IDM_EX_FILE_NEW:
 		{
 			NewDlg		dlg;
@@ -1140,11 +1018,9 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 		case IDM_EX_FAVORITES:
 			toggleFavesDialog();
 			break;
-		case IDM_EX_UPDATE:
-		{
-			::SetEvent(g_hEvent[EID_UPDATE_USER]);
-			break;
-		}
+        case IDM_EX_UPDATE:
+            Refresh();
+            break;
 		default:
 			break;
 	}
@@ -2261,6 +2137,116 @@ bool ExplorerDialog::OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEff
 	TreeView_SelectDropTarget(_hTreeCtrl, NULL);
 
 	return true;
+}
+
+void ExplorerDialog::NavigateBack()
+{
+    TCHAR			pszPath[MAX_PATH];
+    BOOL			dirValid	= TRUE;
+    BOOL			selected	= TRUE;
+    std::vector<std::wstring>   vStrItems;
+
+    _FileList.ToggleStackRec();
+
+    do {
+        if (dirValid = _FileList.GetPrevDir(pszPath, vStrItems)) {
+            selected = SelectItem(pszPath);
+        }
+    } while (dirValid && (selected == FALSE));
+
+    if (selected == FALSE) {
+        _FileList.GetNextDir(pszPath, vStrItems);
+    }
+
+    if (vStrItems.size() != 0) {
+        _FileList.SetItems(vStrItems);
+    }
+
+    _FileList.ToggleStackRec();
+}
+
+void ExplorerDialog::NavigateForward()
+{
+    TCHAR			pszPath[MAX_PATH];
+    BOOL			dirValid	= TRUE;
+    BOOL			selected	= TRUE;
+    std::vector<std::wstring>	vStrItems;
+
+    _FileList.ToggleStackRec();
+
+    do {
+        if (dirValid = _FileList.GetNextDir(pszPath, vStrItems)) {
+            selected = SelectItem(pszPath);
+        }
+    } while (dirValid && (selected == FALSE));
+
+    if (selected == FALSE) {
+        _FileList.GetPrevDir(pszPath, vStrItems);
+    }
+
+    if (vStrItems.size() != 0) {
+        _FileList.SetItems(vStrItems);
+    }
+
+    _FileList.ToggleStackRec();
+}
+
+void ExplorerDialog::NavigateTo(const std::wstring &path)
+{
+    if (!path.empty()) {
+        std::filesystem::path navigatePath(path);
+
+        std::filesystem::path lastPath;
+        if (navigatePath.is_relative()) {
+            HTREEITEM item = TreeView_GetSelection(_hTreeCtrl);
+            lastPath = GetFolderPathName(item);
+            navigatePath = lastPath;
+            navigatePath = navigatePath.concat(path).lexically_normal().concat(L"\\");
+        }
+
+
+        // select item
+        SelectItem(navigatePath.c_str());
+
+        if (path == L"..") {
+            _FileList.SelectFolder(lastPath.parent_path().filename().c_str());
+        }
+        else {
+            _FileList.SelectFolder(L"..");
+        }
+    }
+
+}
+
+void ExplorerDialog::Open(const std::wstring &path)
+{
+    if (!path.empty())
+    {
+        HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
+
+        /* get current folder path */
+        auto filePath = GetFolderPathName(hItem);
+        filePath += path;
+
+        /* open possible link */
+        TCHAR resolvedPath[MAX_PATH];
+        if (ResolveShortCut(filePath.c_str(), resolvedPath, MAX_PATH) == S_OK) {
+            if (::PathIsDirectory(resolvedPath) != FALSE) {
+                SelectItem(resolvedPath);
+            }
+            else {
+                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath);
+            }
+        }
+        else {
+            ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)filePath.c_str());
+        }
+    }
+}
+
+void ExplorerDialog::Refresh()
+{
+    ::SetEvent(g_hEvent[EID_UPDATE_USER]);
 }
 
 bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)

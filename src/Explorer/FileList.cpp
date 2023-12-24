@@ -184,7 +184,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 			onDelete();
 			return TRUE;
 		case SHORTCUT_REFRESH:
-			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
+            _context->Refresh();
 			return TRUE;
 		default:
 			if (_onCharHandler) {
@@ -202,13 +202,13 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	{
 		switch (wParam) {
 		case VK_DELETE:
-			if ((0x80 & ::GetKeyState(VK_CONTROL)) != 0x80) {
-				onDelete((0x80 & ::GetKeyState(VK_SHIFT)) == 0x80);
+			if ((0x8000 & ::GetKeyState(VK_CONTROL)) != 0x8000) {
+				onDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
 				return TRUE;
 			}
 			break;
 		case VK_F5:
-			::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_UPDATE, 0);
+            _context->Refresh();
 			return TRUE;
 		default:
 
@@ -230,20 +230,18 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             return TRUE;
         }
         break;
-	case WM_SYSKEYDOWN:
-	{
-		if ((0x80 & ::GetKeyState(VK_MENU)) == 0x80) {
-			if (wParam == VK_LEFT) {
-				::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_PREV, 0);
-				return TRUE;
-			}
-			else if (wParam == VK_RIGHT) {
-				::SendMessage(_hParent, EXM_USER_ICONBAR, IDM_EX_NEXT, 0);
-				return TRUE;
-			}
-		}
-		break;
-	}
+    case WM_SYSKEYDOWN:
+        if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000) {
+            if (wParam == VK_LEFT) {
+                _context->NavigateBack();
+                return TRUE;
+            }
+            else if (wParam == VK_RIGHT) {
+                _context->NavigateForward();
+                return TRUE;
+            }
+        }
+        break;
     case WM_SYSKEYUP:
         if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
             if (wParam == VK_F10) {
@@ -499,26 +497,21 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 		}
 		case LVN_KEYDOWN:
 		{
-			switch (((LPNMLVKEYDOWN)lParam)->wVKey)
-			{
-			case VK_RETURN:
-			{
-				UINT	selRow		= ListView_GetSelectionMark(_hSelf);
-
-				if (selRow != -1) {
-					if (selRow < _uMaxFolders) {
-						::SendMessage(_hParent, EXM_OPENDIR, 0, (LPARAM)_vFileList[selRow].strName.c_str());
-					} else {
-						::SendMessage(_hParent, EXM_OPENFILE, 0, (LPARAM)_vFileList[selRow].strNameExt.c_str());
-					}
-				}
-				break;
-			}
-			case VK_BACK:
-			{
-				::SendMessage(_hParent, EXM_OPENDIR, 0, (LPARAM)"..");
-				break;
-			}
+            switch (((LPNMLVKEYDOWN)lParam)->wVKey) {
+            case VK_RETURN: {
+                UINT i = ListView_GetSelectionMark(_hSelf);
+                if (i != -1) {
+                    if (i < _uMaxFolders) {
+                        _context->NavigateTo(_vFileList[i].strName);
+                    } else {
+                        _context->Open(_vFileList[i].strNameExt);
+                    }
+                }
+                break;
+            }
+            case VK_BACK:
+                _context->NavigateTo(L"..");
+                break;
 			default:
 				break;
 			}
@@ -1061,10 +1054,10 @@ void FileList::onLMouseBtnDbl(void)
 
 	if (selRow != -1) {
 		if (selRow < _uMaxFolders) {
-			::SendMessage(_hParent, EXM_OPENDIR, 0, (LPARAM)_vFileList[selRow].strName.c_str());
+            _context->NavigateTo(_vFileList[selRow].strName);
 		}
 		else {
-			::SendMessage(_hParent, EXM_OPENFILE, 0, (LPARAM)_vFileList[selRow].strNameExt.c_str());
+            _context->Open(_vFileList[selRow].strNameExt);
 		}
 	}
 }

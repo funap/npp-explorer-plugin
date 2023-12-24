@@ -1330,7 +1330,7 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
                 explorerDlg.doDialog();
             }
 
-            ::SendMessage(explorerDlg.getHSelf(), EXM_OPENDIR, 0, (LPARAM)pElem->Link().c_str());
+            explorerDlg.NavigateTo(pElem->Link());
 
             /* two-step to avoid flickering */
             if (explorerDlg.isVisible() == FALSE) {
