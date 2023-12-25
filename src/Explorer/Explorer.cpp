@@ -150,7 +150,7 @@ void saveSettings();
 void UpdateThemeColor();
 void initializeFonts();
 
-BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID lpReserved)
+BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserved */)
 {
     g_hInst = hInst;
 
@@ -304,7 +304,7 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
 }
 
 // This function is called, if a notification from Notepad occurs
-extern "C" __declspec(dllexport) LRESULT messageProc(UINT Message, WPARAM wParam, LPARAM lParam)
+extern "C" __declspec(dllexport) LRESULT messageProc(UINT /* Message */, WPARAM /* wParam */, LPARAM /* lParam */)
 {
     return TRUE;
 }
@@ -789,7 +789,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
         if (type == DEVT_DRIVE) {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
-                -1,
+                0,
                 &sfi,
                 sizeof(SHFILEINFO),
                 SHGFI_ICON | SHGFI_SMALLICON | stOverlay);
@@ -840,7 +840,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
         {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
-                -1,
+                0,
                 &sfi,
                 sizeof(SHFILEINFO),
                 SHGFI_ICON | SHGFI_SMALLICON | stOverlay);

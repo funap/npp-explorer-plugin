@@ -148,7 +148,7 @@ void ComboOrgi::selectComboText(LPCTSTR pszText)
 {
 	LRESULT lResult	= -1;
 
-	lResult = ::SendMessage(_hCombo, CB_FINDSTRINGEXACT, -1, (LPARAM)pszText);
+	lResult = ::SendMessage(_hCombo, CB_FINDSTRINGEXACT, (WPARAM)-1, (LPARAM)pszText);
 	::SendMessage(_hCombo, CB_SETCURSEL, lResult, 0);
 }
 

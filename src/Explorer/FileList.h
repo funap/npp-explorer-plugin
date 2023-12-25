@@ -133,8 +133,6 @@ protected:
 
 	BOOL FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos);
 
-	void QuickSortRecursiveCol(INT d, INT h, INT column, BOOL bAscending);
-	void QuickSortRecursiveColEx(INT d, INT h, INT column, BOOL bAscending);
 
 	void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
 	void onLMouseBtnDbl();

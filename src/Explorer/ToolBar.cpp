@@ -172,7 +172,7 @@ void ToolBar::reset(bool create)
 	if (create) {	//if the toolbar has been recreated, readd the buttons
 		SIZE_T nrBtnToAdd = _nrButtons;
 		_nrCurrentButtons = nrBtnToAdd;
-		WORD btnSize = GetSystemMetrics(SM_CYSMICON);
+		INT btnSize = GetSystemMetrics(SM_CYSMICON);
 		::SendMessage(_hSelf, TB_ADDBUTTONS, (WPARAM)nrBtnToAdd, (LPARAM)_pTBB);
         ::SendMessage(_hSelf, TB_SETBUTTONSIZE, (WPARAM)0, (LPARAM)MAKELONG(btnSize, btnSize));
     }

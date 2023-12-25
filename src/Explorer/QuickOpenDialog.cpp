@@ -227,7 +227,7 @@ public:
             // directory was removed
             else {
                 std::wstring dirName = path + L"\\";
-                for (auto it = _entries.begin(); it != _entries.end(); ) {
+                for (it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(dirName)) {
                         (*it)->ResetScore();
                         it = _entries.erase(it);
@@ -262,7 +262,7 @@ public:
             else {
                 std::wstring oldDirName = oldPath + L"\\";
                 std::wstring newDirName = newPath + L"\\";
-                for (auto it = _entries.begin(); it != _entries.end(); ) {
+                for (it = _entries.begin(); it != _entries.end(); ) {
                     if ((*it)->FullPath().starts_with(oldDirName)) {
                         (*it)->Rename(oldDirName, newDirName);
                         (*it)->ResetScore();
@@ -379,8 +379,8 @@ private:
         try {
             while (true) {
                 {
-                    std::unique_lock<std::mutex> lock(_conditionMtx);
-                    _searchCond.wait(lock, [&] { return revision != _condition.revision; });
+                    std::unique_lock<std::mutex> conditionLock(_conditionMtx);
+                    _searchCond.wait(conditionLock, [&] { return revision != _condition.revision; });
                     revision = _condition.revision;
                     if (_condition.stop) {
                         break;
@@ -533,7 +533,7 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 
 
 
-void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath, BOOL forceRefresh)
+void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
 {
     if (_needsRefresh || _directoryReader.GetRootPath().compare(rootPath)) {
         _needsRefresh = false;
@@ -664,7 +664,6 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 
     RECT calcRect = {};
     auto type           = _results[itemID]->MatchType();
-    const auto score    = _results[itemID]->Score();
     const auto filename = _results[itemID]->FileName();
     const auto path     = _results[itemID]->RelativePath();
     auto matches        = _results[itemID]->Matches();
@@ -672,7 +671,6 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     auto last           = matches.cend();
 
     if (type == QuickOpenEntry::MATCH_TYPE::FILE) {
-        size_t matchIndex = 0;
         for (size_t i = 0; i < filename.length(); ++i) {
             if ((itr != last) && (i == *itr)) {
                 ::SetBkColor(hdc, backgroundMatchColor);
@@ -696,7 +694,6 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     drawPosition.left = drawItem->rcItem.left + _layout.itemMarginLeft;
     ::SetTextColor(hdc, textColor2);
     if (type == QuickOpenEntry::MATCH_TYPE::PATH) {
-        size_t matchIndex = 0;
         for (size_t i = 0; i < path.length(); ++i) {
             if ((itr != last) && (i == *itr)) {
                 ::SetBkColor(hdc, backgroundMatchColor);

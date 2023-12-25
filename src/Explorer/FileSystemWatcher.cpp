@@ -107,7 +107,6 @@ void FileSystemWatcher::Run(std::wstring directory)
             .hEvent = hEvent
         };
 
-        DWORD bytesReturned = 0;
         BOOL result = ReadDirectoryChangesW(
             hDir,           // Directory
             buffer.get(),   // Buffer

@@ -102,7 +102,6 @@ DWORD WINAPI GetVolumeInformationTimeoutThread(LPVOID lpParam)
 			volInfo->pszVolumeName, volInfo->maxSize, &serialNr, &space, &flags, NULL, 0);
 
 	::SetEvent(g_hEvent[EID_GET_VOLINFO]);
-	::ExitThread(0);
 	return 0;
 }
 
@@ -2121,7 +2120,7 @@ void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UI
 	}
 }
 
-bool ExplorerDialog::OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect)
+bool ExplorerDialog::OnDrop(FORMATETC* /* pFmtEtc */, STGMEDIUM& medium, DWORD* pdwEffect)
 {
 	LPDROPFILES hFiles	= (LPDROPFILES)::GlobalLock(medium.hGlobal);
 	if (NULL == hFiles)
@@ -2149,7 +2148,8 @@ void ExplorerDialog::NavigateBack()
     _FileList.ToggleStackRec();
 
     do {
-        if (dirValid = _FileList.GetPrevDir(pszPath, vStrItems)) {
+        dirValid = _FileList.GetPrevDir(pszPath, vStrItems);
+        if (dirValid) {
             selected = SelectItem(pszPath);
         }
     } while (dirValid && (selected == FALSE));
@@ -2175,7 +2175,8 @@ void ExplorerDialog::NavigateForward()
     _FileList.ToggleStackRec();
 
     do {
-        if (dirValid = _FileList.GetNextDir(pszPath, vStrItems)) {
+        dirValid = _FileList.GetNextDir(pszPath, vStrItems);
+        if (dirValid) {
             selected = SelectItem(pszPath);
         }
     } while (dirValid && (selected == FALSE));

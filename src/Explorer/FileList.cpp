@@ -54,7 +54,6 @@ namespace {
 	{
 		FileList* pFileList = (FileList*)lpParam;
 		pFileList->UpdateOverlayIcon();
-		::ExitThread(0);
 		return 0;
 	}
 }
@@ -1590,7 +1589,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 	}
 }
 
-bool FileList::OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect)
+bool FileList::OnDrop(FORMATETC* /* pFmtEtc*/, STGMEDIUM& medium, DWORD* pdwEffect)
 {
 	LPDROPFILES   hDrop = (LPDROPFILES)::GlobalLock(medium.hGlobal);
 	if (NULL == hDrop)

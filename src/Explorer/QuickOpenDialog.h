@@ -45,7 +45,7 @@ public:
 
     void init(HINSTANCE hInst, HWND parent, ExProp* prop);
     void show();
-    void setRootPath(const std::filesystem::path& currentPath, BOOL forceRefresh = FALSE);
+    void setRootPath(const std::filesystem::path& currentPath);
     void close();
     void SetFont(HFONT font);
 private:

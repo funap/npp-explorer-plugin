@@ -51,7 +51,7 @@ void DirectoryReader::ReadDir(const std::filesystem::path& rootPath, ReadDirCall
     _needsStop = false;
     _reading = true;
     _workerThread = std::thread([this](DirectoryReader* self) {
-        bool complete = self->ReadDirRecursive(self->GetRootPath());
+        self->ReadDirRecursive(self->GetRootPath());
         _reading = false;
         _readDirFinCallback();
     }, this);
