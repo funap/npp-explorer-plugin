@@ -70,8 +70,7 @@ FileList::FileList(ExplorerContext *context)
 	, _uMaxElements(0)
 	, _uMaxElementsOld(0)
 	, _vFileList()
-	, _bSearchFile(FALSE)
-	, _strSearchFile{}
+	, _searchQuery()
 	, _bOldAddExtToName(FALSE)
 	, _bOldViewLong(FALSE)
 	, _isStackRec(TRUE)
@@ -163,7 +162,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	}
 	case WM_CHAR:
 	{
-		CHAR	charkey = (CHAR)tolower((int)wParam);
+		WCHAR charkey = std::towlower((WCHAR)wParam);
 
 		/* do selection of items by user keyword typing or cut/copy/paste */
 		switch (charkey) {
@@ -294,8 +293,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 	{
 		if (wParam == EXT_SEARCHFILE) {
 			::KillTimer(_hSelf, EXT_SEARCHFILE);
-			_bSearchFile = FALSE;
-			_tcscpy(_strSearchFile, _T(""));
+            _searchQuery.clear();
 			return FALSE;
 		}
 		else if (wParam == EXT_SCROLLLISTUP) {
@@ -1061,7 +1059,7 @@ void FileList::onLMouseBtnDbl(void)
 	}
 }
 
-void FileList::onSelectItem(TCHAR charkey)
+void FileList::onSelectItem(WCHAR charkey)
 {
 	UINT	selRow		= ListView_GetSelectionMark(_hSelf);
 
@@ -1074,22 +1072,24 @@ void FileList::onSelectItem(TCHAR charkey)
 		selRow = 0;
 	}
 
+    /* on first call start searching on next element */
+    if (_searchQuery.empty()) {
+        selRow++;
+    }
+
 	/* add character to string */
-	_tcsncat(_strSearchFile, &charkey, 1);
+    _searchQuery.append(1, charkey);
 
-	/* on first call start searching on next element */
-	if (_bSearchFile == FALSE) {
-		selRow++;
+	BOOL found = FindNextItemInList(&selRow);
+	if (!found) {
+        _searchQuery.pop_back();
+        if (!_searchQuery.empty()) {
+            selRow++;
+            found = FindNextItemInList(&selRow);
+        }
 	}
 
-	BOOL bRet		= FindNextItemInList(_uMaxFolders, _uMaxElements, &selRow);
-	if ((bRet == FALSE) && (_bSearchFile == TRUE)) {
-		_strSearchFile[_tcslen(_strSearchFile)-1] = '\0';
-		selRow++;
-		bRet = FindNextItemInList(_uMaxFolders, _uMaxElements, &selRow);
-	}
-
-	if (bRet == TRUE) {
+	if (found) {
 		/* select only one item */
 		for (UINT i = 0; i < _uMaxElements; i++) {
 			ListView_SetItemState(_hSelf, i, (selRow == i ? LVIS_SELANDFOC : 0), 0xFF);
@@ -1097,9 +1097,6 @@ void FileList::onSelectItem(TCHAR charkey)
 		ListView_SetSelectionMark(_hSelf, selRow);
 		ListView_EnsureVisible(_hSelf, selRow, TRUE);
 	}
-
-	/* mark that we starting with searching */
-	_bSearchFile = TRUE;
 }
 
 void FileList::onSelectAll(void)
@@ -1194,16 +1191,15 @@ void FileList::onDelete(bool immediate)
 	SHFileOperation(&fileOp);
 }
 
-BOOL FileList::FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos)
+BOOL FileList::FindNextItemInList(LPUINT puPos)
 {
-	TCHAR	pszFileName[MAX_PATH];
 	BOOL	bRet		= FALSE;
 	UINT	iStartPos	= *puPos;
 
 	/* search in list */
 	for (UINT i = iStartPos; i != (iStartPos-1); i++) {
 		/* if max data is reached, set iterator to zero */
-		if (i == maxData) {
+		if (i == _vFileList.size()) {
 			if (iStartPos <= 1) {
 				break;
 			}
@@ -1212,12 +1208,9 @@ BOOL FileList::FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos
 			}
 		}
 
-		_tcscpy(pszFileName, _vFileList[i].strName.c_str());
-
-		/* trancate the compare length */
-		pszFileName[_tcslen(_strSearchFile)] = '\0';
-
-		if (_tcsicmp(pszFileName, _strSearchFile) == 0) {
+        std::wstring lowerFileName = _vFileList[i].strName;
+        std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), towlower);
+        if (0 == lowerFileName.compare(0, _searchQuery.size(), _searchQuery)) {
 			/* string found in any following case */
 			bRet	= TRUE;
 			*puPos	= i;

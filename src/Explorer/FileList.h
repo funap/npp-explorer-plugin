@@ -131,13 +131,13 @@ protected:
 	void SetColumns(void);
 	void SetOrder(void);
 
-	BOOL FindNextItemInList(SIZE_T maxFolder, SIZE_T maxData, LPUINT puPos);
+	BOOL FindNextItemInList(LPUINT puPos);
 
 
 	void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
 	void onLMouseBtnDbl();
 
-	void onSelectItem(TCHAR charkey);
+	void onSelectItem(WCHAR charkey);
 	void onSelectAll(void);
 	void onDelete(bool immediate = false);
 	void onCopy(void);
@@ -203,8 +203,7 @@ private:
 	std::vector<FileListData>	_vFileList;
 
 	/* search in list by typing of characters */
-	BOOL						_bSearchFile;
-	TCHAR						_strSearchFile[MAX_PATH];
+    std::wstring                _searchQuery;
 
 	BOOL						_bOldAddExtToName;
 	BOOL						_bOldViewLong;
