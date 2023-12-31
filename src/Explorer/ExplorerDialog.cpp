@@ -222,7 +222,7 @@ void ExplorerDialog::redraw()
     ::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
 
     /* and only when dialog is visible, select item again */
-    SelectItem(_pExProp->szCurrentPath);
+    SelectItem(_pExProp->currentDir.c_str());
 
     ::SetEvent(g_hEvent[EID_UPDATE_USER]);
 };
@@ -238,7 +238,6 @@ void ExplorerDialog::doDialog(bool willBeShown)
         data.dlgID = DOCKABLE_EXPLORER_INDEX;
         data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
         data.hIconTab = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_EXPLORE), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
-        data.pszAddInfo = _pExProp->szCurrentPath;
         data.pszModuleName = getPluginFileName();
 
         ThemeRenderer::Instance().Register(_hSelf);
@@ -346,6 +345,18 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 }
                 case TVN_SELCHANGED:
                 {
+                    HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
+                    if (hItem != NULL) {
+                        const auto path = GetPath(hItem);
+                        /* save current path */
+                        if (PathIsDirectory(path.c_str())) {
+                            _pExProp->currentDir = path;
+                        }
+                        else {
+                            std::filesystem::path currentDir(path);
+                            _pExProp->currentDir = currentDir.parent_path().wstring() + L"\\";
+                        }
+                    }
                     if (_isSelNotifyEnable == TRUE)
                     {
                         ::KillTimer(_hSelf, EXT_SELCHANGE);
@@ -533,15 +544,9 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 			}
 			else if (wParam == EXT_SELCHANGE)
 			{
-				::KillTimer(_hSelf, EXT_SELCHANGE);
-
-				HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
-
-				if (hItem != NULL) {
-					const auto path = GetPath(hItem);
-					_FileList.viewPath(path.c_str(), TRUE);
-					updateDockingDlg();
-				}
+                ::KillTimer(_hSelf, EXT_SELCHANGE);
+                _FileList.viewPath(_pExProp->currentDir.c_str(), TRUE);
+                updateDockingDlg();
 				return FALSE;
 			}
 			return TRUE;
@@ -599,15 +604,12 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 					return TRUE;
 				}
 				case VK_TAB:
-                    if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-                        ::SetFocus(_hFilter);
-                    }
-                    else {
-                        if (!_pExProp->useFullTree) {
-                            ::SetFocus(_hListCtrl);
+                    if (!_pExProp->useFullTree) {
+                        if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
+                            ::SetFocus(_hFilter);
                         }
                         else {
-                            ::SetFocus(_hFilter);
+                            ::SetFocus(_hListCtrl);
                         }
                     }
                     return TRUE;
@@ -1039,7 +1041,7 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 			UpdateRoots();
 
 			/* set data */
-			SelectItem(_pExProp->szCurrentPath);
+			SelectItem(_pExProp->currentDir.c_str());
 
 			/* Update "Go to Folder" icon */
 			NotifyNewFile();
@@ -1209,33 +1211,44 @@ void ExplorerDialog::SetFont(const HFONT font)
 	::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)font, TRUE);
 }
 
-BOOL ExplorerDialog::SelectItem(LPCTSTR path)
+BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
 {
     BOOL				folderExists	= FALSE;
-
-    TCHAR				szItemName[MAX_PATH];
-    std::wstring        currentPath;
-
     SIZE_T				iPathLen		= 0;
     BOOL				isRoot			= TRUE;
     HTREEITEM			hItem			= TreeView_GetRoot(_hTreeCtrl);
     HTREEITEM			hItemSel		= NULL;
     HTREEITEM			hItemUpdate		= NULL;
 
-    auto longPath = [](LPCTSTR path) -> std::wstring {
+    auto longPath = [](const std::filesystem::path& path) -> std::filesystem::path {
         TCHAR szLongPath[MAX_PATH];
         TCHAR szRemotePath[MAX_PATH];
         /* convert possible net path name and get the full path name for compare */
-        if (ConvertNetPathName(path, szRemotePath, MAX_PATH) == TRUE) {
+        if (ConvertNetPathName(path.c_str(), szRemotePath, MAX_PATH) == TRUE) {
             ::GetLongPathName(szRemotePath, szLongPath, MAX_PATH);
         }
         else {
-            ::GetLongPathName(path, szLongPath, MAX_PATH);
+            ::GetLongPathName(path.c_str(), szLongPath, MAX_PATH);
         }
-        return std::wstring(szLongPath);
+        return { szLongPath };
     }(path);
 
-    if (longPath.empty()) {
+    std::list<std::wstring> pathSegments;
+    for (const auto& segment : longPath) {
+        pathSegments.push_back(segment.wstring());
+    }
+
+    // remove "" and "\\"
+    for (auto it = pathSegments.begin(); it != pathSegments.end();) {
+        if (*it == L"" || *it == L"\\") {
+            it = pathSegments.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+
+    if (pathSegments.empty()) {
         return folderExists;
     }
 
@@ -1245,32 +1258,27 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
         return folderExists;
     }
 
-    if (longPath.back() != L'\\') {
-        longPath.push_back(L'\\');
-    }
-
     /* disabled detection of TVN_SELCHANGED notification */
     _isSelNotifyEnable = FALSE;
 
+    // mount the root path if it is unmounted
     if (PathIsNetworkPath(longPath.c_str())) {
-        // mount the root path if it is unmounted
         do {
-            GetItemText(hItem, szItemName, MAX_PATH);
+            auto itemName = GetItemText(hItem);
 
             // truncate item name if we are in root
-            if (('A' <= szItemName[0]) && (szItemName[0] <= 'Z')) {
-                szItemName[2] = '\0';
+            if (('A' <= itemName[0]) && (itemName[0] <= 'Z')) {
+                itemName.resize(2);
             }
 
             // compare path names
-            std::wstring itemPath = currentPath + szItemName;
-            if (_tcsnicmp(longPath.c_str(), itemPath.c_str(), itemPath.size()) == 0) {
+            if (_tcsnicmp(longPath.c_str(), itemName.c_str(), itemName.size()) == 0) {
                 // allready mounted
                 break;
             }
             hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT);
             if (hItem == nullptr) {
-                // szLongPath is not mounted, add root item
+                // longPath is not mounted, add root item
                 WCHAR root[MAX_PATH] = {};
                 wcsncpy_s(root, longPath.c_str(), MAX_PATH);
                 ::PathStripToRoot(root);
@@ -1282,18 +1290,24 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
     // expand select item
     hItem = TreeView_GetRoot(_hTreeCtrl);
     do {
-        GetItemText(hItem, szItemName, MAX_PATH);
+        if (pathSegments.empty()) {
+            break;
+        }
+        auto itemName = GetItemText(hItem);
 
         /* truncate item name if we are in root */
-        if (isRoot == TRUE && (('A' <= szItemName[0]) && (szItemName[0] <= 'Z'))) {
-            szItemName[2] = '\0';
+        if (isRoot == TRUE && (('A' <= itemName[0]) && (itemName[0] <= 'Z'))) {
+            itemName.resize(2);
         }
 
         /* compare path names */
-        std::wstring itemPath = currentPath + szItemName + L"\\";
-        if (_tcsnicmp(longPath.c_str(), itemPath.c_str(), itemPath.size()) == 0) {
-            /* set current selected path */
-            currentPath.assign(itemPath);
+        const std::wstring &segment = pathSegments.front();
+        if (segment == itemName) {
+            /* only on first case it is a root */
+            if (isRoot == TRUE) {
+                isRoot = FALSE;
+            }
+            pathSegments.pop_front();
 
             /* found -> store item for correct selection */
             hItemSel = hItem;
@@ -1305,14 +1319,6 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
                 FetchChildren(hItem);
             }
             hItem = TreeView_GetChild(_hTreeCtrl, hItem);
-
-            /* only on first case it is a root */
-            isRoot = FALSE;
-
-            /* leave loop if last element is reached */
-            if (currentPath.size() == longPath.size()) {
-                break;
-            }
         } else {
             /* search for next item in list */
             hItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_NEXT);
@@ -1329,12 +1335,12 @@ BOOL ExplorerDialog::SelectItem(LPCTSTR path)
     } while (hItem != NULL);
 
     /* view path */
-    if (!currentPath.empty()) {
+    if (hItemSel != NULL) {
         /* select last selected item */
         TreeView_SelectItem(_hTreeCtrl, hItemSel);
         TreeView_EnsureVisible(_hTreeCtrl, hItemSel);
 
-        _FileList.viewPath(currentPath.c_str(), TRUE);
+        _FileList.viewPath(_pExProp->currentDir.c_str(), TRUE);
         updateDockingDlg();
     }
 
@@ -1356,7 +1362,7 @@ BOOL ExplorerDialog::gotoPath(void)
 	szFolderName[0] = '\0';
 
 	/* copy current path to show current position */
-	_tcscpy(szFolderName, _pExProp->szCurrentPath);
+	_tcscpy(szFolderName, _pExProp->currentDir.c_str());
 
 	dlg.init(_hInst, _hParent);
 	while (bLeave == FALSE)
@@ -1411,7 +1417,9 @@ void ExplorerDialog::gotoCurrentFile(void)
     TCHAR	pathName[MAX_PATH];
     if (_pExProp->useFullTree) {
         ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)pathName);
-        SelectItem(pathName);
+        if (PathFileExists(pathName)) {
+            SelectItem(pathName);
+        }
     }
     else {
         ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
@@ -1635,8 +1643,8 @@ void ExplorerDialog::UpdateAllExpandedItems(void)
 void ExplorerDialog::UpdatePath(void)
 {
     if (!_pExProp->useFullTree) {
-        _FileList.ToggleStackRec();
         auto path = GetPath(TreeView_GetSelection(_hTreeCtrl));
+        _FileList.ToggleStackRec();
         _FileList.viewPath(path.c_str());
         _FileList.ToggleStackRec();
     }

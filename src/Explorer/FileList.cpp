@@ -338,7 +338,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
 		if (iPos < _uMaxElements) {
 			/* test if overlay icon is need to be updated and if it's changed do a redraw */
 			if (_vFileList[iPos].iOverlay == 0) {
-				ExtractIcons(_pExProp->szCurrentPath, _vFileList[iPos].strNameExt.c_str(),
+				ExtractIcons(_pExProp->currentDir.c_str(), _vFileList[iPos].strNameExt.c_str(),
 					type, &iIcon, &iSelected, &_vFileList[iPos].iOverlay);
 			}
 
@@ -554,7 +554,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 			case CDDS_ITEMPREPAINT: {
 				auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
 				if (index >= static_cast<INT>(_uMaxFolders)) {
-					std::wstring strFilePath = _pExProp->szCurrentPath + _vFileList[index].strNameExt;
+					std::wstring strFilePath = _pExProp->currentDir + _vFileList[index].strNameExt;
 					if (IsFileOpen(strFilePath.c_str()) == TRUE) {
 						::SelectObject(lpCD->nmcd.hdc, _pExProp->underlineFont);
 						::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
@@ -645,7 +645,7 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
 	DevType		type			= (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
 	if (_vFileList[iItem].iIcon == -1) {
-		ExtractIcons(_pExProp->szCurrentPath, _vFileList[iItem].strNameExt.c_str(),
+		ExtractIcons(_pExProp->currentDir.c_str(), _vFileList[iItem].strNameExt.c_str(),
 			type, &_vFileList[iItem].iIcon, &iIconSelected, NULL);
 	}
 	*piIcon		= _vFileList[iItem].iIcon;
@@ -795,9 +795,6 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 		::FindClose(hFind);
 	}
 
-	/* save current path */
-	_tcscpy(_pExProp->szCurrentPath, currentPath);
-
 	/* add current dir to stack */
 	PushDir(currentPath);
 
@@ -836,7 +833,7 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 void FileList::filterFiles(LPCTSTR currentFilter)
 {
 	_pExProp->fileFilter.setFilter(currentFilter);
-	viewPath(_pExProp->szCurrentPath, TRUE);
+	viewPath(_pExProp->currentDir.c_str(), TRUE);
 }
 
 void FileList::SelectFolder(LPCTSTR selFile)
@@ -1028,16 +1025,16 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
             }
 
             if (uList < _uMaxFolders) {
-                paths.push_back(_pExProp->szCurrentPath + _vFileList[uList].strName + _T("\\"));
+                paths.push_back(_pExProp->currentDir + _vFileList[uList].strName + _T("\\"));
             }
             else {
-                paths.push_back(_pExProp->szCurrentPath + _vFileList[uList].strNameExt);
+                paths.push_back(_pExProp->currentDir + _vFileList[uList].strNameExt);
             }
         }
     }
 
     if (paths.size() == 0) {
-        paths.push_back(_pExProp->szCurrentPath);
+        paths.push_back(_pExProp->currentDir);
     }
 
     const auto hasStandardMenu = !(isParent && (paths.size() == 1));
@@ -1149,10 +1146,10 @@ void FileList::onPaste(void)
 		return;
 	}
 	if (hEffect[0] == 2) {
-		doPaste(_pExProp->szCurrentPath, hFiles, DROPEFFECT_MOVE);
+		doPaste(_pExProp->currentDir.c_str(), hFiles, DROPEFFECT_MOVE);
 	}
 	else if (hEffect[0] == 5) {
-		doPaste(_pExProp->szCurrentPath, hFiles, DROPEFFECT_COPY);
+		doPaste(_pExProp->currentDir.c_str(), hFiles, DROPEFFECT_COPY);
 	}
 	::GlobalUnlock(hFiles);
 	::GlobalUnlock(hEffect);
@@ -1164,7 +1161,7 @@ void FileList::onPaste(void)
 
 void FileList::onDelete(bool immediate)
 {
-	SIZE_T	lengthPath	= _tcslen(_pExProp->szCurrentPath);
+	SIZE_T	lengthPath	= _pExProp->currentDir.size();
 	UINT	bufSize		= ListView_GetSelectedCount(_hSelf) * MAX_PATH;
 	LPTSTR	lpszFiles	= new TCHAR[bufSize];
 	::ZeroMemory(lpszFiles, bufSize);
@@ -1176,7 +1173,7 @@ void FileList::onDelete(bool immediate)
 			if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
 				continue;
 			}
-			_tcscpy(&lpszFiles[offset], _pExProp->szCurrentPath);
+			_tcscpy(&lpszFiles[offset], _pExProp->currentDir.c_str());
 			_tcscpy(&lpszFiles[offset+lengthPath], _vFileList[i].strNameExt.c_str());
 			offset += lengthPath + _vFileList[i].strNameExt.size() + 1;
 		}
@@ -1488,7 +1485,7 @@ void FileList::SetItems(std::vector<std::wstring> vStrItems)
  */
 void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect)
 {
-	SIZE_T	parsz = _tcslen(_pExProp->szCurrentPath);
+	SIZE_T	parsz = _pExProp->currentDir.size();
 	SIZE_T	bufsz = sizeof(DROPFILES) + sizeof(TCHAR);
 
 	/* get buffer size */
@@ -1525,7 +1522,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
 			if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
 				continue;
 			}
-			_tcscpy(&szPath[offset], _pExProp->szCurrentPath);
+			_tcscpy(&szPath[offset], _pExProp->currentDir.c_str());
 			_tcscpy(&szPath[offset+parsz], _vFileList[i].strNameExt.c_str());
 			offset += parsz + _vFileList[i].strNameExt.size() + 1;
 		}
@@ -1590,7 +1587,7 @@ bool FileList::OnDrop(FORMATETC* /* pFmtEtc*/, STGMEDIUM& medium, DWORD* pdwEffe
 
 	/* get target */
 	TCHAR	pszFilesTo[MAX_PATH];
-	_tcscpy(pszFilesTo, _pExProp->szCurrentPath);
+	_tcscpy(pszFilesTo, _pExProp->currentDir.c_str());
 
 	/* get position */
 	LVHITTESTINFO	hittest			= {0};

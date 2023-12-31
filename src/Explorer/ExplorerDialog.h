@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <memory>
 #include <algorithm>
 #include <shlwapi.h>
+#include <filesystem>
 
 #include "Explorer.h"
 #include "ExplorerContext.h"
@@ -122,7 +123,7 @@ protected:
 	void UpdateAllExpandedItems(void);
 	void UpdatePath(void);
 
-	BOOL SelectItem(LPCTSTR path);
+	BOOL SelectItem(const std::filesystem::path& path);
 
 	void onDelete(bool immediate = false);
 	void onCopy(void);

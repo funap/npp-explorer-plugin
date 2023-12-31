@@ -392,8 +392,8 @@ void loadSettings(void)
     }
 
     WCHAR temp[MAX_PATH]{};
-    ::GetPrivateProfileString(Explorer, LastPath, _T("C:\\"), exProp.szCurrentPath, MAX_PATH, iniFilePath);
-    ::GetPrivateProfileString(Explorer, RootFolder, L"", temp, MAX_PATH, iniFilePath); exProp.rootFolder.assign(temp);
+    ::GetPrivateProfileString(Explorer, LastPath, _T("C:\\"), temp, MAX_PATH, iniFilePath);     exProp.currentDir.assign(temp);
+    ::GetPrivateProfileString(Explorer, RootFolder, L"", temp, MAX_PATH, iniFilePath);          exProp.rootFolder.assign(temp);
     exProp.iSplitterPos             = ::GetPrivateProfileInt(Explorer, SplitterPos, 120, iniFilePath);
     exProp.iSplitterPosHorizontal   = ::GetPrivateProfileInt(Explorer, SplitterPosHor, 200, iniFilePath);
     exProp.bAscending               = ::GetPrivateProfileInt(Explorer, SortAsc, TRUE, iniFilePath);
@@ -428,8 +428,8 @@ void loadSettings(void)
     ::GetPrivateProfileString(Explorer, LastFilter, _T("*.*"), pszTemp, MAX_PATH, iniFilePath);
     exProp.fileFilter.setFilter(pszTemp);
 
-    if (::PathFileExists(exProp.szCurrentPath) == FALSE) {
-        _tcscpy(exProp.szCurrentPath, _T("C:\\"));
+    if (::PathFileExists(exProp.currentDir.c_str()) == FALSE) {
+        exProp.currentDir = L"C:\\";
     }
 
     // get default font
@@ -462,7 +462,7 @@ void saveSettings(void)
 {
     WCHAR temp[256]{};
 
-    ::WritePrivateProfileString(Explorer, LastPath, exProp.szCurrentPath, iniFilePath);
+    ::WritePrivateProfileString(Explorer, LastPath, exProp.currentDir.c_str(), iniFilePath);
     ::WritePrivateProfileString(Explorer, RootFolder, exProp.rootFolder.c_str(), iniFilePath);
     ::WritePrivateProfileString(Explorer, SplitterPos, _itot(exProp.iSplitterPos, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, SplitterPosHor, _itot(exProp.iSplitterPosHorizontal, temp, 10), iniFilePath);
@@ -602,14 +602,14 @@ void openQuickOpenDlg(void)
         quickOpenDlg.setRootPath(exProp.rootFolder);
     }
     else {
-        quickOpenDlg.setRootPath(exProp.szCurrentPath);
+        quickOpenDlg.setRootPath(exProp.currentDir);
     }
     quickOpenDlg.show();
 }
 
 void openTerminal(void)
 {
-    std::filesystem::path path(exProp.szCurrentPath);
+    std::filesystem::path path(exProp.currentDir);
     ::ShellExecute(g_nppData._nppHandle, _T("open"), exProp.cphProgram.szAppName, nullptr, path.c_str(), SW_SHOW);
 }
 
