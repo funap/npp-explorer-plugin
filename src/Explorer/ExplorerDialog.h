@@ -26,6 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Toolbar.h"
 #include <string>
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include <shlwapi.h>
 
@@ -54,6 +55,7 @@ struct GetVolumeInfo {
 	LPBOOL		pIsValidDrive;
 };
 
+struct FileSystemModel;
 
 class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget, public ExplorerContext
 {
@@ -63,15 +65,7 @@ public:
 
     void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
 
-	virtual void redraw(void) {
-		/* possible new imagelist -> update the window */
-		::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pExProp->bUseSystemIcons));
-		::SetTimer(_hSelf, EXT_UPDATEDEVICE, 0, NULL);
-		_FileList.redraw();
-		::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
-		/* and only when dialog is visible, select item again */
-		SelectItem(_pExProp->szCurrentPath);
-	};
+    void redraw();
 
 	void destroy(void) {};
 
@@ -124,8 +118,8 @@ protected:
 
 	void InitialDialog(void);
 
-	void UpdateDevices(void);
-	void UpdateFolders(void);
+	void UpdateRoots(void);
+	void UpdateAllExpandedItems(void);
 	void UpdatePath(void);
 
 	BOOL SelectItem(LPCTSTR path);
@@ -144,11 +138,11 @@ protected:
 	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
 	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE);
 	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
-	void DrawChildren(HTREEITEM parentItem);
-	void GetFolderPathName(HTREEITEM currentItem, LPTSTR folderPathName) const;
-	std::wstring GetFolderPathName(HTREEITEM currentItem) const;
+	void FetchChildren(HTREEITEM parentItem);
+	std::wstring GetPath(HTREEITEM currentItem) const;
 
 	BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
+    void UpdateLayout();
 private:
 	/* Handles */
 	BOOL					_bStartupFinish;

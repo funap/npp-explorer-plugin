@@ -250,6 +250,7 @@ void OptionDlg::SetParams(void)
 	::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN, BM_SETCHECK, _pProp->bShowHidden?BST_CHECKED:BST_UNCHECKED, 0);
 	::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON, BM_SETCHECK, _pProp->bUseSystemIcons?BST_CHECKED:BST_UNCHECKED, 0);
 	::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV, BM_SETCHECK, _pProp->bAutoNavigate?BST_CHECKED:BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_SETCHECK, _pProp->useFullTree ? BST_CHECKED : BST_UNCHECKED, 0);
 
 	::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, _pProp->nppExecProp.szAppName);
 	::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath);
@@ -305,6 +306,8 @@ BOOL OptionDlg::GetParams(void)
 		_pProp->bUseSystemIcons = TRUE;
 	else
 		_pProp->bUseSystemIcons = FALSE;
+
+    _pProp->useFullTree = (::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_GETCHECK, 0, 0) == BST_CHECKED) ? TRUE : FALSE;
 
 	TCHAR	TEMP[MAX_PATH];
 	::GetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, TEMP, 6);

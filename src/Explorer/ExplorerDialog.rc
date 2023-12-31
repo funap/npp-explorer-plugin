@@ -59,7 +59,6 @@ BEGIN
     CONTROL         "List2",IDC_LIST_FILE,"SysListView32",LVS_REPORT | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS | LVS_OWNERDATA | WS_BORDER | WS_TABSTOP,2,119,161,118,WS_EX_ACCEPTFILES
     COMBOBOX        IDC_COMBO_FILTER,28,251,135,69,CBS_DROPDOWN | CBS_AUTOHSCROLL | WS_VSCROLL | WS_TABSTOP
     CONTROL         "",IDC_BUTTON_SPLITTER,"Button",BS_OWNERDRAW,2,103,161,14
-    LTEXT           "Filter:",IDC_STATIC_FILTER,7,239,18,8
 END
 
 IDD_NEW_DLG DIALOG 0, 0, 254, 62
@@ -96,37 +95,38 @@ STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSM
 CAPTION "Explorer Options"
 FONT 8, "MS Shell Dlg", 0, 0, 0x0
 BEGIN
+    GROUPBOX        "File List",IDC_STATIC_FILELIST,6,6,137,120
     CONTROL         "&Folder With Braces",IDC_CHECK_BRACES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,19,126,10
     CONTROL         "Separate &Extensions",IDC_CHECK_SEPEXT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,31,126,10
-    GROUPBOX        "      &View 'Long' List",IDC_STATIC_LONG,7,47,137,54
-    COMBOBOX        IDC_COMBO_SIZE_FORMAT,47,64,90,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    COMBOBOX        IDC_COMBO_DATE_FORMAT,47,80,90,51,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
-    CONTROL         "Automatic &Update on Focus",IDC_CHECK_AUTO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,19,124,8
-    CONTROL         "Show &Hidden Files",IDC_CHECK_HIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,31,124,8
-    CONTROL         "Use Windows &Icons",IDC_CHECK_USEICON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,43,124,8
-    EDITTEXT        IDC_EDIT_TIMEOUT,253,56,29,12,ES_AUTOHSCROLL | ES_NUMBER
-    EDITTEXT        IDC_EDIT_HISTORYSIZE,253,70,29,12,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Maximum History Size:",IDC_STATIC_HISTORY,157,71,90,8
-    CONTROL         "Auto-navigate to file",IDC_CHECK_AUTONAV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,157,84,124,8
-    DEFPUSHBUTTON   "&Ok",IDOK,289,10,51,14
-    PUSHBUTTON      "&Cancel",IDCANCEL,289,29,51,14
-    CONTROL         "&V",IDC_CHECK_LONG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,48,9,8
-    GROUPBOX        "File List",IDC_STATIC_FILELIST,7,7,137,94
+    GROUPBOX        "",IDC_STATIC_LONG,8,47,133,54
+    CONTROL         "&View 'Long' List",IDC_CHECK_LONG,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,48,63,10
     LTEXT           "Size:",IDC_STATIC_SIZE,13,64,32,12,SS_CENTERIMAGE
     LTEXT           "Date:",IDC_STATIC_DATE,13,80,32,12,SS_CENTERIMAGE
-    GROUPBOX        "General Options",IDC_STATIC_GENOPT,143,7,140,112
-    LTEXT           "Timeout Missed Drives (ms):",IDC_STATIC_TMO,157,57,90,8
-    GROUPBOX        "NppExec Interface",IDC_STATIC_NPPEXEC,7,119,276,51
-    EDITTEXT        IDC_EDIT_EXECNAME,87,133,113,12,ES_AUTOHSCROLL
-    EDITTEXT        IDC_EDIT_SCRIPTPATH,87,150,168,12,ES_AUTOHSCROLL
-    LTEXT           "DLL Name:",IDC_STATIC_EXECNAME,15,133,69,12,SS_CENTERIMAGE
-    LTEXT           "Path of Scripts:",IDC_STATIC_SCRIPTPATH,15,149,69,12,SS_CENTERIMAGE
-    PUSHBUTTON      "...",IDC_BTN_OPENDLG,258,150,14,12
-    PUSHBUTTON      "Create Example",IDC_BTN_EXAMPLE_FILE,203,133,69,12
-    GROUPBOX        "Command Prompt",IDC_STATIC_COMMANDPROMPT,7,165,276,39
-    EDITTEXT        IDC_EDIT_CPH,87,185,113,12,ES_AUTOHSCROLL
-    LTEXT           "Executable:",IDC_STATIC_CPHNAME,15,185,69,12,SS_CENTERIMAGE
-    PUSHBUTTON      "font",IDC_BTN_CHOOSEFONT,155,99,124,14
+    COMBOBOX        IDC_COMBO_SIZE_FORMAT,47,64,90,59,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    COMBOBOX        IDC_COMBO_DATE_FORMAT,47,80,90,51,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "General Options",IDC_STATIC_GENOPT,144,6,140,120
+    CONTROL         "Automatic &Update on Focus",IDC_CHECK_AUTO,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,18,124,8
+    CONTROL         "Show &Hidden Files",IDC_CHECK_HIDDEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,30,124,8
+    CONTROL         "Use Windows &Icons",IDC_CHECK_USEICON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,42,124,8
+    CONTROL         "Auto-navigate to file",IDC_CHECK_AUTONAV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,54,124,8
+    CONTROL         "Use &Full tree",IDC_CHECK_USEFULLTREE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,156,66,124,8
+    LTEXT           "Maximum History Size:",IDC_STATIC_HISTORY,157,92,90,8
+    EDITTEXT        IDC_EDIT_TIMEOUT,249,77,29,12,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_EDIT_HISTORYSIZE,249,91,29,12,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "Timeout Missed Drives (ms):",IDC_STATIC_TMO,155,78,90,8
+    PUSHBUTTON      "font",IDC_BTN_CHOOSEFONT,155,106,124,14
+    GROUPBOX        "NppExec Interface",IDC_STATIC_NPPEXEC,7,126,276,51
+    EDITTEXT        IDC_EDIT_EXECNAME,87,140,113,12,ES_AUTOHSCROLL
+    EDITTEXT        IDC_EDIT_SCRIPTPATH,87,157,168,12,ES_AUTOHSCROLL
+    LTEXT           "DLL Name:",IDC_STATIC_EXECNAME,15,140,69,12,SS_CENTERIMAGE
+    LTEXT           "Path of Scripts:",IDC_STATIC_SCRIPTPATH,15,156,69,12,SS_CENTERIMAGE
+    PUSHBUTTON      "...",IDC_BTN_OPENDLG,258,157,14,12
+    PUSHBUTTON      "Create Example",IDC_BTN_EXAMPLE_FILE,203,140,69,12
+    GROUPBOX        "Command Prompt",IDC_STATIC_COMMANDPROMPT,7,172,276,39
+    EDITTEXT        IDC_EDIT_CPH,87,192,113,12,ES_AUTOHSCROLL
+    LTEXT           "Executable:",IDC_STATIC_CPHNAME,15,192,69,12,SS_CENTERIMAGE
+    DEFPUSHBUTTON   "&Ok",IDOK,289,10,51,14
+    PUSHBUTTON      "&Cancel",IDCANCEL,289,29,51,14
 END
 
 IDD_QUICK_OPEN_DLG DIALOGEX 0, 0, 407, 221
@@ -234,19 +234,32 @@ END
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
 IDI_PARENTFOLDER        ICON                    "res\\parent.ico"
+
 IDI_FOLDER              ICON                    "res\\folder.ico"
+
 IDI_FILE                ICON                    "res\\file.ico"
+
 IDI_WEB                 ICON                    "res\\web.ico"
+
 IDI_SESSION             ICON                    "res\\session.ico"
+
 IDI_GROUP               ICON                    "res\\group.ico"
+
 IDI_EXPLORE             ICON                    "res\\explore.ico"
+
 IDI_HEART               ICON                    "res\\Heart.ico"
+
 IDI_WARN_SESSION        ICON                    "res\\warnsession.ico"
+
 IDI_MISSING_FILE        ICON                    "res\\missingfile.ico"
+
 IDI_TB_FLUENT_EXPLORER  ICON                    "res\\fluent_explorer.ico"
-IDI_TB_FLUENT_EXPLORER_DARKMODE ICON            "res\\fluent_explorer_dark.ico"
+
+IDI_TB_FLUENT_EXPLORER_DARKMODE ICON                    "res\\fluent_explorer_dark.ico"
+
 IDI_TB_FLUENT_FAVES     ICON                    "res\\fluent_faves.ico"
-IDI_TB_FLUENT_FAVES_DARKMODE ICON               "res\\fluent_faves_dark.ico"
+
+IDI_TB_FLUENT_FAVES_DARKMODE ICON                    "res\\fluent_faves_dark.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

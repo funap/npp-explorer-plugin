@@ -66,6 +66,7 @@ constexpr WCHAR ShowLongInfo[]      = L"ShowLongInfo";
 constexpr WCHAR AddExtToName[]      = L"AddExtToName";
 constexpr WCHAR AutoUpdate[]        = L"AutoUpdate";
 constexpr WCHAR AutoNavigate[]      = L"AutoNavigate";
+constexpr WCHAR UseFullTree[]       = L"UseFullTree";
 constexpr WCHAR SizeFormat[]        = L"SizeFormat";
 constexpr WCHAR DateFormat[]        = L"DateFormat";
 constexpr WCHAR FilterHistory[]     = L"FilterHistory";
@@ -407,6 +408,7 @@ void loadSettings(void)
     exProp.bAddExtToName            = ::GetPrivateProfileInt(Explorer, AddExtToName, FALSE, iniFilePath);
     exProp.bAutoUpdate              = ::GetPrivateProfileInt(Explorer, AutoUpdate, TRUE, iniFilePath);
     exProp.bAutoNavigate            = ::GetPrivateProfileInt(Explorer, AutoNavigate, FALSE, iniFilePath);
+    exProp.useFullTree              = ::GetPrivateProfileInt(Explorer, UseFullTree, FALSE, iniFilePath);
     exProp.fmtSize                  = (SizeFmt)::GetPrivateProfileInt(Explorer, SizeFormat, SizeFmt::SFMT_KBYTE, iniFilePath);
     exProp.fmtDate                  = (DateFmt)::GetPrivateProfileInt(Explorer, DateFormat, DFMT_ENG, iniFilePath);
     exProp.uTimeout                 = ::GetPrivateProfileInt(Explorer, TimeOut, 1000, iniFilePath);
@@ -476,6 +478,7 @@ void saveSettings(void)
     ::WritePrivateProfileString(Explorer, AddExtToName, _itot(exProp.bAddExtToName, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, AutoUpdate, _itot(exProp.bAutoUpdate, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, AutoNavigate, _itot(exProp.bAutoNavigate, temp, 10), iniFilePath);
+    ::WritePrivateProfileString(Explorer, UseFullTree, _itot(exProp.useFullTree, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, SizeFormat, _itot((INT)exProp.fmtSize, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);
@@ -717,7 +720,14 @@ BOOL HaveChildren(const std::wstring &folderPath)
         if (IsValidFolder(findData) == TRUE) {
             bFound = FALSE;
             bRet = TRUE;
+            break;
         }
+        if (exProp.useFullTree && IsValidFile(findData) == TRUE) {
+            bFound = FALSE;
+            bRet = TRUE;
+            break;
+        }
+
     } while ((FindNextFile(hFind, &findData)) && (bFound == TRUE));
 
     ::FindClose(hFind);

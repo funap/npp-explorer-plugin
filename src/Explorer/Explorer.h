@@ -138,6 +138,7 @@ struct ExProp{
     NppExecProp                 nppExecProp             {};
     CphProgram                  cphProgram              {};
     SIZE_T                      maxHistorySize          = 0;
+    BOOL                        useFullTree             = false;
 };
 
 

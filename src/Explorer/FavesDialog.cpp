@@ -150,9 +150,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
         _hTreeCtrl    = ::GetDlgItem(_hSelf, IDC_TREE_FOLDER);
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_LIST_FILE));
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_BUTTON_SPLITTER));
-        ::DestroyWindow(::GetDlgItem(_hSelf, IDC_STATIC_FILTER));
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_COMBO_FILTER));
-
         InitialDialog();
         break;
     case WM_NOTIFY: {

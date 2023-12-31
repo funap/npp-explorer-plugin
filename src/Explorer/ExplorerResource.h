@@ -80,11 +80,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #define		IDD_EXPLORER_DLG  30500
 #define		IDD_FAVES_DLG					(IDD_EXPLORER_DLG + 1)
-	#define IDC_TREE_FOLDER					(IDD_EXPLORER_DLG + 2)
-	#define IDC_BUTTON_SPLITTER             (IDD_EXPLORER_DLG + 3)
-	#define IDC_LIST_FILE   				(IDD_EXPLORER_DLG + 4)
-	#define IDC_STATIC_FILTER				(IDD_EXPLORER_DLG + 5)
-    #define IDC_COMBO_FILTER                (IDD_EXPLORER_DLG + 6)
+    #define IDC_TREE_FOLDER					(IDD_EXPLORER_DLG + 2)
+    #define IDC_BUTTON_SPLITTER             (IDD_EXPLORER_DLG + 3)
+    #define IDC_LIST_FILE   				(IDD_EXPLORER_DLG + 4)
+    #define IDC_COMBO_FILTER                (IDD_EXPLORER_DLG + 5)
 
 #define    IDD_NEW_DLG		 30600
 	#define IDC_EDIT_NEW                    (IDD_NEW_DLG + 1)
@@ -134,6 +133,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_CHECK_AUTONAV     		    (IDD_OPTION_DLG + 25)
 	#define IDC_EDIT_HISTORYSIZE			(IDD_OPTION_DLG + 26)
 	#define IDC_STATIC_HISTORY				(IDD_OPTION_DLG + 27)
+    #define IDC_CHECK_USEFULLTREE           (IDD_OPTION_DLG + 28)
 
 #define    IDD_HELP_DLG	     30700
     #define IDC_EMAIL_LINK                  (IDD_HELP_DLG + 1)
