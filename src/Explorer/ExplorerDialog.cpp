@@ -932,8 +932,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 		}
 		case IDM_EX_SEARCH_FIND:
 		{
-            auto currentPath = GetPath(TreeView_GetSelection(_hTreeCtrl));
-			::SendMessage(_hParent, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)currentPath.c_str(), NULL);
+			::SendMessage(_hParent, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)_pExProp->currentDir.c_str(), NULL);
 			break;
 		}
 		case IDM_EX_GO_TO_USER:
@@ -1221,8 +1220,8 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
     HTREEITEM			hItemUpdate		= NULL;
 
     auto longPath = [](const std::filesystem::path& path) -> std::filesystem::path {
-        TCHAR szLongPath[MAX_PATH];
-        TCHAR szRemotePath[MAX_PATH];
+        TCHAR szLongPath[MAX_PATH] = {};
+        TCHAR szRemotePath[MAX_PATH] = {};
         /* convert possible net path name and get the full path name for compare */
         if (ConvertNetPathName(path.c_str(), szRemotePath, MAX_PATH) == TRUE) {
             ::GetLongPathName(szRemotePath, szLongPath, MAX_PATH);
@@ -1235,16 +1234,8 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
 
     std::list<std::wstring> pathSegments;
     for (const auto& segment : longPath) {
-        pathSegments.push_back(segment.wstring());
-    }
-
-    // remove "" and "\\"
-    for (auto it = pathSegments.begin(); it != pathSegments.end();) {
-        if (*it == L"" || *it == L"\\") {
-            it = pathSegments.erase(it);
-        }
-        else {
-            ++it;
+        if (segment != L"" && segment != L"\\") {
+            pathSegments.push_back(segment.wstring());
         }
     }
 
