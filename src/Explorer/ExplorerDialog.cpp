@@ -1448,7 +1448,12 @@ void ExplorerDialog::setFocusOnFolder(void)
 
 void ExplorerDialog::setFocusOnFile(void)
 {
-	::SetFocus(_FileList.getHSelf());
+    if (!_pExProp->useFullTree) {
+        ::SetFocus(_FileList.getHSelf());
+    }
+    else {
+        ::SetFocus(_hTreeCtrl);
+    }
 }
 
 void ExplorerDialog::clearFilter(void)
