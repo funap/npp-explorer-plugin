@@ -1961,6 +1961,7 @@ void ExplorerDialog::UpdateLayout()
         if (_pExProp->useFullTree) {
             getClientRect(rc);
             rc.top += toolBarHeight;
+            rc.bottom -= toolBarHeight;
             ::SetWindowPos(_hTreeCtrl,      NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl,  NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl,      NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
@@ -2014,6 +2015,7 @@ void ExplorerDialog::UpdateLayout()
         if (_pExProp->useFullTree) {
             getClientRect(rc);
             rc.top += toolBarHeight;
+            rc.bottom -= toolBarHeight;
             ::SetWindowPos(_hTreeCtrl, NULL, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl, NULL, 0, 0, 0, 0, SWP_HIDEWINDOW);
