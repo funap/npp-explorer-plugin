@@ -74,7 +74,7 @@ public:
 	void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
 	void initProp(ExProp* prop);
 
-	void viewPath(LPCTSTR currentPath, BOOL redraw = FALSE);
+	void viewPath(const std::wstring& currendDir, BOOL redraw = FALSE);
 
 	BOOL notify(WPARAM wParam, LPARAM lParam);
 
@@ -147,7 +147,7 @@ protected:
 	void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
 	bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
 
-	void PushDir(LPCTSTR str);
+	void PushDir(const std::wstring& str);
 	void UpdateToolBarElements(void);
 
 	void SetFocusItem(SIZE_T item) {

@@ -56,8 +56,6 @@ struct GetVolumeInfo {
 	LPBOOL		pIsValidDrive;
 };
 
-struct FileSystemModel;
-
 class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget, public ExplorerContext
 {
 public:
@@ -137,8 +135,8 @@ protected:
 	void tb_not(LPNMTOOLBAR lpnmtb);
 
 	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-	void UpdateChildren(LPCTSTR pszParentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE);
-	HTREEITEM InsertChildFolder(LPCTSTR childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+	void UpdateChildren(const std::wstring& parentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE);
+	HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
 	void FetchChildren(HTREEITEM parentItem);
 	std::wstring GetPath(HTREEITEM currentItem) const;
 

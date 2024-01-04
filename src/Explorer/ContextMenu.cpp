@@ -190,6 +190,10 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
 	_hWndNpp = hWndNpp;
 	_hWndParent = hWndParent;
 
+    if (!_pidlArray) {
+        return 0;
+    }
+
 	HMENU hShellMenu = ::CreatePopupMenu();
 	if (nullptr == hShellMenu) {
 		return 0;

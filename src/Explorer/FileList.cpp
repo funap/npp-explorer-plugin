@@ -683,29 +683,30 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
 	}
 }
 
-void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
+void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
 {
-	TCHAR					TEMP[MAX_PATH];
-	WIN32_FIND_DATA			Find			= {0};
-	HANDLE					hFind			= NULL;
-	std::vector<FileListData>	vFoldersTemp;
-	std::vector<FileListData>	vFilesTemp;
+    std::wstring findName = currentDir;
+    if (findName.empty()) {
+        return;
+    }
 
-	/* end thread if it is in run mode */
-	::SetEvent(_hEvent[FL_EVT_INT]);
+    /* add backslash if necessary */
+    if (findName.back() != L'\\') {
+        findName.push_back(L'\\');
+    }
+    findName.push_back(L'*');
 
-	/* add backslash if necessary */
-	_tcsncpy(TEMP, currentPath, MAX_PATH-1);
-	if (TEMP[_tcslen(TEMP) - 1] != '\\')
-		_tcscat(TEMP, _T("\\"));
+    /* end thread if it is in run mode */
+    ::SetEvent(_hEvent[FL_EVT_INT]);
 
 	/* clear data */
 	_uMaxElementsOld = _uMaxElements;
 
 	/* find every element in folder */
-	_tcscat(TEMP, _T("*"));
-	hFind = ::FindFirstFile(TEMP, &Find);
-
+    WIN32_FIND_DATA Find{};
+	auto hFind = ::FindFirstFile(findName.c_str(), &Find);
+    std::vector<FileListData> vFoldersTemp;
+    std::vector<FileListData> vFilesTemp;
 	if (hFind != INVALID_HANDLE_VALUE) {
 		/* get current filters */
 		FileListData	tempData;
@@ -769,7 +770,7 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 
 				vFilesTemp.push_back(tempData);
 			}
-			else if ((IsValidParentFolder(Find) == TRUE) && !PathIsRoot(TEMP))
+			else if ((IsValidParentFolder(Find) == TRUE) && !PathIsRoot(currentDir.c_str()))
 			{
 				/* if 'Find' is not a folder but a parent one */
 				tempData.isParent		= TRUE;
@@ -796,7 +797,7 @@ void FileList::viewPath(LPCTSTR currentPath, BOOL redraw)
 	}
 
 	/* add current dir to stack */
-	PushDir(currentPath);
+	PushDir(currentDir);
 
 	LIST_LOCK();
 
@@ -1325,16 +1326,17 @@ void FileList::ToggleStackRec(void)
 	_isStackRec ^= TRUE;
 }
 
-void FileList::PushDir(LPCTSTR pszPath)
+void FileList::PushDir(const std::wstring& path)
 {
 	if (_isStackRec == TRUE) {
-		StaInfo	StackInfo;
-		StackInfo.strPath = pszPath;
+        StaInfo	StackInfo{
+            .strPath = path,
+        };
 
 		if (_itrPos != _vDirStack.end()) {
 			_vDirStack.erase(_itrPos + 1, _vDirStack.end());
 
-			if (_tcsicmp(pszPath, _itrPos->strPath.c_str()) != 0) {
+			if (_tcsicmp(path.c_str(), _itrPos->strPath.c_str()) != 0) {
 				_vDirStack.push_back(StackInfo);
 			}
 		}
