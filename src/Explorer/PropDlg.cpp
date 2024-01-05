@@ -222,7 +222,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                         info.lParam         = (LPARAM)_pLink;
 
                         // Execute the browsing dialog.
-                        LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
+                        PIDLIST_ABSOLUTE pidl = ::SHBrowseForFolder(&info);
 
                         // pidl will be nullptr if they cancel the browse dialog.
                         // pidl will be not nullptr when they select a folder.

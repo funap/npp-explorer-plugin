@@ -78,6 +78,17 @@ static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pDa
 };
 
 
+OptionDlg::OptionDlg()
+    : StaticDialog()
+    , _logfont()
+    , _pProp(nullptr)
+{
+}
+
+OptionDlg::~OptionDlg()
+{
+}
+
 INT_PTR OptionDlg::doDialog(ExProp *prop)
 {
 	_pProp = prop;
@@ -142,7 +153,7 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 						info.lParam				= (LPARAM)_pProp->nppExecProp.szScriptPath;
 
 						// Execute the browsing dialog.
-						LPITEMIDLIST pidl = ::SHBrowseForFolder(&info);
+                        PIDLIST_ABSOLUTE pidl = ::SHBrowseForFolder(&info);
 
 						// pidl will be null if they cancel the browse dialog.
 						// pidl will be not null when they select a folder.

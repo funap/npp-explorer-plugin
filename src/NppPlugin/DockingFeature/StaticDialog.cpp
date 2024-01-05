@@ -53,17 +53,20 @@ POINT StaticDialog::getTopPoint(HWND hwnd, bool isLeft) const
 
 void StaticDialog::goToCenter()
 {
-	RECT rc;
-	::GetClientRect(_hParent, &rc);
+    RECT selfRect;
+    ::GetWindowRect(_hSelf, &selfRect);
+
+    RECT parentRect;
+	::GetClientRect(_hParent, &parentRect);
 	POINT center;
-	center.x = rc.left + (rc.right - rc.left)/2;
-	center.y = rc.top + (rc.bottom - rc.top)/2;
+	center.x = parentRect.left + (parentRect.right - parentRect.left)/2;
+	center.y = parentRect.top + (parentRect.bottom - parentRect.top)/2;
 	::ClientToScreen(_hParent, &center);
 
-	int x = center.x - (_rc.right - _rc.left)/2;
-	int y = center.y - (_rc.bottom - _rc.top)/2;
+	int x = center.x - (selfRect.right - selfRect.left)/2;
+	int y = center.y - (selfRect.bottom - selfRect.top)/2;
 
-	::SetWindowPos(_hSelf, HWND_TOP, x, y, _rc.right - _rc.left, _rc.bottom - _rc.top, SWP_SHOWWINDOW);
+	::SetWindowPos(_hSelf, HWND_TOP, x, y, selfRect.right - selfRect.left, selfRect.bottom - selfRect.top, SWP_SHOWWINDOW);
 }
 
 void StaticDialog::display(bool toShow, bool enhancedPositioningCheckWhenShowing) const
@@ -257,7 +260,6 @@ INT_PTR CALLBACK StaticDialog::dlgProc(HWND hwnd, UINT message, WPARAM wParam, L
 			StaticDialog *pStaticDlg = reinterpret_cast<StaticDialog *>(lParam);
 			pStaticDlg->_hSelf = hwnd;
 			::SetWindowLongPtr(hwnd, GWLP_USERDATA, static_cast<LONG_PTR>(lParam));
-			::GetWindowRect(hwnd, &(pStaticDlg->_rc));
 			pStaticDlg->run_dlgProc(message, wParam, lParam);
 
 			return TRUE;

@@ -51,9 +51,6 @@ protected :
 
 private:
 	void setVersionString();
-
-	/* Handles */
-    HWND			_HSource;
 	
 	/* for eMail */
     URLCtrl			_emailLink;

@@ -612,18 +612,21 @@ void QuickOpenDlg::SetFont(HFONT font)
 
 void QuickOpenDlg::setDefaultPosition()
 {
-    RECT rc;
-    ::GetClientRect(_hParent, &rc);
+    RECT selfRect;
+    ::GetWindowRect(_hSelf, &selfRect);
+
+    RECT parentRect;
+    ::GetClientRect(_hParent, &parentRect);
     POINT center{
-        .x = rc.left + (rc.right - rc.left) / 2,
+        .x = parentRect.left + (parentRect.right - parentRect.left) / 2,
         .y = 0,
     };
     ::ClientToScreen(_hParent, &center);
 
-    int x = center.x - (_rc.right - _rc.left) / 2;
+    int x = center.x - (selfRect.right - selfRect.left) / 2;
     int y = center.y;
 
-    ::SetWindowPos(_hSelf, HWND_TOP, x, y, _rc.right - _rc.left, _rc.bottom - _rc.top, SWP_SHOWWINDOW);
+    ::SetWindowPos(_hSelf, HWND_TOP, x, y, selfRect.right - selfRect.left, selfRect.bottom - selfRect.top, SWP_SHOWWINDOW);
 }
 
 BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
@@ -716,8 +719,6 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 
 INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    static int progressPos = 0;
-
     BOOL ret = FALSE;
     switch (Message) {
     case WM_UPDATE_RUSULT_LIST:
@@ -779,11 +780,15 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 
         // draw progress bar
         if (_directoryReader.IsReading()) {
-            RECT barRect    = _progressBarRect;
-            barRect.left    = max(_progressBarRect.left, progressPos - 16);
-            barRect.right   = min(progressPos + 16,     _progressBarRect.right);
-            progressPos += 2;
-            progressPos %= _progressBarRect.right;
+            static LONG s_progressPos = 0;
+            RECT barRect {
+                .left   = std::max(_progressBarRect.left, s_progressPos - 16),
+                .top    = _progressBarRect.top,
+                .right  = std::min(s_progressPos + 16, _progressBarRect.right),
+                .bottom = _progressBarRect.bottom,
+            };
+            s_progressPos += 2;
+            s_progressPos %= _progressBarRect.right;
 
             const COLORREF progressBarColor = RGB(14, 112, 192);
             const HBRUSH hPbBrush = ::CreateSolidBrush(progressBarColor);

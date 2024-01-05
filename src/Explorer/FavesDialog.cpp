@@ -69,12 +69,20 @@ LPCTSTR FavesDialog::GetNameStrFromCmd(UINT resID)
     return nullptr;
 }
 
-FavesDialog::FavesDialog(void) : DockingDlgInterface(IDD_EXPLORER_DLG)
+FavesDialog::FavesDialog(void)
+    : DockingDlgInterface(IDD_EXPLORER_DLG)
+    , _hDefaultTreeProc(nullptr)
+    , _hImageList(nullptr)
+    , _hImageListSys(nullptr)
+    , _isCut(FALSE)
+    , _hTreeCutCopy(nullptr)
+    , _ToolBar()
+    , _Rebar()
+    , _addToSession(FALSE)
+    , _peOpenLink(nullptr)
+    , _pExProp(nullptr)
+    , _model()
 {
-    _hTreeCtrl      = nullptr;
-    _isCut          = FALSE;
-    _hTreeCutCopy   = nullptr;
-    _addToSession   = FALSE;
 }
 
 FavesDialog::~FavesDialog(void)

@@ -29,8 +29,9 @@ class OptionDlg : public StaticDialog
 {
 
 public:
-	OptionDlg() : StaticDialog() {};
-    
+    OptionDlg();
+    ~OptionDlg();
+
     void init(HINSTANCE hInst, HWND hParent)
 	{
 		Window::init(hInst, hParent);
@@ -50,7 +51,6 @@ protected :
 
 private:
 	/* Handles */
-    HWND			_HSource;
 	LOGFONT			_logfont;
 
 	ExProp*			_pProp;

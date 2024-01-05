@@ -37,23 +37,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ThemeRenderer.h"
 
 namespace {
-int DebugPrintf(LPCTSTR format, ...)
+
+template <typename... Args>
+void DebugPrintf(std::wformat_string<Args...> format, Args&&... args)
 {
-	va_list args;
-	int     len;
-	WCHAR* buf;
-
-	va_start(args, format);
-
-	len = _vscwprintf(format, args) + 1;
-	buf = (WCHAR*)malloc(len * sizeof(WCHAR));
-	len = _vstprintf(buf, format, args);
-
-	OutputDebugString(buf);
-
-	free(buf);
-
-	return len;
+    std::wstring message = std::format(format, std::forward<Args>(args)...);
+    message.push_back('\n');
+    OutputDebugString(message.c_str());
 }
 
 HANDLE g_hEvent[EID_MAX]	= {NULL};
@@ -76,12 +66,12 @@ DWORD WINAPI UpdateThread(LPVOID lpParam)
 
 		if (dwWaitResult == EID_THREAD_END)
 		{
-			DebugPrintf(L"UpdateThread() : EID_THREAD_END\n");
+			DebugPrintf(L"UpdateThread() : EID_THREAD_END");
 			bRun = FALSE;
 		}
 		else if (dwWaitResult < EID_MAX)
 		{
-			DebugPrintf(L"UpdateThread() : NotifyEvent(%d)\n", dwWaitResult);
+            DebugPrintf(L"UpdateThread() : NotifyEvent({})", dwWaitResult);
 			dlg->NotifyEvent(dwWaitResult);
 		}
 	}
@@ -175,27 +165,35 @@ LPCTSTR ExplorerDialog::GetNameStrFromCmd(UINT resID)
 
 
 
+
 ExplorerDialog::ExplorerDialog(void)
     : DockingDlgInterface(IDD_EXPLORER_DLG)
+    , _bStartupFinish(FALSE)
+    , _hExploreVolumeThread(nullptr)
+    , _hItemExpand(nullptr)
+    , _hDefaultTreeProc(nullptr)
+    , _hDefaultSplitterProc(nullptr)
+    , _bOldRectInitilized(FALSE)
+    , _isSelNotifyEnable(TRUE)
+    , _hListCtrl(nullptr)
+    , _hHeader(nullptr)
+    , _hSplitterCtrl(nullptr)
+    , _hFilter(nullptr)
     , _FileList(this)
+    , _ComboFilter()
+    , _ToolBar()
+    , _Rebar()
+    , _ptOldPos()
+    , _ptOldPosHorizontal()
+    , _isLeftButtonDown(FALSE)
+    , _hSplitterCursorUpDown(nullptr)
+    , _hSplitterCursorLeftRight(nullptr)
+    , _pExProp(nullptr)
+    , _hCurWait(nullptr)
+    , _isScrolling(FALSE)
+    , _isDnDStarted(FALSE)
+    , _iDockedPos(CONT_LEFT)
 {
-	_hDefaultTreeProc		= NULL;
-	_hDefaultSplitterProc	= NULL;
-	_hTreeCtrl				= NULL;
-	_hListCtrl				= NULL;
-	_hHeader				= NULL;
-	_hFilter				= NULL;
-	_hCurWait				= NULL;
-	_isScrolling			= FALSE;
-	_isDnDStarted			= FALSE;
-	_isSelNotifyEnable		= TRUE;
-	_isLeftButtonDown		= FALSE;
-	_hSplitterCursorUpDown	= NULL;
-	_bStartupFinish			= FALSE;
-	_bOldRectInitilized		= FALSE;
-	_hExploreVolumeThread	= NULL;
-	_hItemExpand			= NULL;
-	_iDockedPos				= CONT_LEFT;
 }
 
 ExplorerDialog::~ExplorerDialog(void)
@@ -459,7 +457,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 				::Sleep(1);
 			}
 			if (::WaitForSingleObject(g_hThread, 300) != WAIT_OBJECT_0) {
-				DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => TerminateThread!!\n");
+				DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => TerminateThread!!");
 				// https://github.com/funap/npp-explorer-plugin/issues/4
 				// Failsafe for [Bug] Incompatibility with NppMenuSearch plugin #4
 				// TreeView_xxx function in TreeHelper class won't return.
@@ -1393,7 +1391,7 @@ void ExplorerDialog::gotoUserFolder(void)
 {
 	TCHAR	pathName[MAX_PATH];
 
-	if (SHGetSpecialFolderPath(_hSelf, pathName, CSIDL_PROFILE, FALSE) == TRUE) {
+	if (SHGetSpecialFolderPath(nullptr, pathName, CSIDL_PROFILE, FALSE) == TRUE) {
 		_tcscat(pathName, _T("\\"));
 		SelectItem(pathName);
 	}
