@@ -729,60 +729,65 @@ void ContextMenu::quickOpen(void)
 
 void ContextMenu::newFile(void)
 {
-	NewDlg				dlg;
-	BOOL				bLeave		= FALSE;
-	TCHAR				szFileName[MAX_PATH];
-	TCHAR				szComment[] = L"New file";
+    NewDlg  dlg;
+    BOOL    bLeave		= FALSE;
+    TCHAR   szFileName[MAX_PATH];
+    TCHAR   szComment[] = L"New file";
 
-	szFileName[0] = '\0';
+    szFileName[0] = '\0';
 
-	dlg.init(_hInst, _hWndNpp);
-	while (bLeave == FALSE)
-	{
-		if (dlg.doDialog(szFileName, szComment) == TRUE)
-		{
-			/* test if is correct */
-			if (IsValidFileName(szFileName))
-			{
-				std::wstring newFile = _strFirstElement + szFileName;
+    dlg.init(_hInst, _hWndNpp);
+    while (bLeave == FALSE) {
+        if (dlg.doDialog(szFileName, szComment) == TRUE) {
+            /* test if is correct */
+            if (IsValidFileName(szFileName)) {
+                std::filesystem::path newFilePath = _strFirstElement;
+                if (std::filesystem::is_regular_file(newFilePath)) {
+                    newFilePath = newFilePath.parent_path();
+                }
+                newFilePath /= szFileName;
 
-				::CloseHandle(::CreateFile(newFile.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
-				::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)newFile.c_str());
-				bLeave = TRUE;
-			}
-		}
-		else
-			bLeave = TRUE;
-	}
+                ::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
+                ::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                bLeave = TRUE;
+            }
+        }
+        else {
+            bLeave = TRUE;
+        }
+    }
 }
 
 void ContextMenu::newFolder(void)
 {
-	NewDlg				dlg;
-	BOOL				bLeave		= FALSE;
-	TCHAR				szFolderName[MAX_PATH];
-	TCHAR				szComment[MAX_PATH] = L"New folder";
+    NewDlg  dlg;
+    BOOL    bLeave = FALSE;
+    TCHAR   szFolderName[MAX_PATH];
+    TCHAR   szComment[MAX_PATH] = L"New folder";
 
-	szFolderName[0] = '\0';
+    szFolderName[0] = '\0';
 
-	dlg.init(_hInst, _hWndNpp);
-	while (bLeave == FALSE)
-	{
-		if (dlg.doDialog(szFolderName, szComment) == TRUE)
-		{
-			/* test if is correct */
-			if (IsValidFileName(szFolderName))
-			{
-				std::wstring newFolder = _strFirstElement + szFolderName;
-				if (::CreateDirectory(newFolder.c_str(), NULL) == FALSE) {
-					::MessageBox(_hWndNpp, _T("Folder couldn't be created."), _T("Error"), MB_OK);
-				}
-				bLeave = TRUE;
-			}
-		}
-		else
-			bLeave = TRUE;
-	}
+    dlg.init(_hInst, _hWndNpp);
+    while (bLeave == FALSE) {
+        if (dlg.doDialog(szFolderName, szComment) == TRUE) {
+            /* test if is correct */
+            if (IsValidFileName(szFolderName)) {
+                std::filesystem::path newFolderPath = _strFirstElement;
+                if (std::filesystem::is_regular_file(newFolderPath)) {
+                    newFolderPath = newFolderPath.parent_path();
+                }
+                newFolderPath /= szFolderName;
+
+                if (::CreateDirectory(newFolderPath.c_str(), NULL) == FALSE) {
+                    ::MessageBox(_hWndNpp, _T("Folder couldn't be created."), _T("Error"), MB_OK);
+                }
+                bLeave = TRUE;
+            }
+        }
+        else {
+            bLeave = TRUE;
+        }
+    }
 }
 
 void ContextMenu::findInFiles(void)

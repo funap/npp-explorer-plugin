@@ -343,17 +343,16 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 }
                 case TVN_SELCHANGED:
                 {
-                    HTREEITEM	hItem = TreeView_GetSelection(_hTreeCtrl);
-                    if (hItem != NULL) {
-                        const auto path = GetPath(hItem);
+                    HTREEITEM item = TreeView_GetSelection(_hTreeCtrl);
+                    if (item != NULL) {
+                        std::filesystem::path path = GetPath(item);
+                        if (std::filesystem::is_regular_file(path)) {
+                            path = path.parent_path();
+                            path += "\\";
+                        }
                         /* save current path */
-                        if (PathIsDirectory(path.c_str())) {
-                            _pExProp->currentDir = path;
-                        }
-                        else {
-                            std::filesystem::path currentDir(path);
-                            _pExProp->currentDir = currentDir.parent_path().wstring() + L"\\";
-                        }
+                        _pExProp->currentDir = path.wstring();
+                        DebugPrintf(L"pwd:{}", _pExProp->currentDir.c_str());
                     }
                     if (_isSelNotifyEnable == TRUE)
                     {
@@ -884,8 +883,11 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 				{
 					/* test if is correct */
 					if (IsValidFileName(szFileName)) {
-						auto newFilePath = GetPath(TreeView_GetSelection(_hTreeCtrl));
-                        newFilePath += szFileName;
+                        std::filesystem::path newFilePath = GetPath(TreeView_GetSelection(_hTreeCtrl));
+                        if (std::filesystem::is_regular_file(newFilePath)) {
+                            newFilePath = newFilePath.parent_path();
+                        }
+                        newFilePath /= szFileName;
 
 						::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL));
 						::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
@@ -914,8 +916,11 @@ void ExplorerDialog::tb_cmd(WPARAM message)
 				{
 					/* test if is correct */
 					if (IsValidFileName(szFolderName)) {
-						auto newFolderPath = GetPath(TreeView_GetSelection(_hTreeCtrl));
-                        newFolderPath.append(szFolderName);
+                        std::filesystem::path newFolderPath = GetPath(TreeView_GetSelection(_hTreeCtrl));
+                        if (std::filesystem::is_regular_file(newFolderPath)) {
+                            newFolderPath = newFolderPath.parent_path();
+                        }
+                        newFolderPath /= szFolderName;
 
 						if (::CreateDirectory(newFolderPath.c_str(), NULL) == FALSE) {
 							::MessageBox(_hParent, _T("Folder couldn't be created."), _T("Error"), MB_OK);
