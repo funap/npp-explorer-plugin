@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="Current" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    Rename PROJECTNAME to the same as the *.vcxproj file in your project.
+
+    Or, import into that file by adding before the last closing tag:
+
+    <Import Project="PROJECTNAME.vcxproj.user"/>
+
+    Then, call with:
+
+      msbuild /target:zip
+
+    You can customize the ZIP program by setting the environment variable:
+
+      set ZIPCMD=zip
+      set ZIPCMD=7z a -tzip
+  -->
+
+  <Target Name="Zip" DependsOnTargets="Build">
+    <PropertyGroup>
+        <ZipCmd Condition="'$(ZIPCMD)' == ''">zip</ZipCmd>
+    </PropertyGroup>
+    <Exec Command="if not exist $(OutDir)$(TargetName) mkdir $(OutDir)$(TargetName)"/>
+    <Exec Command="copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)$(TargetName)"/>
+    <Exec Command="for /f %%i in ('powershell -NoProfile -Command &quot;(Get-Item $(OutDir)$(TargetName)$(TargetExt)).VersionInfo.ProductVersion&quot;') do del $(OutDir)$(TargetName)-v%%i-$(Platform).zip"/>
+    <Exec Command="for /f %%i in ('powershell -NoProfile -Command &quot;(Get-Item $(OutDir)$(TargetName)$(TargetExt)).VersionInfo.ProductVersion&quot;') do cd  $(OutDir)$(TargetName) %26%26 $(ZIPCMD) -r ..\$(TargetName)-v%%i-$(Platform).zip *"/>
+  </Target>
+</Project>
