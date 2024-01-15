@@ -248,7 +248,7 @@ void StaticDialog::create(int dialogID, bool isRTL, bool msgDestParent)
 	}
 
 	// if the destination of message NPPM_MODELESSDIALOG is not its parent, then it's the grand-parent
-	// ::SendMessage(msgDestParent ? _hParent : (::GetParent(_hParent)), NPPM_MODELESSDIALOG, MODELESSDIALOGADD, reinterpret_cast<WPARAM>(_hSelf));
+	::SendMessage(msgDestParent ? _hParent : (::GetParent(_hParent)), NPPM_MODELESSDIALOG, MODELESSDIALOGADD, reinterpret_cast<WPARAM>(_hSelf));
 }
 
 INT_PTR CALLBACK StaticDialog::dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)

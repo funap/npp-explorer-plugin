@@ -55,7 +55,15 @@ LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 {
 	switch (Message)
 	{
-	case WM_CHAR:
+    case WM_CHAR:
+        if (_onCharHandler) {
+            BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
+            if (handled) {
+                return TRUE;
+            }
+        }
+        break;
+	case WM_KEYUP:
 	{
 		switch (wParam) {
 		case VK_RETURN: {
@@ -67,12 +75,6 @@ LRESULT ComboOrgi::runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam
 			return TRUE;
 		}
 		default:
-			if (_onCharHandler) {
-				BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
-				if (handled) {
-					return TRUE;
-				}
-			}
 			break;
 		}
 		break;
