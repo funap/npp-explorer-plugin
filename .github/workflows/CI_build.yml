@@ -29,7 +29,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
           name: Explorer-${{ matrix.build_configuration }}-${{ matrix.build_platform }}
-          path: ${{ matrix.build_configuration }}\${{ matrix.build_platform }}\Explorer.dll
+          path: $(OutDir)$(TargetName)$(TargetExt)
 
     - name: Release
       uses: softprops/action-gh-release@v1
