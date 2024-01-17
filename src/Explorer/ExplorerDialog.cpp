@@ -1478,10 +1478,13 @@ void ExplorerDialog::onDelete(bool immediate)
         path.pop_back();
     }
 
+    WCHAR szzFrom[MAX_PATH] = {};
+    path.copy(szzFrom, MAX_PATH);
+
 	/* delete folder into recycle bin */
 	SHFILEOPSTRUCT	fileOp	= {0};
 	fileOp.hwnd				= _hParent;
-	fileOp.pFrom			= path.data();
+	fileOp.pFrom			= szzFrom;
 	fileOp.fFlags			= (immediate ? 0 : FOF_ALLOWUNDO);
 	fileOp.wFunc			= FO_DELETE;
 	SHFileOperation(&fileOp);
