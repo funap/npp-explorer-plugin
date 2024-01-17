@@ -1,0 +1,43 @@
+name: CI_build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 6
+      matrix:
+        build_configuration: [Release, Debug]
+        build_platform: [x64, x86]
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1
+
+    - name: MSBuild of plugin dll
+      working-directory: .\
+      run: msbuild Explorer.vcxproj /m /p:configuration="${{ matrix.build_configuration }}" /p:platform="${{ matrix.build_platform }}" /p:PlatformToolset="v143" /p:PostBuildEventUseInBuild=false /target:zip
+      env:
+          ZIPCMD: 7z a -tzip
+
+    - name: Archive
+      uses: actions/upload-artifact@v3
+      with:
+          name: Explorer-${{ matrix.build_configuration }}-${{ matrix.build_platform }}
+          path: build\bin\${{ matrix.build_platform }}\${{ matrix.build_configuration }}\Explorer.dll
+
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/') && matrix.build_configuration == 'Release'
+      with:
+          body: ${{ github.event.commits[0].message }}
+          files: build/bin/${{ matrix.build_platform }}/${{ matrix.build_configuration }}/Explorer-v${{ github.ref_name }}-${{ matrix.build_platform }}.zip
+
+    - name: SHA256
+      if: startsWith(github.ref, 'refs/tags/') && matrix.build_configuration == 'Release'
+      run: sha256sum.exe build\bin\${{ matrix.build_platform }}\${{ matrix.build_configuration }}\Explorer-v${{ github.ref_name }}-${{ matrix.build_platform }}.zip
