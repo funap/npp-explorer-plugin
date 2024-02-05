@@ -26,21 +26,19 @@
 
 #include <windows.h>
 #include <string>
+#include <string_view>
 #include <vector>
 
 class FileFilter
 {
 public:
-	FileFilter();
-	~FileFilter();
-	void setFilter(std::wstring_view newFilter);
-	LPCWSTR	getFilterString();
-	BOOL match(const std::wstring& fileName);
+    FileFilter();
+    ~FileFilter();
+    void setFilter(std::wstring_view newFilter);
+    LPCWSTR getFilterString();
+    BOOL match(const std::wstring& fileName);
 private:
-	std::vector<std::wstring> split(const std::wstring_view &string, const WCHAR delim);
-	BOOL wildcmp(LPCTSTR pattern, LPCTSTR target);
-
-	std::wstring				_filterString;
-	std::vector<std::wstring>	_allowList;
-	std::vector<std::wstring>	_denyList;
+    std::wstring                _filterString;
+    std::vector<std::wstring>   _allowList;
+    std::vector<std::wstring>   _denyList;
 };

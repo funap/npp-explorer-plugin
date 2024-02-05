@@ -18,7 +18,7 @@
 #pragma once
 
 #include <windows.h>
-#include <tchar.h>
+
 #include "../NppPlugin/DockingFeature/Window.h"
 
 /* XOR mask for hand cursor */
@@ -32,29 +32,26 @@ public:
 
     void create(HWND itemHandle, LPCTSTR link, COLORREF linkColor = RGB(0,0,255));
     void destroy(){
-		if (_hfUnderlined) {
-			::DeleteObject(_hfUnderlined);
-			_hfUnderlined = nullptr;
-		}
-		if (_hCursor) {
-			::DestroyCursor(_hCursor);
-			_hCursor = nullptr;
-		}
+        if (_hfUnderlined) {
+            ::DeleteObject(_hfUnderlined);
+            _hfUnderlined = nullptr;
+        }
+        if (_hCursor) {
+            ::DestroyCursor(_hCursor);
+            _hCursor = nullptr;
+        }
     };
 
 private :
-    TCHAR			_URL[MAX_PATH];
-    HFONT			_hfUnderlined;
-    HCURSOR			_hCursor;
+    WCHAR       _URL[MAX_PATH];
+    HFONT       _hfUnderlined;
+    HCURSOR     _hCursor;
 
-    WNDPROC			_oldproc;
-    COLORREF		_linkColor;			
-    COLORREF		_visitedColor;
+    WNDPROC     _oldproc;
+    COLORREF    _linkColor;
+    COLORREF    _visitedColor;
 
-    bool			_clicking;
-
-    
-
+    bool        _clicking;
 
     static LRESULT CALLBACK URLCtrlProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam){
         return ((URLCtrl *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProc(hwnd, Message, wParam, lParam);

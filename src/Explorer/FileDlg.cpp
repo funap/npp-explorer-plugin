@@ -15,39 +15,40 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-#include <stdarg.h>
 #include "FileDlg.h"
+
+#include <cstdarg>
 
 //FileDlg *FileDlg::staticThis = NULL;
 
 FileDlg::FileDlg(HINSTANCE hInst, HWND hwnd) 
-	: _nbCharFileExt(0), _nbExt(0)
+    : _nbCharFileExt(0), _nbExt(0)
 {//staticThis = this;
-    for (int i = 0 ; i < nbExtMax ; i++)
+    for (int i = 0 ; i < nbExtMax ; i++) {
         _extArray[i][0] = '\0';
+    }
 
     ::ZeroMemory(_fileExt, sizeof(_fileExt));
-	_fileName[0] = '\0';
+    _fileName[0] = '\0';
  
-	_ofn.lStructSize = sizeof(_ofn);     
-	_ofn.hwndOwner = hwnd; 
-	_ofn.hInstance = hInst;
-	_ofn.lpstrFilter = _fileExt;
-	_ofn.lpstrCustomFilter = (LPTSTR) NULL;
-	_ofn.nMaxCustFilter = 0L;
-	_ofn.nFilterIndex = 1L;
-	_ofn.lpstrFile = _fileName;
-	_ofn.nMaxFile = sizeof(_fileName);
-	_ofn.lpstrFileTitle = NULL;
-	_ofn.nMaxFileTitle = 0;
-	_ofn.lpstrInitialDir = NULL;
-	_ofn.lpstrTitle = NULL;
-	_ofn.nFileOffset  = 0;
-	_ofn.nFileExtension = 0;
-	_ofn.lpstrDefExt = NULL;  // No default extension
-	_ofn.lCustData = 0;
-	_ofn.Flags = OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_LONGNAMES | DS_CENTER | OFN_HIDEREADONLY;
-
+    _ofn.lStructSize = sizeof(_ofn);
+    _ofn.hwndOwner = hwnd; 
+    _ofn.hInstance = hInst;
+    _ofn.lpstrFilter = _fileExt;
+    _ofn.lpstrCustomFilter = nullptr;
+    _ofn.nMaxCustFilter = 0L;
+    _ofn.nFilterIndex = 1L;
+    _ofn.lpstrFile = _fileName;
+    _ofn.nMaxFile = sizeof(_fileName);
+    _ofn.lpstrFileTitle = nullptr;
+    _ofn.nMaxFileTitle = 0;
+    _ofn.lpstrInitialDir = nullptr;
+    _ofn.lpstrTitle = nullptr;
+    _ofn.nFileOffset  = 0;
+    _ofn.nFileExtension = 0;
+    _ofn.lpstrDefExt = nullptr;  // No default extension
+    _ofn.lCustData = 0;
+    _ofn.Flags = OFN_PATHMUSTEXIST | OFN_EXPLORER | OFN_LONGNAMES | DS_CENTER | OFN_HIDEREADONLY;
 }
 
 // This function set and concatenate the filter into the list box of FileDlg.
@@ -56,37 +57,37 @@ FileDlg::FileDlg(HINSTANCE hInst, HWND hwnd)
 // a file name to filter. Since the nb of arguments is variable, you have to add NULL at the end.
 // example : 
 // FileDlg.setExtFilter("c/c++ src file", ".c", ".cpp", ".cxx", ".h", NULL);
-// FileDlg.setExtFilter("Makeile", "makefile", "GNUmakefile", NULL);
+// FileDlg.setExtFilter("Makefile", "makefile", "GNUmakefile", NULL);
 void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
 {
     // fill out the ext array for save as file dialog
-    if (_nbExt < nbExtMax)
-        _tcscpy(_extArray[_nbExt++], ext);
+    if (_nbExt < nbExtMax) {
+        wcscpy(_extArray[_nbExt++], ext);
+    }
     // 
     std::wstring extFilter = extText;
     std::wstring exts;
 
-	va_list pArg;
-	va_start(pArg, ext);
+    va_list pArg;
+    va_start(pArg, ext);
 
-	const TCHAR* ext2Concat;
-	ext2Concat = ext;
-	do {
-		if (ext2Concat[0] == _T('.')) {
-			exts += _T("*");
-		}
-		exts += ext2Concat;
-		exts += _T(";");
-		}
-	while ((ext2Concat = va_arg(pArg, const TCHAR*)) != nullptr);
+    const WCHAR* ext2Concat;
+    ext2Concat = ext;
+    do {
+        if (ext2Concat[0] == '.') {
+            exts += L"*";
+        }
+        exts += ext2Concat;
+        exts += L";";
+    } while ((ext2Concat = va_arg(pArg, const WCHAR*)) != nullptr);
 
-	va_end(pArg);
+    va_end(pArg);
 
-	// remove the last ';'
+    // remove the last ';'
     exts = exts.substr(0, exts.length()-1);
 
-    extFilter += _T(" (");
-    extFilter += exts + _T(")");
+    extFilter += L" (";
+    extFilter += exts + L")";
     
     LPTSTR pFileExt = _fileExt + _nbCharFileExt;
     memcpy(pFileExt, extFilter.c_str(), extFilter.length() + 1);
@@ -99,77 +100,71 @@ void FileDlg::setExtFilter(LPCTSTR extText, LPCTSTR ext, ...)
 
 LPTSTR FileDlg::doOpenSingleFileDlg() 
 {
-	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(_countof(dir), dir);
-	_ofn.lpstrInitialDir = dir;
+    WCHAR dir[MAX_PATH];
+    ::GetCurrentDirectory(_countof(dir), dir);
+    _ofn.lpstrInitialDir = dir;
 
-	_ofn.Flags |= OFN_FILEMUSTEXIST;
+    _ofn.Flags |= OFN_FILEMUSTEXIST;
 
-	LPTSTR fn = NULL;
-	try {
-		fn = ::GetOpenFileName(&_ofn)?_fileName:NULL;
-	}
-	catch(...) {
-		::MessageBox(NULL, TEXT("GetSaveFileName crashes!!!"), TEXT(""), MB_OK);
-	}
-	return (fn);
+    LPTSTR fn = nullptr;
+    try {
+        fn = ::GetOpenFileName(&_ofn) ? _fileName : nullptr;
+    }
+    catch(...) {
+        ::MessageBox(nullptr, TEXT("GetSaveFileName crashes!!!"), TEXT(""), MB_OK);
+    }
+    return (fn);
 }
 
 stringVector * FileDlg::doOpenMultiFilesDlg()
 {
-	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(_countof(dir), dir);
-	_ofn.lpstrInitialDir = dir;
+    WCHAR dir[MAX_PATH];
+    ::GetCurrentDirectory(_countof(dir), dir);
+    _ofn.lpstrInitialDir = dir;
 
-	_ofn.Flags |= OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT;
+    _ofn.Flags |= OFN_FILEMUSTEXIST | OFN_ALLOWMULTISELECT;
 
-	if (::GetOpenFileName(&_ofn))
-	{
-		//if (isReadOnly())
-			//::MessageBox(NULL, "read only", "", MB_OK);
+    if (::GetOpenFileName(&_ofn)) {
+        WCHAR fn[MAX_PATH] = {};
+        LPTSTR pFn = _fileName + wcslen(_fileName) + 1;
+        if (!(*pFn)) {
+            _fileNames.emplace_back(_fileName);
+        }
+        else {
+            wcscpy(fn, _fileName);
+            if (fn[wcslen(fn)-1] != '\\') {
+                wcscat(fn, TEXT("\\"));
+            }
+        }
+        int term = int(wcslen(fn));
 
-		TCHAR fn[MAX_PATH] = {};
-		LPTSTR pFn = _fileName + _tcslen(_fileName) + 1;
-		if (!(*pFn))
-			_fileNames.push_back(std::wstring(_fileName));
-		else
-		{
-			_tcscpy(fn, _fileName);
-			if (fn[_tcslen(fn)-1] != '\\')
-				_tcscat(fn, TEXT("\\"));
-		}
-		int term = int(_tcslen(fn));
+        while (*pFn) {
+            fn[term] = '\0';
+            wcscat(fn, pFn);
+            _fileNames.emplace_back(fn);
+            pFn += wcslen(pFn) + 1;
+        }
 
-		while (*pFn)
-		{
-			fn[term] = '\0';
-			_tcscat(fn, pFn);
-			_fileNames.push_back(std::wstring(fn));
-			pFn += _tcslen(pFn) + 1;
-		}
-
-		return &_fileNames;
-	}
-	else
-		return NULL;
+        return &_fileNames;
+    }
+    return nullptr;
 }
 
 LPTSTR FileDlg::doSaveDlg() 
 {
-	TCHAR dir[MAX_PATH];
-	::GetCurrentDirectory(_countof(dir), dir);
-	_ofn.lpstrInitialDir = dir;
+    WCHAR dir[MAX_PATH];
+    ::GetCurrentDirectory(_countof(dir), dir);
+    _ofn.lpstrInitialDir = dir;
+    _ofn.Flags |= OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
 
-	_ofn.Flags |= OFN_OVERWRITEPROMPT | OFN_HIDEREADONLY;
-
-	LPTSTR fn = NULL;
-	try {
-		fn = ::GetSaveFileName(&_ofn)?_fileName:NULL;
-	}
-	catch(...) {
-		::MessageBox(NULL, TEXT("GetSaveFileName crashes!!!"), TEXT(""), MB_OK);
-	}
-	return (fn);
+    LPTSTR fn = nullptr;
+    try {
+        fn = ::GetSaveFileName(&_ofn) ? _fileName : nullptr;
+    }
+    catch(...) {
+        ::MessageBox(nullptr, TEXT("GetSaveFileName crashes!!!"), TEXT(""), MB_OK);
+    }
+    return (fn);
 }
 
 

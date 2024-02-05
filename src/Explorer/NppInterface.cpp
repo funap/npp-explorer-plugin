@@ -26,54 +26,53 @@
 
 #include "../NppPlugin/Scintilla.h"
 #include "../NppPlugin/menuCmdID.h"
-#include <stdexcept>
 
 NppData NppInterface::_nppData;
 
 void NppInterface::setNppData(NppData nppData)
 {
-	_nppData = nppData;
+    _nppData = nppData;
 }
 
 HWND NppInterface::getWindow()
 {
-	return _nppData._nppHandle;
+    return _nppData._nppHandle;
 }
 
 BOOL NppInterface::doOpen(std::wstring_view path)
 {
-	return static_cast<BOOL>(::SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)path.data()));
+    return static_cast<BOOL>(::SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)path.data()));
 }
 
 std::wstring NppInterface::getSelectedText()
 {
-	std::wstring selectedTextW;
+    std::wstring selectedTextW;
 
-	UINT currentEdit;
-	::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
-	HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
+    UINT currentEdit;
+    ::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
+    HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
 
-	INT charLength = (INT)::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, 0);
-	if (0 < charLength) {
-		std::string selectedTextA;
-		selectedTextA.resize(charLength);
-		::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, (LPARAM)&selectedTextA[0]);
-		INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, nullptr, 0);
-		selectedTextW.resize(wideCharLength);
-		::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, selectedTextW.data(), wideCharLength);
+    INT charLength = (INT)::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, 0);
+    if (0 < charLength) {
+        std::string selectedTextA;
+        selectedTextA.resize(charLength);
+        ::SendMessage(currentSciHandle, SCI_GETSELTEXT, 0, (LPARAM)&selectedTextA[0]);
+        INT wideCharLength = ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, nullptr, 0);
+        selectedTextW.resize(wideCharLength);
+        ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, selectedTextA.data(), charLength, selectedTextW.data(), wideCharLength);
     }
 
-	return selectedTextW;
+    return selectedTextW;
 }
 
 COLORREF NppInterface::getEditorDefaultForegroundColor()
 {
-	return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0));
+    return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0));
 }
 
 COLORREF NppInterface::getEditorDefaultBackgroundColor()
 {
-	return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
+    return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
 }
 
 COLORREF NppInterface::getEditorCurrentLineBackgroundColor()
@@ -129,55 +128,55 @@ NppColors NppInterface::GetColors()
 
 void NppInterface::setFocusToCurrentEdit()
 {
-	UINT currentEdit;
-	::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)& currentEdit);
-	HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
+    UINT currentEdit;
+    ::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)& currentEdit);
+    HWND currentSciHandle = (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
 
-	::SetFocus(currentSciHandle);
+    ::SetFocus(currentSciHandle);
 }
 
 std::vector<std::wstring> NppInterface::getSessionFiles(const std::wstring &sessionFilePath)
 {
-	std::vector<std::wstring> sessionFiles;
+    std::vector<std::wstring> sessionFiles;
 
-	/* get document count and create resources */
-	INT fileCount = (INT)::SendMessage(_nppData._nppHandle, NPPM_GETNBSESSIONFILES, 0, (LPARAM)sessionFilePath.c_str());
+    /* get document count and create resources */
+    INT fileCount = (INT)::SendMessage(_nppData._nppHandle, NPPM_GETNBSESSIONFILES, 0, (LPARAM)sessionFilePath.c_str());
 
-	std::vector<WCHAR*> fileNames(fileCount);
-	for (auto &fileName : fileNames) {
-		fileName = new WCHAR[MAX_PATH];
-	}
+    std::vector<WCHAR*> fileNames(fileCount);
+    for (auto &fileName : fileNames) {
+        fileName = new WCHAR[MAX_PATH];
+    }
 
-	/* get file names */
-	if (::SendMessage(_nppData._nppHandle, NPPM_GETSESSIONFILES, (WPARAM)fileNames.data(), (LPARAM)sessionFilePath.c_str())) {
-		for (auto &&fileName : fileNames) {
-			sessionFiles.push_back(std::wstring(fileName));
-		}
-	}
+    /* get file names */
+    if (::SendMessage(_nppData._nppHandle, NPPM_GETSESSIONFILES, (WPARAM)fileNames.data(), (LPARAM)sessionFilePath.c_str())) {
+        for (auto &&fileName : fileNames) {
+            sessionFiles.push_back(std::wstring(fileName));
+        }
+    }
 
-	for (auto &fileName : fileNames) {
-		delete []fileName;
-		fileName = nullptr;
-	}
+    for (auto &fileName : fileNames) {
+        delete []fileName;
+        fileName = nullptr;
+    }
 
-	return sessionFiles;
+    return sessionFiles;
 }
 
 std::wstring NppInterface::getCurrentDirectory()
 {
-	WCHAR directoryPath[MAX_PATH];
-	if (::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTDIRECTORY, std::size(directoryPath), (LPARAM)&directoryPath[0])) {
-		return std::wstring(directoryPath);
-	}
-	return std::wstring();
+    WCHAR directoryPath[MAX_PATH];
+    if (::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTDIRECTORY, std::size(directoryPath), (LPARAM)&directoryPath[0])) {
+        return {directoryPath};
+    }
+    return {};
 }
 
 INT NppInterface::getNppVersion()
 {
-	return static_cast<INT>(::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0));
+    return static_cast<INT>(::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0));
 }
 
 BOOL NppInterface::isSupportFluentUI()
 {
-	return (HIWORD(NppInterface::getNppVersion()) >= 8);
+    return (HIWORD(NppInterface::getNppVersion()) >= 8);
 }

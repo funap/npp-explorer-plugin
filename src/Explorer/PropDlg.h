@@ -52,7 +52,7 @@ public:
 
     INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LinkDlg::NONE, BOOL fileMustExist = FALSE);
     void setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink = FALSE);
-    FavesItemPtr getSelectedGroup(void) const;
+    FavesItemPtr getSelectedGroup() const;
     void setSelectedGroup(FavesItemPtr group);
 
 protected :

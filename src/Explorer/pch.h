@@ -28,7 +28,6 @@
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
-#include <tchar.h>
 #include <dbt.h>
 #include <shellapi.h>
 #include <shlwapi.h>

@@ -23,36 +23,34 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerResource.h"
 
-
-
 class NewDlg : public StaticDialog
 {
 
 public:
-	NewDlg() : 
-		StaticDialog(),
-		_pszWndName(nullptr),
-		_pFileName(nullptr),
-		_pDesc(nullptr)
-	{
-	};
-    
-    void init(HINSTANCE hInst, HWND hWnd, LPCTSTR pszWndName = NULL) {
-		Window::init(hInst, hWnd);
-		_pszWndName = pszWndName;
-	};
+    NewDlg() : 
+        StaticDialog(),
+        _pszWndName(nullptr),
+        _pFileName(nullptr),
+        _pDesc(nullptr)
+    {
+    };
 
-	INT_PTR doDialog(LPCTSTR pFileName, LPCTSTR pDesc);
+    void init(HINSTANCE hInst, HWND hWnd, LPCTSTR pszWndName = NULL) {
+        Window::init(hInst, hWnd);
+        _pszWndName = pszWndName;
+    };
+
+    INT_PTR doDialog(LPCTSTR pFileName, LPCTSTR pDesc);
 
     virtual void destroy() {};
 
 
 protected :
-	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
+    INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
 private:
-	LPCTSTR			_pszWndName;
-	LPCTSTR			_pFileName;
-	LPCTSTR			_pDesc;
+    LPCTSTR _pszWndName;
+    LPCTSTR _pFileName;
+    LPCTSTR _pDesc;
 
 };

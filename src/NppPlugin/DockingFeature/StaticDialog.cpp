@@ -17,38 +17,39 @@
 #include <stdio.h>
 #include <string>
 #include <windows.h>
+
 #include "StaticDialog.h"
+#include "..\Notepad_plus_msgs.h"
 
 StaticDialog::~StaticDialog()
 {
-	if (isCreated())
-	{
-		// Prevent run_dlgProc from doing anything, since its virtual
-		::SetWindowLongPtr(_hSelf, GWLP_USERDATA, NULL);
-		destroy();
-	}
+    if (isCreated()) {
+        // Prevent run_dlgProc from doing anything, since its virtual
+        ::SetWindowLongPtr(_hSelf, GWLP_USERDATA, NULL);
+        destroy();
+    }
 }
 
 void StaticDialog::destroy()
 {
-	::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<WPARAM>(_hSelf));
-	::DestroyWindow(_hSelf);
+    ::SendMessage(_hParent, NPPM_MODELESSDIALOG, MODELESSDIALOGREMOVE, reinterpret_cast<WPARAM>(_hSelf));
+    ::DestroyWindow(_hSelf);
 }
 
 POINT StaticDialog::getTopPoint(HWND hwnd, bool isLeft) const
 {
-	RECT rc;
-	::GetWindowRect(hwnd, &rc);
+    RECT rc;
+    ::GetWindowRect(hwnd, &rc);
 
-	POINT p;
-	if (isLeft)
-		p.x = rc.left;
-	else
-		p.x = rc.right;
+    POINT p;
+    if (isLeft)
+        p.x = rc.left;
+    else
+        p.x = rc.right;
 
-	p.y = rc.top;
-	::ScreenToClient(_hSelf, &p);
-	return p;
+    p.y = rc.top;
+    ::ScreenToClient(_hSelf, &p);
+    return p;
 }
 
 void StaticDialog::goToCenter()
@@ -57,64 +58,61 @@ void StaticDialog::goToCenter()
     ::GetWindowRect(_hSelf, &selfRect);
 
     RECT parentRect;
-	::GetClientRect(_hParent, &parentRect);
-	POINT center;
-	center.x = parentRect.left + (parentRect.right - parentRect.left)/2;
-	center.y = parentRect.top + (parentRect.bottom - parentRect.top)/2;
-	::ClientToScreen(_hParent, &center);
+    ::GetClientRect(_hParent, &parentRect);
+    POINT center;
+    center.x = parentRect.left + (parentRect.right - parentRect.left)/2;
+    center.y = parentRect.top + (parentRect.bottom - parentRect.top)/2;
+    ::ClientToScreen(_hParent, &center);
 
-	int x = center.x - (selfRect.right - selfRect.left)/2;
-	int y = center.y - (selfRect.bottom - selfRect.top)/2;
+    int x = center.x - (selfRect.right - selfRect.left)/2;
+    int y = center.y - (selfRect.bottom - selfRect.top)/2;
 
-	::SetWindowPos(_hSelf, HWND_TOP, x, y, selfRect.right - selfRect.left, selfRect.bottom - selfRect.top, SWP_SHOWWINDOW);
+    ::SetWindowPos(_hSelf, HWND_TOP, x, y, selfRect.right - selfRect.left, selfRect.bottom - selfRect.top, SWP_SHOWWINDOW);
 }
 
 void StaticDialog::display(bool toShow, bool enhancedPositioningCheckWhenShowing) const
 {
-	if (toShow)
-	{
-		if (enhancedPositioningCheckWhenShowing)
-		{
-			RECT testPositionRc, candidateRc;
+    if (toShow) {
+        if (enhancedPositioningCheckWhenShowing) {
+            RECT testPositionRc;
+            RECT candidateRc;
 
-			getWindowRect(testPositionRc);
+            getWindowRect(testPositionRc);
 
-			candidateRc = getViewablePositionRect(testPositionRc);
+            candidateRc = getViewablePositionRect(testPositionRc);
 
-			if ((testPositionRc.left != candidateRc.left) || (testPositionRc.top != candidateRc.top))
-			{
-				::MoveWindow(_hSelf, candidateRc.left, candidateRc.top, 
-					candidateRc.right - candidateRc.left, candidateRc.bottom - candidateRc.top, TRUE);
-			}
-		}
-		else
-		{
-			// If the user has switched from a dual monitor to a single monitor since we last
-			// displayed the dialog, then ensure that it's still visible on the single monitor.
-			RECT workAreaRect = { 0 };
-			RECT rc = { 0 };
-			::SystemParametersInfo(SPI_GETWORKAREA, 0, &workAreaRect, 0);
-			::GetWindowRect(_hSelf, &rc);
-			int newLeft = rc.left;
-			int newTop = rc.top;
-			int margin = ::GetSystemMetrics(SM_CYSMCAPTION);
+            if ((testPositionRc.left != candidateRc.left) || (testPositionRc.top != candidateRc.top)) {
+                ::MoveWindow(_hSelf, candidateRc.left, candidateRc.top, 
+                    candidateRc.right - candidateRc.left, candidateRc.bottom - candidateRc.top, TRUE);
+            }
+        }
+        else {
+            // If the user has switched from a dual monitor to a single monitor since we last
+            // displayed the dialog, then ensure that it's still visible on the single monitor.
+            RECT workAreaRect = { 0 };
+            RECT rc = { 0 };
+            ::SystemParametersInfo(SPI_GETWORKAREA, 0, &workAreaRect, 0);
+            ::GetWindowRect(_hSelf, &rc);
+            int newLeft = rc.left;
+            int newTop = rc.top;
+            int margin = ::GetSystemMetrics(SM_CYSMCAPTION);
 
-			if (newLeft > ::GetSystemMetrics(SM_CXVIRTUALSCREEN) - margin)
-				newLeft -= rc.right - workAreaRect.right;
-			if (newLeft + (rc.right - rc.left) < ::GetSystemMetrics(SM_XVIRTUALSCREEN) + margin)
-				newLeft = workAreaRect.left;
-			if (newTop > ::GetSystemMetrics(SM_CYVIRTUALSCREEN) - margin)
-				newTop -= rc.bottom - workAreaRect.bottom;
-			if (newTop + (rc.bottom - rc.top) < ::GetSystemMetrics(SM_YVIRTUALSCREEN) + margin)
-				newTop = workAreaRect.top;
+            if (newLeft > ::GetSystemMetrics(SM_CXVIRTUALSCREEN) - margin)
+                newLeft -= rc.right - workAreaRect.right;
+            if (newLeft + (rc.right - rc.left) < ::GetSystemMetrics(SM_XVIRTUALSCREEN) + margin)
+                newLeft = workAreaRect.left;
+            if (newTop > ::GetSystemMetrics(SM_CYVIRTUALSCREEN) - margin)
+                newTop -= rc.bottom - workAreaRect.bottom;
+            if (newTop + (rc.bottom - rc.top) < ::GetSystemMetrics(SM_YVIRTUALSCREEN) + margin)
+                newTop = workAreaRect.top;
 
-			if ((newLeft != rc.left) || (newTop != rc.top)) // then the virtual screen size has shrunk
-				// Remember that MoveWindow wants width/height.
-				::MoveWindow(_hSelf, newLeft, newTop, rc.right - rc.left, rc.bottom - rc.top, TRUE);
-		}
-	}
+            if ((newLeft != rc.left) || (newTop != rc.top)) // then the virtual screen size has shrunk
+                // Remember that MoveWindow wants width/height.
+                ::MoveWindow(_hSelf, newLeft, newTop, rc.right - rc.left, rc.bottom - rc.top, TRUE);
+        }
+    }
 
-	Window::display(toShow);
+    Window::display(toShow);
 }
 
 RECT StaticDialog::getViewablePositionRect(RECT testPositionRc) const

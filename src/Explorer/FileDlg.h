@@ -19,7 +19,7 @@
 
 #include <windows.h>
 #include <commdlg.h>
-#include <TCHAR.H>
+#include <WCHAR.H>
 
 #include <vector>
 #include <string>
@@ -34,26 +34,26 @@ typedef std::vector<std::wstring> stringVector;
 class FileDlg
 {
 public:
-	FileDlg(HINSTANCE hInst, HWND hwnd);
-	void setExtFilter(LPCTSTR, LPCTSTR, ...);
-	void setDefFileName(LPCTSTR fn){_tcscpy(_fileName, fn);}
+    FileDlg(HINSTANCE hInst, HWND hwnd);
+    void setExtFilter(LPCTSTR, LPCTSTR, ...);
+    void setDefFileName(LPCTSTR fn) { wcscpy(_fileName, fn); }
 
-	LPTSTR doSaveDlg();
-	stringVector * doOpenMultiFilesDlg();
-	LPTSTR doOpenSingleFileDlg();
-	bool isReadOnly() {return _ofn.Flags & OFN_READONLY;};
+    LPTSTR doSaveDlg();
+    stringVector * doOpenMultiFilesDlg();
+    LPTSTR doOpenSingleFileDlg();
+    bool isReadOnly() const { return _ofn.Flags & OFN_READONLY; }
 
 private:
-	TCHAR _fileName[MAX_PATH*8];
+    WCHAR _fileName[MAX_PATH*8];
 
-	TCHAR _fileExt[MAX_PATH*2];
-	int _nbCharFileExt;
-	//bool _isMultiSel;
+    WCHAR _fileExt[MAX_PATH*2];
+    int _nbCharFileExt;
+    //bool _isMultiSel;
 
-	stringVector _fileNames;
-	OPENFILENAME _ofn;
+    stringVector _fileNames;
+    OPENFILENAME _ofn;
 
-    TCHAR _extArray[nbExtMax][extLenMax];
+    WCHAR _extArray[nbExtMax][extLenMax];
     int _nbExt;
 
     static FileDlg *staticThis;

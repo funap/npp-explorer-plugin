@@ -33,25 +33,25 @@ public:
     ~OptionDlg();
 
     void init(HINSTANCE hInst, HWND hParent)
-	{
-		Window::init(hInst, hParent);
-	};
+    {
+        Window::init(hInst, hParent);
+    };
 
-	INT_PTR doDialog(ExProp *prop);
+    INT_PTR doDialog(ExProp *prop);
 
     virtual void destroy() {};
 
 
 protected :
-	INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
+    INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
-	void LongUpdate(void);
-	void SetParams(void);
-	BOOL GetParams(void);
+    void LongUpdate();
+    void SetParams();
+    BOOL GetParams();
 
 private:
-	/* Handles */
-	LOGFONT			_logfont;
+    /* Handles */
+    LOGFONT _logfont;
 
-	ExProp*			_pProp;
+    ExProp* _pProp;
 };

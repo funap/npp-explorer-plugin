@@ -23,7 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "URLCtrl.h"
 
-#include "ExplorerResource.h"
 
 
 
@@ -31,28 +30,28 @@ class HelpDlg : public StaticDialog
 {
 
 public:
-	HelpDlg() : StaticDialog() {};
-    
-    void init(HINSTANCE hInst, HWND hParent)
-	{
-		Window::init(hInst, hParent);
-	};
+    HelpDlg() : StaticDialog() {};
 
-   	void doDialog();
+    void init(HINSTANCE hInst, HWND hParent)
+    {
+        Window::init(hInst, hParent);
+    };
+
+    void doDialog();
 
     virtual void destroy() {
         _emailLink.destroy();
-		_urlNppPlugins.destroy();
+        _urlNppPlugins.destroy();
     };
 
 
 protected :
-	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
+    virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
 private:
-	void setVersionString();
-	
-	/* for eMail */
-    URLCtrl			_emailLink;
-	URLCtrl			_urlNppPlugins;
+    void setVersionString();
+
+    /* for eMail */
+    URLCtrl _emailLink;
+    URLCtrl _urlNppPlugins;
 };

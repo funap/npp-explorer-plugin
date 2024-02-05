@@ -26,7 +26,6 @@
 #include <functional>
 #include <filesystem>
 #include <thread>
-#include <mutex>
 
 class FileSystemWatcher {
 public:
@@ -46,13 +45,13 @@ public:
     void Renamed(RenamedCallback callback);
 
 private:
-    void Run(std::wstring directory);
+    void Run();
 
     std::thread                 m_thread;
     bool                        m_stop;
+    std::wstring                m_directory;
 
     CreatedCallback             m_createdCallback;
     DeletedCallback             m_deletedCallback;
     RenamedCallback             m_renamedCallback;
-
 };

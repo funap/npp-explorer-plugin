@@ -22,12 +22,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 
 #include <stdlib.h>
-#include <iostream>
 #include <shellapi.h>
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <dbt.h>
 #include <atlbase.h>
+
+#include <ranges>
 
 #include "NppInterface.h"
 #include "ExplorerDialog.h"
@@ -36,6 +37,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "OptionDialog.h"
 #include "HelpDialog.h"
 #include "ThemeRenderer.h"
+#include "../NppPlugin/PluginInterface.h"
+#include "../NppPlugin/menuCmdID.h"
 
 
 WCHAR       configPath[MAX_PATH];
@@ -45,9 +48,7 @@ WCHAR       iniFilePath[MAX_PATH];
 constexpr WCHAR  PLUGIN_NAME[]      = L"&Explorer";
 
 /* ini file sections */
-constexpr WCHAR WindowData[]        = L"WindowData";
 constexpr WCHAR Explorer[]          = L"Explorer";
-constexpr WCHAR Faves[]             = L"Faves";
 
 /* section Explorer */
 constexpr WCHAR LastPath[]          = L"LastPath";
@@ -184,8 +185,9 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
         ImageList_Destroy(ghImgList);
 
         /* Remove subclaasing */
-        if (wndProcNotepad != nullptr)
+        if (wndProcNotepad != nullptr) {
             SetWindowLongPtr(g_nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
+        }
 
         ::DeleteObject(exProp.defaultFont);
         ::DeleteObject(exProp.underlineFont);
@@ -321,13 +323,8 @@ void UpdateThemeColor()
         uint8_t r = GetRValue(rgb);
         uint8_t g = GetGValue(rgb);
         uint8_t b = GetBValue(rgb);
-        float brightness = (0.2126f * r + 0.7152f * g + 0.0722f * b) / 255.0f;
-        if (brightness < 0.5f) {
-            return true;
-        }
-        else {
-            return false;
-        }
+        float brightness = (0.2126F * r + 0.7152F * g + 0.0722F * b) / 255.0F;
+        return brightness < 0.5F;
     };
 
     auto nppColors = NppInterface::GetColors();
@@ -357,7 +354,7 @@ void initializeFonts()
 }
 
 // Load the parameters for plugin
-void loadSettings(void)
+void loadSettings()
 {
     /* initialize the config directory */
     ::SendMessage(g_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)configPath);
@@ -370,15 +367,15 @@ void loadSettings(void)
             ::PathRemoveFileSpec(configPath);
         } while (::PathFileExists(configPath) == FALSE);
 
-        for (auto itr = vPaths.crbegin(), end = vPaths.crend(); itr != end; ++itr) {
-            _tcscpy(configPath, itr->c_str());
+        for (const auto & vPath : std::ranges::reverse_view(vPaths)) {
+            wcscpy(configPath, vPath.c_str());
             ::CreateDirectory(configPath, nullptr);
         }
         vPaths.clear();
     }
 
-    _tcscpy(iniFilePath, configPath);
-    _tcscat(iniFilePath, EXPLORER_INI);
+    wcscpy(iniFilePath, configPath);
+    wcscat(iniFilePath, EXPLORER_INI);
     if (::PathFileExists(iniFilePath) == FALSE) {
         HANDLE  hFile           = nullptr;
         BYTE    bom[]           = {0xFF, 0xFE};
@@ -392,7 +389,7 @@ void loadSettings(void)
     }
 
     WCHAR temp[MAX_PATH]{};
-    ::GetPrivateProfileString(Explorer, LastPath, _T("C:\\"), temp, MAX_PATH, iniFilePath);     exProp.currentDir.assign(temp);
+    ::GetPrivateProfileString(Explorer, LastPath, L"C:\\", temp, MAX_PATH, iniFilePath);     exProp.currentDir.assign(temp);
     ::GetPrivateProfileString(Explorer, RootFolder, L"", temp, MAX_PATH, iniFilePath);          exProp.rootFolder.assign(temp);
     exProp.iSplitterPos             = ::GetPrivateProfileInt(Explorer, SplitterPos, 120, iniFilePath);
     exProp.iSplitterPosHorizontal   = ::GetPrivateProfileInt(Explorer, SplitterPosHor, 200, iniFilePath);
@@ -414,18 +411,18 @@ void loadSettings(void)
     exProp.uTimeout                 = ::GetPrivateProfileInt(Explorer, TimeOut, 1000, iniFilePath);
     exProp.bUseSystemIcons          = ::GetPrivateProfileInt(Explorer, UseSystemIcons, TRUE, iniFilePath);
     exProp.maxHistorySize           = ::GetPrivateProfileInt(Explorer, MaxHistorySize, 50, iniFilePath);
-    ::GetPrivateProfileString(Explorer, NppExecAppName, _T("NppExec.dll"), exProp.nppExecProp.szAppName, MAX_PATH, iniFilePath);
+    ::GetPrivateProfileString(Explorer, NppExecAppName, L"NppExec.dll", exProp.nppExecProp.szAppName, MAX_PATH, iniFilePath);
     ::GetPrivateProfileString(Explorer, NppExecScriptPath, configPath, exProp.nppExecProp.szScriptPath, MAX_PATH, iniFilePath);
-    ::GetPrivateProfileString(Explorer, CphProgramName, _T("cmd.exe"), exProp.cphProgram.szAppName, MAX_PATH, iniFilePath);
+    ::GetPrivateProfileString(Explorer, CphProgramName, L"cmd.exe", exProp.cphProgram.szAppName, MAX_PATH, iniFilePath);
 
     WCHAR pszTemp[MAX_PATH];
     for (INT i = 0; i < 20; i++) {
         auto number = std::to_wstring(i);
-        if (::GetPrivateProfileString(FilterHistory, number.c_str(), _T(""), pszTemp, MAX_PATH, iniFilePath) != 0) {
-            exProp.vStrFilterHistory.push_back(pszTemp);
+        if (::GetPrivateProfileString(FilterHistory, number.c_str(), L"", pszTemp, MAX_PATH, iniFilePath) != 0) {
+            exProp.vStrFilterHistory.emplace_back(pszTemp);
         }
     }
-    ::GetPrivateProfileString(Explorer, LastFilter, _T("*.*"), pszTemp, MAX_PATH, iniFilePath);
+    ::GetPrivateProfileString(Explorer, LastFilter, L"*.*", pszTemp, MAX_PATH, iniFilePath);
     exProp.fileFilter.setFilter(pszTemp);
 
     if (::PathFileExists(exProp.currentDir.c_str()) == FALSE) {
@@ -451,14 +448,14 @@ void loadSettings(void)
     }
 
     WCHAR fontFaceName[LF_FACESIZE] = {};
-    ::GetPrivateProfileString(Explorer, FontFaceName, _T(""), fontFaceName, LF_FACESIZE, iniFilePath);
+    ::GetPrivateProfileString(Explorer, FontFaceName, L"", fontFaceName, LF_FACESIZE, iniFilePath);
     if (wcslen(fontFaceName) > 0) {
         wcsncpy(exProp.logfont.lfFaceName, fontFaceName, LF_FACESIZE);
     }
 }
 
 // Saves the parameters for plugin
-void saveSettings(void)
+void saveSettings()
 {
     WCHAR temp[256]{};
 
@@ -501,7 +498,7 @@ void saveSettings(void)
     ::WritePrivateProfileString(Explorer, LastFilter, exProp.fileFilter.getFilterString(), iniFilePath);
 }
 
-void toggleExplorerDialog(void)
+void toggleExplorerDialog()
 {
     if (explorerDlg.isVisible()) {
         explorerDlg.doDialog(false);
@@ -511,7 +508,7 @@ void toggleExplorerDialog(void)
     }
 }
 
-void toggleFavesDialog(void)
+void toggleFavesDialog()
 {
     if (favesDlg.isVisible()) {
         favesDlg.doDialog(false);
@@ -521,7 +518,7 @@ void toggleFavesDialog(void)
     }
 }
 
-void gotoPath(void)
+void gotoPath()
 {
     if (explorerDlg.gotoPath()) {
         explorerDlg.doDialog();
@@ -529,13 +526,13 @@ void gotoPath(void)
     }
 }
 
-void gotoUserFolder(void)
+void gotoUserFolder()
 {
     explorerDlg.doDialog();
     explorerDlg.gotoUserFolder();
 }
 
-void gotoRootFolder(void)
+void gotoRootFolder()
 {
     explorerDlg.doDialog();
     if (!exProp.rootFolder.empty()) {
@@ -543,41 +540,41 @@ void gotoRootFolder(void)
     }
 }
 
-void gotoCurrentFolder(void)
+void gotoCurrentFolder()
 {
     explorerDlg.doDialog();
     explorerDlg.gotoCurrentFolder();
 }
 
-void gotoCurrentFile(void)
+void gotoCurrentFile()
 {
     explorerDlg.doDialog();
     explorerDlg.gotoCurrentFile();
 }
 
-void showExplorerDialogOnFolder(void)
+void showExplorerDialogOnFolder()
 {
     explorerDlg.doDialog();
     explorerDlg.setFocusOnFolder();
 }
 
-void showExplorerDialogOnFile(void)
+void showExplorerDialogOnFile()
 {
     explorerDlg.doDialog();
     explorerDlg.setFocusOnFile();
 }
 
-void showFavesDialog(void)
+void showFavesDialog()
 {
     favesDlg.doDialog();
 }
 
-void clearFilter(void)
+void clearFilter()
 {
     explorerDlg.clearFilter();
 }
 
-void openOptionDlg(void)
+void openOptionDlg()
 {
     if (optionDlg.doDialog(&exProp) == IDOK) {
         saveSettings();
@@ -591,12 +588,12 @@ void openOptionDlg(void)
     }
 }
 
-void openHelpDlg(void)
+void openHelpDlg()
 {
     helpDlg.doDialog();
 }
 
-void openQuickOpenDlg(void)
+void openQuickOpenDlg()
 {
     if (!exProp.rootFolder.empty()) {
         quickOpenDlg.setRootPath(exProp.rootFolder);
@@ -607,10 +604,10 @@ void openQuickOpenDlg(void)
     quickOpenDlg.show();
 }
 
-void openTerminal(void)
+void openTerminal()
 {
     std::filesystem::path path(exProp.currentDir);
-    ::ShellExecute(g_nppData._nppHandle, _T("open"), exProp.cphProgram.szAppName, nullptr, path.c_str(), SW_SHOW);
+    ::ShellExecute(g_nppData._nppHandle, L"open", exProp.cphProgram.szAppName, nullptr, path.c_str(), SW_SHOW);
 }
 
 // Subclass of Notepad
@@ -662,41 +659,33 @@ BOOL VolumeNameExists(LPTSTR rootDrive, LPTSTR volumeName)
 
 bool IsValidFileName(LPTSTR pszFileName)
 {
-    if (_tcspbrk(pszFileName, _T("\\/:*?\"<>")) == nullptr)
+    if (_tcspbrk(pszFileName, L"\\/:*?\"<>") == nullptr) {
         return true;
+    }
 
-    ::MessageBox(nullptr, _T("Filename does not contain any of this characters:\n       \\ / : * ? \" < >"), _T("Error"), MB_OK);
+    ::MessageBox(nullptr, L"Filename does not contain any of this characters:\n       \\ / : * ? \" < >", L"Error", MB_OK);
     return false;
 }
 
 bool IsValidFolder(const WIN32_FIND_DATA & Find)
 {
-    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-        (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden) &&
-            (_tcscmp(Find.cFileName, _T(".")) != 0) &&
-            (_tcscmp(Find.cFileName, _T("..")) != 0) &&
-            (Find.cFileName[0] != '?'))
-        return true;
-
-    return false;
+    return (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        && (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden)
+        && (_tcscmp(Find.cFileName, L".") != 0)
+        && (_tcscmp(Find.cFileName, L"..") != 0) 
+        && (Find.cFileName[0] != '?');
 }
 
 bool IsValidParentFolder(const WIN32_FIND_DATA & Find)
 {
-    if ((Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-        (_tcscmp(Find.cFileName, _T("..")) == 0)) {
-        return true;
-    }
-    return false;
+    return (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        && (_tcscmp(Find.cFileName, L"..") == 0);
 }
 
 bool IsValidFile(const WIN32_FIND_DATA & Find)
 {
-    if (!(Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) &&
-        (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden))
-        return true;
-
-    return false;
+    return !(Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        && (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || exProp.bShowHidden);
 }
 
 BOOL HaveChildren(const std::wstring &folderPath)
@@ -743,14 +732,14 @@ BOOL ConvertNetPathName(LPCTSTR pPathName, LPTSTR pRemotePath, UINT length)
 
     for (INT i = 0; i < 26; ++i) {
         if (0x01 & (driveList >> i)) {
-            _stprintf(volumeName, _T("%c:"), 'A' + i);
+            _stprintf(volumeName, L"%c:", 'A' + i);
 
             /* call get connection twice to get the real size */
             DWORD dwRemoteLength = 1;
             if (ERROR_MORE_DATA == WNetGetConnection(volumeName, remoteName, &dwRemoteLength)) {
                 if ((dwRemoteLength < MAX_PATH) && (NO_ERROR == WNetGetConnection(volumeName, remoteName, &dwRemoteLength))) {
                     if (_tcsstr(pPathName, remoteName) != nullptr) {
-                        _tcscpy(pRemotePath, volumeName);
+                        wcscpy(pRemotePath, volumeName);
                         _tcsncat(pRemotePath, &pPathName[dwRemoteLength - 1], length - 2);
                         return TRUE;
                     }
@@ -768,30 +757,30 @@ HIMAGELIST GetSmallImageList(BOOL bSystem)
     if (bSystem) {
         if (s_himlSys == nullptr) {
             SHFILEINFO sfi{};
-            s_himlSys = (HIMAGELIST)SHGetFileInfo(_T("C:\\"), 0, &sfi, sizeof(SHFILEINFO), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+            s_himlSys = (HIMAGELIST)SHGetFileInfo(L"C:\\", 0, &sfi, sizeof(SHFILEINFO), SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
         }
         return s_himlSys;
     }
     return ghImgList;
 }
 
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
 {
     SHFILEINFO  sfi{};
-    SIZE_T      length = _tcslen(currentPath) - 1;
+    SIZE_T      length = wcslen(currentPath) - 1;
     WCHAR       TEMP[MAX_PATH];
     UINT        stOverlay = (piIconOverlayed ? SHGFI_OVERLAYINDEX : 0);
 
-    _tcscpy(TEMP, currentPath);
+    wcscpy(TEMP, currentPath);
     if (TEMP[length] == '*') {
         TEMP[length] = '\0';
     }
     else if (TEMP[length] != '\\') {
-        _tcscat(TEMP, _T("\\"));
+        wcscat(TEMP, L"\\");
     }
 
-    if (volumeName != nullptr) {
-        _tcscat(TEMP, volumeName);
+    if (fileName != nullptr) {
+        wcscat(TEMP, fileName);
     }
 
     if (exProp.bUseSystemIcons == FALSE) {
@@ -841,13 +830,13 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
             *piIconNormal   = ICON_FILE;
             *piIconSelected = ICON_FILE;
         }
-        if (piIconOverlayed != nullptr)
+        if (piIconOverlayed != nullptr) {
             *piIconOverlayed = 0;
+        }
     }
     else {
         /* get normal and overlayed icon */
-        if ((type == DEVT_DIRECTORY) || (type == DEVT_DRIVE))
-        {
+        if ((type == DEVT_DIRECTORY) || (type == DEVT_DRIVE)) {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
                 0,
@@ -866,8 +855,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
                 ::DestroyIcon(sfi.hIcon);
             }
         }
-        else
-        {
+        else {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
                 FILE_ATTRIBUTE_NORMAL,
@@ -878,12 +866,12 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
         }
 
         *piIconNormal = sfi.iIcon & 0x00ffffff;
-        if (piIconOverlayed != nullptr)
+        if (piIconOverlayed != nullptr) {
             *piIconOverlayed = sfi.iIcon >> 24;
+        }
 
         /* get selected (open) icon */
-        if (type == DEVT_DIRECTORY)
-        {
+        if (type == DEVT_DIRECTORY) {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
                 0,
@@ -894,8 +882,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR volumeName, DevType type, LPINT p
 
             *piIconSelected = sfi.iIcon;
         }
-        else
-        {
+        else {
             *piIconSelected = *piIconNormal;
         }
     }
@@ -946,10 +933,8 @@ HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, i
 
 
 // Current docs
-void UpdateDocs(void)
+void UpdateDocs()
 {
-    static INT s_lastDocCount;
-
     UINT currentEdit;
     ::SendMessage(g_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
     g_HSource = (currentEdit == 0)?g_nppData._scintillaMainHandle:g_nppData._scintillaSecondHandle;
@@ -962,7 +947,7 @@ void UpdateDocs(void)
 
     if ((_tcscmp(newPath, g_currentFile) != 0) || (newDocCount != g_docCount)) {
         /* update current path in explorer and favorites */
-        _tcscpy(g_currentFile, newPath);
+        wcscpy(g_currentFile, newPath);
         g_docCount = newDocCount;
         explorerDlg.NotifyNewFile();
         favesDlg.NotifyNewFile();
@@ -977,7 +962,7 @@ void UpdateDocs(void)
         fileNames   = (LPTSTR*)new LPTSTR[docCnt];
 
         for (i = 0; i < docCnt; i++) {
-            fileNames[i] = (LPTSTR)new TCHAR[MAX_PATH];
+            fileNames[i] = (LPTSTR)new WCHAR[MAX_PATH];
         }
 
         if (::SendMessage(g_nppData._nppHandle, NPPM_GETOPENFILENAMES, (WPARAM)fileNames, (LPARAM)docCnt)) {
@@ -992,11 +977,10 @@ void UpdateDocs(void)
             }
         }
 
-        for (i = 0; i < docCnt; i++)
+        for (i = 0; i < docCnt; i++) {
             delete [] fileNames[i];
+        }
         delete [] fileNames;
-
-        s_lastDocCount = docCnt;
     }
 }
 
@@ -1026,7 +1010,7 @@ BOOL IsFileOpen(const std::wstring &filePath)
 }
 
 // compare arguments and convert
-BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::vector<std::wstring> vFileList)
+BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const std::vector<std::wstring> &vFileList)
 {
     WCHAR           szElement[MAX_PATH];
     LPTSTR          pszPtr      = nullptr;
@@ -1035,19 +1019,19 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::ve
     VarExNppExec    varElement  = VAR_UNKNOWN;
 
     /* get name of NppExec plugin */
-    pszPtr = _tcstok(pszExplArg, _T(" "));
+    pszPtr = _tcstok(pszExplArg, L" ");
 
-    if (_tcscmp(pszPtr, _T("//Explorer:")) != 0) {
+    if (_tcscmp(pszPtr, L"//Explorer:") != 0) {
         WCHAR   szTemp[MAX_PATH];
-        _stprintf(szTemp, _T("Format of first line needs to be:\n//Explorer: NPPEXEC_DLL_NAME PARAM_X[0] PARAM_X[1]"));
-        ::MessageBox(g_nppData._nppHandle, szTemp, _T("Error"), MB_OK | MB_ICONERROR);
+        _stprintf(szTemp, L"Format of first line needs to be:\n//Explorer: NPPEXEC_DLL_NAME PARAM_X[0] PARAM_X[1]");
+        ::MessageBox(g_nppData._nppHandle, szTemp, L"Error", MB_OK | MB_ICONERROR);
         return FALSE;
     }
 
-    pszPtr = _tcstok(nullptr, _T(" "));
-    _tcscpy(pszName, pszPtr);
+    pszPtr = _tcstok(nullptr, L" ");
+    wcscpy(pszName, pszPtr);
 
-    pszPtr = _tcstok(nullptr, _T(" "));
+    pszPtr = _tcstok(nullptr, L" ");
 
     while (pszPtr != nullptr)
     {
@@ -1067,36 +1051,36 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::ve
         } else if (_tcsstr(pszPtr, cVarExNppExec[VAR_FILE_EXT]) != nullptr) {
             varElement = VAR_FILE_EXT;
         } else {
-            TCHAR szTemp[MAX_PATH];
-            _stprintf(szTemp, _T("Argument \"%s\" unknown."), pszPtr);
-            ::MessageBox(g_nppData._nppHandle, szTemp, _T("Error"), MB_OK | MB_ICONERROR);
+            WCHAR szTemp[MAX_PATH];
+            _stprintf(szTemp, L"Argument \"%s\" unknown.", pszPtr);
+            ::MessageBox(g_nppData._nppHandle, szTemp, L"Error", MB_OK | MB_ICONERROR);
 
             return FALSE;
         }
 
         /* get array list position of given files. Note: of by 1 because of '[' */
-        pszPtr += _tcslen(cVarExNppExec[varElement]) + 1;
+        pszPtr += wcslen(cVarExNppExec[varElement]) + 1;
 
-        pszEnd = _tcsstr(pszPtr, _T("]"));
+        pszEnd = _tcsstr(pszPtr, L"]");
 
         if (pszEnd == nullptr) {
             return FALSE;
-        } else{
-            *pszEnd = '\0';
         }
+
+        *pszEnd = '\0';
 
         /* control if file element exist */
         iCount = _ttoi(pszPtr);
         if (iCount > vFileList.size()) {
             auto message = std::format(L"Element \"{}\" of argument \"{}\" not selected.", iCount, pszPtr);
-            ::MessageBox(g_nppData._nppHandle, message.c_str(), _T("Error"), MB_OK | MB_ICONERROR);
+            ::MessageBox(g_nppData._nppHandle, message.c_str(), L"Error", MB_OK | MB_ICONERROR);
             return FALSE;
         }
 
         BOOL cpyDone = TRUE;
 
         /* copy full file in any case to element array */
-        _tcscpy(szElement, vFileList[iCount].c_str());
+        wcscpy(szElement, vFileList[iCount].c_str());
         ::PathRemoveBackslash(szElement);
 
         /* copy file element to argument list as requested */
@@ -1133,7 +1117,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::ve
             break;
         case VAR_FILE_EXT:
             if (*(::PathFindExtension(szElement)) != 0) {
-                _tcscpy(szElement, ::PathFindExtension(vFileList[iCount].c_str()) + 1);
+                wcscpy(szElement, ::PathFindExtension(vFileList[iCount].c_str()) + 1);
             }
             else {
                 cpyDone = FALSE;
@@ -1148,30 +1132,28 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::ve
             LPTSTR pszTemp = *p_pszNppArg;
 
             if (*p_pszNppArg != nullptr) {
-                *p_pszNppArg = (LPTSTR)new TCHAR[_tcslen(pszTemp) + _tcslen(szElement) + 4];
+                *p_pszNppArg = (LPTSTR)new WCHAR[wcslen(pszTemp) + wcslen(szElement) + 4];
             }
             else {
-                *p_pszNppArg = (LPTSTR)new TCHAR[_tcslen(szElement) + 3];
+                *p_pszNppArg = (LPTSTR)new WCHAR[wcslen(szElement) + 3];
             }
 
             if (*p_pszNppArg != nullptr) {
                 if (pszTemp != nullptr) {
-                    _stprintf(*p_pszNppArg, _T("%s \"%s\""), pszTemp, szElement);
+                    _stprintf(*p_pszNppArg, L"%s \"%s\"", pszTemp, szElement);
                     delete [] pszTemp;
                 }
                 else {
-                    _stprintf(*p_pszNppArg, _T("\"%s\""), szElement);
+                    _stprintf(*p_pszNppArg, L"\"%s\"", szElement);
                 }
             }
             else {
-                if (pszTemp != nullptr) {
-                    delete [] pszTemp;
-                }
+                delete [] pszTemp;
                 return FALSE;
             }
         }
 
-        pszPtr = _tcstok(nullptr, _T(" "));
+        pszPtr = _tcstok(nullptr, L" ");
     }
 
     return TRUE;
@@ -1195,10 +1177,12 @@ ScDir GetScrollDirection(HWND hWnd, UINT offTop, UINT offBottom)
 
     POINT pt{};
     ::GetCursorPos(&pt);
-    if (::PtInRect(&rcUp, pt) == TRUE)
+    if (::PtInRect(&rcUp, pt) == TRUE) {
         return SCR_UP;
-    else if (::PtInRect(&rcDown, pt) == TRUE)
+    }
+    if (::PtInRect(&rcDown, pt) == TRUE) {
         return SCR_DOWN;
+    }
     return SCR_OUTSIDE;
 }
 
@@ -1242,7 +1226,7 @@ void ErrorMessage(DWORD err)
     LPVOID lpMsgBuf;
 
     FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, nullptr, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR) & lpMsgBuf, 0, nullptr); // Process any inserts in lpMsgBuf.
-    ::MessageBox(nullptr, (LPCTSTR) lpMsgBuf, _T("Error"), MB_OK | MB_ICONINFORMATION);
+    ::MessageBox(nullptr, (LPCTSTR) lpMsgBuf, L"Error", MB_OK | MB_ICONINFORMATION);
 
     LocalFree(lpMsgBuf);
 }

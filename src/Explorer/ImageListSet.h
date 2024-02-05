@@ -22,86 +22,91 @@
 #include <vector>
 
 const int nbMax = 45;
-#define	IDI_SEPARATOR_ICON -1
+#define IDI_SEPARATOR_ICON -1
 
 class IconList
 {
 public :
-	IconList() :
-		_hImglst(nullptr),
-		_hInst(nullptr),
-		_pIconIDArray(nullptr),
-		_iconIDArraySize(0),
-		_iconSize(0)
-	{
-	};
+    IconList() :
+        _hImglst(nullptr),
+        _hInst(nullptr),
+        _pIconIDArray(nullptr),
+        _iconIDArraySize(0),
+        _iconSize(0)
+    {
+    };
 
-	void create(HINSTANCE hInst, int iconSize) {
-		InitCommonControls();
-		_hInst = hInst;
-		_iconSize = iconSize; 
-		_hImglst = ImageList_Create(iconSize, iconSize, ILC_COLOR32 | ILC_MASK, 0, nbMax);
-		if (!_hImglst)
-			throw int(25);
-	};
+    void create(HINSTANCE hInst, int iconSize) {
+        InitCommonControls();
+        _hInst = hInst;
+        _iconSize = iconSize; 
+        _hImglst = ImageList_Create(iconSize, iconSize, ILC_COLOR32 | ILC_MASK, 0, nbMax);
+        if (!_hImglst) {
+            throw int(25);
+        }
+    };
 
-	void create(int iconSize, HINSTANCE hInst, int *iconIDArray, int iconIDArraySize) {
-		create(hInst, iconSize);
-		_pIconIDArray = iconIDArray;
-		_iconIDArraySize = iconIDArraySize;
+    void create(int iconSize, HINSTANCE hInst, int *iconIDArray, int iconIDArraySize) {
+        create(hInst, iconSize);
+        _pIconIDArray = iconIDArray;
+        _iconIDArraySize = iconIDArraySize;
 
-		for (int i = 0 ; i < iconIDArraySize ; i++)
-			addIcon(iconIDArray[i]);
-	};
+        for (int i = 0 ; i < iconIDArraySize ; i++) {
+            addIcon(iconIDArray[i]);
+        }
+    };
 
-	void destroy() {
-		ImageList_Destroy(_hImglst);
-	};
+    void destroy() {
+        ImageList_Destroy(_hImglst);
+    };
 
-	HIMAGELIST getHandle() const {return _hImglst;};
+    HIMAGELIST getHandle() const {return _hImglst;};
 
-	void addIcon(int iconID) const {
-		HICON hIcon = ::LoadIcon(_hInst, MAKEINTRESOURCE(iconID));
-		if (!hIcon)
-			throw int(26);
-		ImageList_AddIcon(_hImglst, hIcon);
-		::DeleteObject(hIcon);
-	};
+    void addIcon(int iconID) const {
+        HICON hIcon = ::LoadIcon(_hInst, MAKEINTRESOURCE(iconID));
+        if (!hIcon) {
+            throw int(26);
+        }
+        ImageList_AddIcon(_hImglst, hIcon);
+        ::DeleteObject(hIcon);
+    };
 
-	bool changeIcon(int index, const TCHAR *iconLocation) const{
-		HBITMAP hBmp = (HBITMAP)::LoadImage(_hInst, iconLocation, IMAGE_ICON, _iconSize, _iconSize, LR_LOADFROMFILE | LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
-		if (!hBmp)
-			return false;
-		int i = ImageList_ReplaceIcon(_hImglst, index, (HICON)hBmp);
-		ImageList_AddMasked(_hImglst, (HBITMAP)hBmp, RGB(255,0,255));
-		::DeleteObject(hBmp);
-		return (i == index);
-	};
+    bool changeIcon(int index, const WCHAR *iconLocation) const{
+        HBITMAP hBmp = (HBITMAP)::LoadImage(_hInst, iconLocation, IMAGE_ICON, _iconSize, _iconSize, LR_LOADFROMFILE | LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+        if (!hBmp) {
+            return false;
+        }
+        int i = ImageList_ReplaceIcon(_hImglst, index, (HICON)hBmp);
+        ImageList_AddMasked(_hImglst, (HBITMAP)hBmp, RGB(255,0,255));
+        ::DeleteObject(hBmp);
+        return (i == index);
+    };
 
-	void setIconSize(int size) const {
-		ImageList_SetIconSize(_hImglst, size, size);
-		for (int i = 0 ; i < _iconIDArraySize ; i++)
-			addIcon(_pIconIDArray[i]);
-	};
+    void setIconSize(int size) const {
+        ImageList_SetIconSize(_hImglst, size, size);
+        for (int i = 0 ; i < _iconIDArraySize ; i++) {
+            addIcon(_pIconIDArray[i]);
+        }
+    };
 private :
-	HIMAGELIST _hImglst;
-	HINSTANCE _hInst;
-	int *_pIconIDArray;
-	int _iconIDArraySize;
-	int _iconSize;
+    HIMAGELIST _hImglst;
+    HINSTANCE _hInst;
+    int *_pIconIDArray;
+    int _iconIDArraySize;
+    int _iconSize;
 };
 
-typedef struct 
-{	
-	int _cmdID;
+struct ToolBarButtonUnit
+{
+    int _cmdID;
 
-	int _defaultIcon;
-	int _hotIcon;
-	int _grayIcon;
+    int _defaultIcon;
+    int _hotIcon;
+    int _grayIcon;
 
-	int _stdIcon;
-	BYTE _uIconStyle;
-}ToolBarButtonUnit;
+    int _stdIcon;
+    BYTE _uIconStyle;
+};
 
 typedef std::vector<ToolBarButtonUnit> ToolBarIconIDs;
 
@@ -110,13 +115,13 @@ typedef std::vector<IconList> IconListVector;
 class IconLists
 {
 public :
-	IconLists() {};
-	HIMAGELIST getImageListHandle(int index) const {
-		return _iconListVector[index].getHandle();
-	};
+    IconLists() {};
+    HIMAGELIST getImageListHandle(int index) const {
+        return _iconListVector[index].getHandle();
+    };
 
 protected :
-	IconListVector _iconListVector;
+    IconListVector _iconListVector;
 };
 
 const int HLIST_DEFAULT = 0;
@@ -126,67 +131,66 @@ const int HLIST_DISABLE = 2;
 class ToolBarIcons : public IconLists
 {
 public :
-	ToolBarIcons() : _nbCmd(0) {};
+    ToolBarIcons() : _nbCmd(0) {};
 
-	void init(ToolBarButtonUnit *buttonUnitArray, int arraySize);
-	void create(HINSTANCE hInst, int iconSize);
-	void destroy();
+    void init(ToolBarButtonUnit *buttonUnitArray, int arraySize);
+    void create(HINSTANCE hInst, int iconSize);
+    void destroy();
 
-	HIMAGELIST getDefaultLst() const {
-		return IconLists::getImageListHandle(HLIST_DEFAULT);
-	};
+    HIMAGELIST getDefaultLst() const {
+        return IconLists::getImageListHandle(HLIST_DEFAULT);
+    };
 
-	HIMAGELIST getHotLst() const {
-		return IconLists::getImageListHandle(HLIST_HOT);
-	};
+    HIMAGELIST getHotLst() const {
+        return IconLists::getImageListHandle(HLIST_HOT);
+    };
 
-	HIMAGELIST getDisableLst() const {
-		return IconLists::getImageListHandle(HLIST_DISABLE);
-	};
+    HIMAGELIST getDisableLst() const {
+        return IconLists::getImageListHandle(HLIST_DISABLE);
+    };
 
-	unsigned int getNbCommand() const {return _nbCmd;};
-	void resizeIcon(int size) {
-		reInit(size);
-	};
+    unsigned int getNbCommand() const {return _nbCmd;};
+    void resizeIcon(int size) {
+        reInit(size);
+    };
 
-	void reInit(int size) {
-		ImageList_SetIconSize(getDefaultLst(), size, size);
-		ImageList_SetIconSize(getHotLst(), size, size);
-		ImageList_SetIconSize(getDisableLst(), size, size);
+    void reInit(int size) {
+        ImageList_SetIconSize(getDefaultLst(), size, size);
+        ImageList_SetIconSize(getHotLst(), size, size);
+        ImageList_SetIconSize(getDisableLst(), size, size);
 
-		for (int i = 0 ; i < int(_tbiis.size()) ; i++)
-		{
-			if (_tbiis[i]._defaultIcon != -1)
-			{
-				_iconListVector[HLIST_DEFAULT].addIcon(_tbiis[i]._defaultIcon);
-				_iconListVector[HLIST_HOT].addIcon(_tbiis[i]._hotIcon);
-				_iconListVector[HLIST_DISABLE].addIcon(_tbiis[i]._grayIcon);
-			}
-		}
+        for (int i = 0 ; i < int(_tbiis.size()) ; i++) {
+            if (_tbiis[i]._defaultIcon != -1) {
+                _iconListVector[HLIST_DEFAULT].addIcon(_tbiis[i]._defaultIcon);
+                _iconListVector[HLIST_HOT].addIcon(_tbiis[i]._hotIcon);
+                _iconListVector[HLIST_DISABLE].addIcon(_tbiis[i]._grayIcon);
+            }
+        }
 
-	};
+    };
 
-	int getNbIcon() const {
-		return int(_tbiis.size());
-	};
+    int getNbIcon() const {
+        return int(_tbiis.size());
+    };
 
-	int getStdIconAt(SIZE_T i) const {
-		return _tbiis[i]._stdIcon;
-	};
+    int getStdIconAt(SIZE_T i) const {
+        return _tbiis[i]._stdIcon;
+    };
 
-	BYTE getIconStyle(SIZE_T i) const {
-		return _tbiis[i]._uIconStyle;
-	};
+    BYTE getIconStyle(SIZE_T i) const {
+        return _tbiis[i]._uIconStyle;
+    };
 
 
-	bool replaceIcon(int witchList, int iconIndex, const TCHAR *iconLocation) const {
-		if ((witchList != HLIST_DEFAULT) && (witchList != HLIST_HOT) && (witchList != HLIST_DISABLE))
-			return false;
-		return _iconListVector[witchList].changeIcon(iconIndex, iconLocation);
-		
-	};
+    bool replaceIcon(int witchList, int iconIndex, const WCHAR *iconLocation) const {
+        if ((witchList != HLIST_DEFAULT) && (witchList != HLIST_HOT) && (witchList != HLIST_DISABLE)) {
+            return false;
+        }
+        return _iconListVector[witchList].changeIcon(iconIndex, iconLocation);
+        
+    };
 
 private :
-	ToolBarIconIDs _tbiis;
-	unsigned int _nbCmd;
+    ToolBarIconIDs _tbiis;
+    unsigned int _nbCmd;
 };

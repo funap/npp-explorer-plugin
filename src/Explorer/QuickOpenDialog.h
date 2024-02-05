@@ -24,15 +24,14 @@
 
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
-#include <filesystem>
 
-#include "Explorer.h"
-#include "../NppPlugin/DockingFeature/StaticDialog.h"
-#include "ExplorerResource.h"
 #include "DirectoryReader.h"
+#include "Explorer.h"
 #include "FileSystemWatcher.h"
+#include "../NppPlugin/DockingFeature/StaticDialog.h"
 
 class QuickOpenModel;
 class QuickOpenEntry;
@@ -45,7 +44,7 @@ public:
 
     void init(HINSTANCE hInst, HWND parent, ExProp* prop);
     void show();
-    void setRootPath(const std::filesystem::path& currentPath);
+    void setRootPath(const std::filesystem::path& rootPath);
     void close();
     void SetFont(HFONT font);
 private:

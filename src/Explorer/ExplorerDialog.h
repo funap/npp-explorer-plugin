@@ -19,78 +19,66 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
-#include "TreeHelperClass.h"
-#include "FileList.h"
-#include "ComboOrgi.h"
-#include "Toolbar.h"
 #include <string>
 #include <vector>
-#include <memory>
-#include <algorithm>
 #include <shlwapi.h>
 #include <filesystem>
 
+#include "ComboOrgi.h"
 #include "Explorer.h"
 #include "ExplorerContext.h"
-#include "ExplorerResource.h"
+#include "FileList.h"
+#include "TreeHelperClass.h"
+#include "ToolBar.h"
+#include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
 enum EventID {
-	EID_INIT = 0,
-	EID_UPDATE_USER,
-	EID_UPDATE_DEVICE,
-	EID_UPDATE_ACTIVATE,
-	EID_UPDATE_ACTIVATEPATH,
+    EID_INIT = 0,
+    EID_UPDATE_USER,
+    EID_UPDATE_DEVICE,
+    EID_UPDATE_ACTIVATE,
+    EID_UPDATE_ACTIVATEPATH,
     EID_UPDATE_GOTOCURRENTFILE,
-	EID_EXPAND_ITEM,
-	EID_THREAD_END,
-	EID_MAX_THREAD,
-	EID_GET_VOLINFO,
-	EID_MAX
+    EID_EXPAND_ITEM,
+    EID_THREAD_END,
+    EID_MAX_THREAD,
+    EID_GET_VOLINFO,
+    EID_MAX,
 };
 
 struct GetVolumeInfo {
-	LPCTSTR		pszDrivePathName;
-	LPTSTR		pszVolumeName;
-	UINT		maxSize;
-	LPBOOL		pIsValidDrive;
+    LPCTSTR     pszDrivePathName;
+    LPTSTR      pszVolumeName;
+    UINT        maxSize;
+    LPBOOL      pIsValidDrive;
 };
 
 class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget, public ExplorerContext
 {
 public:
-	ExplorerDialog(void);
-	~ExplorerDialog(void);
+    ExplorerDialog();
+    ~ExplorerDialog();
 
     void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
-
     void redraw();
-
-	void destroy(void) {};
-
-   	void doDialog(bool willBeShown = true);
-
-	BOOL gotoPath(void);
-	void gotoUserFolder(void);
-	void gotoCurrentFolder(void);
-	void gotoCurrentFile(void);
-	void gotoFileLocation(const std::wstring& filePath);
-	void clearFilter(void);
-	void setFocusOnFolder(void);
-	void setFocusOnFile(void);
-
-	void NotifyNewFile(void);
-
-	void initFinish(void) {
-		_bStartupFinish = TRUE;
-		::SendMessage(_hSelf, WM_SIZE, 0, 0);
-	};
-
-	void NotifyEvent(DWORD event);
-
-	void SetFont(const HFONT font);
-public:
-	bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
+    void destroy() {};
+    void doDialog(bool willBeShown = true);
+    BOOL gotoPath();
+    void gotoUserFolder();
+    void gotoCurrentFolder();
+    void gotoCurrentFile();
+    void gotoFileLocation(const std::wstring& filePath);
+    void clearFilter();
+    void setFocusOnFolder();
+    void setFocusOnFile();
+    void NotifyNewFile();
+    void initFinish() {
+        _bStartupFinish = TRUE;
+        ::SendMessage(_hSelf, WM_SIZE, 0, 0);
+    };
+    void NotifyEvent(DWORD event);
+    void SetFont(HFONT font);
+    bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
     void NavigateBack() override;
     void NavigateForward() override;
     void NavigateTo(const std::wstring& path) override;
@@ -99,89 +87,87 @@ public:
     void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
 protected:
 
-	/* Subclassing tree */
-	LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runTreeProc(hwnd, Message, wParam, lParam));
-	};
+    /* Subclassing tree */
+    LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runTreeProc(hwnd, Message, wParam, lParam));
+    };
 
-	/* Subclassing splitter */
-	LRESULT runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runSplitterProc(hwnd, Message, wParam, lParam));
-	};
+    /* Subclassing splitter */
+    LRESULT runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK wndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runSplitterProc(hwnd, Message, wParam, lParam));
+    };
 
-	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
+    virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
-	LPCTSTR GetNameStrFromCmd(UINT idButton);
+    void InitialDialog();
 
-	void InitialDialog(void);
+    void UpdateRoots();
+    void UpdateAllExpandedItems();
+    void UpdatePath();
 
-	void UpdateRoots(void);
-	void UpdateAllExpandedItems(void);
-	void UpdatePath(void);
+    BOOL SelectItem(const std::filesystem::path& path);
 
-	BOOL SelectItem(const std::filesystem::path& path);
+    void onDelete(bool immediate = false);
+    void onCopy();
+    void onPaste();
+    void onCut();
 
-	void onDelete(bool immediate = false);
-	void onCopy(void);
-	void onPaste(void);
-	void onCut(void);
+    void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
+    bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
 
-	void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
-	bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
+    void tb_cmd(WPARAM message);
+    void tb_not(LPNMTOOLBAR lpnmtb);
 
-	void tb_cmd(WPARAM message);
-	void tb_not(LPNMTOOLBAR lpnmtb);
+    BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
+    void UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive = TRUE);
+    HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+    void FetchChildren(HTREEITEM parentItem);
+    std::wstring GetPath(HTREEITEM currentItem) const;
 
-	BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-	void UpdateChildren(const std::wstring& parentPath, HTREEITEM pCurrentItem, BOOL doRecursive = TRUE);
-	HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
-	void FetchChildren(HTREEITEM parentItem);
-	std::wstring GetPath(HTREEITEM currentItem) const;
-
-	BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
+    BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
     void UpdateLayout();
 private:
-	/* Handles */
-	BOOL					_bStartupFinish;
-	HANDLE					_hExploreVolumeThread;
-	HTREEITEM				_hItemExpand;
+    /* Handles */
+    BOOL        _bStartupFinish;
+    HANDLE      _hExploreVolumeThread;
+    HTREEITEM   _hItemExpand;
 
-	/* control process */
-	WNDPROC					_hDefaultTreeProc;
-	WNDPROC					_hDefaultSplitterProc;
+    /* control process */
+    WNDPROC     _hDefaultTreeProc;
+    WNDPROC     _hDefaultSplitterProc;
 
-	/* some status values */
-	BOOL					_bOldRectInitilized;
-	BOOL					_isSelNotifyEnable;
+    /* some status values */
+    BOOL        _bOldRectInitialized;
+    BOOL        _isSelNotifyEnable;
 
-	/* handles of controls */
-	HWND					_hListCtrl;
-	HWND					_hHeader;
-	HWND					_hSplitterCtrl;
-	HWND					_hFilter;
+    /* handles of controls */
+    HWND        _hListCtrl;
+    HWND        _hHeader;
+    HWND        _hSplitterCtrl;
+    HWND        _hFilter;
 
-	/* classes */
-	FileList				_FileList;
-	ComboOrgi				_ComboFilter;
-	ToolBar					_ToolBar;
-	ReBar					_Rebar;
+    /* classes */
+    FileList    _FileList;
+    ComboOrgi   _ComboFilter;
+    ToolBar     _ToolBar;
+    ReBar       _Rebar;
 
-	/* splitter values */
-	POINT					_ptOldPos;
-	POINT					_ptOldPosHorizontal;
-	BOOL					_isLeftButtonDown;
-	HCURSOR					_hSplitterCursorUpDown;
-	HCURSOR					_hSplitterCursorLeftRight;
-	ExProp*					_pExProp;
+    /* splitter values */
+    POINT       _ptOldPos;
+    POINT       _ptOldPosHorizontal;
+    BOOL        _isLeftButtonDown;
+    HCURSOR     _hSplitterCursorUpDown;
+    HCURSOR     _hSplitterCursorLeftRight;
+    ExProp*     _pExProp;
 
-	/* thread variable */
-	HCURSOR					_hCurWait;
+    /* thread variable */
+    HCURSOR     _hCurWait;
 
-	/* drag and drop values */
-	BOOL					_isScrolling;
-	BOOL					_isDnDStarted;
+    /* drag and drop values */
+    BOOL        _isScrolling;
+    BOOL        _isDnDStarted;
 
-	INT						_iDockedPos;
+    INT         _iDockedPos;
 };

@@ -25,16 +25,19 @@
 #include "QuickOpenDialog.h"
 
 #include <cwctype>
+#include <algorithm>
 #include <execution>
+#include <string_view>
 
 #include <shlwapi.h>
 #include <windowsx.h>
 
+#include "ExplorerResource.h"
 #include "FuzzyMatcher.h"
 #include "NppInterface.h"
 
 namespace {
-    constexpr UINT WM_UPDATE_RUSULT_LIST = WM_USER + 1;
+    constexpr UINT WM_UPDATE_RESULT_LIST = WM_USER + 1;
     constexpr UINT_PTR SCAN_QUERY    = 1;
     constexpr UINT_PTR UPDATE_PROGRESSBAR   = 2;
     constexpr UINT_PTR EDIT_SUBCLASS_ID = 1;
@@ -42,7 +45,7 @@ namespace {
 
     UINT getDpiForWindow(HWND hWnd) {
         UINT dpi = 96;
-        HMODULE user32dll = ::LoadLibrary(L"User32.dll");
+        HMODULE user32dll = ::LoadLibraryW(L"User32.dll");
         if (nullptr != user32dll) {
             typedef UINT(WINAPI * PGETDPIFORWINDOW)(HWND);
             PGETDPIFORWINDOW pGetDpiForWindow = (PGETDPIFORWINDOW)::GetProcAddress(user32dll, "GetDpiForWindow");
@@ -63,7 +66,7 @@ namespace {
     {
         auto it = str.begin();
         while (it != str.end()) {
-            if (std::iswcntrl(*it) || std::iswblank(*it)) {
+            if ((std::iswcntrl(*it) != 0) || (std::iswblank(*it) != 0)) {
                 it = str.erase(it);
             }
             else {
@@ -74,7 +77,7 @@ namespace {
 
     bool IsFile(const std::wstring& path) {
         DWORD attributes = GetFileAttributesW(path.c_str());
-        return (attributes != INVALID_FILE_ATTRIBUTES) && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
+        return (attributes != INVALID_FILE_ATTRIBUTES) && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0U);
     }
 }
 
@@ -84,7 +87,6 @@ public:
     explicit QuickOpenEntry(const std::wstring& path)
         : _relativePath(path.substr(s_rootPath.size()))
         , _score(0)
-        , _matches()
         , _matchType(MATCH_TYPE::INIT)
     {
     }
@@ -154,7 +156,7 @@ public:
         return _score;
     }
 
-    const std::vector<size_t> Matches() const
+    std::vector<size_t> Matches() const
     {
         return _matches;
     }
@@ -374,7 +376,7 @@ private:
     void Run(SearchCallback callback)
     {
         int revision = 0;
-        std::wstring query = _condition.query.value_or(std::wstring());;
+        std::wstring query = _condition.query.value_or(L"");
         std::vector<std::shared_ptr<QuickOpenEntry>> results;
         try {
             while (true) {
@@ -387,11 +389,11 @@ private:
                     }
 
                     // If the query is the same, do not recalculate the scores.
-                    if (_condition.query.value_or(std::wstring()).compare(query) == 0) {
+                    if (_condition.query.value_or(L"") == query) {
                         ;
                     }
                     // When characters are added to the query, inherit the narrowed-down results.
-                    else if (_condition.query.value_or(std::wstring()).starts_with(query)) {
+                    else if (_condition.query.value_or(L"").starts_with(query)) {
                         std::lock_guard<std::mutex> lock(_entriesMtx);
                         for (auto& entry : results) {
                             entry->ResetScore();
@@ -405,7 +407,7 @@ private:
                         }
                         results.clear();
                     }
-                    query = _condition.query.value_or(std::wstring());
+                    query = _condition.query.value_or(L"");
                 }
 
                 auto entries = GetUnscoredEntries();
@@ -428,7 +430,8 @@ private:
                         std::vector<size_t> matches;
                         int score = matcher.ScoreMatch(entry->FileName(), &matches);
                         if (0 < score) {
-                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::FILE, score | 1 << 30, std::move(matches));
+                            constexpr int FILE_MATCH_BONUS = 1 << 30;
+                            entry->SetScore(QuickOpenEntry::MATCH_TYPE::FILE, score + FILE_MATCH_BONUS, std::move(matches));
                             continue;
                         }
 
@@ -471,7 +474,6 @@ private:
         catch (...) {
             // do nothing
         }
-        return;
     }
     struct Condition {
         int                         revision{0};
@@ -491,9 +493,6 @@ private:
 QuickOpenDlg::QuickOpenDlg()
     : StaticDialog()
     , _model(std::make_unique<QuickOpenModel>())
-    , _directoryReader()
-    , _query()
-    , _results()
     , _layout{}
     , _hWndResult(nullptr)
     , _hWndEdit(nullptr)
@@ -535,7 +534,7 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
 
 void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
 {
-    if (_needsRefresh || _directoryReader.GetRootPath().compare(rootPath)) {
+    if (_needsRefresh || (_directoryReader.GetRootPath() != rootPath)) {
         _needsRefresh = false;
         _directoryReader.Cancel();
 
@@ -548,7 +547,7 @@ void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
                 _model->AddEntry(path);
             },
             [this]() {
-                PostMessage(_hSelf, WM_UPDATE_RUSULT_LIST, 0, 0);
+                PostMessage(_hSelf, WM_UPDATE_RESULT_LIST, 0, 0);
             }
         );
     }
@@ -561,7 +560,7 @@ void QuickOpenDlg::show()
         ::Edit_SetText(_hWndEdit, selectedText.c_str());
     }
     _model->StartSearchThread([this]() {
-        PostMessage(_hSelf, WM_UPDATE_RUSULT_LIST, 0, 0);
+        PostMessage(_hSelf, WM_UPDATE_RESULT_LIST, 0, 0);
     });
 
     updateQuery();
@@ -647,7 +646,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     COLORREF textColor1             = RGB(  0,   0,   0);
     COLORREF textColor2             = RGB(128, 128, 128);
 
-    if ((drawItem->itemState) & (ODS_SELECTED)) {
+    if (ODS_SELECTED == ((drawItem->itemState) & (ODS_SELECTED))) {
         backgroundColor             = RGB(230, 231, 239);
         backgroundMatchColor        = RGB(252, 234, 128);
         textColor1                  = RGB(  0,   0,   0);
@@ -721,7 +720,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
 {
     BOOL ret = FALSE;
     switch (Message) {
-    case WM_UPDATE_RUSULT_LIST:
+    case WM_UPDATE_RESULT_LIST:
         updateResultList();
         ret = TRUE;
         break;
@@ -757,7 +756,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
             if (!_directoryReader.IsReading()) {
                 ::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
             }
-            ::InvalidateRect(_hSelf, &_progressBarRect, false);
+            ::InvalidateRect(_hSelf, &_progressBarRect, FALSE);
             ::UpdateWindow(_hSelf);
             ret = TRUE;
             break;
@@ -781,10 +780,11 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         // draw progress bar
         if (_directoryReader.IsReading()) {
             static LONG s_progressPos = 0;
+            constexpr LONG PROGRESSBAR_WIDTH = 16U;
             RECT barRect {
-                .left   = std::max(_progressBarRect.left, s_progressPos - 16),
+                .left   = std::max(_progressBarRect.left, s_progressPos - PROGRESSBAR_WIDTH),
                 .top    = _progressBarRect.top,
-                .right  = std::min(s_progressPos + 16, _progressBarRect.right),
+                .right  = std::min(s_progressPos + PROGRESSBAR_WIDTH, _progressBarRect.right),
                 .bottom = _progressBarRect.bottom,
             };
             s_progressPos += 2;
@@ -862,7 +862,7 @@ void QuickOpenDlg::updateQuery()
     std::wstring query;
     if (1 < bufferLength) {
         query.resize(bufferLength);
-        ::Edit_GetText(_hWndEdit, &query[0], bufferLength);
+        ::Edit_GetText(_hWndEdit, query.data(), bufferLength);
         removeWhitespaces(query);
     }
 

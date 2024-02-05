@@ -23,8 +23,9 @@
 #include <assert.h>
 #include <shlwapi.h>
 #include <string>
-#include "StaticDialog.h"
 
+#include "StaticDialog.h"
+#include "../Notepad_plus_msgs.h"
 
 
 class DockingDlgInterface : public StaticDialog

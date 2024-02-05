@@ -26,61 +26,42 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <vector>
 #include <functional>
 
-#ifndef CB_GETCOMBOBOXINFO
-#define	CB_GETCOMBOBOXINFO	0x0164
-#endif
-
-#if(WINVER <= 0x0400)
-struct COMBOBOXINFO 
-{
-    int cbSize;
-    RECT rcItem;
-    RECT rcButton;
-    DWORD stateButton;
-    HWND hwndCombo;
-    HWND hwndItem;
-    HWND hwndList; 
-};
-#endif 
-
 class ComboOrgi
 {
 public :
-	ComboOrgi();
-    ~ComboOrgi ();
-	virtual void init(HWND hCombo, HWND parent);
-	virtual void destroy() {
-	};
+    ComboOrgi();
+    ~ComboOrgi();
+    virtual void init(HWND hCombo, HWND parent);
+    virtual void destroy() {
+    };
 
-	void addText(LPCTSTR pszText);
-	void setText(LPCTSTR pszText, UINT size = MAX_PATH);
-	void getText(LPTSTR pszText, UINT size = MAX_PATH);
-	bool getSelText(LPTSTR pszText);
+    void addText(LPCTSTR pszText);
+    void setText(LPCTSTR pszText, UINT size = MAX_PATH);
+    void getText(LPTSTR pszText, UINT size = MAX_PATH);
+    bool getSelText(LPTSTR pszText);
 
-	void setComboList(const std::vector<std::wstring> &vStrList);
-	std::vector<std::wstring> getComboList();
+    void setComboList(const std::vector<std::wstring> &vStrList);
+    std::vector<std::wstring> getComboList();
 
-	void clearComboList(void)
-	{
-		_comboItems.clear();
-	};
+    void clearComboList()
+    {
+        _comboItems.clear();
+    };
 
-	void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
+    void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
 
 private:
-	void selectComboText(LPCTSTR pszText);
+    void selectComboText(LPCTSTR pszText);
+    LRESULT runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK wndDefaultProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ComboOrgi *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProc(hwnd, Message, wParam, lParam));
+    };
 
-private :
-	HWND					_hCombo;
-    WNDPROC					_hDefaultComboProc;
-	HWND					_hParent;
+    HWND                        _hCombo;
+    WNDPROC                     _hDefaultComboProc;
+    HWND                        _hParent;
+    std::wstring                _currData;
+    std::vector<std::wstring>   _comboItems;
+    std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
 
-	std::wstring				_currData;
-	std::vector<std::wstring>	_comboItems;
-	std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)>		_onCharHandler;
-
-	LRESULT runProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-		return (((ComboOrgi *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runProc(hwnd, Message, wParam, lParam));
-	};
 };

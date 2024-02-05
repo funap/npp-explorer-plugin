@@ -23,6 +23,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <algorithm>
 #include <shlobj.h>
 
+#include "../NppPlugin/Notepad_plus_msgs.h"
+
 namespace {
 constexpr WCHAR STR_DETAILS_HIDE[] = L"Details <<";
 constexpr WCHAR STR_DETAILS_SHOW[] = L"Details >>";
@@ -30,17 +32,17 @@ constexpr WCHAR STR_DETAILS_SHOW[] = L"Details >>";
 
 // Set a call back with the handle after init to set the path.
 // http://msdn.microsoft.com/library/default.asp?url=/library/en-us/shellcc/platform/shell/reference/callbackfunctions/browsecallbackproc.asp
-static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM, LPARAM pData)
+static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM /*unused*/, LPARAM pData)
 {
-    if (uMsg == BFFM_INITIALIZED)
+    if (uMsg == BFFM_INITIALIZED) {
         ::SendMessage(hwnd, BFFM_SETSELECTION, TRUE, pData);
+    }
     return 0;
 };
 
 
 PropDlg::PropDlg()
     : StaticDialog()
-    , TreeHelper()
     , _pName(nullptr)
     , _pLink(nullptr)
     , _pDesc(nullptr)
@@ -74,23 +76,23 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
     switch (Message) {
         case WM_INITDIALOG: {
             /* set discription */
-            TCHAR szBuffer[256];
+            WCHAR szBuffer[256];
 
-            _stprintf(szBuffer, _T("%s:"), _pDesc);
+            _stprintf(szBuffer, L"%s:", _pDesc);
             ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
 
             /* if name is not defined extract from link */
             if (_pName && _pLink) {
-                _tcscpy(szBuffer, _pLink);
+                wcscpy(szBuffer, _pLink);
                 if ((_pName[0] == '\0') && (szBuffer[0] != '\0')) {
-                    if (szBuffer[_tcslen(szBuffer) - 1] == '\\') {
-                        szBuffer[_tcslen(szBuffer) - 1] = '\0';
+                    if (szBuffer[wcslen(szBuffer) - 1] == '\\') {
+                        szBuffer[wcslen(szBuffer) - 1] = '\0';
                     }
-                    if (szBuffer[_tcslen(szBuffer) - 1] == ':') {
-                        _tcscpy(_pName, szBuffer);
+                    if (szBuffer[wcslen(szBuffer) - 1] == ':') {
+                        wcscpy(_pName, szBuffer);
                     }
                     else {
-                        _tcscpy(_pName, (_tcsrchr(szBuffer, '\\') + 1));
+                        wcscpy(_pName, (_tcsrchr(szBuffer, '\\') + 1));
                     }
                 }
             }
@@ -114,7 +116,8 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
             goToCenter();
 
             if (_linkDlg == LinkDlg::NONE) {
-                RECT rcName, rcLink;
+                RECT rcName;
+                RECT rcLink;
 
                 ::ShowWindow(::GetDlgItem(_hSelf, IDC_BTN_OPENDLG), SW_HIDE);
                 ::GetWindowRect(::GetDlgItem(_hSelf, IDC_EDIT_NAME), &rcName);
@@ -215,8 +218,8 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                         ZeroMemory(&info, sizeof(info));
                         info.hwndOwner      = _hParent;
                         info.pidlRoot       = nullptr;
-                        info.pszDisplayName = (LPTSTR)new TCHAR[MAX_PATH];
-                        info.lpszTitle      = _T("Select a folder:");
+                        info.pszDisplayName = (LPTSTR)new WCHAR[MAX_PATH];
+                        info.lpszTitle      = L"Select a folder:";
                         info.ulFlags        = BIF_RETURNONLYFSDIRS;
                         info.lpfn           = BrowseCallbackProc;
                         info.lParam         = (LPARAM)_pLink;
@@ -244,10 +247,10 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     FileDlg dlg(_hInst, _hParent);
 
                     dlg.setDefFileName(_pLink);
-                    if (_tcsstr(_pDesc, _T("Session")) != nullptr) {
-                        dlg.setExtFilter(_T("Session file"), _T(".session"), nullptr);
+                    if (_tcsstr(_pDesc, L"Session") != nullptr) {
+                        dlg.setExtFilter(L"Session file", L".session", nullptr);
                     }
-                    dlg.setExtFilter(_T("All types"), _T(".*"), nullptr);
+                    dlg.setExtFilter(L"All types", L".*", nullptr);
 
                     if (_fileMustExist == TRUE) {
                         pszLink = dlg.doSaveDlg();
@@ -258,7 +261,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 
                     if (pszLink != nullptr) {
                         // Set edit control to the directory path.
-                        _tcscpy(_pLink, pszLink);
+                        wcscpy(_pLink, pszLink);
                         ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
                     }
                 }
@@ -276,18 +279,16 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
                     SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
 
-                    if ((_tcslen(_pName) != 0) && (_tcslen(_pLink) != 0)) {
-                        auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
+                    if ((wcslen(_pName) != 0) && (wcslen(_pLink) != 0)) {
+                        auto *selectedItem = TreeView_GetSelection(_hTreeCtrl);
                         _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
                         ::EndDialog(_hSelf, TRUE);
                         return TRUE;
                     }
-                    else {
-                        ::MessageBox(_hParent, _T("Fill out all fields!"), _T("Error"), MB_OK);
-                    }
+                    ::MessageBox(_hParent, L"Fill out all fields!", L"Error", MB_OK);
                 }
                 else {
-                    auto selectedItem = TreeView_GetSelection(_hTreeCtrl);
+                    auto *selectedItem = TreeView_GetSelection(_hTreeCtrl);
                     _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
                     ::EndDialog(_hSelf, TRUE);
                     return TRUE;
@@ -352,8 +353,8 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                                     ::SetDlgItemText(_hSelf, IDC_EDIT_LINK, pElem->Link().data());
                                 }
                                 else {
-                                    ::SetDlgItemText(_hSelf, IDC_EDIT_NAME, _T(""));
-                                    ::SetDlgItemText(_hSelf, IDC_EDIT_LINK, _T(""));
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_NAME, L"");
+                                    ::SetDlgItemText(_hSelf, IDC_EDIT_LINK, L"");
                                 }
                             }
                         }
@@ -377,17 +378,17 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
     return FALSE;
 }
 
-void PropDlg::setRoot(FavesItemPtr pElem, INT iUImgPos, BOOL bWithLink)
+void PropDlg::setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink)
 {
-    _root   = pElem;
-    _iUImgPos   = iUImgPos;
+    _root       = pElem;
+    _iUImgPos   = iUserImagePos;
     _bWithLink  = bWithLink;
 
     /* do not destroy items */
     _seeDetails = TRUE;
 }
 
-FavesItemPtr PropDlg::getSelectedGroup(void) const
+FavesItemPtr PropDlg::getSelectedGroup() const
 {
     return _selectedGroup;
 }

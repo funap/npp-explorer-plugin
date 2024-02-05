@@ -21,39 +21,30 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <windows.h>
 #include <commctrl.h>
-#include <vector>
+
 #include <string>
-
-
-#ifndef TreeView_GetItemState
-#define TVM_GETITEMSTATE (TV_FIRST+39)
-#define TreeView_GetItemState(hwndTV, hti, mask) \
-(UINT)::SendMessage((hwndTV), TVM_GETITEMSTATE, (WPARAM)(hti), (LPARAM)(mask))
-#endif
-
+#include <vector>
 
 class TreeHelper
 {
 public:
-	TreeHelper() : _hTreeCtrl(NULL) {};
-	~TreeHelper() {};
+    TreeHelper() : _hTreeCtrl(nullptr) {};
+    ~TreeHelper() {};
 
 protected:
-	std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
-	HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, void* lParam = NULL);
-	BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedIamage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, void* lParam = NULL, BOOL delChildren = TRUE);
-	void DeleteChildren(HTREEITEM parentItem);
-	BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
-	std::wstring GetItemText(HTREEITEM hItem) const;
+    std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
+    HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, void* lParam = NULL);
+    BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, void* lParam = NULL, BOOL delChildren = TRUE);
+    void DeleteChildren(HTREEITEM parentItem);
+    BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
+    std::wstring GetItemText(HTREEITEM hItem) const;
     void* GetParam(HTREEITEM hItem);
-	void SetParam(HTREEITEM hItem, void* lParam);
-	BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);
-	void SetItemIcons(HTREEITEM hItem, INT icon, INT selected, INT overlay);
-	BOOL IsItemExpanded(HTREEITEM hItem);
-	INT GetChildrenCount(HTREEITEM item);
-
+    void SetParam(HTREEITEM hItem, void* lParam);
+    BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);
+    void SetItemIcons(HTREEITEM hItem, INT icon, INT selected, INT overlay);
+    BOOL IsItemExpanded(HTREEITEM hItem);
+    INT GetChildrenCount(HTREEITEM item);
     HTREEITEM FindTreeItemByParam(const void* param);
 
-protected:
-	HWND				_hTreeCtrl;
+    HWND    _hTreeCtrl;
 };

@@ -19,144 +19,126 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
-#include "TreeHelperClass.h"
-#include "FileList.h"
-#include "ComboOrgi.h"
-#include "Toolbar.h"
-#include "PropDlg.h"
 #include <string>
 #include <vector>
-#include <algorithm>
 #include <shlwapi.h>
-#include <windows.h>
-#include <windowsx.h>
-#include <commctrl.h>
 
 #include "Explorer.h"
-#include "ExplorerResource.h"
 #include "FavesModel.h"
+#include "TreeHelperClass.h"
+#include "Toolbar.h"
+#include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
 enum MenuID {
-	FM_NEWLINK = 1,
-	FM_NEWGROUP,
-	FM_ADDSESSION,
-	FM_SAVESESSION,
-	FM_COPY,
-	FM_CUT,
-	FM_PASTE,
-	FM_DELETE,
-	FM_PROPERTIES,
-	FM_OPEN,
-	FM_OPENOTHERVIEW,
-	FM_OPENNEWINSTANCE,
-	FM_GOTO_FILE_LOCATION,
-	FM_ADDTOSESSION
+    FM_NEWLINK = 1,
+    FM_NEWGROUP,
+    FM_ADDSESSION,
+    FM_SAVESESSION,
+    FM_COPY,
+    FM_CUT,
+    FM_PASTE,
+    FM_DELETE,
+    FM_PROPERTIES,
+    FM_OPEN,
+    FM_OPENOTHERVIEW,
+    FM_OPENNEWINSTANCE,
+    FM_GOTO_FILE_LOCATION,
+    FM_ADDTOSESSION,
 };
 
 
 class FavesDialog : public DockingDlgInterface, public TreeHelper
 {
 public:
-	FavesDialog(void);
-	~FavesDialog(void);
+    FavesDialog();
+    ~FavesDialog();
 
     void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
 
-	virtual void redraw(void) {
-		::RedrawWindow(_ToolBar.getHSelf(), NULL, NULL, TRUE);
-		ExpandElementsRecursive(TVI_ROOT);
-	};
+    virtual void redraw() {
+        ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
+        ExpandElementsRecursive(TVI_ROOT);
+    };
 
-	void destroy(void)
-	{
-		/* save settings and destroy the resources */
-		SaveSettings();
-	};
+    void destroy()
+    {
+        /* save settings and destroy the resources */
+        SaveSettings();
+    };
 
-   	void doDialog(bool willBeShown = true);
+    void doDialog(bool willBeShown = true);
 
-	void AddToFavorties(BOOL isFolder, LPTSTR szLink);
+    void AddToFavorties(BOOL isFolder, LPTSTR szLink);
     void AddToFavorties(BOOL isFolder, std::vector<std::wstring>&& paths);
-    void SaveSession(void);
-	void NotifyNewFile(void);
+    void SaveSession();
+    void NotifyNewFile();
 
-	void initFinish(void) {
-		::SendMessage(_hSelf, WM_SIZE, 0, 0);
-	};
-	void SetFont(const HFONT font);
+    void initFinish() {
+        ::SendMessage(_hSelf, WM_SIZE, 0, 0);
+    };
+    void SetFont(HFONT font);
 protected:
 
-	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
+    virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
-	LPCTSTR GetNameStrFromCmd(UINT idButton);
-	void tb_cmd(UINT message);
+    void tb_cmd(UINT message);
 
-	void InitialDialog(void);
+    void InitialDialog();
 
     void CopyItem(HTREEITEM hItem);
-	void CutItem(HTREEITEM hItem);
-	void PasteItem(HTREEITEM hItem);
+    void CutItem(HTREEITEM hItem);
+    void PasteItem(HTREEITEM hItem);
 
-	void AddSaveSession(HTREEITEM hItem, BOOL bSave);
+    void AddSaveSession(HTREEITEM hItem, BOOL bSave);
 
-	void NewItem(HTREEITEM hItem);
-	void EditItem(HTREEITEM hItem);
-	void DeleteItem(HTREEITEM hItem);
+    void NewItem(HTREEITEM hItem);
+    void EditItem(HTREEITEM hItem);
+    void DeleteItem(HTREEITEM hItem);
 
     void RefreshTree(HTREEITEM parentItem);
 
-	void OpenContext(HTREEITEM hItem, POINT pt);
-	BOOL DoesLinkExist(LPTSTR link, FavesType root);
-	void OpenLink(FavesItemPtr pElem);
-	void UpdateLink(HTREEITEM hItem);
-	void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
+    void OpenContext(HTREEITEM hItem, POINT pt);
+    BOOL DoesLinkExist(LPTSTR link, FavesType type);
+    void OpenLink(FavesItemPtr pElem);
+    void UpdateLink(HTREEITEM hParentItem);
+    void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
 
-	void DrawSessionChildren(HTREEITEM hItem);
+    void DrawSessionChildren(HTREEITEM hItem);
 
-	void ReadSettings(void);
-	void ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr);
+    void ReadSettings();
+    void ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr);
 
-	void SaveSettings(void);
-	void SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile);
+    void SaveSettings();
+    void SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile);
 
-	void ExpandElementsRecursive(HTREEITEM hItem);
+    void ExpandElementsRecursive(HTREEITEM hItem);
 
-	LinkDlg MapPropDlg(int root) {
-		switch (root) {
-			case FAVES_FOLDER:		return LinkDlg::FOLDER;
-			case FAVES_FILE:		return LinkDlg::FILE;
-			case FAVES_SESSION:	return LinkDlg::FILE;
-			default: return LinkDlg::NONE;
-		}
-	};
-	BOOL OpenTreeViewItem(const HTREEITEM hItem);
+    BOOL OpenTreeViewItem(HTREEITEM hItem);
 
-protected:
-	/* Subclassing tree */
-	LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-	static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
-		return reinterpret_cast<FavesDialog*>(dwRefData)->runTreeProc(hwnd, message, wParam, lParam);
-	};
+    /* Subclassing tree */
+    LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+        return reinterpret_cast<FavesDialog*>(dwRefData)->runTreeProc(hwnd, message, wParam, lParam);
+    };
 
 private:
-	/* control process */
-	WNDPROC					_hDefaultTreeProc;
+    /* control process */
+    WNDPROC         _hDefaultTreeProc;
 
-	/* different imagelists */
-	HIMAGELIST				_hImageList;
-	HIMAGELIST				_hImageListSys;
+    /* different imagelists */
+    HIMAGELIST      _hImageList;
+    HIMAGELIST      _hImageListSys;
 
-	BOOL					_isCut;
-	HTREEITEM				_hTreeCutCopy;
+    BOOL            _isCut;
+    HTREEITEM       _hTreeCutCopy;
 
-	ToolBar					_ToolBar;
-	ReBar					_Rebar;
+    ToolBar         _ToolBar;
+    ReBar           _Rebar;
 
-	BOOL					_addToSession;
-	FavesItemPtr				_peOpenLink;
-	ExProp*					_pExProp;
+    BOOL            _addToSession;
+    FavesItemPtr    _peOpenLink;
+    ExProp*         _pExProp;
 
-	/* database */
-    FavesModel              _model;
+    /* database */
+    FavesModel      _model;
 };

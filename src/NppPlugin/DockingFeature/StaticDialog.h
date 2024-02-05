@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #pragma once
-#include "..\Notepad_plus_msgs.h"
+
 #include "Window.h"
 
 typedef HRESULT (WINAPI * ETDTProc) (HWND, DWORD);
@@ -23,54 +23,54 @@ enum class PosAlign { left, right, top, bottom };
 
 struct DLGTEMPLATEEX
 {
-      WORD   dlgVer;
-      WORD   signature;
-      DWORD  helpID;
-      DWORD  exStyle;
-      DWORD  style;
-      WORD   cDlgItems;
-      short  x;
-      short  y;
-      short  cx;
-      short  cy;
-      // The structure has more fields but are variable length
+    WORD   dlgVer;
+    WORD   signature;
+    DWORD  helpID;
+    DWORD  exStyle;
+    DWORD  style;
+    WORD   cDlgItems;
+    short  x;
+    short  y;
+    short  cx;
+    short  cy;
+    // The structure has more fields but are variable length
 };
 
 class StaticDialog : public Window
 {
 public :
-	virtual ~StaticDialog();
+    virtual ~StaticDialog();
 
-	virtual void create(int dialogID, bool isRTL = false, bool msgDestParent = true);
+    virtual void create(int dialogID, bool isRTL = false, bool msgDestParent = true);
 
     virtual bool isCreated() const {
-		return (_hSelf != NULL);
-	}
+        return (_hSelf != NULL);
+    }
 
-	void goToCenter();
+    void goToCenter();
 
-	void display(bool toShow = true, bool enhancedPositioningCheckWhenShowing = false) const;
+    void display(bool toShow = true, bool enhancedPositioningCheckWhenShowing = false) const;
 
-	RECT getViewablePositionRect(RECT testRc) const;
+    RECT getViewablePositionRect(RECT testRc) const;
 
-	POINT getTopPoint(HWND hwnd, bool isLeft = true) const;
+    POINT getTopPoint(HWND hwnd, bool isLeft = true) const;
 
-	bool isCheckedOrNot(int checkControlID) const
-	{
-		return (BST_CHECKED == ::SendMessage(::GetDlgItem(_hSelf, checkControlID), BM_GETCHECK, 0, 0));
-	}
+    bool isCheckedOrNot(int checkControlID) const
+    {
+        return (BST_CHECKED == ::SendMessage(::GetDlgItem(_hSelf, checkControlID), BM_GETCHECK, 0, 0));
+    }
 
-	void setChecked(int checkControlID, bool checkOrNot = true) const
-	{
-		::SendDlgItemMessage(_hSelf, checkControlID, BM_SETCHECK, checkOrNot ? BST_CHECKED : BST_UNCHECKED, 0);
-	}
+    void setChecked(int checkControlID, bool checkOrNot = true) const
+    {
+        ::SendDlgItemMessage(_hSelf, checkControlID, BM_SETCHECK, checkOrNot ? BST_CHECKED : BST_UNCHECKED, 0);
+    }
 
     virtual void destroy() override;
 
 protected:
-	static INT_PTR CALLBACK dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
-	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) = 0;
+    static INT_PTR CALLBACK dlgProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) = 0;
 
     void alignWith(HWND handle, HWND handle2Align, PosAlign pos, POINT & point);
-	HGLOBAL makeRTLResource(int dialogID, DLGTEMPLATE **ppMyDlgTemplate);
+    HGLOBAL makeRTLResource(int dialogID, DLGTEMPLATE **ppMyDlgTemplate);
 };

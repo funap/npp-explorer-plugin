@@ -23,14 +23,72 @@
 */
 
 #include "FileFilter.h"
-#include <tchar.h>
-#include <cwctype>
-#include <memory>
 
-FileFilter::FileFilter() :
-	_filterString(),
-	_allowList(),
-	_denyList()
+namespace {
+std::vector<std::wstring> split(const std::wstring_view &string, WCHAR delim)
+{
+    std::vector<std::wstring> result;
+    std::wstring item;
+    for (WCHAR ch : string) {
+        if (ch == delim) {
+            if (!item.empty()) {
+                result.push_back(item);
+            }
+            item.clear();
+        }
+        else {
+            item += ch;
+        }
+    }
+    if (!item.empty()) {
+        result.push_back(item);
+    }
+    return result;
+}
+
+BOOL wildcmp(LPCTSTR wild, LPCTSTR string)
+{
+    // Written by Jack Handy - jakkhandy@hotmail.com
+    // See: http://www.codeproject.com/string/wildcmp.asp
+    LPCTSTR cp = nullptr;
+    LPCTSTR mp = nullptr;
+
+    while ((*string) && (*wild != '*')) {
+        if ((tolower(*wild) != tolower(*string)) && (*wild != '?')) {
+            return FALSE;
+        }
+        wild++;
+        string++;
+    }
+
+    while (*string) {
+        if (*wild == '*') {
+            if (!*++wild) {
+                return TRUE;
+            }
+            mp = wild;
+            cp = string + 1;
+        }
+        else if ((tolower(*wild) == tolower(*string)) || (*wild == '?')) {
+            wild++;
+            string++;
+        }
+        else {
+            wild = mp;
+            string = cp++;
+        }
+    }
+
+    while (*wild == '*') {
+        wild++;
+    }
+    return !*wild;
+}
+
+} // namespace
+
+
+FileFilter::FileFilter()
 {
 }
 
@@ -40,123 +98,66 @@ FileFilter::~FileFilter()
 
 void FileFilter::setFilter(std::wstring_view newFilter)
 {
-	_filterString = std::wstring(L"*.*");
-	if (0 < newFilter.length()) {
-		_filterString = newFilter;
-	}
+    _filterString = std::wstring(L"*.*");
+    if (0 < newFilter.length()) {
+        _filterString = newFilter;
+    }
 
-	const WCHAR             SEPARATOR  = ';';
-	const std::wstring_view DENY_BEGIN = L"[^";
-	const std::wstring_view DENY_END   = L"]";
+    const WCHAR             SEPARATOR  = ';';
+    const std::wstring_view DENY_BEGIN = L"[^";
+    const std::wstring_view DENY_END   = L"]";
 
-	SIZE_T denyBeginPos = _filterString.find_first_of(DENY_BEGIN);
-	if (std::wstring::npos == denyBeginPos) {
-		_allowList = split(_filterString, SEPARATOR);
-	}
-	else {
-		SIZE_T denyEndPos = _filterString.find_first_of(DENY_END, denyBeginPos);
-		if (std::wstring::npos != denyEndPos && denyEndPos > denyBeginPos) {
-			_allowList = split(_filterString.substr(0, denyBeginPos), SEPARATOR);
-			denyBeginPos += DENY_BEGIN.length();
-			_denyList  = split(_filterString.substr(denyBeginPos, denyEndPos - denyBeginPos), SEPARATOR);
-		}
-		else {
-			_allowList = split(_filterString.substr(0, denyBeginPos), SEPARATOR);
-			denyBeginPos += DENY_BEGIN.length();
-			_denyList  = split(_filterString.substr(denyBeginPos), SEPARATOR);
-		}
-	}
+    SIZE_T denyBeginPos = _filterString.find_first_of(DENY_BEGIN);
+    if (std::wstring::npos == denyBeginPos) {
+        _allowList = split(_filterString, SEPARATOR);
+    }
+    else {
+        SIZE_T denyEndPos = _filterString.find_first_of(DENY_END, denyBeginPos);
+        if (std::wstring::npos != denyEndPos && denyEndPos > denyBeginPos) {
+            _allowList = split(_filterString.substr(0, denyBeginPos), SEPARATOR);
+            denyBeginPos += DENY_BEGIN.length();
+            _denyList  = split(_filterString.substr(denyBeginPos, denyEndPos - denyBeginPos), SEPARATOR);
+        }
+        else {
+            _allowList = split(_filterString.substr(0, denyBeginPos), SEPARATOR);
+            denyBeginPos += DENY_BEGIN.length();
+            _denyList  = split(_filterString.substr(denyBeginPos), SEPARATOR);
+        }
+    }
 
-	// When only the deny list was inputted
-	if (_allowList.empty()) {
-		_allowList.emplace_back(L"*.*");
-	}
+    // When only the deny list was inputted
+    if (_allowList.empty()) {
+        _allowList.emplace_back(L"*.*");
+    }
 }
 
-LPCWSTR	FileFilter::getFilterString()
+LPCWSTR FileFilter::getFilterString()
 {
-	return _filterString.c_str();
+    return _filterString.c_str();
 }
 
-std::vector<std::wstring> FileFilter::split(const std::wstring_view &string, const WCHAR delim)
-{
-	std::vector<std::wstring> result;
-	std::wstring item;
-	for (WCHAR ch : string) {
-		if (ch == delim) {
-			if (!item.empty())
-				result.push_back(item);
-			item.clear();
-		}
-		else {
-			item += ch;
-		}
-	}
-	if (!item.empty()) {
-		result.push_back(item);
-	}
-	return result;
-}
 
 BOOL FileFilter::match(const std::wstring &fileName)
 {
-	if (fileName.empty())
-		return FALSE;
+    if (fileName.empty()) {
+        return FALSE;
+    }
 
-	if (L"*.*" == _filterString) {
-		return TRUE;
-	}
+    if (L"*.*" == _filterString) {
+        return TRUE;
+    }
 
-	for (const auto &deny : _denyList) {
-		if (0 != wildcmp(deny.c_str(), fileName.c_str())) {
-			return FALSE;
-		}
-	}
+    for (const auto &deny : _denyList) {
+        if (0 != wildcmp(deny.c_str(), fileName.c_str())) {
+            return FALSE;
+        }
+    }
 
-	for (const auto& allow : _allowList) {
-		if (0 != wildcmp(allow.c_str(), fileName.c_str())) {
-			return TRUE;
-		}
-	}
+    for (const auto& allow : _allowList) {
+        if (0 != wildcmp(allow.c_str(), fileName.c_str())) {
+            return TRUE;
+        }
+    }
 
-	return FALSE;
-}
-
-BOOL FileFilter::wildcmp(LPCTSTR wild, LPCTSTR string)
-{
-	// Written by Jack Handy - jakkhandy@hotmail.com
-	// See: http://www.codeproject.com/string/wildcmp.asp
-	LPCTSTR		cp = NULL;
-	LPCTSTR		mp = NULL;
-
-	while ((*string) && (*wild != '*')) {
-		if ((tolower(*wild) != tolower(*string)) && (*wild != '?')) {
-			return FALSE;
-		}
-		wild++;
-		string++;
-	}
-
-	while (*string) {
-		if (*wild == '*') {
-			if (!*++wild) {
-				return TRUE;
-			}
-			mp = wild;
-			cp = string + 1;
-		}
-		else if ((tolower(*wild) == tolower(*string)) || (*wild == '?')) {
-			wild++;
-			string++;
-		}
-		else {
-			wild = mp;
-			string = cp++;
-		}
-	}
-
-	while (*wild == '*') {
-		wild++;
-	}
-	return !*wild;
+    return FALSE;
 }

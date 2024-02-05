@@ -1,7 +1,7 @@
 /***********************************************************\
-*	Original in MFC by Roman Engels		Copyright 2003		*
-*															*
-*	http://www.codeproject.com/shell/shellcontextmenu.asp	*
+*   Original in MFC by Roman Engels     Copyright 2003      *
+*                                                           *
+*   http://www.codeproject.com/shell/shellcontextmenu.asp   *
 \***********************************************************/
 
 /*
@@ -42,63 +42,62 @@ struct __declspec(uuid("000214e6-0000-0000-c000-000000000046")) IShellFolder;
 class ContextMenu
 {
 public:
-	ContextMenu();
-	~ContextMenu();
+    ContextMenu();
+    ~ContextMenu();
 
-	void SetObjects(const std::wstring &strObject);
-	void SetObjects(const std::vector<std::wstring> &strArray);
-	UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
-
-private:
-	static LRESULT CALLBACK defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
-	LRESULT CALLBACK HookWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
-
-	HRESULT SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast);
-
-	void	InvokeCommand(LPCONTEXTMENU pContextMenu, UINT idCommand);
-	void	HandleCustomCommand(UINT idCommand);
-	LPCONTEXTMENU	GetContextMenu();
-	void	FreePIDLArray(LPITEMIDLIST * pidlArray);
-	UINT	GetPIDLSize(LPCITEMIDLIST pidl);
-	LPBYTE	GetPIDLPos(LPCITEMIDLIST pidl, int nPos);
-	int		GetPIDLCount(LPCITEMIDLIST pidl);
-	LPITEMIDLIST CopyPIDL(LPCITEMIDLIST pidl, int cb = -1);
-
-	/* notepad functions */
-	void	Rename(void);
-	void	quickOpen(void);
-	void	newFile(void);
-	void	newFolder(void);
-	void	findInFiles(void);
-	void	openFile(void);
-	void	openFileInOtherView(void);
-	void	openFileInNewInstance(void);
-	void	openPrompt(void);
-    void    setRootFolder();
-    void    gotoRootFolder();
-    void    clearRootFolder();
-	void	addToFaves(void);
-	void	addRelativePathsCB(void);
-	void	addFullPathsCB(void);
-	void	addFileNamesCB(void);
-	bool	Str2CB(LPCTSTR str2cpy);
-	void	openScriptPath(HMODULE hInst);
-	void	startNppExec(HMODULE hInst, UINT cmdID);
+    void SetObjects(const std::wstring &strObject);
+    void SetObjects(const std::vector<std::wstring> &strArray);
+    UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:
-	HINSTANCE				_hInst;
-	HWND					_hWndNpp;
-	HWND					_hWndParent;
+    static LRESULT CALLBACK defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    LRESULT CALLBACK HookWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
-	SIZE_T					_nItems;
-	BOOL					_bDelete;
-	IShellFolder*			_psfFolder;
-	LPITEMIDLIST*			_pidlArray;
+    HRESULT SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast);
 
-	IContextMenu2*			_contextMenu2;
-	IContextMenu3*			_contextMenu3;
+    void    InvokeCommand(LPCONTEXTMENU pContextMenu, UINT idCommand);
+    void    HandleCustomCommand(UINT idCommand);
+    LPCONTEXTMENU   GetContextMenu();
+    void    FreePIDLArray(LPITEMIDLIST * pidlArray);
+    UINT    GetPIDLSize(LPCITEMIDLIST pidl);
+    LPBYTE  GetPIDLPos(LPCITEMIDLIST pidl, int nPos);
+    int     GetPIDLCount(LPCITEMIDLIST pidl);
+    LPITEMIDLIST CopyPIDL(LPCITEMIDLIST pidl, int cb = -1);
 
-	std::wstring				_strFirstElement;
-	std::vector<std::wstring>	_strArray;
-	std::vector<std::wstring>	_strNppScripts;
+    /* notepad functions */
+    void Rename();
+    void quickOpen();
+    void newFile();
+    void newFolder();
+    void findInFiles();
+    void openFile();
+    void openFileInOtherView();
+    void openFileInNewInstance();
+    void openPrompt();
+    void setRootFolder();
+    void gotoRootFolder();
+    void clearRootFolder();
+    void addToFaves();
+    void addRelativePathsCB();
+    void addFullPathsCB();
+    void addFileNamesCB();
+    bool Str2CB(LPCTSTR str2cpy);
+    void openScriptPath(HMODULE hInst);
+    void startNppExec(HMODULE hInst, UINT cmdID);
+
+    HINSTANCE       _hInst;
+    HWND            _hWndNpp;
+    HWND            _hWndParent;
+
+    SIZE_T          _nItems;
+    BOOL            _bDelete;
+    IShellFolder*   _psfFolder;
+    LPITEMIDLIST*   _pidlArray;
+
+    IContextMenu2*  _contextMenu2;
+    IContextMenu3*  _contextMenu3;
+
+    std::wstring                _strFirstElement;
+    std::vector<std::wstring>   _strArray;
+    std::vector<std::wstring>   _strNppScripts;
 };

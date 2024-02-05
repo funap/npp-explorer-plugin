@@ -15,65 +15,65 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CEnumFormatEtc : public IEnumFORMATETC
 {
-   private:
-     ULONG           m_cRefCount;
-     std::vector<FORMATETC>  m_pFmtEtc;
-     SIZE_T           m_iCur;
+private:
+    ULONG           m_cRefCount;
+    std::vector<FORMATETC>  m_pFmtEtc;
+    SIZE_T           m_iCur;
 
-   public:
-     CEnumFormatEtc(const std::vector<FORMATETC>& ArrFE);
-	 CEnumFormatEtc(const std::vector<FORMATETC*>& ArrFE);
-     //IUnknown members
-     STDMETHOD(QueryInterface)(REFIID, void FAR* FAR*);
-     STDMETHOD_(ULONG, AddRef)(void);
-     STDMETHOD_(ULONG, Release)(void);
+public:
+    CEnumFormatEtc(const std::vector<FORMATETC>& ArrFE);
+    CEnumFormatEtc(const std::vector<FORMATETC*>& ArrFE);
+    //IUnknown members
+    STDMETHOD(QueryInterface)(REFIID, void FAR* FAR*);
+    STDMETHOD_(ULONG, AddRef)();
+    STDMETHOD_(ULONG, Release)();
 
-     //IEnumFORMATETC members
-     STDMETHOD(Next)(ULONG, LPFORMATETC, ULONG FAR *);
-     STDMETHOD(Skip)(ULONG);
-     STDMETHOD(Reset)(void);
-     STDMETHOD(Clone)(IEnumFORMATETC FAR * FAR*);
+    //IEnumFORMATETC members
+    STDMETHOD(Next)(ULONG, LPFORMATETC, ULONG FAR *);
+    STDMETHOD(Skip)(ULONG);
+    STDMETHOD(Reset)();
+    STDMETHOD(Clone)(IEnumFORMATETC FAR * FAR*);
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CIDropSource : public IDropSource
 {
 public:
-	CIDropSource()
-		: m_cRefCount(0)
-		, m_bDropped(false)
-	{
-	}
-	//IUnknown
+    CIDropSource()
+        : m_cRefCount(0)
+        , m_bDropped(false)
+    {
+    }
+    //IUnknown
     virtual HRESULT STDMETHODCALLTYPE QueryInterface(
             /* [in] */ REFIID riid,
             /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);        
     virtual ULONG STDMETHODCALLTYPE AddRef( void);
     virtual ULONG STDMETHODCALLTYPE Release( void);
-	//IDropSource
+    //IDropSource
     virtual HRESULT STDMETHODCALLTYPE QueryContinueDrag( 
         /* [in] */ BOOL fEscapePressed,
         /* [in] */ DWORD grfKeyState);
-    
+
     virtual HRESULT STDMETHODCALLTYPE GiveFeedback( 
         /* [in] */ DWORD dwEffect);
 private:
-	long m_cRefCount;
-	bool m_bDropped;
+    long m_cRefCount;
+    bool m_bDropped;
 
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CIDataObject : public IDataObject//,public IAsyncOperation
 {
-	CIDropSource* m_pDropSource;
-	long m_cRefCount;
-	std::vector<FORMATETC*> m_ArrFormatEtc;
-	std::vector<STGMEDIUM*> m_StgMedium;
+    CIDropSource* m_pDropSource;
+    long m_cRefCount;
+    std::vector<FORMATETC*> m_ArrFormatEtc;
+    std::vector<STGMEDIUM*> m_StgMedium;
 public:
-	CIDataObject(CIDropSource* pDropSource);
-	~CIDataObject();
-	void CopyMedium(STGMEDIUM* pMedDest, STGMEDIUM* pMedSrc, FORMATETC* pFmtSrc);
+    CIDataObject(CIDropSource* pDropSource);
+    ~CIDataObject();
+    void CopyMedium(STGMEDIUM* pMedDest, STGMEDIUM* pMedSrc, FORMATETC* pFmtSrc);
     //IUnknown
     virtual HRESULT STDMETHODCALLTYPE QueryInterface(
             /* [in] */ REFIID riid,
@@ -81,8 +81,8 @@ public:
     virtual ULONG STDMETHODCALLTYPE AddRef( void);
     virtual ULONG STDMETHODCALLTYPE Release( void);
 
-	//IDataObject
-	virtual /* [local] */ HRESULT STDMETHODCALLTYPE GetData( 
+    //IDataObject
+    virtual /* [local] */ HRESULT STDMETHODCALLTYPE GetData( 
         /* [unique][in] */ FORMATETC __RPC_FAR *pformatetcIn,
         /* [out] */ STGMEDIUM __RPC_FAR *pmedium);
     
@@ -117,73 +117,40 @@ public:
     
     virtual HRESULT STDMETHODCALLTYPE EnumDAdvise( 
         /* [out] */ IEnumSTATDATA __RPC_FAR *__RPC_FAR *ppenumAdvise);
-
-	//IAsyncOperation
-    //virtual HRESULT STDMETHODCALLTYPE SetAsyncMode( 
-    //    /* [in] */ BOOL fDoOpAsync)
-	//{
-	//	return E_NOTIMPL;
-	//}
-    //
-    //virtual HRESULT STDMETHODCALLTYPE GetAsyncMode( 
-    //    /* [out] */ BOOL __RPC_FAR *pfIsOpAsync)
-	//{
-	//	return E_NOTIMPL;
-	//}
-    //
-    //virtual HRESULT STDMETHODCALLTYPE StartOperation( 
-    //    /* [optional][unique][in] */ IBindCtx __RPC_FAR *pbcReserved)
-	//{
-	//	return E_NOTIMPL;
-	//}
-    //
-    //virtual HRESULT STDMETHODCALLTYPE InOperation( 
-    //    /* [out] */ BOOL __RPC_FAR *pfInAsyncOp)
-	//{
-	//	return E_NOTIMPL;
-	//}
-    //
-    //virtual HRESULT STDMETHODCALLTYPE EndOperation( 
-    //    /* [in] */ HRESULT hResult,
-    //    /* [unique][in] */ IBindCtx __RPC_FAR *pbcReserved,
-    //    /* [in] */ DWORD dwEffects)
-	//{
-	//	return E_NOTIMPL;
-	//}
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////
 class CIDropTarget : public IDropTarget
 {
 public:
-	bool m_bAllowDrop;
+    bool m_bAllowDrop;
 private:
-	DWORD m_cRefCount;
-	struct IDropTargetHelper *m_pDropTargetHelper;
-	std::vector<FORMATETC> m_formatetc;
-	FORMATETC* m_pSupportedFrmt;
+    DWORD m_cRefCount;
+    struct IDropTargetHelper *m_pDropTargetHelper;
+    std::vector<FORMATETC> m_formatetc;
+    FORMATETC* m_pSupportedFrmt;
 protected:
-	HWND m_hTargetWnd;
+    HWND m_hTargetWnd;
 public:
-	
-	CIDropTarget();
-	virtual ~CIDropTarget();
-	void AddSuportedFormat(HWND hTargetWnd, FORMATETC& ftetc) {
-		m_hTargetWnd = hTargetWnd;
-		m_formatetc.push_back(ftetc);
-	}
-	
-	//return values: true - release the medium. false - don't release the medium 
-	virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium,DWORD *pdwEffect) = 0;
 
-	virtual HRESULT STDMETHODCALLTYPE QueryInterface( 
-		/* [in] */ REFIID riid,
-		/* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);
-	virtual ULONG STDMETHODCALLTYPE AddRef( void) { return ++m_cRefCount; }
-	virtual ULONG STDMETHODCALLTYPE Release( void);
-	bool QueryDrop(DWORD grfKeyState, LPDWORD pdwEffect);
+    CIDropTarget();
+    virtual ~CIDropTarget();
+    void AddSuportedFormat(HWND hTargetWnd, FORMATETC& ftetc) {
+        m_hTargetWnd = hTargetWnd;
+        m_formatetc.push_back(ftetc);
+    }
 
-	virtual HRESULT STDMETHODCALLTYPE DragEnter(
+    //return values: true - release the medium. false - don't release the medium 
+    virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium,DWORD *pdwEffect) = 0;
+
+    virtual HRESULT STDMETHODCALLTYPE QueryInterface( 
+        /* [in] */ REFIID riid,
+        /* [iid_is][out] */ void __RPC_FAR *__RPC_FAR *ppvObject);
+    virtual ULONG STDMETHODCALLTYPE AddRef( void) { return ++m_cRefCount; }
+    virtual ULONG STDMETHODCALLTYPE Release( void);
+    bool QueryDrop(DWORD grfKeyState, LPDWORD pdwEffect);
+
+    virtual HRESULT STDMETHODCALLTYPE DragEnter(
         /* [unique][in] */ IDataObject __RPC_FAR *pDataObj,
         /* [in] */ DWORD grfKeyState,
         /* [in] */ POINTL pt,

@@ -48,7 +48,6 @@ ThemeRenderer::ThemeRenderer()
     : m_isDarkMode(false)
     , m_colors()
     , m_brushes()
-    , m_windows()
 {
 }
 
@@ -87,7 +86,7 @@ void ThemeRenderer::SetTheme(BOOL isDarkMode, Colors colors)
     m_brushes.selected.CreateSolidBrush(colors.selected);
     m_brushes.selectedNotFocus.CreateSolidBrush(colors.selectedNotFocus);
 
-    for (auto hwnd : m_windows) {
+    for (const auto& hwnd : m_windows) {
         ApplyTheme(hwnd);
     }
 }
@@ -116,7 +115,7 @@ void ThemeRenderer::Register(HWND hwnd)
 void ThemeRenderer::ApplyTheme(HWND hwnd)
 {
     EnumChildWindows(hwnd, [](HWND childWindow, LPARAM lParam) -> BOOL {
-        ThemeRenderer* self = reinterpret_cast<ThemeRenderer*>(lParam);
+        auto* self = reinterpret_cast<ThemeRenderer*>(lParam);
         std::wstring className = GetClassName(childWindow);
         if (className == TOOLBARCLASSNAME) {
             COLORSCHEME scheme{
@@ -143,13 +142,14 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
 
 LRESULT CALLBACK ThemeRenderer::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
+    auto *self = reinterpret_cast<ThemeRenderer*>(dwRefData);
     switch (uIdSubclass) {
     case WINDOW_SUBCLASS_ID:
-        return reinterpret_cast<ThemeRenderer*>(dwRefData)->WindowProc(hWnd, uMsg, wParam, lParam);
+        return self->WindowProc(hWnd, uMsg, wParam, lParam);
     case REBAR_SUBCLASS_ID:
-        return reinterpret_cast<ThemeRenderer*>(dwRefData)->RebarProc(hWnd, uMsg, wParam, lParam);
+        return self->RebarProc(hWnd, uMsg, wParam, lParam);
     case BUTTON_SUBCLASS_ID:
-        return reinterpret_cast<ThemeRenderer*>(dwRefData)->ButtonProc(hWnd, uMsg, wParam, lParam);
+        return self->ButtonProc(hWnd, uMsg, wParam, lParam);
     default:
         break;
     }

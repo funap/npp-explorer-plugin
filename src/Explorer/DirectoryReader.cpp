@@ -24,19 +24,18 @@
 
 #include "DirectoryReader.h"
 
-#include <vector>
+#include <utility>
 
 DirectoryReader::DirectoryReader()
     : _needsStop(false)
     , _reading(false)
-    , _workerThread()
 {
 
 }
 
 DirectoryReader::~DirectoryReader()
 {
-	Cancel();
+    Cancel();
 }
 
 void DirectoryReader::ReadDir(const std::filesystem::path& rootPath, ReadDirCallback readDirCallback, ReadDirFinCallback readDirFinCallback)
@@ -45,8 +44,8 @@ void DirectoryReader::ReadDir(const std::filesystem::path& rootPath, ReadDirCall
         Cancel();
     }
 
-    _readDirCallback = readDirCallback;
-    _readDirFinCallback = readDirFinCallback;
+    _readDirCallback = std::move(readDirCallback);
+    _readDirFinCallback = std::move(readDirFinCallback);
     _rootPath = rootPath;
     _needsStop = false;
     _reading = true;

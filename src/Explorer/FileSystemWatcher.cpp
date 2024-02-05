@@ -22,11 +22,11 @@
 #include "FileSystemWatcher.h"
 
 #include <Windows.h>
+#include <minwindef.h>
 #include <string>
-#include <vector>
 #include <thread>
 #include <functional>
-#include <mutex>
+#include <utility>
 
 namespace {
 constexpr DWORD operator "" _KB(unsigned long long value) {
@@ -47,7 +47,8 @@ void FileSystemWatcher::Reset(const std::wstring& directory)
 {
     Stop();
     m_stop = false;
-    m_thread = std::thread(&FileSystemWatcher::Run, this, directory);
+    m_directory = directory;
+    m_thread = std::thread(&FileSystemWatcher::Run, this);
 }
 
 void FileSystemWatcher::Stop()
@@ -60,29 +61,29 @@ void FileSystemWatcher::Stop()
 
 void FileSystemWatcher::Created(CreatedCallback callback)
 {
-    m_createdCallback = callback;
+    m_createdCallback = std::move(callback);
 }
 
 void FileSystemWatcher::Deleted(DeletedCallback callback)
 {
-    m_deletedCallback = callback;
+    m_deletedCallback = std::move(callback);
 }
 
 void FileSystemWatcher::Renamed(RenamedCallback callback)
 {
-    m_renamedCallback = callback;
+    m_renamedCallback = std::move(callback);
 }
 
-void FileSystemWatcher::Run(std::wstring directory)
+void FileSystemWatcher::Run()
 {
     HANDLE hDir = ::CreateFileW(
-        directory.c_str(),
+        m_directory.c_str(),
         FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        NULL,
+        nullptr,
         OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
-        NULL
+        nullptr
     );
 
     if (hDir == INVALID_HANDLE_VALUE) {
@@ -153,26 +154,26 @@ void FileSystemWatcher::Run(std::wstring directory)
             continue;
         }
 
-        FILE_NOTIFY_INFORMATION* info = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.get());
+        auto *info = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(buffer.get());
         std::wstring oldName;
         while (true) {
             std::wstring filename(info->FileName, info->FileNameLength / sizeof(WCHAR));
             if (info->Action == FILE_ACTION_ADDED) {
                 if (m_createdCallback) {
-                    m_createdCallback(directory + filename);
+                    m_createdCallback(m_directory + filename);
                 }
             }
             else if (info->Action == FILE_ACTION_REMOVED) {
                 if (m_deletedCallback) {
-                    m_deletedCallback(directory + filename);
+                    m_deletedCallback(m_directory + filename);
                 }
             }
             else if (info->Action == FILE_ACTION_RENAMED_OLD_NAME) {
-                oldName = directory + filename;
+                oldName = m_directory + filename;
             }
             else if (info->Action == FILE_ACTION_RENAMED_NEW_NAME) {
                 if (!oldName.empty()) {
-                    std::wstring newName = directory + filename;
+                    std::wstring newName = m_directory + filename;
                     if (m_renamedCallback) {
                         m_renamedCallback(oldName, newName);
                     }
@@ -180,7 +181,7 @@ void FileSystemWatcher::Run(std::wstring directory)
                 }
             }
             else {
-
+                ;
             }
 
             if (info->NextEntryOffset == 0) {

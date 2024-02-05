@@ -19,18 +19,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 
-#include "../NppPlugin/PluginInterface.h"
-#include "../NppPlugin/menuCmdID.h"
 #include "FileFilter.h"
 
-#include <vector>
 #include <string>
-#include <memory>
+#include <vector>
+
 
 constexpr INT DOCKABLE_EXPLORER_INDEX   = 0;
 constexpr INT DOCKABLE_FAVORTIES_INDEX  = 1;
@@ -84,7 +83,7 @@ enum DateFmt {
 };
 
 struct DrvMap {
-    TCHAR   cDrv;
+    WCHAR   cDrv;
     UINT    pos;
 };
 
@@ -143,23 +142,23 @@ struct ExProp{
 
 
 
-void toggleExplorerDialog(void);
-void toggleFavesDialog(void);
-void openQuickOpenDlg(void);
+void toggleExplorerDialog();
+void toggleFavesDialog();
+void openQuickOpenDlg();
 
-void gotoPath(void);
-void gotoUserFolder(void);
-void gotoCurrentFolder(void);
-void gotoRootFolder(void);
-void gotoCurrentFile(void);
-void showExplorerDialogOnFolder(void);
-void showExplorerDialogOnFile(void);
-void showFavesDialog(void);
-void clearFilter(void);
+void gotoPath();
+void gotoUserFolder();
+void gotoCurrentFolder();
+void gotoRootFolder();
+void gotoCurrentFile();
+void showExplorerDialogOnFolder();
+void showExplorerDialogOnFile();
+void showFavesDialog();
+void clearFilter();
 
-void openOptionDlg(void);
-void openHelpDlg(void);
-void openTerminal(void);
+void openOptionDlg();
+void openHelpDlg();
+void openTerminal();
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -179,7 +178,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIc
 HRESULT ResolveShortCut(const std::wstring& shortcutPath, LPTSTR lpszFilePath, int maxBuf);
 
 /* current open files */
-void UpdateDocs(void);
+void UpdateDocs();
 void UpdateCurrUsedDocs(LPTSTR *ppFiles, UINT numFiles);
 BOOL IsFileOpen(const std::wstring& filePath);
 
@@ -192,4 +191,4 @@ void ScreenToClient(HWND hWnd, RECT* rect);
 void ErrorMessage(DWORD err);
 
 /* Helper functions for NppExec */
-BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, std::vector<std::wstring> vFileList);
+BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const std::vector<std::wstring> &vFileList);

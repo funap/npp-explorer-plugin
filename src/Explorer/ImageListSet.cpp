@@ -20,30 +20,31 @@
 
 void ToolBarIcons::init(ToolBarButtonUnit *buttonUnitArray, int arraySize)
 {
-	for (int i = 0 ; i < arraySize ; i++)
-		_tbiis.push_back(buttonUnitArray[i]);
-	_nbCmd = arraySize;
+    for (int i = 0 ; i < arraySize ; i++) {
+        _tbiis.push_back(buttonUnitArray[i]);
+    }
+    _nbCmd = arraySize;
 }
 
 void ToolBarIcons::create(HINSTANCE hInst, int iconSize)
 {
-	_iconListVector.push_back(IconList());
-	_iconListVector.push_back(IconList());
-	_iconListVector.push_back(IconList());
-	//_iconListVector.push_back(IconList());
+    _iconListVector.push_back(IconList());
+    _iconListVector.push_back(IconList());
+    _iconListVector.push_back(IconList());
+    //_iconListVector.push_back(IconList());
 
-	_iconListVector[HLIST_DEFAULT].create(hInst, iconSize);
-	_iconListVector[HLIST_HOT].create(hInst, iconSize);
-	_iconListVector[HLIST_DISABLE].create(hInst, iconSize);
-	//_iconListVector[HLIST_UGLY].create(hInst, 16);
+    _iconListVector[HLIST_DEFAULT].create(hInst, iconSize);
+    _iconListVector[HLIST_HOT].create(hInst, iconSize);
+    _iconListVector[HLIST_DISABLE].create(hInst, iconSize);
+    //_iconListVector[HLIST_UGLY].create(hInst, 16);
 
-	reInit(iconSize);
+    reInit(iconSize);
 }
 
 void ToolBarIcons::destroy()
 {
-	_iconListVector[HLIST_DEFAULT].destroy();
-	_iconListVector[HLIST_HOT].destroy();
-	_iconListVector[HLIST_DISABLE].destroy();
-	//_iconListVector[HLIST_UGLY].destroy();
+    _iconListVector[HLIST_DEFAULT].destroy();
+    _iconListVector[HLIST_HOT].destroy();
+    _iconListVector[HLIST_DISABLE].destroy();
+    //_iconListVector[HLIST_UGLY].destroy();
 }

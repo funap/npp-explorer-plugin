@@ -24,13 +24,16 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 namespace StringUtil {
-	template <typename ... Args>
-	std::wstring format(const std::wstring& fmt, Args ... args)
-	{
-		size_t length = std::swprintf(nullptr, 0, fmt.c_str(), args ...);
-		std::vector<WCHAR> buf(length + 1);
-		std::swprintf(&buf[0], length + 1, fmt.c_str(), args ...);
-		return std::wstring(&buf[0], &buf[0] + length);
-	}
+    template <typename ... Args>
+    std::wstring format(const std::wstring& fmt, Args ... args)
+    {
+        size_t length = std::swprintf(nullptr, 0, fmt.c_str(), args ...);
+        std::vector<wchar_t> buf(length + 1);
+        std::swprintf(&buf[0], length + 1, fmt.c_str(), args ...);
+        return std::wstring(&buf[0], &buf[0] + length);
+    }
 }

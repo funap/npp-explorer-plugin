@@ -49,28 +49,29 @@ struct NppColors
 
 class NppInterface
 {
+private:
+    NppInterface() = default;
+    ~NppInterface() = default;
 public:
-	static void			setNppData(NppData nppData);
+    NppInterface(const NppInterface&)               = delete;
+    NppInterface& operator=(const NppInterface&)    = delete;
+    NppInterface(NppInterface&&)                    = delete;
+    NppInterface& operator=(NppInterface&&)         = delete;
 
-	static HWND			getWindow();
-	static BOOL			doOpen(std::wstring_view);
-	static std::wstring	getSelectedText();
-	static COLORREF		getEditorDefaultForegroundColor();
-	static COLORREF		getEditorDefaultBackgroundColor();
+    static void         setNppData(NppData nppData);
+    static HWND         getWindow();
+    static BOOL         doOpen(std::wstring_view);
+    static std::wstring getSelectedText();
+    static COLORREF     getEditorDefaultForegroundColor();
+    static COLORREF     getEditorDefaultBackgroundColor();
     static COLORREF     getEditorCurrentLineBackgroundColor();
     static BOOL         IsDarkMode();
     static NppColors    GetColors();
-	static void         setFocusToCurrentEdit();
-	static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
-	static std::wstring getCurrentDirectory();
-	static INT      getNppVersion();
-	static BOOL     isSupportFluentUI();
-	NppInterface(const NppInterface&)				= delete;
-	NppInterface& operator=(const NppInterface&)	= delete;
-	NppInterface(NppInterface&&)					= delete;
-	NppInterface& operator=(NppInterface&&)			= delete;
+    static void         setFocusToCurrentEdit();
+    static std::vector<std::wstring> getSessionFiles(const std::wstring& sessionFilePath);
+    static std::wstring getCurrentDirectory();
+    static INT      getNppVersion();
+    static BOOL     isSupportFluentUI();
 private:
-	NppInterface() = default;
-	~NppInterface() = default;
-	static NppData _nppData;
+    static NppData _nppData;
 };

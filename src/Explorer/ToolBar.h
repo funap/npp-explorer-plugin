@@ -18,16 +18,12 @@
 #pragma once
 
 #include "../NppPlugin/DockingFeature/Window.h"
-#include "../NppPlugin/Notepad_plus_msgs.h"
 #include "ImageListSet.h"
 
-#define REBAR_BAR_TOOLBAR		0
-#define REBAR_BAR_SEARCH		1
+#define REBAR_BAR_TOOLBAR   0
+#define REBAR_BAR_SEARCH    1
 
-#define REBAR_BAR_EXTERNAL		10
-#ifndef _WIN32_IE
-#define _WIN32_IE	0x0600
-#endif //_WIN32_IE
+#define REBAR_BAR_EXTERNAL  10
 
 #include "windows.h"
 #include <commctrl.h>
@@ -36,9 +32,9 @@
 enum toolBarStatusType {/*TB_HIDE, */TB_SMALL, TB_LARGE, TB_STANDARD};
 
 struct DynamicList {
-	UINT		message;		// identification of icon in tool bar (menu ID)
-	HBITMAP		hBmp;			// bitmap for toolbar
-	HICON		hIcon;			// icon for toolbar
+    UINT    message;    // identification of icon in tool bar (menu ID)
+    HBITMAP hBmp;       // bitmap for toolbar
+    HICON   hIcon;      // icon for toolbar
 };
 
 class ReBar;
@@ -46,128 +42,130 @@ class ReBar;
 class ToolBar : public Window
 {
 public :
-	ToolBar() : 
-		Window(),
-		_pTBB(NULL),
-		_state(TB_STANDARD),
-		_nrButtons(0),
-		_nrCurrentButtons(0), 
-		_pRebar(NULL),
-		_rbBand()
-	{
-	};
-	virtual ~ToolBar(){};
+    ToolBar() : 
+        _pTBB(nullptr),
+        _state(TB_STANDARD),
+        _nrButtons(0),
+        _nrCurrentButtons(0), 
+        _pRebar(nullptr),
+        _rbBand()
+    {
+    };
+    virtual ~ToolBar(){};
 
-	virtual bool init(HINSTANCE hInst, HWND hPere, toolBarStatusType type, 
-		ToolBarButtonUnit *buttonUnitArray, int arraySize);
+    virtual bool init(HINSTANCE hInst, HWND hPere, toolBarStatusType type, 
+        ToolBarButtonUnit *buttonUnitArray, int arraySize);
 
-	virtual void destroy();
-	void enable(int cmdID, bool doEnable) const {
-		::SendMessage(_hSelf, TB_ENABLEBUTTON, cmdID, (LPARAM)doEnable);
-	};
+    virtual void destroy();
+    void enable(int cmdID, bool doEnable) const {
+        ::SendMessage(_hSelf, TB_ENABLEBUTTON, cmdID, (LPARAM)doEnable);
+    };
 
-	int getWidth() const;
-	int getHeight() const;
+    int getWidth() const;
+    int getHeight() const;
 
-	void reduce() {
-		if (_state == TB_SMALL)
-			return;
+    void reduce() {
+        if (_state == TB_SMALL) {
+            return;
+        }
 
-		_toolBarIcons.resizeIcon(16);
-		bool recreate = (_state == TB_STANDARD);
-		setState(TB_SMALL);
-		reset(recreate);	//recreate toolbar if std icons were used
-		Window::redraw();
-	};
-	void enlarge() {
-		if (_state == TB_LARGE)
-			return;
+        _toolBarIcons.resizeIcon(16);
+        bool recreate = (_state == TB_STANDARD);
+        setState(TB_SMALL);
+        reset(recreate); //recreate toolbar if std icons were used
+        Window::redraw();
+    };
+    void enlarge() {
+        if (_state == TB_LARGE) {
+            return;
+        }
 
-		_toolBarIcons.resizeIcon(32);
-		bool recreate = (_state == TB_STANDARD);
-		setState(TB_LARGE);
-		reset(recreate);	//recreate toolbar if std icons were used
-		Window::redraw();
-	};
-	void setToUglyIcons() {
-		if (_state == TB_STANDARD) 
-			return;
-		bool recreate = true;
-		setState(TB_STANDARD);
-		reset(recreate);	//must recreate toolbar if setting to internal bitmaps
-		Window::redraw();
-	}
+        _toolBarIcons.resizeIcon(32);
+        bool recreate = (_state == TB_STANDARD);
+        setState(TB_LARGE);
+        reset(recreate); //recreate toolbar if std icons were used
+        Window::redraw();
+    };
+    void setToUglyIcons() {
+        if (_state == TB_STANDARD) { 
+            return;
+        }
+        bool recreate = true;
+        setState(TB_STANDARD);
+        reset(recreate); //must recreate toolbar if setting to internal bitmaps
+        Window::redraw();
+    }
 
-	bool getCheckState(int ID2Check) const {
-		return bool(::SendMessage(_hSelf, TB_GETSTATE, (WPARAM)ID2Check, 0) & TBSTATE_CHECKED);
-	};
+    bool getCheckState(int ID2Check) const {
+        return bool(::SendMessage(_hSelf, TB_GETSTATE, (WPARAM)ID2Check, 0) & TBSTATE_CHECKED);
+    };
 
-	void setCheck(int ID2Check, bool willBeChecked) const {
-		::SendMessage(_hSelf, TB_CHECKBUTTON, (WPARAM)ID2Check, (LPARAM)MAKELONG(willBeChecked, 0));
-	};
+    void setCheck(int ID2Check, bool willBeChecked) const {
+        ::SendMessage(_hSelf, TB_CHECKBUTTON, (WPARAM)ID2Check, (LPARAM)MAKELONG(willBeChecked, 0));
+    };
 
-	toolBarStatusType getState() const {
-		return _state;
-	};
+    toolBarStatusType getState() const {
+        return _state;
+    };
 
-	bool changeIcons(int whichLst, int iconIndex, const TCHAR *iconLocation){
-		return _toolBarIcons.replaceIcon(whichLst, iconIndex, iconLocation);
-	};
+    bool changeIcons(int whichLst, int iconIndex, const WCHAR *iconLocation){
+        return _toolBarIcons.replaceIcon(whichLst, iconIndex, iconLocation);
+    };
 
-	UINT doPopop(POINT chevPoint);	//show the popup if buttons are hidden
+    UINT doPopop(POINT chevPoint); //show the popup if buttons are hidden
 
-	void addToRebar(ReBar * rebar);
+    void addToRebar(ReBar * rebar);
 
 private :
-	TBBUTTON *_pTBB;
-	ToolBarIcons _toolBarIcons;
-	toolBarStatusType _state;
-	SIZE_T _nrButtons;
-	SIZE_T _nrCurrentButtons;
-	ReBar * _pRebar;
-	REBARBANDINFO _rbBand;
+    TBBUTTON *_pTBB;
+    ToolBarIcons _toolBarIcons;
+    toolBarStatusType _state;
+    SIZE_T _nrButtons;
+    SIZE_T _nrCurrentButtons;
+    ReBar * _pRebar;
+    REBARBANDINFO _rbBand;
 
 
-	void setDefaultImageList() {
-		::SendMessage(_hSelf, TB_SETIMAGELIST , (WPARAM)0, (LPARAM)_toolBarIcons.getDefaultLst());
-	};
-	void setHotImageList() {
-		::SendMessage(_hSelf, TB_SETHOTIMAGELIST , (WPARAM)0, (LPARAM)_toolBarIcons.getHotLst());
-	};
-	void setDisableImageList() {
-		::SendMessage(_hSelf, TB_SETDISABLEDIMAGELIST, (WPARAM)0, (LPARAM)_toolBarIcons.getDisableLst());
-	};
+    void setDefaultImageList() {
+        ::SendMessage(_hSelf, TB_SETIMAGELIST , (WPARAM)0, (LPARAM)_toolBarIcons.getDefaultLst());
+    };
+    void setHotImageList() {
+        ::SendMessage(_hSelf, TB_SETHOTIMAGELIST , (WPARAM)0, (LPARAM)_toolBarIcons.getHotLst());
+    };
+    void setDisableImageList() {
+        ::SendMessage(_hSelf, TB_SETDISABLEDIMAGELIST, (WPARAM)0, (LPARAM)_toolBarIcons.getDisableLst());
+    };
 
-	void reset(bool create = false);
-	void setState(toolBarStatusType state) {
-		_state = state;
-	}
-	
+    void reset(bool create = false);
+    void setState(toolBarStatusType state) {
+        _state = state;
+    }
+
 };
 
 class ReBar : public Window
 {
 public :
-	ReBar():Window() { usedIDs.clear(); };
+    ReBar() { usedIDs.clear(); };
 
-	virtual void destroy() {
-		::DestroyWindow(_hSelf);
-		_hSelf = NULL;
-		usedIDs.clear();
-	};
+    virtual void destroy() {
+        ::DestroyWindow(_hSelf);
+        _hSelf = NULL;
+        usedIDs.clear();
+    };
 
-	void init(HINSTANCE hInst, HWND hPere);
-	bool addBand(REBARBANDINFO * rBand, bool useID);	//useID true if ID from info should be used (false for plugins). wID in bandinfo will be set to used ID
-	void reNew(int id, REBARBANDINFO * rBand);					//wID from bandinfo is used for update
-	void removeBand(int id);
+    void init(HINSTANCE hInst, HWND hPere);
+    bool addBand(REBARBANDINFO * rBand, bool useID);    //useID true if ID from info should be used (false for plugins). wID in bandinfo will be set to used ID
+    void reNew(int id, REBARBANDINFO * rBand);          //wID from bandinfo is used for update
+    void removeBand(int id);
 
-	void setIDVisible(int id, bool show);
-	bool getIDVisible(int id);
+    void setIDVisible(int id, bool show);
+    bool getIDVisible(int id);
 
 private:
-	std::vector<int> usedIDs;
+    std::vector<int> usedIDs;
 
-	int getNewID();
-	void releaseID(int id);
-	bool isIDTaken(int id);
+    int getNewID();
+    void releaseID(int id);
+    bool isIDTaken(int id);
 };
