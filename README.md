@@ -46,6 +46,16 @@ i.e.
 #### 7.5.9 or lower
 Just copy the `Explorer.dll` to your `Notepad++\plugins\` directory.
 
+## After Installation
+By default, Quick Open feature can be accessed using the shortcut <kbd>Ctrl+P</kbd>. However, it's important to be aware that this shortcut is already assigned to the `Print...` command.
+
+To resolve this conflict, follow these steps:
+1. Open the application and navigate to `Settings` > `Shortcut Mapper...`
+2. In the Shortcut Mapper window, use the filter input at the bottom to search for the `Print...` command.
+3. Once located, clear the existing shortcut assigned to the `Print...` command.
+
+Or assign your favorite key to `Quick Open...`.
+
 ## License
 This project is licensed under the terms of the GNU GPL v2.0 license
 
