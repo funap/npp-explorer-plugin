@@ -45,10 +45,10 @@ public:
     PropDlg();
     ~PropDlg();
 
-    void init(HINSTANCE hInst, HWND hWnd) {
+    void init(HINSTANCE hInst, HWND hWnd) override {
         Window::init(hInst, hWnd);
     };
-    virtual void destroy() {};
+    void destroy() override {};
 
     INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LinkDlg::NONE, BOOL fileMustExist = FALSE);
     void setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink = FALSE);

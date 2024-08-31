@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerDialog.h"
 #include "FavesDialog.h"
+#include "NewDlg.h"
 #include "NppInterface.h"
 #include "QuickOpenDialog.h"
 #include "../NppPlugin/menuCmdID.h"

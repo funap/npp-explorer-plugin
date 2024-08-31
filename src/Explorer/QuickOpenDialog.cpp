@@ -24,9 +24,10 @@
 
 #include "QuickOpenDialog.h"
 
-#include <cwctype>
 #include <algorithm>
+#include <cwctype>
 #include <execution>
+#include <list>
 #include <string_view>
 
 #include <shlwapi.h>

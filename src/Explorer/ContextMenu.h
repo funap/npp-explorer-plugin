@@ -25,17 +25,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
-#include "Explorer.h"
-#include "ExplorerResource.h"
-#include "NewDlg.h"
-#include "../NppPlugin/DockingFeature/Window.h"
-
 #include <shlobj.h>
-#include <commctrl.h>
-
-#include <malloc.h>
 #include <vector>
 #include <string>
+
+#include "Explorer.h"
 
 struct __declspec(uuid("000214e6-0000-0000-c000-000000000046")) IShellFolder;
 

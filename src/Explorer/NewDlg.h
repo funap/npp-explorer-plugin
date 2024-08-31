@@ -42,7 +42,7 @@ public:
 
     INT_PTR doDialog(LPCTSTR pFileName, LPCTSTR pDesc);
 
-    virtual void destroy() {};
+    void destroy() override {};
 
 
 protected :

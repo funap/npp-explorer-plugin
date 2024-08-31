@@ -19,7 +19,6 @@
 
 #include <windows.h>
 #include <commdlg.h>
-#include <WCHAR.H>
 
 #include <vector>
 #include <string>

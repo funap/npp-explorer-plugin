@@ -21,7 +21,6 @@
 // THE SOFTWARE.
 #pragma once
 
-#include <Windows.h>
 #include <string>
 #include <functional>
 #include <filesystem>

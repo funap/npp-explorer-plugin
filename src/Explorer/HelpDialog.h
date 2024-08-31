@@ -32,14 +32,14 @@ class HelpDlg : public StaticDialog
 public:
     HelpDlg() : StaticDialog() {};
 
-    void init(HINSTANCE hInst, HWND hParent)
+    void init(HINSTANCE hInst, HWND hParent) override
     {
         Window::init(hInst, hParent);
     };
 
     void doDialog();
 
-    virtual void destroy() {
+    void destroy() override{
         _emailLink.destroy();
         _urlNppPlugins.destroy();
     };

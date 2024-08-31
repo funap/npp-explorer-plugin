@@ -26,6 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <dbt.h>
 #include <algorithm>
 #include <filesystem>
+#include <list>
+#include <string>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"

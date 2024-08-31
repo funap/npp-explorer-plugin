@@ -26,7 +26,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "FavesModel.h"
 #include "TreeHelperClass.h"
-#include "Toolbar.h"
+#include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
 enum MenuID {
@@ -60,7 +60,7 @@ public:
         ExpandElementsRecursive(TVI_ROOT);
     };
 
-    void destroy()
+    void destroy() override
     {
         /* save settings and destroy the resources */
         SaveSettings();

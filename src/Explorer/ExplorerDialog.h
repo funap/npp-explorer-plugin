@@ -61,7 +61,7 @@ public:
 
     void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
     void redraw();
-    void destroy() {};
+    void destroy() override {};
     void doDialog(bool willBeShown = true);
     BOOL gotoPath();
     void gotoUserFolder();
