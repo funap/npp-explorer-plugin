@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <shlwapi.h>
 #include <string>
+#include <functional>
 
 #include "StaticDialog.h"
 #include "../Notepad_plus_msgs.h"
@@ -70,6 +71,9 @@ public:
 
 	virtual void display(bool toShow = true) const {
 		::SendMessage(_hParent, toShow ? NPPM_DMMSHOW : NPPM_DMMHIDE, 0, reinterpret_cast<LPARAM>(_hSelf));
+        if (_visibleChangedHandler) {
+            _visibleChangedHandler(toShow);
+        }
 	}
 
 	bool isClosed() const {
@@ -84,6 +88,9 @@ public:
 		return _moduleName.c_str();
 	}
 
+    void VisibleChanged(std::function<void(bool)> visibleChangedHandler) {
+        _visibleChangedHandler = visibleChangedHandler;
+    }
 protected :
 	int	_dlgID = -1;
 	bool _isFloating = true;
@@ -91,6 +98,7 @@ protected :
 	std::wstring _moduleName;
 	std::wstring _pluginName;
 	bool _isClosed = false;
+    std::function<void(bool)> _visibleChangedHandler;
 
 	virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM, LPARAM lParam) {
 		switch (message)
@@ -105,6 +113,9 @@ protected :
 					{
 						case DMN_CLOSE:
 						{
+                            if (_visibleChangedHandler) {
+                                _visibleChangedHandler(false);
+                            }
 							break;
 						}
 						case DMN_FLOAT:

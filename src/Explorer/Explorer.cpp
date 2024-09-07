@@ -240,6 +240,13 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     optionDlg   .init(g_hInst, g_nppData._nppHandle);
     helpDlg     .init(g_hInst, g_nppData._nppHandle);
 
+    explorerDlg.VisibleChanged([](bool visible) {
+        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[0]._cmdID, (LPARAM)visible);
+    });
+    favesDlg.VisibleChanged([](bool visible) {
+        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[1]._cmdID, (LPARAM)visible);
+    });
+
     /* Subclassing for Notepad */
     wndProcNotepad = (WNDPROC)::SetWindowLongPtr(g_nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
 }
