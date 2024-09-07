@@ -42,7 +42,6 @@ enum EventID {
     EID_EXPAND_ITEM,
     EID_THREAD_END,
     EID_MAX_THREAD,
-    EID_GET_VOLINFO,
     EID_MAX,
 };
 
@@ -125,8 +124,6 @@ protected:
     HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
     void FetchChildren(HTREEITEM parentItem);
     std::wstring GetPath(HTREEITEM currentItem) const;
-
-    BOOL ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize);
     void UpdateLayout();
 private:
     /* Handles */

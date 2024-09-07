@@ -28,6 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <filesystem>
 #include <list>
 #include <string>
+#include <optional>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -75,23 +76,6 @@ DWORD WINAPI UpdateThread(LPVOID lpParam)
     return 0;
 }
 
-
-DWORD WINAPI GetVolumeInformationTimeoutThread(LPVOID lpParam)
-{
-    DWORD           serialNr    = 0;
-    DWORD           space       = 0;
-    DWORD           flags       = 0;
-    GetVolumeInfo*  volInfo     = (GetVolumeInfo*)lpParam;
-
-    if (volInfo->maxSize < MAX_PATH+1) {
-        *volInfo->pIsValidDrive = GetVolumeInformation(volInfo->pszDrivePathName,
-            volInfo->pszVolumeName, volInfo->maxSize, &serialNr, &space, &flags, nullptr, 0);
-    }
-
-    ::SetEvent(g_hEvent[EID_GET_VOLINFO]);
-    return 0;
-}
-
 ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_FAVORITES,      IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_TB_FAVES,       0},
     {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
@@ -128,6 +112,20 @@ LPCTSTR GetNameStrFromCmd(UINT resourceId)
         return szToolTip[resourceId - IDM_EX_FAVORITES];
     }
     return nullptr;
+}
+
+std::optional<std::wstring> GetVolumeName(LPCWSTR drivePath)
+{
+    DWORD volumeNameSize = MAX_PATH;
+    std::wstring volumeName(volumeNameSize, L'\0');
+
+    if (::GetVolumeInformation(drivePath, &volumeName[0], volumeNameSize, nullptr, nullptr, nullptr, nullptr, 0)) {
+        volumeName.resize(wcslen(volumeName.c_str()));
+        return volumeName;
+    }
+    else {
+        return std::nullopt;
+    }
 }
 
 struct FileSystemEntry {
@@ -1438,70 +1436,61 @@ void ExplorerDialog::onPaste()
  */
 void ExplorerDialog::UpdateRoots()
 {
-    DWORD   driveList       = ::GetLogicalDrives();
-    BOOL    isValidDrive    = FALSE;
-    BOOL    haveChildren    = FALSE;
+    const DWORD driveList = ::GetLogicalDrives();
 
-    HTREEITEM hCurrentItem  = TreeView_GetNextItem(_hTreeCtrl, TVI_ROOT, TVGN_CHILD);
+    HTREEITEM hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, TVI_ROOT, TVGN_CHILD);
 
-    WCHAR   drivePathName[] = L" :\\";
-    WCHAR   TEMP[MAX_PATH]  = {0};
-    WCHAR   volumeName[MAX_PATH];
+    WCHAR drivePathName[] = L" :\\";
 
     for (INT i = 0; i < 26; i++) {
-        drivePathName[0] = 'A' + i;
+        const WCHAR driveLetter = L'A' + i;
+        drivePathName[0] = driveLetter;
 
         if (0x01 & (driveList >> i)) {
-            /* create volume name */
-            isValidDrive = ExploreVolumeInformation(drivePathName, TEMP, MAX_PATH);
-            _stprintf(volumeName, L"%c:", 'A' + i);
+            auto volumeInfo = GetVolumeName(drivePathName);
+            std::wstring volumeName = std::format(L"{}:", driveLetter);
+            bool haveChildren = false;
 
-            if (isValidDrive == TRUE) {
-                _stprintf(volumeName, L"%c: [%s]", 'A' + i, TEMP);
-
-                /* have children */
+            if (volumeInfo) {
+                volumeName = std::format(L"{}: [{}]", driveLetter, *volumeInfo);
                 haveChildren = HaveChildren(drivePathName);
             }
 
             if (hCurrentItem != nullptr) {
-                int iIconNormal     = 0;
-                int iIconSelected   = 0;
-                int iIconOverlayed  = 0;
-
-                /* get current volume name in list and test if name is changed */
-                GetItemText(hCurrentItem, TEMP, MAX_PATH);
-
-                if (_tcscmp(volumeName, TEMP) == 0) {
-                    /* if names are equal, go to next item in tree */
+                auto currentItemName = GetItemText(hCurrentItem);
+                if (volumeName == currentItemName) {
+                    // if names are equal, go to next item in tree
+                    int iIconNormal = 0;
+                    int iIconSelected = 0;
+                    int iIconOverlayed = 0;
                     ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
                 }
-                else if (volumeName[0] == TEMP[0]) {
-                    /* if names are not the same but the drive letter are equal, rename item */
-
-                    /* get icons */
+                else if (!currentItemName.empty() && (driveLetter == currentItemName.front())) {
+                    // if names are not the same but the drive letter are equal, rename item
+                    int iIconNormal = 0;
+                    int iIconSelected = 0;
+                    int iIconOverlayed = 0;
                     ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     DeleteChildren(hCurrentItem);
                     hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
                 }
                 else {
-                    /* insert the device when new and not present before */
+                    // insert the device when new and not present before
                     HTREEITEM hItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_PREVIOUS);
-                    InsertChildFolder(volumeName, TVI_ROOT, hItem, isValidDrive);
+                    InsertChildFolder(volumeName, TVI_ROOT, hItem, volumeInfo.has_value());
                 }
             }
             else {
-                InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, isValidDrive);
+                InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, volumeInfo.has_value());
             }
-        }
-        else {
+        } else {
+            // get current volume name in list and test if name is changed
             if (hCurrentItem != nullptr) {
-                /* get current volume name in list and test if name is changed */
-                GetItemText(hCurrentItem, TEMP, MAX_PATH);
-
-                if (drivePathName[0] == TEMP[0]) {
+                auto currentItemName = GetItemText(hCurrentItem);
+                if (!currentItemName.empty() && (driveLetter == currentItemName[0])) {
                     HTREEITEM pPrevItem = hCurrentItem;
                     hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
                     TreeView_DeleteItem(_hTreeCtrl, pPrevItem);
@@ -1788,37 +1777,10 @@ std::wstring ExplorerDialog::GetPath(HTREEITEM currentItem) const
 void ExplorerDialog::NotifyNewFile()
 {
     if (isCreated()) {
-        WCHAR TEMP[MAX_PATH]{};
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
-        _ToolBar.enable(IDM_EX_GO_TO_FOLDER, (wcslen(TEMP) != 0));
+        WCHAR currentDirectory[MAX_PATH]{};
+        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)currentDirectory);
+        _ToolBar.enable(IDM_EX_GO_TO_FOLDER, (wcslen(currentDirectory) != 0));
     }
-}
-
-
-BOOL ExplorerDialog::ExploreVolumeInformation(LPCTSTR pszDrivePathName, LPTSTR pszVolumeName, UINT maxSize)
-{
-    BOOL isValidDrive = FALSE;
-    GetVolumeInfo volInfo {
-        .pszDrivePathName    = pszDrivePathName,
-        .pszVolumeName       = pszVolumeName,
-        .maxSize             = maxSize,
-        .pIsValidDrive       = &isValidDrive,
-    };
-
-    DWORD dwThreadId = 0;
-    _hExploreVolumeThread = ::CreateThread(nullptr, 0, GetVolumeInformationTimeoutThread, &volInfo, 0, &dwThreadId);
-
-    if (_hExploreVolumeThread) {
-        if (WAIT_OBJECT_0 != ::WaitForSingleObject(g_hEvent[EID_GET_VOLINFO], _pExProp->uTimeout)) {
-            ::TerminateThread(_hExploreVolumeThread, 0);
-            isValidDrive = FALSE;
-        }
-
-        ::CloseHandle(_hExploreVolumeThread);
-        _hExploreVolumeThread = nullptr;
-    }
-
-    return isValidDrive;
 }
 
 void ExplorerDialog::UpdateLayout()
