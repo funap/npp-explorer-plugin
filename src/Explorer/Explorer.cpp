@@ -26,9 +26,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <dbt.h>
-#include <atlbase.h>
-
 #include <ranges>
+#include <wrl/client.h>
 
 #include "NppInterface.h"
 #include "ExplorerDialog.h"
@@ -241,10 +240,10 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     helpDlg     .init(g_hInst, g_nppData._nppHandle);
 
     explorerDlg.VisibleChanged([](bool visible) {
-        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[0]._cmdID, (LPARAM)visible);
+        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)visible);
     });
     favesDlg.VisibleChanged([](bool visible) {
-        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[1]._cmdID, (LPARAM)visible);
+        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)visible);
     });
 
     /* Subclassing for Notepad */
@@ -896,46 +895,40 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
 }
 
 // Resolve files if they are shortcuts
-HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPTSTR lpszFilePath, int maxBuf)
+HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPWSTR lpszFilePath, int maxBuf)
 {
-    HRESULT hRes = S_FALSE;
-    CComPtr<IShellLink> ipShellLink;
-    lpszFilePath[0] = '\0';
-
-    // Get a pointer to the IShellLink interface
-    hRes = CoCreateInstance(CLSID_ShellLink,
-                            nullptr,
-                            CLSCTX_INPROC_SERVER,
-                            IID_IShellLink,
-                            (void**)&ipShellLink);
-
-    if (hRes == S_OK) {
-        // Get a pointer to the IPersistFile interface
-        CComQIPtr<IPersistFile> ipPersistFile(ipShellLink);
-
-        // Open the shortcut file and initialize it from its contents
-        hRes = ipPersistFile->Load(shortcutPath.c_str(), STGM_READ);
-        if (hRes == S_OK) {
-            // Try to find the target of a shortcut, even if it has been moved or renamed
-            hRes = ipShellLink->Resolve(nullptr, SLR_UPDATE);
-            if (hRes == S_OK) {
-                // Get the path to the shortcut target
-                WCHAR szPath[MAX_PATH];
-                hRes = ipShellLink->GetPath(szPath, MAX_PATH, nullptr, SLGP_RAWPATH);
-                if (hRes == S_OK) {
-                    _tcsncpy(lpszFilePath, szPath, maxBuf);
-
-                    if (::PathIsDirectory(lpszFilePath) != FALSE) {
-                        if (lpszFilePath[wcslen(lpszFilePath) - 1] != '\\') {
-                            wcsncat(lpszFilePath, L"\\", MAX_PATH);
-                        }
-                    }
-                }
-            }
-        }
+    Microsoft::WRL::ComPtr<IShellLink> shellLink;
+    HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink));
+    if (FAILED(hr)) {
+        return hr;
     }
 
-    return hRes;
+    Microsoft::WRL::ComPtr<IPersistFile> persistFile;
+    hr = shellLink.As(&persistFile);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = persistFile->Load(shortcutPath.c_str(), STGM_READ);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = shellLink->Resolve(nullptr, SLR_UPDATE);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    hr = shellLink->GetPath(lpszFilePath, maxBuf, nullptr, SLGP_RAWPATH);
+    if (FAILED(hr)) {
+        return hr;
+    }
+
+    if (::PathIsDirectory(lpszFilePath) && lpszFilePath[wcslen(lpszFilePath) - 1] != L'\\') {
+        wcsncat_s(lpszFilePath, maxBuf, L"\\", 1);
+    }
+
+    return S_OK;
 }
 
 
