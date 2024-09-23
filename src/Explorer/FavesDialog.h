@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 #include "FavesModel.h"
-#include "TreeHelperClass.h"
+#include "TreeView.h"
 #include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
@@ -47,7 +47,7 @@ enum MenuID {
 };
 
 
-class FavesDialog : public DockingDlgInterface, public TreeHelper
+class FavesDialog : public DockingDlgInterface
 {
 public:
     FavesDialog();
@@ -101,7 +101,6 @@ protected:
     BOOL DoesLinkExist(LPTSTR link, FavesType type);
     void OpenLink(FavesItemPtr pElem);
     void UpdateLink(HTREEITEM hParentItem);
-    void UpdateNode(HTREEITEM hItem, BOOL haveChildren);
 
     void DrawSessionChildren(HTREEITEM hItem);
 
@@ -141,4 +140,5 @@ private:
 
     /* database */
     FavesModel      _model;
+    TreeView        _hTreeCtrl;
 };

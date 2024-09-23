@@ -32,15 +32,9 @@ public:
     OptionDlg();
     ~OptionDlg();
 
-    void init(HINSTANCE hInst, HWND hParent)
-    {
-        Window::init(hInst, hParent);
-    };
-
     INT_PTR doDialog(ExProp *prop);
 
-    virtual void destroy() {};
-
+    void destroy() override {}
 
 protected :
     INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;

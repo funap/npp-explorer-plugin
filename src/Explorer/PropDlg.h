@@ -29,7 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "FileDlg.h"
 #include "ExplorerResource.h"
-#include "TreeHelperClass.h"
+#include "TreeView.h"
 #include "FavesModel.h"
 
 enum class LinkDlg {
@@ -38,7 +38,7 @@ enum class LinkDlg {
     FILE
 };
 
-class PropDlg : public StaticDialog, public TreeHelper
+class PropDlg : public StaticDialog
 {
 
 public:
@@ -71,4 +71,5 @@ private:
     FavesItemPtr    _root;
     INT             _iUImgPos;
     FavesItemPtr    _selectedGroup;
+    TreeView        _hTreeCtrl;
 };

@@ -269,7 +269,7 @@
     <ClCompile Include="src\Explorer\QuickOpenDialog.cpp" />
     <ClCompile Include="src\Explorer\ThemeRenderer.cpp" />
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
-    <ClCompile Include="src\Explorer\TreeHelperClass.cpp" />
+    <ClCompile Include="src\Explorer\TreeView.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
@@ -305,7 +305,7 @@
     <ClInclude Include="src\Explorer\StringUtil.h" />
     <ClInclude Include="src\Explorer\ThemeRenderer.h" />
     <ClInclude Include="src\Explorer\ToolBar.h" />
-    <ClInclude Include="src\Explorer\TreeHelperClass.h" />
+    <ClInclude Include="src\Explorer\TreeView.h" />
     <ClInclude Include="src\Explorer\URLCtrl.h" />
     <ClInclude Include="src\Explorer\version.h" />
     <ClInclude Include="src\Explorer\Graphics.h" />

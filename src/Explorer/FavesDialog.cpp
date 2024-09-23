@@ -164,7 +164,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     switch (Message) {
     case WM_INITDIALOG:
         /* get handle of dialogs */
-        _hTreeCtrl    = ::GetDlgItem(_hSelf, IDC_TREE_FOLDER);
+        _hTreeCtrl.Attach(:: GetDlgItem(_hSelf, IDC_TREE_FOLDER));
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_LIST_FILE));
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_BUTTON_SPLITTER));
         ::DestroyWindow(::GetDlgItem(_hSelf, IDC_COMBO_FILTER));
@@ -230,7 +230,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         .cchTextMax = MAX_PATH,
                     };
                     if (TRUE == TreeView_GetItem(nmhdr->hwndFrom, &tvi)) {
-                        const auto *elem = reinterpret_cast<FavesItemPtr>(GetParam(hItem));
+                        const auto *elem = reinterpret_cast<FavesItemPtr>(_hTreeCtrl.GetParam(hItem));
                         if (elem && (elem->Type() == FAVES_FILE) && elem->IsLink()) {
                             if (IsFileOpen(elem->Link()) == TRUE) {
                                 ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
@@ -278,7 +278,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                     .pt = pt
                 };
                 ::ScreenToClient(_hTreeCtrl, &ht.pt);
-                HTREEITEM hItem = TreeView_HitTest(_hTreeCtrl, &ht);
+                HTREEITEM hItem = _hTreeCtrl.HitTest(&ht);
                 if (hItem != nullptr) {
                     OpenContext(hItem, pt);
                 }
@@ -289,38 +289,31 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                 HTREEITEM hItem = pnmtv->itemNew.hItem;
 
                 if (hItem != nullptr) {
-                    /* get element information */
+                    // get element information
                     FavesItemPtr pElem = reinterpret_cast<FavesItemPtr>(pnmtv->itemNew.lParam);
-
-                    /* update expand state */
+                    if (pElem == nullptr) {
+                        break;
+                    }
+                    // update expand state
                     pElem->IsExpanded(!pElem->IsExpanded());
 
                     // reload session's children
                     if ((pElem->Type() == FAVES_SESSION) && pElem->IsLink()) {
-                        DeleteChildren(hItem);
+                        _hTreeCtrl.DeleteChildren(hItem);
                         DrawSessionChildren(hItem);
                     }
 
-                    if (!TreeView_GetChild(_hTreeCtrl, hItem)) {
-                        if (pElem == nullptr) {
-                            /* nothing to do */
-                        }
-                        else if ((pElem->Type() == FAVES_SESSION) && pElem->IsLink()) {
-                            DeleteChildren(hItem);
-                            DrawSessionChildren(hItem);
-                        }
-                        else {
-                            UpdateLink(hItem);
-                        }
+                    if (!_hTreeCtrl.ItemHasChildren(hItem) && pElem->IsGroup()) {
+                        UpdateLink(hItem);
                     }
                 }
                 break;
             }
             case TVN_SELCHANGED: {
-                HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+                HTREEITEM hItem = _hTreeCtrl.GetSelection();
 
                 if (hItem != nullptr) {
-                    FavesItemPtr pElem = (FavesItemPtr)GetParam(hItem);
+                    FavesItemPtr pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
 
                     if (pElem != nullptr) {
                         _ToolBar.enable(IDM_EX_LINK_NEW,    pElem->IsGroup());
@@ -341,13 +334,13 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                 LPNMTVGETINFOTIP pTip = reinterpret_cast<LPNMTVGETINFOTIP>(lParam);
                 HTREEITEM item = pTip->hItem;
 
-                FavesItemPtr pElem = reinterpret_cast<FavesItemPtr>(GetParam(item));
+                FavesItemPtr pElem = reinterpret_cast<FavesItemPtr>(_hTreeCtrl.GetParam(item));
                 if (pElem) {
                     // show full file path
                     std::wstring tipText;
                     tipText += pElem->Link();
                     if ((pElem->Type() == FAVES_SESSION) && pElem->IsLink()) {
-                        INT count = GetChildrenCount(item);
+                        INT count = _hTreeCtrl.GetChildrenCount(item);
                         if (count > 0) {
                             // Check non-existent files
                             auto sessionFiles = NppInterface::getSessionFiles(pElem->Link());
@@ -470,13 +463,13 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             return TRUE;
         }
         if (wParam == VK_RETURN) {
-            HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+            HTREEITEM hItem = _hTreeCtrl.GetSelection();
             if (OpenTreeViewItem(hItem)) {
                 return TRUE;
             }
         }
         if (wParam == VK_DELETE) {
-            HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+            HTREEITEM hItem = _hTreeCtrl.GetSelection();
             DeleteItem(hItem);
         }
         break;
@@ -488,7 +481,7 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
             }
         };
 
-        HTREEITEM hItem = TreeView_HitTest(_hTreeCtrl, &hti);
+        HTREEITEM hItem = _hTreeCtrl.HitTest(&hti);
         if ((hti.flags & TVHT_ONITEM) && OpenTreeViewItem(hItem)) {
             return TRUE;
         }
@@ -504,7 +497,7 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
 BOOL FavesDialog::OpenTreeViewItem(HTREEITEM hItem)
 {
     if (hItem) {
-        FavesItemPtr    pElem = reinterpret_cast<FavesItemPtr>(GetParam(hItem));
+        FavesItemPtr pElem = reinterpret_cast<FavesItemPtr>(_hTreeCtrl.GetParam(hItem));
         if (pElem) {
             if (pElem->IsLink()) {
                 _peOpenLink = pElem;
@@ -540,8 +533,8 @@ void FavesDialog::tb_cmd(UINT message)
         break;
     }
     case IDM_EX_LINK_NEW: {
-        HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
-        FavesType type  = ((FavesItemPtr)GetParam(hItem))->Type();
+        HTREEITEM hItem = _hTreeCtrl.GetSelection();
+        FavesType type  = ((FavesItemPtr)_hTreeCtrl.GetParam(hItem))->Type();
         if (type == FAVES_SESSION) {
             AddSaveSession(hItem, FALSE);
         }
@@ -551,10 +544,10 @@ void FavesDialog::tb_cmd(UINT message)
         break;
     }
     case IDM_EX_LINK_EDIT:
-        EditItem(TreeView_GetSelection(_hTreeCtrl));
+        EditItem(_hTreeCtrl.GetSelection());
         break;
     case IDM_EX_LINK_DELETE:
-        DeleteItem(TreeView_GetSelection(_hTreeCtrl));
+        DeleteItem(_hTreeCtrl.GetSelection());
         break;
     default:
         break;
@@ -584,10 +577,10 @@ void FavesDialog::InitialDialog()
 
     /* add new items in list and make reference to items */
     SendMessage(_hTreeCtrl, WM_SETREDRAW, FALSE, 0);
-    UpdateLink(InsertItem(_model.FolderRoot()->Name(),  ICON_FOLDER,  ICON_FOLDER,  0, 0, TVI_ROOT, TVI_LAST, _model.FolderRoot()->HasChildren(),   _model.FolderRoot()));
-    UpdateLink(InsertItem(_model.FileRoot()->Name(),    ICON_FILE,    ICON_FILE,    0, 0, TVI_ROOT, TVI_LAST, _model.FileRoot()->HasChildren(),     _model.FileRoot()));
-    UpdateLink(InsertItem(_model.WebRoot()->Name(),     ICON_WEB,     ICON_WEB,     0, 0, TVI_ROOT, TVI_LAST, _model.WebRoot()->HasChildren(),      _model.WebRoot()));
-    UpdateLink(InsertItem(_model.SessionRoot()->Name(), ICON_SESSION, ICON_SESSION, 0, 0, TVI_ROOT, TVI_LAST, _model.SessionRoot()->HasChildren(),  _model.SessionRoot()));
+    UpdateLink(_hTreeCtrl.InsertItem(_model.FolderRoot()->Name(),  ICON_FOLDER,  ICON_FOLDER,  0, 0, TVI_ROOT, TVI_LAST, _model.FolderRoot()->HasChildren(),   _model.FolderRoot()));
+    UpdateLink(_hTreeCtrl.InsertItem(_model.FileRoot()->Name(),    ICON_FILE,    ICON_FILE,    0, 0, TVI_ROOT, TVI_LAST, _model.FileRoot()->HasChildren(),     _model.FileRoot()));
+    UpdateLink(_hTreeCtrl.InsertItem(_model.WebRoot()->Name(),     ICON_WEB,     ICON_WEB,     0, 0, TVI_ROOT, TVI_LAST, _model.WebRoot()->HasChildren(),      _model.WebRoot()));
+    UpdateLink(_hTreeCtrl.InsertItem(_model.SessionRoot()->Name(), ICON_SESSION, ICON_SESSION, 0, 0, TVI_ROOT, TVI_LAST, _model.SessionRoot()->HasChildren(),  _model.SessionRoot()));
     SendMessage(_hTreeCtrl, WM_SETREDRAW, TRUE, 0);
 }
 
@@ -610,8 +603,12 @@ void FavesDialog::CutItem(HTREEITEM hItem)
 
 void FavesDialog::PasteItem(HTREEITEM hItem)
 {
-    FavesItemPtr destination = (FavesItemPtr)GetParam(hItem);
-    FavesItemPtr source      = (FavesItemPtr)GetParam(_hTreeCutCopy);
+    FavesItemPtr destination = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
+    FavesItemPtr source      = (FavesItemPtr)_hTreeCtrl.GetParam(_hTreeCutCopy);
+
+    if (!source) {
+        return;
+    }
 
     if (destination == source) {
         _hTreeCutCopy = nullptr;
@@ -633,18 +630,18 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
             auto *parent = source->m_parent;
             source->Remove();
 
-            auto *parentTreeItem    = TreeView_GetParent(_hTreeCtrl, _hTreeCutCopy);
+            auto *parentTreeItem = _hTreeCtrl.GetParent(_hTreeCutCopy);
             UpdateLink(parentTreeItem);
-            UpdateNode(parentTreeItem, parent->HasChildren());
+            _hTreeCtrl.SetItemHasChildren(parentTreeItem, parent->HasChildren());
             ExpandElementsRecursive(parentTreeItem);
         }
 
         /* update information */
         UpdateLink(hItem);
-        UpdateNode(hItem, TRUE);
+        _hTreeCtrl.SetItemHasChildren(hItem, TRUE);
         ExpandElementsRecursive(hItem);
         if (destination->IsExpanded()) {
-            TreeView_Expand(_hTreeCtrl, hItem, TVM_EXPAND | TVE_COLLAPSERESET);
+            _hTreeCtrl.Expand(hItem, TVM_EXPAND | TVE_COLLAPSERESET);
         }
 
         _hTreeCutCopy = nullptr;
@@ -660,13 +657,13 @@ void FavesDialog::RefreshTree(HTREEITEM item)
 {
     if (item) {
         /* update information */
-        HTREEITEM    hParentItem = TreeView_GetParent(_hTreeCtrl, item);
+        HTREEITEM hParentItem = _hTreeCtrl.GetParent(item);
         if (hParentItem != nullptr) {
             UpdateLink(hParentItem);
         }
         UpdateLink(item);
         // expand item
-        TreeView_Expand(_hTreeCtrl, item, TVM_EXPAND | TVE_COLLAPSERESET);
+        _hTreeCtrl.Expand(item, TVM_EXPAND | TVE_COLLAPSERESET);
     }
 }
 
@@ -699,7 +696,7 @@ void FavesDialog::AddToFavorties(BOOL isFolder, LPTSTR szLink)
         auto newItem = std::make_unique<FavesItem>(group, type, pszName, pszLink);
         group->AddChild(std::move(newItem));
 
-        auto *item = FindTreeItemByParam(group);
+        auto *item = _hTreeCtrl.FindTreeItemByParam(group);
         RefreshTree(item);
     }
 
@@ -736,7 +733,7 @@ void FavesDialog::AddToFavorties(BOOL isFolder, std::vector<std::wstring>&& path
                 group->AddChild(std::move(newItem));
             }
 
-            auto *item = FindTreeItemByParam(group);
+            auto *item = _hTreeCtrl.FindTreeItemByParam(group);
             RefreshTree(item);
         }
     }
@@ -770,7 +767,7 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
     }
     else {
         /* get group or session information */
-        pElem = (FavesItemPtr)GetParam(hItem);
+        pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
     }
 
     /* init properties dialog */
@@ -782,11 +779,11 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
         if (hItem == nullptr) {
             /* get group name */
             pElem = dlgProp.getSelectedGroup();
-            hParentItem = FindTreeItemByParam(pElem);
+            hParentItem = _hTreeCtrl.FindTreeItemByParam(pElem);
 
             if (pElem->IsLink()) {
-                hItem = FindTreeItemByParam(pElem);
-                hParentItem = TreeView_GetParent(_hTreeCtrl, hItem);
+                hItem = _hTreeCtrl.FindTreeItemByParam(pElem);
+                hParentItem = _hTreeCtrl.GetParent(hItem);
             }
         }
 
@@ -810,13 +807,13 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
         if ((hParentItem == nullptr) && (hItem != nullptr)) {
             /* update the session items */
             UpdateLink(hItem);
-            TreeView_Expand(_hTreeCtrl, hItem, TVM_EXPAND | TVE_COLLAPSERESET);
+            _hTreeCtrl.Expand(hItem, TVM_EXPAND | TVE_COLLAPSERESET);
         }
 
         if ((hParentItem != nullptr) && (hItem == nullptr)) {
             /* update the session items */
             UpdateLink(hParentItem);
-            TreeView_Expand(_hTreeCtrl, hParentItem, TVM_EXPAND | TVE_COLLAPSERESET);
+            _hTreeCtrl.Expand(hParentItem, TVM_EXPAND | TVE_COLLAPSERESET);
         }
     }
 
@@ -828,7 +825,7 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
 void FavesDialog::NewItem(HTREEITEM hItem)
 {
     PropDlg         dlgProp;
-    FavesItemPtr    pElem   = (FavesItemPtr)GetParam(hItem);
+    FavesItemPtr    pElem   = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
     FavesType       type    = pElem->Type();
     BOOL            isOk    = FALSE;
     LPTSTR          pszName = (LPTSTR)new WCHAR[MAX_PATH];
@@ -861,11 +858,11 @@ void FavesDialog::NewItem(HTREEITEM hItem)
     if (isOk == TRUE) {
         /* update information */
         if (pElem->IsGroup()) {
-            UpdateLink(TreeView_GetParent(_hTreeCtrl, hItem));
+            UpdateLink(_hTreeCtrl.GetParent(hItem));
         }
         UpdateLink(hItem);
 
-        TreeView_Expand(_hTreeCtrl, hItem, TVM_EXPAND | TVE_COLLAPSERESET);
+        _hTreeCtrl.Expand(hItem, TVM_EXPAND | TVE_COLLAPSERESET);
     }
 
     delete [] pszName;
@@ -875,8 +872,8 @@ void FavesDialog::NewItem(HTREEITEM hItem)
 
 void FavesDialog::EditItem(HTREEITEM hItem)
 {
-    HTREEITEM       hParentItem = TreeView_GetParent(_hTreeCtrl, hItem);
-    FavesItemPtr    pElem       = (FavesItemPtr)GetParam(hItem);
+    HTREEITEM       hParentItem = _hTreeCtrl.GetParent(hItem);
+    FavesItemPtr    pElem       = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
 
     if (!pElem->IsRoot()) {
         FavesType   type        = pElem->Type();
@@ -915,7 +912,7 @@ void FavesDialog::EditItem(HTREEITEM hItem)
             dlgProp.setSelectedGroup(pElem->m_parent);
             if (dlgProp.doDialog(pszName, pszLink, pszDesc, MapPropDlg(type)) == TRUE) {
                 auto *group = dlgProp.getSelectedGroup();
-                auto *selectedGroup = FindTreeItemByParam(group);
+                auto *selectedGroup = _hTreeCtrl.FindTreeItemByParam(group);
                 if (hParentItem != selectedGroup) {
                     pElem->Remove();
                     auto newItem = std::make_unique<FavesItem>(group, type, pszName, pszLink);
@@ -944,8 +941,8 @@ void FavesDialog::EditItem(HTREEITEM hItem)
 
 void FavesDialog::DeleteItem(HTREEITEM hItem)
 {
-    HTREEITEM       hItemParent = TreeView_GetParent(_hTreeCtrl, hItem);
-    FavesItemPtr    pElem       = (FavesItemPtr)GetParam(hItem);
+    HTREEITEM       hItemParent = _hTreeCtrl.GetParent(hItem);
+    FavesItemPtr    pElem       = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
 
     if (!pElem) {
         return;
@@ -960,18 +957,18 @@ void FavesDialog::DeleteItem(HTREEITEM hItem)
     }
 
     pElem->Remove();
-    TreeView_DeleteItem(_hTreeCtrl, hItem);
+    _hTreeCtrl.DeleteItem(hItem);
 
     /* update only parent of parent when current item is a group folder */
-    if (((FavesItemPtr)GetParam(hItemParent))->IsGroup()) {
-        UpdateLink(TreeView_GetParent(_hTreeCtrl, hItemParent));
+    if (((FavesItemPtr)_hTreeCtrl.GetParam(hItemParent))->IsGroup()) {
+        UpdateLink(_hTreeCtrl.GetParent(hItemParent));
     }
     UpdateLink(hItemParent);
 }
 
 void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 {
-    FavesItemPtr pElem = (FavesItemPtr)GetParam(hItem);
+    FavesItemPtr pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
 
     /* get element and level depth */
     if (pElem != nullptr) {
@@ -1039,10 +1036,10 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
                     /* update information */
                     if (pElem->IsGroup()) {
-                        UpdateLink(TreeView_GetParent(_hTreeCtrl, hItem));
+                        UpdateLink(_hTreeCtrl.GetParent(hItem));
                     }
                     UpdateLink(hItem);
-                    TreeView_Expand(_hTreeCtrl, hItem, TVM_EXPAND | TVE_COLLAPSERESET);
+                    _hTreeCtrl.Expand(hItem, TVM_EXPAND | TVE_COLLAPSERESET);
                 }
 
                 delete [] pszName;
@@ -1131,7 +1128,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
                 break;
             case FM_SAVESESSION:
                 ::SendMessage(_hParent, NPPM_SAVECURRENTSESSION, 0, (LPARAM)pElem->Link().c_str());
-                DeleteChildren(hItem);
+                _hTreeCtrl.DeleteChildren(hItem);
                 DrawSessionChildren(hItem);
                 break;
             case FM_COPY:
@@ -1165,8 +1162,8 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
 void FavesDialog::UpdateLink(HTREEITEM hParentItem)
 {
-    HTREEITEM       hCurrentItem    = TreeView_GetNextItem(_hTreeCtrl, hParentItem, TVGN_CHILD);
-    FavesItemPtr    parentElement   = (FavesItemPtr)GetParam(hParentItem);
+    HTREEITEM       hCurrentItem    = _hTreeCtrl.GetNextItem(hParentItem, TVGN_CHILD);
+    FavesItemPtr    parentElement   = (FavesItemPtr)_hTreeCtrl.GetParam(hParentItem);
 
     if (parentElement != nullptr) {
         parentElement->SortChildren();
@@ -1209,62 +1206,45 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
 
             /* update or add new item */
             if (hCurrentItem != nullptr) {
-                UpdateItem(hCurrentItem, child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren, child.get());
+                _hTreeCtrl.UpdateItem(hCurrentItem, child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren, child.get());
             }
             else {
-                hCurrentItem = InsertItem(child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+                hCurrentItem = _hTreeCtrl.InsertItem(child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             }
 
             /* control item expand state and correct if necessary */
-            BOOL isTreeExp = (TreeView_GetItemState(_hTreeCtrl, hCurrentItem, TVIS_EXPANDED) & TVIS_EXPANDED ? TRUE : FALSE);
+            BOOL isTreeExp = _hTreeCtrl.IsItemExpanded(hCurrentItem);
 
             /* toggle if state is not equal */
             if (isTreeExp != child->IsExpanded()) {
                 child->IsExpanded(isTreeExp);
-                TreeView_Expand(_hTreeCtrl, hCurrentItem, TVE_TOGGLE);
+                _hTreeCtrl.Expand(hCurrentItem, TVE_TOGGLE);
             }
 
             /* in any case redraw the session children items */
             if (child->Type() == FAVES_SESSION) {
-                DeleteChildren(hCurrentItem);
+                _hTreeCtrl.DeleteChildren(hCurrentItem);
                 DrawSessionChildren(hCurrentItem);
             }
 
-            hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+            hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
         }
 
         // Update current node
-        UpdateNode(hParentItem, parentElement->HasChildren());
+        _hTreeCtrl.SetItemHasChildren(hParentItem, parentElement->HasChildren());
 
         /* delete possible not existed items */
         while (hCurrentItem != nullptr) {
             HTREEITEM   pPrevItem   = hCurrentItem;
-            hCurrentItem            = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
-            TreeView_DeleteItem(_hTreeCtrl, pPrevItem);
-        }
-    }
-}
-
-void FavesDialog::UpdateNode(HTREEITEM hItem, BOOL haveChildren)
-{
-    if (hItem != nullptr) {
-        WCHAR TEMP[MAX_PATH] = {};
-        TVITEM tvi = {
-            .mask       = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_PARAM,
-            .hItem      = hItem,
-            .pszText    = TEMP,
-            .cchTextMax = MAX_PATH,
-        };
-
-        if (TreeView_GetItem(_hTreeCtrl, &tvi) == TRUE) {
-            UpdateItem(hItem, TEMP, tvi.iImage, tvi.iSelectedImage, 0, 0, haveChildren, (void*)tvi.lParam);
+            hCurrentItem            = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+            _hTreeCtrl.DeleteItem(pPrevItem);
         }
     }
 }
 
 void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
 {
-    FavesItemPtr session = (FavesItemPtr)GetParam(hItem);
+    FavesItemPtr session = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
     if (session->IsGroup()) {
         return;
     }
@@ -1286,17 +1266,17 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
             iIconSelected = iIconNormal;
             hasMissingFile = TRUE;
         }
-        InsertItem(newItem->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hItem, TVI_LAST, FALSE, newItem.get());
+        _hTreeCtrl.InsertItem(newItem->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hItem, TVI_LAST, FALSE, newItem.get());
         session->AddChild(std::move(newItem));
     }
 
     if (hasMissingFile) {
         session->uParam |= FAVES_PARAM_USERIMAGE;
-        SetItemIcons(hItem, ICON_WARN_SESSION, ICON_WARN_SESSION, 0);
+        _hTreeCtrl.SetItemIcons(hItem, ICON_WARN_SESSION, ICON_WARN_SESSION, 0);
     }
     else {
         session->uParam |= FAVES_PARAM_USERIMAGE;
-        SetItemIcons(hItem, ICON_SESSION, ICON_SESSION, 0);
+        _hTreeCtrl.SetItemIcons(hItem, ICON_SESSION, ICON_SESSION, 0);
     }
 }
 
@@ -1399,25 +1379,25 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
 
 void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 {
-    HTREEITEM hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hItem, TVGN_CHILD);
+    HTREEITEM hCurrentItem = _hTreeCtrl.GetNextItem(hItem, TVGN_CHILD);
     while (hCurrentItem) {
-        FavesItemPtr pElem = (FavesItemPtr)GetParam(hCurrentItem);
+        FavesItemPtr pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hCurrentItem);
         if (pElem->IsExpanded()) {
             UpdateLink(hCurrentItem);
 
             /* toggle only the main items, because groups were updated automatically in UpdateLink() */
             if (pElem->IsRoot()) {
                 /* if node needs to be expand, delete the indicator first,
-                   because TreeView_Expand() function toggles the flag     */
+                   because TreeView Expand() function toggles the flag     */
                 pElem->IsExpanded(!pElem->IsExpanded());
-                TreeView_Expand(_hTreeCtrl, hCurrentItem, TVE_TOGGLE);
+                _hTreeCtrl.Expand(hCurrentItem, TVE_TOGGLE);
             }
 
             /* traverse into the tree */
             ExpandElementsRecursive(hCurrentItem);
         }
 
-        hCurrentItem = TreeView_GetNextItem(_hTreeCtrl, hCurrentItem, TVGN_NEXT);
+        hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
     }
 }
 
@@ -1454,7 +1434,7 @@ void FavesDialog::ReadSettings()
                     ptr = data + 1;
                     ptr = _tcstok(ptr, L"\n");
 
-                    /* finaly, fill out the tree and the vDB */
+                    /* finally, fill out the tree and the vDB */
                     for (auto *root : {_model.FolderRoot(), _model.FileRoot(), _model.WebRoot(), _model.SessionRoot()}) {
                         /* error */
                         if (ptr == nullptr) {

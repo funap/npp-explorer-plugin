@@ -28,7 +28,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 #include "ExplorerContext.h"
 #include "FileList.h"
-#include "TreeHelperClass.h"
+#include "TreeView.h"
 #include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
@@ -52,7 +52,7 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
-class ExplorerDialog : public DockingDlgInterface, public TreeHelper, public CIDropTarget, public ExplorerContext
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext
 {
 public:
     ExplorerDialog();
@@ -167,4 +167,5 @@ private:
     BOOL        _isDnDStarted;
 
     INT         _iDockedPos;
+    TreeView    _hTreeCtrl;
 };

@@ -111,7 +111,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
             }
 
             SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NAME));
-            _hTreeCtrl = ::GetDlgItem(_hSelf, IDC_TREE_SELECT);
+            _hTreeCtrl.Attach(::GetDlgItem(_hSelf, IDC_TREE_SELECT));
 
             goToCenter();
 
@@ -155,16 +155,16 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     return elem->IsGroup();
                 });
 
-                HTREEITEM hItem = InsertItem(_root->m_name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _root);
+                HTREEITEM hItem = _hTreeCtrl.InsertItem(_root->m_name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _root);
 
                 SendMessage(_hTreeCtrl, WM_SETREDRAW, FALSE, 0);
                 ExpandTreeView(hItem);
                 SendMessage(_hTreeCtrl, WM_SETREDRAW, TRUE, 0);
 
                 if (_selectedGroup) {
-                    hItem = FindTreeItemByParam(_selectedGroup);
+                    hItem = _hTreeCtrl.FindTreeItemByParam(_selectedGroup);
                 }
-                TreeView_SelectItem(_hTreeCtrl, hItem);
+                _hTreeCtrl.SelectItem(hItem);
 
                 ::SetWindowText(::GetDlgItem(_hSelf, IDC_BUTTON_DETAILS), L"Details <<");
             }
@@ -280,16 +280,16 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
 
                     if ((wcslen(_pName) != 0) && (wcslen(_pLink) != 0)) {
-                        auto *selectedItem = TreeView_GetSelection(_hTreeCtrl);
-                        _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
+                        auto *selectedItem = _hTreeCtrl.GetSelection();
+                        _selectedGroup = (FavesItemPtr)_hTreeCtrl.GetParam(selectedItem);
                         ::EndDialog(_hSelf, TRUE);
                         return TRUE;
                     }
                     ::MessageBox(_hParent, L"Fill out all fields!", L"Error", MB_OK);
                 }
                 else {
-                    auto *selectedItem = TreeView_GetSelection(_hTreeCtrl);
-                    _selectedGroup = (FavesItemPtr)GetParam(selectedItem);
+                    auto *selectedItem = _hTreeCtrl.GetSelection();
+                    _selectedGroup = (FavesItemPtr)_hTreeCtrl.GetParam(selectedItem);
                     ::EndDialog(_hSelf, TRUE);
                     return TRUE;
                 }
@@ -342,10 +342,10 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                 case TVN_SELCHANGED: {
                     /* only when link params are also viewed */
                     if (_bWithLink == TRUE) {
-                        HTREEITEM hItem = TreeView_GetSelection(_hTreeCtrl);
+                        HTREEITEM hItem = _hTreeCtrl.GetSelection();
 
                         if (hItem != nullptr) {
-                            FavesItemPtr pElem = (FavesItemPtr)GetParam(hItem);
+                            FavesItemPtr pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
 
                             if (pElem != nullptr) {
                                 if (pElem->IsLink()) {
@@ -400,7 +400,7 @@ void PropDlg::setSelectedGroup(FavesItemPtr group)
 
 void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
 {
-    FavesItemPtr parent = (FavesItemPtr)GetParam(hParentItem);
+    FavesItemPtr parent = (FavesItemPtr)_hTreeCtrl.GetParam(hParentItem);
     if (parent == nullptr) {
         return;
     }
@@ -414,7 +414,7 @@ void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
                 }
             }
             // add new item
-            HTREEITEM pCurrentItem = InsertItem(child->m_name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->m_name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             ExpandTreeView(pCurrentItem);
         }
 
@@ -424,9 +424,9 @@ void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
             INT iIconSelected   = 0;
             INT iIconOverlayed  = 0;
             ExtractIcons(child->m_name.c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-            HTREEITEM pCurrentItem = InsertItem(child->m_name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->m_name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             ExpandTreeView(pCurrentItem);
         }
     }
-    TreeView_Expand(_hTreeCtrl, hParentItem, TVE_EXPAND);
+    _hTreeCtrl.Expand(hParentItem, TVE_EXPAND);
 }

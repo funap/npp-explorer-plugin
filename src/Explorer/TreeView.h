@@ -25,26 +25,46 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string>
 #include <vector>
 
-class TreeHelper
+class TreeView
 {
 public:
-    TreeHelper() : _hTreeCtrl(nullptr) {};
-    ~TreeHelper() {};
+    TreeView() {};
+    virtual ~TreeView() {};
 
-protected:
-    std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
+    BOOL Attach(HWND wnd);
+    operator HWND() const { return _wnd; }
+
     HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, void* lParam = NULL);
     BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, void* lParam = NULL, BOOL delChildren = TRUE);
     void DeleteChildren(HTREEITEM parentItem);
-    BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize);
+    BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize) const;
     std::wstring GetItemText(HTREEITEM hItem) const;
-    void* GetParam(HTREEITEM hItem);
+    void* GetParam(HTREEITEM hItem) const;
     void SetParam(HTREEITEM hItem, void* lParam);
-    BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay);
+    BOOL SetItemHasChildren(HTREEITEM item, BOOL hasChildren);
+    BOOL GetItemIcons(HTREEITEM hItem, LPINT iIcon, LPINT piSelected, LPINT iOverlay) const;
     void SetItemIcons(HTREEITEM hItem, INT icon, INT selected, INT overlay);
-    BOOL IsItemExpanded(HTREEITEM hItem);
-    INT GetChildrenCount(HTREEITEM item);
+    BOOL IsItemExpanded(HTREEITEM hItem) const;
+    INT GetChildrenCount(HTREEITEM item) const;
+    std::vector<std::wstring> GetItemPathFromRoot(HTREEITEM currentItem) const;
     HTREEITEM FindTreeItemByParam(const void* param);
 
-    HWND    _hTreeCtrl;
+    HIMAGELIST SetImageList(HIMAGELIST images, int type = TVSIL_NORMAL);
+    HTREEITEM HitTest(TVHITTESTINFO* hitInfo) const;
+    HTREEITEM GetSelection() const;
+    HTREEITEM GetRoot() const;
+    HTREEITEM GetChild(HTREEITEM item) const;
+    HTREEITEM GetParent(HTREEITEM item) const;
+    HTREEITEM GetNextItem(HTREEITEM item, UINT code) const;
+    HTREEITEM GetDropHilightItem() const;
+    HTREEITEM GetLastVisibleItem() const;
+    BOOL ItemHasChildren(HTREEITEM item) const;
+    BOOL Expand(HTREEITEM item, UINT code) const;
+    BOOL GetItemRect(HTREEITEM item, RECT* rect, BOOL isTextOnly) const;
+    BOOL SelectItem(HTREEITEM item);
+    BOOL DeleteItem(HTREEITEM item);
+    BOOL EnsureVisible(HTREEITEM item);
+    BOOL SelectDropTarget(HTREEITEM item);
+protected:
+    HWND    _wnd{nullptr};
 };

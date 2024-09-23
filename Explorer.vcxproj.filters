@@ -93,7 +93,7 @@
     <ClCompile Include="src\Explorer\ToolBar.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
-    <ClCompile Include="src\Explorer\TreeHelperClass.cpp">
+    <ClCompile Include="src\Explorer\TreeView.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
     <ClCompile Include="src\Explorer\URLCtrl.cpp">
@@ -190,7 +190,7 @@
     <ClInclude Include="src\Explorer\ToolBar.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Explorer\TreeHelperClass.h">
+    <ClInclude Include="src\Explorer\TreeView.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\URLCtrl.h">
