@@ -30,6 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileList.h"
 #include "TreeView.h"
 #include "ToolBar.h"
+#include "WorkerThread.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
 enum EventID {
@@ -52,7 +53,7 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback
 {
 public:
     ExplorerDialog();
@@ -85,7 +86,6 @@ public:
     void Refresh() override;
     void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
 protected:
-
     /* Subclassing tree */
     LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
     static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
@@ -101,6 +101,7 @@ protected:
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
     void InitialDialog();
+    void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task);
 
     void UpdateRoots();
     void UpdateAllExpandedItems();
@@ -146,6 +147,7 @@ private:
     HWND        _hFilter;
 
     /* classes */
+    TreeView    _hTreeCtrl;
     FileList    _FileList;
     ComboOrgi   _ComboFilter;
     ToolBar     _ToolBar;
@@ -167,5 +169,6 @@ private:
     BOOL        _isDnDStarted;
 
     INT         _iDockedPos;
-    TreeView    _hTreeCtrl;
+
+    WorkerThread _workerThread;
 };

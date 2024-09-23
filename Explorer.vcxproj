@@ -271,6 +271,7 @@
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
     <ClCompile Include="src\Explorer\TreeView.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
+    <ClCompile Include="src\Explorer\WorkerThread.cpp" />
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -309,6 +310,7 @@
     <ClInclude Include="src\Explorer\URLCtrl.h" />
     <ClInclude Include="src\Explorer\version.h" />
     <ClInclude Include="src\Explorer\Graphics.h" />
+    <ClInclude Include="src\Explorer\WorkerThread.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\Docking.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\DockingDlgInterface.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\dockingResource.h" />

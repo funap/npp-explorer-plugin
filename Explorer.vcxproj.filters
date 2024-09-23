@@ -102,6 +102,9 @@
     <ClCompile Include="src\Explorer\DirectoryReader.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\WorkerThread.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Explorer\version.rc">
@@ -236,6 +239,9 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\ExplorerContext.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\WorkerThread.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

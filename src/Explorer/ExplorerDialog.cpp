@@ -171,6 +171,7 @@ ExplorerDialog::ExplorerDialog()
 
 ExplorerDialog::~ExplorerDialog()
 {
+    _workerThread.Stop();
 }
 
 
@@ -195,7 +196,7 @@ void ExplorerDialog::redraw()
     /* and only when dialog is visible, select item again */
     SelectItem(_pExProp->currentDir);
 
-    ::SetEvent(g_hEvent[EID_UPDATE_USER]);
+    Refresh();
 };
 
 void ExplorerDialog::doDialog(bool willBeShown)
@@ -458,6 +459,11 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case EXM_USER_ICONBAR:
         tb_cmd(wParam);
         return TRUE;
+    case EXM_ASYNCTASK_COMPLETED: {
+        std::unique_ptr<IAsyncTask> task(reinterpret_cast<IAsyncTask*>(wParam));
+        task->OnCompleted();
+        return TRUE;
+    }
     case WM_TIMER: 
         if (wParam == EXT_UPDATEDEVICE) {
             ::KillTimer(_hSelf, EXT_UPDATEDEVICE);
@@ -518,7 +524,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             onDelete();
             return TRUE;
         case SHORTCUT_REFRESH:
-            ::SetEvent(g_hEvent[EID_UPDATE_USER]);
+            Refresh();
             return TRUE;
         case VK_RETURN: {
             /* toggle item on return */
@@ -571,7 +577,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             return TRUE;
         }
         if (wParam == VK_F5) {
-            ::SetEvent(g_hEvent[EID_UPDATE_USER]);
+            Refresh();
             return TRUE;
         }
         if (VK_ESCAPE == wParam) {
@@ -1007,6 +1013,8 @@ void ExplorerDialog::NotifyEvent(DWORD event)
 
 void ExplorerDialog::InitialDialog()
 {
+    _workerThread.Start(this);
+
     /* get handle of dialogs */
     _hTreeCtrl.Attach(::GetDlgItem(_hSelf, IDC_TREE_FOLDER));
     _hListCtrl      = ::GetDlgItem(_hSelf, IDC_LIST_FILE);
@@ -1098,6 +1106,11 @@ void ExplorerDialog::InitialDialog()
         }
         return FALSE;
     });
+}
+
+void ExplorerDialog::OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task)
+{
+    PostMessage(_hSelf, EXM_ASYNCTASK_COMPLETED, reinterpret_cast<WPARAM>(task.release()), 0);
 }
 
 void ExplorerDialog::SetFont(HFONT font)
