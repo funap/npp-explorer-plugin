@@ -29,6 +29,9 @@
 #include <execution>
 #include <list>
 #include <string_view>
+#include <memory>
+#include <optional>
+#include <condition_variable>
 
 #include <shlwapi.h>
 #include <windowsx.h>

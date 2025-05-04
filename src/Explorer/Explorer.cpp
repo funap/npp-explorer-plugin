@@ -27,6 +27,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <dbt.h>
 #include <ranges>
+#include <format>
 #include <wrl/client.h>
 
 #include "NppInterface.h"
@@ -1052,7 +1053,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const s
             varElement = VAR_FILE_EXT;
         } else {
             WCHAR szTemp[MAX_PATH];
-            _stprintf(szTemp, L"Argument \"%s\" unknown.", pszPtr);
+            _stprintf(szTemp, L"Argument \"%ls\" unknown.", pszPtr);
             ::MessageBox(g_nppData._nppHandle, szTemp, L"Error", MB_OK | MB_ICONERROR);
 
             return FALSE;
@@ -1140,11 +1141,11 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const s
 
             if (*p_pszNppArg != nullptr) {
                 if (pszTemp != nullptr) {
-                    _stprintf(*p_pszNppArg, L"%s \"%s\"", pszTemp, szElement);
+                    _stprintf(*p_pszNppArg, L"%ls \"%ls\"", pszTemp, szElement);
                     delete [] pszTemp;
                 }
                 else {
-                    _stprintf(*p_pszNppArg, L"\"%s\"", szElement);
+                    _stprintf(*p_pszNppArg, L"\"%ls\"", szElement);
                 }
             }
             else {

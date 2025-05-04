@@ -78,7 +78,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
             /* set discription */
             WCHAR szBuffer[256];
 
-            _stprintf(szBuffer, L"%s:", _pDesc);
+            _stprintf(szBuffer, L"%ls:", _pDesc);
             ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
 
             /* if name is not defined extract from link */

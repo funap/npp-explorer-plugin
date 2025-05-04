@@ -29,13 +29,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <list>
 #include <string>
 #include <optional>
+#include <format>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
 #include "ContextMenu.h"
 #include "NewDlg.h"
 #include "NppInterface.h"
-#include "StringUtil.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
 
@@ -2159,8 +2159,8 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
         }
 
         const std::wstring message = (dwEffect == DROPEFFECT_MOVE)
-            ? StringUtil::format(L"Move %d file(s)/folder(s) to:\n\n%s", count, pszTo)
-            : StringUtil::format(L"Copy %d file(s)/folder(s) to:\n\n%s", count, pszTo);
+            ? std::format(L"Move {} file(s)/folder(s) to:\n\n{}", count, pszTo)
+            : std::format(L"Copy {} file(s)/folder(s) to:\n\n{}", count, pszTo);
 
         if (::MessageBox(_hSelf, message.c_str(), L"Explorer", MB_YESNO) == IDYES) {
             // TODO move or copy the file views into other window in dependency to keystate

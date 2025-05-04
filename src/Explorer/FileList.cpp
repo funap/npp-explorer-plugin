@@ -643,10 +643,10 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     switch (iSubItem) {
     case SubItem::Name:
         if ((iItem < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
-            swprintf(szItem, L"[%s]", _vFileList[iItem].strName.c_str());
+            swprintf(szItem, L"[%ls]", _vFileList[iItem].strName.c_str());
         }
         else {
-            swprintf(szItem, L"%s", _vFileList[iItem].strName.c_str());
+            swprintf(szItem, L"%ls", _vFileList[iItem].strName.c_str());
         }
         break;
     case SubItem::Extension:
@@ -1621,10 +1621,10 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 
         WCHAR text[MAX_PATH + 32];
         if (dwEffect == DROPEFFECT_MOVE) {
-            swprintf(text, L"Move %d file(s)/folder(s) to:\n\n%s", count, pszTo);
+            swprintf(text, L"Move %d file(s)/folder(s) to:\n\n%ls", count, pszTo);
         }
         else {// dwEffect == DROPEFFECT_COPY
-            swprintf(text, L"Copy %d file(s)/folder(s) to:\n\n%s", count, pszTo);
+            swprintf(text, L"Copy %d file(s)/folder(s) to:\n\n%ls", count, pszTo);
         }
 
         if (::MessageBox(_hSelf, text, L"Explorer", MB_YESNO) == IDYES) {

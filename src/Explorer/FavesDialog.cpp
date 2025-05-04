@@ -27,6 +27,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <Vsstyle.h>
 #include <Vssym32.h>
 
+#include <format>
+
 #include "Explorer.h"
 #include "ExplorerDialog.h"
 #include "ExplorerResource.h"
@@ -352,9 +354,9 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                             }
 
                             // make tooltip text.
-                            tipText += StringUtil::format(L"\nThis session has %d files", count);
+                            tipText += std::format(L"\nThis session has {} files", count);
                             if (nonExistentFileCount > 0) {
-                                tipText += StringUtil::format(L" (%d are non-existent)", nonExistentFileCount);
+                                tipText += std::format(L" ({} are non-existent)", nonExistentFileCount);
                             }
                             tipText += L".";
                         }
@@ -648,7 +650,7 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
     }
     else {
         WCHAR msgBoxTxt[128];
-        _stprintf(msgBoxTxt, L"Could only be paste into %s", source->Root()->Name().c_str());
+        _stprintf(msgBoxTxt, L"Could only be paste into %ls", source->Root()->Name().c_str());
         ::MessageBox(_hParent, msgBoxTxt, L"Error", MB_OK);
     }
 }
@@ -1018,12 +1020,10 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
             case FM_NEWGROUP: {
                 LPTSTR pszName = (LPTSTR)new WCHAR[MAX_PATH];
                 LPTSTR pszDesc = (LPTSTR)new WCHAR[MAX_PATH];
-                LPTSTR pszComm = (LPTSTR)new WCHAR[MAX_PATH];
 
                 pszName[0] = '\0';
 
-                wcscpy(pszComm, L"New group in %s");
-                _stprintf(pszDesc, pszComm, pElem->Root()->Name().c_str());
+                _stprintf(pszDesc, L"New group in %ls", pElem->Root()->Name().c_str());
 
                 /* init new dialog */
                 NewDlg dlgNew;
@@ -1044,7 +1044,6 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
                 delete [] pszName;
                 delete [] pszDesc;
-                delete [] pszComm;
                 break;
             }
             case FM_COPY:
@@ -1358,7 +1357,10 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
                 }
             }
             if (0 < nonExistentFileCount) {
-                if (IDCANCEL == ::MessageBox(_hSelf, StringUtil::format(L"This session has %d non-existent files. Processing will delete all non-existent files in the session. Are you sure you want to continue?", nonExistentFileCount).c_str(), L"Open Session", MB_OKCANCEL | MB_ICONWARNING)) {
+                const std::wstring msg = std::format(L"This session has {} non-existent files. "
+                                                     L"Processing will delete all non-existent files in the session. Are you sure you want to continue?",
+                                                     nonExistentFileCount);
+                if (IDCANCEL == ::MessageBox(_hSelf, msg.c_str(), L"Open Session", MB_OKCANCEL | MB_ICONWARNING)) {
                     return;
                 }
             }
@@ -1566,7 +1568,7 @@ void FavesDialog::SaveSettings()
         ::WriteFile(hFile, szBOM, sizeof(szBOM), &hasWritten, nullptr);
 
         for (auto *root : { _model.FolderRoot(), _model.FileRoot(), _model.WebRoot(), _model.SessionRoot() }) {
-            std::wstring temp = StringUtil::format(L"%s\nExpand=%i\n\n", root->Name().c_str(), root->IsExpanded());
+            std::wstring temp = std::format(L"{}\nExpand={}\n\n", root->Name().c_str(), root->IsExpanded());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
             SaveElementTreeRecursive(root, hFile);
         }
@@ -1590,10 +1592,10 @@ void FavesDialog::SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile)
         if (child->IsGroup()) {
             ::WriteFile(hFile, L"#GROUP\n", (DWORD)wcslen(L"#GROUP\n") * sizeof(WCHAR), &hasWritten, nullptr);
 
-            std::wstring temp = StringUtil::format(L"\tName=%s\n", child->Name().c_str());
+            std::wstring temp = std::format(L"\tName={}\n", child->Name().c_str());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
 
-            temp = StringUtil::format(L"\tExpand=%i\n\n", child->IsExpanded());
+            temp = std::format(L"\tExpand={}\n\n", child->IsExpanded());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
 
             SaveElementTreeRecursive(child.get(), hFile);
@@ -1603,10 +1605,10 @@ void FavesDialog::SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile)
         else if (child->IsLink()) {
             ::WriteFile(hFile, L"#LINK\n", (DWORD)wcslen(L"#LINK\n") * sizeof(WCHAR), &hasWritten, nullptr);
 
-            std::wstring temp = StringUtil::format(L"\tName=%s\n", child->Name().c_str());
+            std::wstring temp = std::format(L"\tName={}\n", child->Name().c_str());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
 
-            temp = StringUtil::format(L"\tLink=%s\n\n", child->Link().c_str());
+            temp = std::format(L"\tLink={}\n\n", child->Link().c_str());
             ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
         }
     }
