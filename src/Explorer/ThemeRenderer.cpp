@@ -31,6 +31,7 @@ namespace {
 constexpr UINT_PTR WINDOW_SUBCLASS_ID   = 0;
 constexpr UINT_PTR REBAR_SUBCLASS_ID    = 1;
 constexpr UINT_PTR BUTTON_SUBCLASS_ID   = 2;
+constexpr UINT_PTR EDIT_SUBCLASS_ID     = 3;
 
 auto GetClassName(HWND hwnd) -> std::wstring
 {
@@ -73,18 +74,43 @@ ThemeRenderer& ThemeRenderer::Instance()
     return *s_instance;
 }
 
+HBRUSH ThemeRenderer::GetBrush(BrushType type) const
+{
+    switch (type) {
+    case BrushType::Body:
+        return m_brushes.body;
+    case BrushType::BodyBg:
+        return m_brushes.body_bg;
+    case BrushType::Secondary:
+        return m_brushes.secondary;
+    case BrushType::SecondaryBg:
+        return m_brushes.secondary_bg;
+    case BrushType::Border:
+        return m_brushes.border;
+    case BrushType::Primary:
+        return m_brushes.primary;
+    case BrushType::PrimaryBg:
+        return m_brushes.primary_bg;
+    case BrushType::PrimaryBorder:
+        return m_brushes.primary_border;
+    default:
+        return m_brushes.body_bg;  // デフォルトは本文背景を返す
+    }
+}
 
-void ThemeRenderer::SetTheme(BOOL isDarkMode, Colors colors)
+void ThemeRenderer::SetTheme(BOOL isDarkMode, const ThemeColors& colors)
 {
     m_isDarkMode = isDarkMode;
     m_colors     = colors;
 
-    m_brushes.face.CreateSolidBrush(colors.face);
-    m_brushes.bg.CreateSolidBrush(colors.bg);
-    m_brushes.hot.CreateSolidBrush(colors.hot);
-    m_brushes.hotSelected.CreateSolidBrush(colors.hotSelected);
-    m_brushes.selected.CreateSolidBrush(colors.selected);
-    m_brushes.selectedNotFocus.CreateSolidBrush(colors.selectedNotFocus);
+    m_brushes.body.CreateSolidBrush(colors.body);
+    m_brushes.body_bg.CreateSolidBrush(colors.body_bg);
+    m_brushes.secondary.CreateSolidBrush(colors.secondary);
+    m_brushes.secondary_bg.CreateSolidBrush(colors.secondary_bg);
+    m_brushes.border.CreateSolidBrush(colors.border);
+    m_brushes.primary.CreateSolidBrush(colors.primary);
+    m_brushes.primary_bg.CreateSolidBrush(colors.primary_bg);
+    m_brushes.primary_border.CreateSolidBrush(colors.primary_border);
 
     for (const auto& hwnd : m_windows) {
         ApplyTheme(hwnd);
@@ -106,6 +132,9 @@ void ThemeRenderer::Register(HWND hwnd)
         else if (className == WC_BUTTON) {
             ::SetWindowSubclass(childWindow, DefaultSubclassProc, BUTTON_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
         }
+        else if (className == WC_EDIT) {
+            ::SetWindowSubclass(childWindow, DefaultSubclassProc, EDIT_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
+        }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
 
@@ -120,21 +149,21 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
         if (className == TOOLBARCLASSNAME) {
             COLORSCHEME scheme{
                 .dwSize          = sizeof(COLORSCHEME),
-                .clrBtnHighlight = self->m_colors.selected,
-                .clrBtnShadow    = self->m_colors.face,
+                .clrBtnHighlight = self->m_colors.primary_bg,
+                .clrBtnShadow    = self->m_colors.secondary_bg,
             };
             ::SendMessage(childWindow, TB_SETCOLORSCHEME, 0, reinterpret_cast<LPARAM>(&scheme));
         }
         else if (className == WC_TREEVIEW) {
-            TreeView_SetBkColor(childWindow, self->m_colors.bg);
-            TreeView_SetTextColor(childWindow, self->m_colors.fg);
+            TreeView_SetBkColor(childWindow, self->m_colors.secondary_bg);
+            TreeView_SetTextColor(childWindow, self->m_colors.secondary);
             ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
         }
         else if (className == WC_LISTVIEW) {
-            ListView_SetBkColor(childWindow, self->m_colors.bg);
-            ListView_SetTextColor(childWindow, self->m_colors.fg);
+            ListView_SetBkColor(childWindow, self->m_colors.secondary_bg);
+            ListView_SetTextColor(childWindow, self->m_colors.secondary);
             ListView_SetTextBkColor(childWindow, CLR_NONE);
-            ::InvalidateRect(childWindow, NULL, TRUE);
+            ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
         }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
@@ -150,6 +179,8 @@ LRESULT CALLBACK ThemeRenderer::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM
         return self->RebarProc(hWnd, uMsg, wParam, lParam);
     case BUTTON_SUBCLASS_ID:
         return self->ButtonProc(hWnd, uMsg, wParam, lParam);
+    case EDIT_SUBCLASS_ID:
+        return self->EditProc(hWnd, uMsg, wParam, lParam);
     default:
         break;
     }
@@ -162,8 +193,15 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushes.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.body_bg);
         return TRUE;
+    }
+    case WM_CTLCOLOREDIT:
+    {
+        HDC hdc = (HDC)wParam;
+        ::SetTextColor(hdc, m_colors.secondary);
+        ::SetBkColor(hdc, m_colors.secondary_bg);
+        return (LRESULT)(HBRUSH)m_brushes.secondary_bg;
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, REBAR_SUBCLASS_ID);
@@ -179,7 +217,7 @@ LRESULT ThemeRenderer::RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushes.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.secondary_bg);
         return TRUE;
     }
     case WM_NCDESTROY:
@@ -196,11 +234,38 @@ LRESULT ThemeRenderer::ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     case WM_ERASEBKGND: {
         RECT rc{};
         ::GetClientRect(hWnd, &rc);
-        ::FillRect((HDC)wParam, &rc, m_brushes.face);
+        ::FillRect((HDC)wParam, &rc, m_brushes.body_bg);
         return TRUE;
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, BUTTON_SUBCLASS_ID);
+        m_windows.erase(hWnd);
+        break;
+    }
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT ThemeRenderer::EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg) {
+    case WM_NCPAINT: {
+        HDC hdc = GetWindowDC(hWnd);
+        RECT rect;
+        GetWindowRect(hWnd, &rect);
+        OffsetRect(&rect, -rect.left, -rect.top);
+
+        HWND hFocusWnd = GetFocus();
+        if (hFocusWnd == hWnd) {
+            FrameRect(hdc, &rect, m_brushes.primary_border);
+        } else {
+            FrameRect(hdc, &rect, m_brushes.border);
+        }
+
+        ReleaseDC(hWnd, hdc);
+        return TRUE;
+    }
+    case WM_NCDESTROY:
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, EDIT_SUBCLASS_ID);
         m_windows.erase(hWnd);
         break;
     }

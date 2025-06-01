@@ -336,13 +336,17 @@ void UpdateThemeColor()
 
     auto nppColors = NppInterface::GetColors();
 
-    Colors colors{
-        .face = nppColors.background,
-        .text = nppColors.text,
-        .bg = NppInterface::getEditorDefaultBackgroundColor(),
-        .fg = NppInterface::getEditorDefaultForegroundColor(),
+    ThemeColors colors{
+        .body               = nppColors.darkerText,
+        .body_bg            = nppColors.pureBackground,
+        .secondary          = NppInterface::getEditorDefaultForegroundColor(),
+        .secondary_bg       = NppInterface::getEditorDefaultBackgroundColor(),
+        .border             = nppColors.edge,
+        .primary            = nppColors.text,
+        .primary_bg         = nppColors.hotBackground,
+        .primary_border     = nppColors.hotEdge,
     };
-    auto isDarkMode = IsDarkColor(colors.bg);
+    auto isDarkMode = IsDarkColor(colors.body_bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
 }
 
@@ -355,6 +359,7 @@ void initializeFonts()
         ::DeleteObject(exProp.underlineFont);
     }
     exProp.defaultFont = ::CreateFontIndirect(&exProp.logfont);
+
     LOGFONT logfontUnder = exProp.logfont;
     logfontUnder.lfUnderline = TRUE;
     exProp.underlineFont = ::CreateFontIndirect(&logfontUnder);

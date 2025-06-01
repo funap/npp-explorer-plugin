@@ -100,7 +100,6 @@ FavesDialog::FavesDialog()
 
 FavesDialog::~FavesDialog()
 {
-    ImageList_Destroy(_hImageList);
 }
 
 

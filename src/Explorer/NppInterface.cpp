@@ -77,7 +77,7 @@ COLORREF NppInterface::getEditorDefaultBackgroundColor()
 
 COLORREF NppInterface::getEditorCurrentLineBackgroundColor()
 {
-    return static_cast<COLORREF>(::SendMessage(_nppData._scintillaMainHandle, SCI_GETELEMENTCOLOUR, SC_ELEMENT_CARET_LINE_BACK, 0));
+    return static_cast<COLORREF>(::SendMessage(_nppData._scintillaMainHandle, SCI_GETCARETLINEBACK, 0, 0));
 }
 
 BOOL NppInterface::IsDarkMode()
@@ -111,13 +111,13 @@ NppColors NppInterface::GetColors()
     }
     // default colors;
     return {
-        .background         = ::GetSysColor(COLOR_WINDOW),
-        .softerBackground   = ::GetSysColor(COLOR_3DFACE),
-        .hotBackground      = ::GetSysColor(COLOR_HIGHLIGHT),
-        .pureBackground     = ::GetSysColor(COLOR_WINDOW),
+        .background         = ::GetSysColor(COLOR_3DFACE),
+        .softerBackground   = ::GetSysColor(COLOR_WINDOW),
+        .hotBackground      = RGB(204, 232, 255),
+        .pureBackground     = ::GetSysColor(COLOR_3DFACE),
         .errorBackground    = ::GetSysColor(COLOR_WINDOW),
         .text               = ::GetSysColor(COLOR_WINDOWTEXT),
-        .darkerText         = ::GetSysColor(COLOR_HIGHLIGHTTEXT),
+        .darkerText         = ::GetSysColor(COLOR_WINDOWTEXT),
         .disabledText       = ::GetSysColor(COLOR_GRAYTEXT),
         .linkText           = ::GetSysColor(COLOR_HOTLIGHT),
         .edge               = ::GetSysColor(COLOR_INACTIVEBORDER),
