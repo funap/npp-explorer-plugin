@@ -94,7 +94,7 @@ HBRUSH ThemeRenderer::GetBrush(BrushType type) const
     case BrushType::PrimaryBorder:
         return m_brushes.primary_border;
     default:
-        return m_brushes.body_bg;  // デフォルトは本文背景を返す
+        return m_brushes.body_bg;
     }
 }
 

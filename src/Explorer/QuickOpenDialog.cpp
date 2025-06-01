@@ -645,25 +645,21 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     if (ODA_FOCUS == (drawItem->itemAction & ODA_FOCUS)) {
         return TRUE;
     }
-
     const HDC& hdc = drawItem->hDC;
+    ThemeRenderer& theme = ThemeRenderer::Instance();
+
     COLORREF backgroundMatchColor   = RGB(254, 230, 177);
     COLORREF matchColor             = RGB(0, 0, 0);
-
-    COLORREF backgroundColor        = ThemeRenderer::Instance().GetColors().secondary_bg;
-    COLORREF textColor1             = ThemeRenderer::Instance().GetColors().secondary;
+    COLORREF backgroundColor        = theme.GetColors().secondary_bg;
+    COLORREF textColor1             = theme.GetColors().secondary;
     COLORREF textColor2             = RGB(128, 128, 128);
-
+    HBRUSH   backgroundBrush        = theme.GetBrush(ThemeRenderer::BrushType::SecondaryBg);
     if (ODS_SELECTED == ((drawItem->itemState) & (ODS_SELECTED))) {
-        backgroundColor             = ThemeRenderer::Instance().GetColors().primary_bg;
-        textColor1                  = ThemeRenderer::Instance().GetColors().primary;
-        textColor2                  = RGB(128, 128, 128);
+        backgroundColor             = theme.GetColors().primary_bg;
+        textColor1                  = theme.GetColors().primary;
+        backgroundBrush             = theme.GetBrush(ThemeRenderer::BrushType::PrimaryBg);
     }
-
-    // Fill background
-    const HBRUSH hBrush = ::CreateSolidBrush(backgroundColor);
-    ::FillRect(hdc, &drawItem->rcItem, hBrush);
-    ::DeleteObject(hBrush);
+    ::FillRect(hdc, &drawItem->rcItem, backgroundBrush);
 
     RECT drawPosition = drawItem->rcItem;
     drawPosition.top += _layout.itemMargin;
