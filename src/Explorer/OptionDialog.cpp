@@ -244,6 +244,8 @@ void OptionDlg::SetParams()
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON,     BM_SETCHECK, _pProp->bUseSystemIcons? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV,     BM_SETCHECK, _pProp->bAutoNavigate  ? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_SETCHECK, _pProp->useFullTree    ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_SETCHECK, _pProp->bHideFoldersInFileList ? BST_CHECKED : BST_UNCHECKED, 0);
+
 
     ::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME,     _pProp->nppExecProp.szAppName);
     ::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH,   _pProp->nppExecProp.szScriptPath);
@@ -270,6 +272,7 @@ BOOL OptionDlg::GetParams()
     _pProp->bAutoNavigate   = (::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV, BM_GETCHECK, 0, 0) == BST_CHECKED)       ? TRUE : FALSE;
     _pProp->bUseSystemIcons = (::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON, BM_GETCHECK, 0, 0) == BST_CHECKED)       ? TRUE : FALSE;
     _pProp->useFullTree     = (::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_GETCHECK, 0, 0) == BST_CHECKED)   ? TRUE : FALSE;
+    _pProp->bHideFoldersInFileList = (::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_GETCHECK, 0, 0) == BST_CHECKED) ? TRUE : FALSE;
 
     WCHAR TEMP[MAX_PATH];
     ::GetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, TEMP, 6);

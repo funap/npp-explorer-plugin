@@ -82,6 +82,7 @@ constexpr WCHAR FontHeight[]        = L"FontHeight";
 constexpr WCHAR FontWeight[]        = L"FontWeight";
 constexpr WCHAR FontItalic[]        = L"FontItalic";
 constexpr WCHAR FontFaceName[]      = L"FontFaceName";
+constexpr WCHAR HideFolders[]       = L"HideFolders";
 
 
 /* global values */
@@ -418,6 +419,7 @@ void loadSettings()
     exProp.bAutoUpdate              = ::GetPrivateProfileInt(Explorer, AutoUpdate, TRUE, iniFilePath);
     exProp.bAutoNavigate            = ::GetPrivateProfileInt(Explorer, AutoNavigate, FALSE, iniFilePath);
     exProp.useFullTree              = ::GetPrivateProfileInt(Explorer, UseFullTree, FALSE, iniFilePath);
+    exProp.bHideFoldersInFileList   = ::GetPrivateProfileInt(Explorer, HideFolders, FALSE, iniFilePath);
     exProp.fmtSize                  = (SizeFmt)::GetPrivateProfileInt(Explorer, SizeFormat, SizeFmt::SFMT_KBYTE, iniFilePath);
     exProp.fmtDate                  = (DateFmt)::GetPrivateProfileInt(Explorer, DateFormat, DFMT_ENG, iniFilePath);
     exProp.uTimeout                 = ::GetPrivateProfileInt(Explorer, TimeOut, 1000, iniFilePath);
@@ -488,6 +490,7 @@ void saveSettings()
     ::WritePrivateProfileString(Explorer, AutoUpdate, _itot(exProp.bAutoUpdate, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, AutoNavigate, _itot(exProp.bAutoNavigate, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, UseFullTree, _itot(exProp.useFullTree, temp, 10), iniFilePath);
+    ::WritePrivateProfileString(Explorer, HideFolders, _itot(exProp.bHideFoldersInFileList, temp, 10), iniFilePath);    
     ::WritePrivateProfileString(Explorer, SizeFormat, _itot((INT)exProp.fmtSize, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);
     ::WritePrivateProfileString(Explorer, DateFormat, _itot((INT)exProp.fmtDate, temp, 10), iniFilePath);

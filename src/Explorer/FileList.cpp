@@ -695,6 +695,10 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
         /* get current filters */
         FileListData tempData;
         do {
+            if (_pExProp->bHideFoldersInFileList && (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+                continue; // Skip directories if hideFoldersInContentView is true
+            }
+
             if (IsValidFolder(Find) == TRUE) {
                 /* get data in order of list elements */
                 tempData.isParent       = FALSE;
@@ -783,7 +787,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
     _vFileList.clear();
 
     /* set temporal list as global */
-    for (const auto &folder : vFoldersTemp) {
+    for (const auto& folder : vFoldersTemp) {
         _vFileList.push_back(folder);
     }
     for (const auto &file : vFilesTemp) {
