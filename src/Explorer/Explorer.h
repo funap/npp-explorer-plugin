@@ -127,6 +127,7 @@ struct ExProp{
     BOOL                        bAddExtToName           = false;
     BOOL                        bAutoUpdate             = false;
     BOOL                        bAutoNavigate           = false;
+    bool                        bHideFoldersInFileList{ true };
     SizeFmt                     fmtSize                 = SizeFmt::SFMT_BYTES;
     DateFmt                     fmtDate                 = DateFmt::DFMT_ENG;
     std::vector<std::wstring>   vStrFilterHistory       {};
