@@ -151,11 +151,11 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                 /* set image list */
                 ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
 
-                BOOL canExpand = std::any_of(_root->m_children.begin(), _root->m_children.end(), [](const auto &elem) {
+                BOOL canExpand = std::any_of(_root->Children().cbegin(), _root->Children().cend(), [](const auto &elem) {
                     return elem->IsGroup();
                 });
 
-                HTREEITEM hItem = _hTreeCtrl.InsertItem(_root->m_name, iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _root);
+                HTREEITEM hItem = _hTreeCtrl.InsertItem(_root->Name(), iIconPos, _iUImgPos, 0, 0, TVI_ROOT, TVI_LAST, canExpand, _root);
 
                 SendMessage(_hTreeCtrl, WM_SETREDRAW, FALSE, 0);
                 ExpandTreeView(hItem);
@@ -405,16 +405,16 @@ void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
         return;
     }
 
-    for (auto&& child : parent->m_children) {
+    for (auto&& child : parent->Children()) {
         BOOL haveChildren = FALSE;
         if (child->IsGroup()) {
-            if (!child->m_children.empty()) {
-                if (child->m_children[0]->IsGroup() || (_bWithLink == TRUE)) {
+            if (!child->Children().empty()) {
+                if (child->Children().front()->IsGroup() || (_bWithLink == TRUE)) {
                     haveChildren = TRUE;
                 }
             }
             // add new item
-            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->m_name, ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->Name(), ICON_GROUP, ICON_GROUP, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             ExpandTreeView(pCurrentItem);
         }
 
@@ -423,8 +423,8 @@ void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
             INT iIconNormal     = 0;
             INT iIconSelected   = 0;
             INT iIconOverlayed  = 0;
-            ExtractIcons(child->m_name.c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->m_name, _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+            ExtractIcons(child->Name().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->Name(), _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             ExpandTreeView(pCurrentItem);
         }
     }

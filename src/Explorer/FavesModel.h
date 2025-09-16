@@ -27,6 +27,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <filesystem>
 
 enum FavesType {
     FAVES_FOLDER = 0,
@@ -52,6 +53,8 @@ public:
     FavesItemPtr WebRoot() const;
     FavesItemPtr SessionRoot() const;
 
+    void Load(const std::filesystem::path& path);
+    void Save(const std::filesystem::path& path) const;
 private:
     std::unique_ptr<FavesItem> m_folders;
     std::unique_ptr<FavesItem> m_files;
@@ -62,32 +65,42 @@ private:
 class FavesItem {
 public:
     FavesItem() = delete;
+    FavesItem(const FavesItemPtr parent, FavesType type);
     FavesItem(const FavesItemPtr parent, FavesType type, const std::wstring& name, const std::wstring& link = L"");
+    FavesItem(const FavesItemPtr parent, const FavesItemPtr other);
     ~FavesItem();
 
     FavesItemPtr        Root();
+    FavesItemPtr        Parent() const;
     FavesType           Type() const;
     const std::wstring& Name() const;
+    void                Name(const std::wstring& name);
     const std::wstring& Link() const;
-    BOOL                IsExpanded() const;
-    VOID                IsExpanded(BOOL isExpanded);
+    void                Link(const std::wstring& link);
+    bool                IsExpanded() const;
+    void                IsExpanded(bool isExpanded);
 
-    BOOL IsNodeDescendant(const FavesItem* anotherNode) const;
-    VOID CopyChildren(FavesItemPtr source);
-    VOID ClearChildren();
-    VOID SortChildren();
-    VOID Remove();
-    BOOL IsRoot() const;
-    BOOL IsGroup() const;
-    BOOL IsLink() const;
-    BOOL HasChildren() const;
-    VOID AddChild(std::unique_ptr<FavesItem>&& child);
+    bool IsNodeDescendant(const FavesItem* anotherNode) const;
+    void CopyChildren(FavesItemPtr source);
+    void ClearChildren();
+    void SortChildren();
+    void Remove();
+    bool IsRoot() const;
+    bool IsGroup() const;
+    bool IsLink() const;
+    bool HasChildren() const;
+    void AddChild(std::unique_ptr<FavesItem>&& child);
+    const std::vector<std::unique_ptr<FavesItem>>& Children() const;
 
+    uint32_t Data() const;
+    void Data(uint32_t data);
+
+private:
     const FavesItemPtr                      m_parent;
     const FavesType                         m_type;
-    UINT                                    uParam{};
     std::wstring                            m_name;
     std::wstring                            m_link;
-    BOOL                                    m_isExpanded;
+    uint32_t                                m_data{0};
+    bool                                    m_isExpanded{false};
     std::vector<std::unique_ptr<FavesItem>> m_children;
 };

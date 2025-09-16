@@ -105,10 +105,7 @@ protected:
     void DrawSessionChildren(HTREEITEM hItem);
 
     void ReadSettings();
-    void ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr);
-
     void SaveSettings();
-    void SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile);
 
     void ExpandElementsRecursive(HTREEITEM hItem);
 

@@ -27,7 +27,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
@@ -35,16 +35,16 @@
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v145</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -271,6 +271,7 @@
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
     <ClCompile Include="src\Explorer\TreeView.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
+    <ClCompile Include="src\Explorer\UTF16Stream.cpp" />
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -307,6 +308,7 @@
     <ClInclude Include="src\Explorer\ToolBar.h" />
     <ClInclude Include="src\Explorer\TreeView.h" />
     <ClInclude Include="src\Explorer\URLCtrl.h" />
+    <ClInclude Include="src\Explorer\UTF16Stream.h" />
     <ClInclude Include="src\Explorer\version.h" />
     <ClInclude Include="src\Explorer\Graphics.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\Docking.h" />
