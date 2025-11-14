@@ -24,7 +24,6 @@ public:
 
     bool is_open() const;
 
-    Utf16Writer& operator<<(const std::wstring& str);
     Utf16Writer& operator<<(std::wstring_view str);
     Utf16Writer& operator<<(std::string_view str);
     Utf16Writer& operator<<(const wchar_t* str);

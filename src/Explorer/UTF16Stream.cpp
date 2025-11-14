@@ -15,7 +15,7 @@ std::wstring ConvertUtf8ToUtf16(std::string_view utf8_str)
 
     while (i < utf8_str.length()) {
         uint32_t codepoint = 0;
-        int bytes = 0;
+        size_t bytes = 0;
 
         unsigned char c = static_cast<unsigned char>(utf8_str[i]);
 
@@ -36,19 +36,27 @@ std::wstring ConvertUtf8ToUtf16(std::string_view utf8_str)
             bytes = 4;
         }
         else {
-            // Invalid UTF-8 sequence
+            // Invalid UTF-8 sequence - skip this byte
             ++i;
             continue;
         }
 
         // Process remaining bytes
-        for (int j = 1; j < bytes && (i + j) < utf8_str.length(); ++j) {
+        bool valid = true;
+        for (size_t j = 1; j < bytes && (i + j) < utf8_str.length(); ++j) {
             unsigned char next = static_cast<unsigned char>(utf8_str[i + j]);
             if ((next & 0xC0) != 0x80) {
-                // Invalid UTF-8 sequence
+                // Invalid continuation byte
+                valid = false;
                 break;
             }
             codepoint = (codepoint << 6) | (next & 0x3F);
+        }
+
+        if (!valid || (i + bytes) > utf8_str.length()) {
+            // Skip invalid sequence
+            ++i;
+            continue;
         }
 
         // Convert to UTF-16
@@ -107,30 +115,33 @@ bool Utf16Reader::getline(std::wstring& line)
             wchar_t next;
             if (ReadChar(next)) {
                 if (next == L'\n') {
+                    // Found \r\n - line ending
                     break;
                 }
-                line += ch;
+                // \r followed by something else - include only the next char
                 line += next;
             }
-        } else {
+            // Single \r as line ending
+            break;
+        }
+        else {
             line += ch;
         }
     }
     return found_data;
 }
 
-bool Utf16Reader::eof() const {
+bool Utf16Reader::eof() const
+{
     return file_.eof();
 }
 
-void Utf16Reader::close() {
-    file_.close();
-}
+void Utf16Reader::close() { file_.close(); }
 
 bool Utf16Reader::ReadChar(wchar_t& ch)
 {
     file_.read(reinterpret_cast<char*>(&ch), sizeof(ch));
-    if (file_.gcount() != sizeof(ch)) {
+    if (file_.gcount() != static_cast<std::streamsize>(sizeof(ch))) {
         file_.setstate(std::ios::eofbit);
         return false;
     }
@@ -142,10 +153,14 @@ bool Utf16Reader::ReadChar(wchar_t& ch)
 Utf16Writer::Utf16Writer(const std::filesystem::path& filename)
     : file_(filename, std::ios::binary)
 {
-    if (!file_.is_open()) {
+    if (!file_.is_open())
+    {
         throw std::runtime_error("Failed to open file: " + filename.string());
     }
     file_.write(reinterpret_cast<const char*>(&UTF16LE_BOM), sizeof(UTF16LE_BOM));
+    if (!file_.good()) {
+        throw std::runtime_error("Failed to write BOM to file: " + filename.string());
+    }
 }
 
 Utf16Writer::~Utf16Writer()
@@ -153,19 +168,15 @@ Utf16Writer::~Utf16Writer()
     file_.close();
 }
 
-bool Utf16Writer::is_open() const {
+bool Utf16Writer::is_open() const
+{
     return file_.is_open();
 }
 
 Utf16Writer& Utf16Writer::operator<<(std::wstring_view str)
 {
-    file_.write(reinterpret_cast<const char*>(str.data()), str.length() * sizeof(wchar_t));
-    return *this;
-}
-
-Utf16Writer& Utf16Writer::operator<<(const std::wstring& str)
-{
-    file_.write(reinterpret_cast<const char*>(str.data()), str.length() * sizeof(wchar_t));
+    file_.write(reinterpret_cast<const char*>(str.data()),
+                static_cast<std::streamsize>(str.length() * sizeof(wchar_t)));
     return *this;
 }
 
@@ -178,14 +189,16 @@ Utf16Writer& Utf16Writer::operator<<(wchar_t ch)
 Utf16Writer& Utf16Writer::operator<<(const wchar_t* str)
 {
     const std::wstring_view view(str);
-    file_.write(reinterpret_cast<const char*>(view.data()), view.length() * sizeof(wchar_t));
+    file_.write(reinterpret_cast<const char*>(view.data()),
+                static_cast<std::streamsize>(view.length() * sizeof(wchar_t)));
     return *this;
 }
 
 Utf16Writer& Utf16Writer::operator<<(uint32_t value)
 {
     const std::wstring str = std::to_wstring(value);
-    file_.write(reinterpret_cast<const char*>(str.data()), str.length() * sizeof(wchar_t));
+    file_.write(reinterpret_cast<const char*>(str.data()),
+                static_cast<std::streamsize>(str.length() * sizeof(wchar_t)));
     return *this;
 }
 
@@ -193,6 +206,7 @@ Utf16Writer& Utf16Writer::operator<<(std::string_view str)
 {
     // Convert to UTF-16 from UTF-8
     std::wstring converted = ConvertUtf8ToUtf16(str);
-    file_.write(reinterpret_cast<const char*>(converted.data()), converted.length() * sizeof(wchar_t));
+    file_.write(reinterpret_cast<const char*>(converted.data()),
+                static_cast<std::streamsize>(converted.length() * sizeof(wchar_t)));
     return *this;
 }
