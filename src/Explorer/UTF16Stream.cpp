@@ -112,16 +112,13 @@ bool Utf16Reader::getline(std::wstring& line)
             break;
         }
         if (ch == L'\r') {
+            // CR encountered - check if followed by LF
             wchar_t next;
-            if (ReadChar(next)) {
-                if (next == L'\n') {
-                    // Found \r\n - line ending
-                    break;
-                }
-                // \r followed by something else - include only the next char
-                line += next;
+            if (PeekChar(next) && next == L'\n') {
+                // CRLF sequence - consume the LF
+                ReadChar(next);
             }
-            // Single \r as line ending
+            // CR alone or CRLF - line ending (LF already consumed if present)
             break;
         }
         else {
@@ -136,7 +133,10 @@ bool Utf16Reader::eof() const
     return file_.eof();
 }
 
-void Utf16Reader::close() { file_.close(); }
+void Utf16Reader::close()
+{
+    file_.close();
+}
 
 bool Utf16Reader::ReadChar(wchar_t& ch)
 {
@@ -148,6 +148,14 @@ bool Utf16Reader::ReadChar(wchar_t& ch)
     return true;
 }
 
+bool Utf16Reader::PeekChar(wchar_t& ch)
+{
+    ch = file_.peek();
+    if (ch == WEOF) {
+        return false;
+    }
+    return true;
+}
 
 
 Utf16Writer::Utf16Writer(const std::filesystem::path& filename)

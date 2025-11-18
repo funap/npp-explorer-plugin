@@ -13,6 +13,7 @@ public:
 
 private:
     bool ReadChar(wchar_t& ch);
+    bool PeekChar(wchar_t& ch);
     std::ifstream file_;
 };
 
