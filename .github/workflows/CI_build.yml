@@ -26,7 +26,7 @@ jobs:
           ZIPCMD: 7z a -tzip
 
     - name: Archive
-      uses: actions/upload-artifact@v6
+      uses: actions/upload-artifact@v7
       with:
           name: Explorer-${{ matrix.build_configuration }}-${{ matrix.build_platform }}
           path: build\bin\${{ matrix.build_platform }}\${{ matrix.build_configuration }}\Explorer.dll
