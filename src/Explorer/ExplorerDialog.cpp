@@ -35,7 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerResource.h"
 #include "ContextMenu.h"
 #include "NewDlg.h"
-#include "NppInterface.h"
+#include "Editor.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
 
@@ -281,7 +281,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 if (item != nullptr) {
                     const auto path = GetPath(item);
                     if (!PathIsDirectory(path.c_str())) {
-                        NppInterface::doOpen(path);
+                        Editor::Instance().DoOpen(path);
                     }
                 }
                 break;
@@ -531,7 +531,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 _hTreeCtrl.Expand(hItem, TVE_TOGGLE);
             }
             else {
-                NppInterface::doOpen(path);
+                Editor::Instance().DoOpen(path);
             }
             return TRUE;
         }
@@ -575,7 +575,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             return TRUE;
         }
         if (VK_ESCAPE == wParam) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
         break;
@@ -836,7 +836,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
         break;
     }
     case IDM_EX_SEARCH_FIND:
-        ::SendMessage(_hParent, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)_pExProp->currentDir.c_str(), NULL);
+        Editor::Instance().LaunchFindFileDialog(_pExProp->currentDir);
         break;
     case IDM_EX_GO_TO_USER:
         gotoUserFolder();
@@ -1072,7 +1072,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1091,7 +1091,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1294,28 +1294,30 @@ void ExplorerDialog::gotoUserFolder()
 
 void ExplorerDialog::gotoCurrentFolder()
 {
-    WCHAR pathName[MAX_PATH];
-    ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
-    wcscat(pathName, L"\\");
-    SelectItem(pathName);
+    std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+    if (!currentDir.empty()) {
+        if (currentDir.back() != '\\') currentDir.push_back('\\');
+        SelectItem(currentDir);
+    }
     setFocusOnFile();
 }
 
 void ExplorerDialog::gotoCurrentFile()
 {
-    WCHAR pathName[MAX_PATH];
     if (_pExProp->useFullTree) {
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)pathName);
-        if (PathFileExists(pathName)) {
-            SelectItem(pathName);
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        if (PathFileExists(currentPath.c_str())) {
+            SelectItem(currentPath.wstring());
         }
     }
     else {
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
-        wcscat(pathName, L"\\");
-        SelectItem(pathName);
-        _FileList.SelectCurFile();
-        setFocusOnFile();
+        std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+        if (!currentDir.empty()) {
+            if (currentDir.back() != '\\') currentDir.push_back('\\');
+            SelectItem(currentDir);
+            _FileList.SelectCurFile();
+            setFocusOnFile();
+        }
     }
 }
 

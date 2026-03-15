@@ -72,9 +72,6 @@
     <ClCompile Include="src\Explorer\NewDlg.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
-    <ClCompile Include="src\Explorer\NppInterface.cpp">
-      <Filter>src\Explorer</Filter>
-    </ClCompile>
     <ClCompile Include="src\Explorer\OptionDialog.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
@@ -103,6 +100,9 @@
       <Filter>src\Explorer</Filter>
     </ClCompile>
     <ClCompile Include="src\Explorer\UTF16Stream.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\Editor.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -164,9 +164,6 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\NewDlg.h">
-      <Filter>src\Explorer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Explorer\NppInterface.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\OptionDialog.h">
@@ -242,6 +239,12 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\UTF16Stream.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\Editor.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\IEditor.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

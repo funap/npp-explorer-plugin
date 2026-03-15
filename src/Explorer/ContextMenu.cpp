@@ -1,4 +1,4 @@
-﻿/***********************************************************\
+/***********************************************************\
 *   Original in MFC by Roman Engels     Copyright 2003      *
 *                                                           *
 *   http://www.codeproject.com/shell/shellcontextmenu.asp   *
@@ -31,7 +31,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerDialog.h"
 #include "FavesDialog.h"
 #include "NewDlg.h"
-#include "NppInterface.h"
+#include "Editor.h"
 #include "QuickOpenDialog.h"
 #include "../NppPlugin/menuCmdID.h"
 #include "../NppPlugin/nppexec_msgs.h"
@@ -231,13 +231,13 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
         .srcModuleName    = PathFindFileName(szPath),
         .info             = &dwExecVer,
     };
-    ::SendMessage(hWndNpp, NPPM_MSGTOPLUGIN, (WPARAM)exProp.nppExecProp.szAppName, (LPARAM)&ci);
+    Editor::Instance().SendMsgToPlugin(exProp.nppExecProp.szAppName, &ci);
 
     /* get acivity state of NppExec */
     ci.internalMsg      = NPEM_GETSTATE;
     ci.srcModuleName    = PathFindFileName(szPath);
     ci.info             = &dwExecState;
-    ::SendMessage(hWndNpp, NPPM_MSGTOPLUGIN, (WPARAM)exProp.nppExecProp.szAppName, (LPARAM)&ci);
+    Editor::Instance().SendMsgToPlugin(exProp.nppExecProp.szAppName, &ci);
 
     /* Add notepad menu items */
     if (isFolder) {
@@ -306,7 +306,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     ::AppendMenu(hMainMenu, MF_STRING, CTX_QUICK_OPEN, L"Quick Open...");
     ::InsertMenu(hMainMenu, 3, MF_BYPOSITION | MF_SEPARATOR, 0, 0);
     ::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_FAVES, L"Add to 'Favorites'...");
-    std::wstring currentDirectory = NppInterface::getCurrentDirectory();
+    std::wstring currentDirectory = Editor::Instance().GetCurrentDirectory().wstring();
     if (!currentDirectory.empty()) {
         ::AppendMenu(hMainMenu, MF_STRING, CTX_RELATIVE_PATH, L"Relative File Path(s) to Clipboard");
     }
@@ -754,7 +754,7 @@ void ContextMenu::newFile()
                 newFilePath /= szFileName;
 
                 ::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
-                ::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                Editor::Instance().DoOpen(newFilePath);
                 bLeave = TRUE;
             }
         }
@@ -798,13 +798,13 @@ void ContextMenu::newFolder()
 
 void ContextMenu::findInFiles()
 {
-    ::SendMessage(_hWndNpp, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)_strFirstElement.c_str(), NULL);
+    Editor::Instance().LaunchFindFileDialog(_strFirstElement);
 }
 
 void ContextMenu::openFile()
 {
     for (const auto &path : _strArray) {
-        ::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)path.c_str());
+        Editor::Instance().DoOpen(path);
     }
 }
 
@@ -812,9 +812,9 @@ void ContextMenu::openFileInOtherView()
 {
     BOOL isFirstItem = TRUE;
     for (const auto &path : _strArray) {
-        ::SendMessage(_hWndNpp, NPPM_DOOPEN, 0, (LPARAM)path.c_str());
+        Editor::Instance().DoOpen(path);
         if (isFirstItem) {
-            ::SendMessage(_hWndNpp, WM_COMMAND, IDM_VIEW_GOTO_ANOTHER_VIEW, 0);
+            Editor::Instance().RunMenuCommand(IDM_VIEW_GOTO_ANOTHER_VIEW);
             isFirstItem = FALSE;
         }
     }
@@ -902,7 +902,7 @@ void ContextMenu::addToFaves()
 
 void ContextMenu::addRelativePathsCB()
 {
-    const std::wstring currentDirectory = NppInterface::getCurrentDirectory();
+    const std::wstring currentDirectory = Editor::Instance().GetCurrentDirectory().wstring();
     if (currentDirectory.empty()) {
         return;
     }
@@ -1054,7 +1054,7 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
                         .srcModuleName  = PathFindFileName(szPath),
                         .info           = &npep,
                     };
-                    ::SendMessage(_hWndNpp, NPPM_MSGTOPLUGIN, (WPARAM)szAppName, (LPARAM)&ci);
+                    Editor::Instance().SendMsgToPlugin(szAppName, &ci);
 
                     if (npep.dwResult != NPE_NPPEXEC_OK) {
                         ::MessageBox(_hWndNpp, L"NppExec currently in use!", L"Error", MB_OK);

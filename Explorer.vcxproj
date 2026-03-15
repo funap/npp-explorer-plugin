@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|Win32">
@@ -257,7 +257,7 @@
     <ClCompile Include="src\Explorer\HelpDialog.cpp" />
     <ClCompile Include="src\Explorer\ImageListSet.cpp" />
     <ClCompile Include="src\Explorer\NewDlg.cpp" />
-    <ClCompile Include="src\Explorer\NppInterface.cpp" />
+    <ClCompile Include="src\Explorer\Editor.cpp" />
     <ClCompile Include="src\Explorer\OptionDialog.cpp" />
     <ClCompile Include="src\Explorer\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -297,7 +297,8 @@
     <ClInclude Include="src\Explorer\HelpDialog.h" />
     <ClInclude Include="src\Explorer\ImageListSet.h" />
     <ClInclude Include="src\Explorer\NewDlg.h" />
-    <ClInclude Include="src\Explorer\NppInterface.h" />
+    <ClInclude Include="src\Explorer\Editor.h" />
+    <ClInclude Include="src\Explorer\IEditor.h" />
     <ClInclude Include="src\Explorer\OptionDialog.h" />
     <ClInclude Include="src\Explorer\pch.h" />
     <ClInclude Include="src\Explorer\PropDlg.h" />

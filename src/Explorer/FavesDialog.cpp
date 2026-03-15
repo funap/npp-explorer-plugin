@@ -1,4 +1,4 @@
-﻿/*
+/*
 This file is part of Explorer Plugin for Notepad++
 Copyright (C)2006 Jens Lorenz <jens.plugin.npp@gmx.de>
 
@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerDialog.h"
 #include "ExplorerResource.h"
 #include "NewDlg.h"
-#include "NppInterface.h"
+#include "Editor.h"
 #include "PropDlg.h"
 #include "resource.h"
 #include "StringUtil.h"
@@ -146,15 +146,13 @@ void FavesDialog::SaveSession()
 void FavesDialog::NotifyNewFile()
 {
     if (isCreated() && isVisible()) {
-        WCHAR TEMP[MAX_PATH] = {};
-
         /* update "new file link" icon */
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
-        _ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(TEMP));
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        _ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(currentPath.c_str()));
 
         /* update "new folder link" icon */
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
-        _ToolBar.enable(IDM_EX_LINK_NEW_FOLDER, (wcslen(TEMP) != 0));
+        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        _ToolBar.enable(IDM_EX_LINK_NEW_FOLDER, (!currentDir.empty()));
     }
 }
 
@@ -343,7 +341,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         INT count = _hTreeCtrl.GetChildrenCount(item);
                         if (count > 0) {
                             // Check non-existent files
-                            auto sessionFiles = NppInterface::getSessionFiles(pElem->Link());
+                            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
                             int nonExistentFileCount = 0;
                             for (auto &&file : sessionFiles) {
                                 if (!::PathFileExists(file.c_str())) {
@@ -419,7 +417,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     case WM_COMMAND:
         // ESC key has been pressed
         if (LOWORD(wParam) == IDCANCEL) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
 
@@ -459,7 +457,7 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         break;
     case WM_KEYDOWN:
         if (VK_ESCAPE == wParam) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
         if (wParam == VK_RETURN) {
@@ -517,18 +515,16 @@ void FavesDialog::tb_cmd(UINT message)
         toggleExplorerDialog();
         break;
     case IDM_EX_LINK_NEW_FILE: {
-        WCHAR TEMP[MAX_PATH] = {};
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
-        if (PathFileExists(TEMP)) {
-            AddToFavorties(FALSE, TEMP);
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        if (PathFileExists(currentPath.c_str())) {
+            AddToFavorties(FALSE, const_cast<LPTSTR>(currentPath.c_str()));
         }
         break;
     }
     case IDM_EX_LINK_NEW_FOLDER: {
-        WCHAR TEMP[MAX_PATH] = {};
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
-        if (wcslen(TEMP) != 0) {
-            AddToFavorties(TRUE, TEMP);
+        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        if (!currentDir.empty()) {
+            AddToFavorties(TRUE, const_cast<LPTSTR>(currentDir.c_str()));
         }
         break;
     }
@@ -1246,7 +1242,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
     session->ClearChildren();
 
     BOOL hasMissingFile = FALSE;
-    auto sessionFiles = NppInterface::getSessionFiles(session->Link());
+    auto sessionFiles = Editor::Instance().GetSessionFiles(session->Link());
     for (const auto &path : sessionFiles) {
         auto newItem = std::make_unique<FavesItem>(session, FAVES_FILE, path.substr(path.find_last_of(L'\\') + 1), path);
         INT iIconNormal = 0;
@@ -1334,9 +1330,9 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
             /* open possible link */
             WCHAR pszFilePath[MAX_PATH];
             if (ResolveShortCut(pElem->Link(), pszFilePath, MAX_PATH) == S_OK) {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszFilePath);
+                Editor::Instance().DoOpen(pszFilePath);
             } else {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pElem->Link().c_str());
+                Editor::Instance().DoOpen(pElem->Link());
             }
             break;
         }
@@ -1345,7 +1341,7 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
             break;
         case FAVES_SESSION: {
             // Check non-existent files
-            auto sessionFiles = NppInterface::getSessionFiles(pElem->Link());
+            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
             int nonExistentFileCount = 0;
             for (auto&& file : sessionFiles) {
                 if (!::PathFileExists(file.c_str())) {

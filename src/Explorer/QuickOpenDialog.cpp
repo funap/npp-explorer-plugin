@@ -38,7 +38,7 @@
 
 #include "ExplorerResource.h"
 #include "FuzzyMatcher.h"
-#include "NppInterface.h"
+#include "Editor.h"
 #include "ThemeRenderer.h"
 
 namespace {
@@ -561,7 +561,7 @@ void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
 
 void QuickOpenDlg::show()
 {
-    std::wstring selectedText = NppInterface::getSelectedText();
+    std::wstring selectedText = Editor::Instance().GetSelectedText();
     if (!selectedText.empty()) {
         ::Edit_SetText(_hWndEdit, selectedText.c_str());
     }
@@ -886,7 +886,7 @@ void QuickOpenDlg::openSelectedItem() const
     const int index = ListView_GetSelectionMark(_hWndResult);
     if (0 <= index) {
         if (static_cast<SIZE_T>(index) < _results.size()) {
-            NppInterface::doOpen(_results[index]->FullPath());
+            Editor::Instance().DoOpen(_results[index]->FullPath());
         }
     }
 }

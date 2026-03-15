@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <format>
 #include <wrl/client.h>
 
-#include "NppInterface.h"
+#include "Editor.h"
 #include "ExplorerDialog.h"
 #include "FavesDialog.h"
 #include "QuickOpenDialog.h"
@@ -223,7 +223,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
 
 extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
-    NppInterface::setNppData(notpadPlusData);
+    Editor::Instance().SetNppData(notpadPlusData);
 
     /* stores notepad data */
     g_nppData   = notpadPlusData;
@@ -242,10 +242,10 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     helpDlg     .init(g_hInst, g_nppData._nppHandle);
 
     explorerDlg.VisibleChanged([](bool visible) {
-        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)visible);
+        Editor::Instance().SetMenuItemCheck(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, visible);
     });
     favesDlg.VisibleChanged([](bool visible) {
-        ::SendMessage(g_nppData._nppHandle, NPPM_SETMENUITEMCHECK, funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)visible);
+        Editor::Instance().SetMenuItemCheck(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, visible);
     });
 
     /* Subclassing for Notepad */
@@ -291,13 +291,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         g_favesIcons.hToolbarIconDarkMode      = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE),     IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
 
         /* change menu language */
-        if (NppInterface::isSupportFluentUI()) {
-            ::SendMessage(g_nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_explorerIcons);
-            ::SendMessage(g_nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_favesIcons);
+        if (Editor::Instance().IsSupportFluentUI()) {
+            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, true);
+            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, true);
         }
         else {
-            ::SendMessage(g_nppData._nppHandle, NPPM_ADDTOOLBARICON_DEPRECATED, (WPARAM)funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, (LPARAM)&g_explorerIcons);
-            ::SendMessage(g_nppData._nppHandle, NPPM_ADDTOOLBARICON_DEPRECATED, (WPARAM)funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, (LPARAM)&g_favesIcons);
+            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, false);
+            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, false);
         }
         break;
     }
@@ -335,17 +335,17 @@ void UpdateThemeColor()
         return brightness < 0.5F;
     };
 
-    auto nppColors = NppInterface::GetColors();
+    auto editorColors = Editor::Instance().GetColors();
 
     ThemeColors colors{
-        .body               = nppColors.darkerText,
-        .body_bg            = nppColors.pureBackground,
-        .secondary          = NppInterface::getEditorDefaultForegroundColor(),
-        .secondary_bg       = NppInterface::getEditorDefaultBackgroundColor(),
-        .border             = nppColors.edge,
-        .primary            = nppColors.text,
-        .primary_bg         = nppColors.hotBackground,
-        .primary_border     = nppColors.hotEdge,
+        .body               = editorColors.darkerText,
+        .body_bg            = editorColors.pureBackground,
+        .secondary          = Editor::Instance().GetEditorDefaultForegroundColor(),
+        .secondary_bg       = Editor::Instance().GetEditorDefaultBackgroundColor(),
+        .border             = editorColors.edge,
+        .primary            = editorColors.text,
+        .primary_bg         = editorColors.hotBackground,
+        .primary_border     = editorColors.hotEdge,
     };
     auto isDarkMode = IsDarkColor(colors.body_bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
@@ -370,7 +370,8 @@ void initializeFonts()
 void loadSettings()
 {
     /* initialize the config directory */
-    ::SendMessage(g_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)configPath);
+    std::filesystem::path configPathStr = Editor::Instance().GetConfigDir();
+    wcscpy(configPath, configPathStr.c_str());
 
     /* Test if config path exist, if not create */
     if (::PathFileExists(configPath) == FALSE) {
@@ -944,39 +945,31 @@ HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPWSTR lpszFilePath, i
 // Current docs
 void UpdateDocs()
 {
-    UINT currentEdit;
-    ::SendMessage(g_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
-    g_HSource = (currentEdit == 0)?g_nppData._scintillaMainHandle:g_nppData._scintillaSecondHandle;
+    g_HSource = Editor::Instance().GetCurrentScintilla();
 
     /* update open files */
-    INT     newDocCount = 0;
-    WCHAR   newPath[MAX_PATH];
-    ::SendMessage(g_nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)newPath);
-    newDocCount = (INT)::SendMessage(g_nppData._nppHandle, NPPM_GETNBOPENFILES, 0, ALL_OPEN_FILES);
+    int     newDocCount = 0;
+    std::filesystem::path newPath = Editor::Instance().GetFullCurrentPath();
+    newDocCount = Editor::Instance().GetNbOpenFiles();
 
-    if ((_tcscmp(newPath, g_currentFile) != 0) || (newDocCount != g_docCount)) {
+    if ((wcscmp(newPath.c_str(), g_currentFile) != 0) || (newDocCount != g_docCount)) {
         /* update current path in explorer and favorites */
-        wcscpy(g_currentFile, newPath);
+        wcscpy(g_currentFile, newPath.c_str());
         g_docCount = newDocCount;
         explorerDlg.NotifyNewFile();
         favesDlg.NotifyNewFile();
 
-        /* update documents list */
-        INT         i = 0;
-        LPTSTR      *fileNames;
-
-        INT docCnt  = (INT)::SendMessage(g_nppData._nppHandle, NPPM_GETNBOPENFILES, 0, ALL_OPEN_FILES);
-
-        /* update doc information for file list () */
-        fileNames   = (LPTSTR*)new LPTSTR[docCnt];
-
-        for (i = 0; i < docCnt; i++) {
-            fileNames[i] = (LPTSTR)new WCHAR[MAX_PATH];
-        }
-
-        if (::SendMessage(g_nppData._nppHandle, NPPM_GETOPENFILENAMES, (WPARAM)fileNames, (LPARAM)docCnt)) {
+        std::vector<std::wstring> fileNames;
+        if (Editor::Instance().GetOpenFileNames(fileNames)) {
             if (explorerDlg.isVisible() || favesDlg.isVisible()) {
-                UpdateCurrUsedDocs(fileNames, docCnt);
+                /* update documents list */
+                g_openedFilePaths.clear();
+                for (const auto& fileName : fileNames) {
+                    WCHAR pszLongName[MAX_PATH];
+                    if (GetLongPathName(fileName.c_str(), pszLongName, MAX_PATH) != 0) {
+                        g_openedFilePaths.push_back(pszLongName);
+                    }
+                }
             }
             if (explorerDlg.isVisible()) {
                 RedrawWindow(explorerDlg.getHSelf(), nullptr, nullptr, TRUE);
@@ -985,11 +978,6 @@ void UpdateDocs()
                 RedrawWindow(favesDlg.getHSelf(), nullptr, nullptr, TRUE);
             }
         }
-
-        for (i = 0; i < docCnt; i++) {
-            delete [] fileNames[i];
-        }
-        delete [] fileNames;
     }
 }
 
