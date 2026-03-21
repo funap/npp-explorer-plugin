@@ -72,7 +72,7 @@ public:
     ~FileList();
 
     void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
-    void initProp(ExProp* prop);
+    void initProp(Settings* prop);
 
     void viewPath(const std::wstring& currentDir, BOOL redraw = FALSE);
 
@@ -85,7 +85,7 @@ public:
 
     virtual void destroy() {};
     virtual void redraw() {
-        _hImlListSys = GetSmallImageList(_pExProp->bUseSystemIcons);
+        _hImlListSys = GetSmallImageList(_pSettings->IsUseSystemIcons());
         ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
         SetColumns();
         Window::redraw();
@@ -185,7 +185,7 @@ private:    /* for thread */
     HWND                            _hHeader;
     HIMAGELIST                      _hImlListSys;
 
-    ExProp*                         _pExProp;
+    Settings*                       _pSettings;
 
     /* file list owner drawn */
     HIMAGELIST                      _hImlParent;
@@ -205,8 +205,8 @@ private:    /* for thread */
     /* search in list by typing of characters */
     std::wstring                    _searchQuery;
 
-    BOOL                            _bOldAddExtToName;
-    BOOL                            _bOldViewLong;
+    bool                            _bOldAddExtToName;
+    bool                            _bOldViewLong;
 
     /* stack for prev and next dir */
     BOOL                            _isStackRec;

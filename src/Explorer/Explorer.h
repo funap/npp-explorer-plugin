@@ -24,7 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <windowsx.h>
 #include <commctrl.h>
 
-#include "FileFilter.h"
+#include "Settings.h"
 
 #include <string>
 #include <vector>
@@ -67,20 +67,6 @@ enum DevType {
     DEVT_FILE,
 };
 
-enum SizeFmt {
-    SFMT_BYTES,
-    SFMT_KBYTE,
-    SFMT_DYNAMIC,
-    SFMT_DYNAMIC_EX,
-    SFMT_MAX,
-};
-
-enum DateFmt {
-    DFMT_ENG,
-    DFMT_GER,
-    DFMT_MAX,
-};
-
 struct DrvMap {
     WCHAR   cDrv;
     UINT    pos;
@@ -90,54 +76,6 @@ enum ScDir {
     SCR_OUTSIDE,
     SCR_UP,
     SCR_DOWN,
-};
-
-struct NppExecScripts {
-    WCHAR   szScriptName[MAX_PATH] {};
-    WCHAR   szArguments[MAX_PATH]  {};
-};
-
-struct NppExecProp {
-    WCHAR   szAppName[MAX_PATH]    {};
-    WCHAR   szScriptPath[MAX_PATH] {};
-    std::vector<NppExecScripts> vNppExecScripts;
-};
-
-struct CphProgram {
-    WCHAR   szAppName[MAX_PATH]    {};
-};
-struct ExProp{
-    /* pointer to global current path */
-    std::wstring                currentDir;
-    std::wstring                rootFolder;
-    LOGFONT                     logfont                 {};
-    HFONT                       defaultFont             = nullptr;
-    HFONT                       underlineFont           = nullptr;
-    INT                         iSplitterPos            = 0;
-    INT                         iSplitterPosHorizontal  = 0;
-    BOOL                        bAscending              = false;
-    INT                         iSortPos                = 0;
-    INT                         iColumnPosName          = 0;
-    INT                         iColumnPosExt           = 0;
-    INT                         iColumnPosSize          = 0;
-    INT                         iColumnPosDate          = 0;
-    BOOL                        bShowHidden             = false;
-    BOOL                        bViewBraces             = false;
-    BOOL                        bViewLong               = false;
-    BOOL                        bAddExtToName           = false;
-    BOOL                        bAutoUpdate             = false;
-    BOOL                        bAutoNavigate           = false;
-    bool                        bHideFoldersInFileList{ false };
-    SizeFmt                     fmtSize                 = SizeFmt::SFMT_BYTES;
-    DateFmt                     fmtDate                 = DateFmt::DFMT_ENG;
-    std::vector<std::wstring>   vStrFilterHistory       {};
-    FileFilter                  fileFilter              {};
-    UINT                        uTimeout                = 0;
-    BOOL                        bUseSystemIcons         = false;
-    NppExecProp                 nppExecProp             {};
-    CphProgram                  cphProgram              {};
-    SIZE_T                      maxHistorySize          = 0;
-    BOOL                        useFullTree             = false;
 };
 
 

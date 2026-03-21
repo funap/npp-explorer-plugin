@@ -94,7 +94,7 @@ FavesDialog::FavesDialog()
     , _hTreeCutCopy(nullptr)
     , _addToSession(FALSE)
     , _peOpenLink(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
 {
 }
 
@@ -103,9 +103,9 @@ FavesDialog::~FavesDialog()
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, HWND hParent, ExProp* prop)
+void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop)
 {
-    _pExProp = prop;
+    _pSettings = prop;
     DockingDlgInterface::init(hInst, hParent);
 
     ReadSettings();
@@ -231,7 +231,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         const auto *elem = reinterpret_cast<FavesItemPtr>(_hTreeCtrl.GetParam(hItem));
                         if (elem && (elem->Type() == FAVES_FILE) && elem->IsLink()) {
                             if (IsFileOpen(elem->Link()) == TRUE) {
-                                ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
+                                ::SelectObject(cd->nmcd.hdc, _pSettings->GetUnderlineFont());
                             }
                         }
                         SetBkMode(cd->nmcd.hdc, TRANSPARENT);
@@ -239,7 +239,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         COLORREF textColor = TreeView_GetTextColor(nmhdr->hwndFrom);
                         SetTextColor(cd->nmcd.hdc, textColor);
                         ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
-                        ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
+                        ::SelectObject(cd->nmcd.hdc, _pSettings->GetDefaultFont());
 
                         const SIZE iconSize = {
                             .cx = GetSystemMetrics(SM_CXSMICON),
@@ -247,7 +247,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         };
                         const INT top = (textRect.top + textRect.bottom - iconSize.cy) / 2;
                         const INT left = textRect.left - iconSize.cx - GetSystemMetrics(SM_CXEDGE);
-                        if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->Data() & FAVES_PARAM_USERIMAGE)))) {
+                        if ((_pSettings->IsUseSystemIcons() == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->Data() & FAVES_PARAM_USERIMAGE)))) {
                             ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
                         }
                         else {
@@ -563,7 +563,7 @@ void FavesDialog::InitialDialog()
     ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)_hImageListSys);
 
     // set font
-    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* create toolbar */
     _ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
@@ -1398,8 +1398,7 @@ void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 
 void FavesDialog::ReadSettings()
 {
-    extern WCHAR configPath[MAX_PATH];
-    std::filesystem::path favorites_dat(configPath);
+    std::filesystem::path favorites_dat(_pSettings->GetConfigDir());
     favorites_dat /= FAVES_DATA;
     
     if (!std::filesystem::exists(favorites_dat)) {
@@ -1417,8 +1416,7 @@ void FavesDialog::ReadSettings()
 
 void FavesDialog::SaveSettings()
 {
-    extern WCHAR configPath[MAX_PATH];
-    std::filesystem::path favorites_dat(configPath);
+    std::filesystem::path favorites_dat(_pSettings->GetConfigDir());
     favorites_dat /= FAVES_DATA;
     try {
         _model.Save(favorites_dat);
@@ -1427,3 +1425,4 @@ void FavesDialog::SaveSettings()
         ::MessageBoxA(_hParent, e.what(), "Error", MB_OK | MB_ICONERROR);
     }
 }
+

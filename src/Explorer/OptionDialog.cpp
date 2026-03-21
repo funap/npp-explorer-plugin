@@ -90,7 +90,7 @@ OptionDlg::~OptionDlg()
 {
 }
 
-INT_PTR OptionDlg::doDialog(ExProp *prop)
+INT_PTR OptionDlg::doDialog(Settings *prop)
 {
     _pProp = prop;
     return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_OPTION_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
@@ -141,7 +141,7 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
                         .lpszTitle      = L"Select a folder:",
                         .ulFlags        = BIF_RETURNONLYFSDIRS,
                         .lpfn           = BrowseCallbackProc,
-                        .lParam         = (LPARAM)_pProp->nppExecProp.szScriptPath,
+                        .lParam         = (LPARAM)_pProp->GetNppExecProp().szScriptPath.c_str(),
                     };
                     // Execute the browsing dialog.
                     PIDLIST_ABSOLUTE pidl = ::SHBrowseForFolder(&info);
@@ -151,9 +151,11 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
                     if (pidl) {
                         // Try to convert the pidl to a display string.
                         // Return is true if success.
-                        if (::SHGetPathFromIDList(pidl, _pProp->nppExecProp.szScriptPath)) {
+                        WCHAR szPath[MAX_PATH];
+                        if (::SHGetPathFromIDList(pidl, szPath)) {
                             // Set edit control to the directory path.
-                            ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_SCRIPTPATH), _pProp->nppExecProp.szScriptPath);
+                            _pProp->GetNppExecProp().szScriptPath = szPath;
+                            ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_SCRIPTPATH), szPath);
                         }
                         pShellMalloc->Free(pidl);
                     }
@@ -167,13 +169,13 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
                 DWORD   dwByteWritten   = 0;
                 WCHAR   szExampleScriptPath[MAX_PATH];
 
-                if (_pProp->nppExecProp.szScriptPath[0] == '.') {
+                if (_pProp->GetNppExecProp().szScriptPath[0] == '.') {
                     /* module path of notepad */
                     ::GetModuleFileName(_hInst, szExampleScriptPath, _countof(szExampleScriptPath));
                     PathRemoveFileSpec(szExampleScriptPath);
-                    PathAppend(szExampleScriptPath, _pProp->nppExecProp.szScriptPath);
+                    PathAppend(szExampleScriptPath, _pProp->GetNppExecProp().szScriptPath.c_str());
                 } else {
-                    wcscpy(szExampleScriptPath, _pProp->nppExecProp.szScriptPath);
+                    wcscpy(szExampleScriptPath, _pProp->GetNppExecProp().szScriptPath.c_str());
                 }
                 ::PathAppend(szExampleScriptPath, L"Goto path.exec");
 
@@ -234,26 +236,26 @@ void OptionDlg::LongUpdate()
 
 void OptionDlg::SetParams()
 {
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_LONG,        BM_SETCHECK, _pProp->bViewLong      ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_SETCURSEL, (WPARAM)_pProp->fmtSize, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_SETCURSEL, (WPARAM)_pProp->fmtDate, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_SEPEXT,      BM_SETCHECK, _pProp->bAddExtToName  ? BST_UNCHECKED : BST_CHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_BRACES,      BM_SETCHECK, _pProp->bViewBraces    ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTO,        BM_SETCHECK, _pProp->bAutoUpdate    ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN,      BM_SETCHECK, _pProp->bShowHidden    ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON,     BM_SETCHECK, _pProp->bUseSystemIcons? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV,     BM_SETCHECK, _pProp->bAutoNavigate  ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_SETCHECK, _pProp->useFullTree    ? BST_CHECKED : BST_UNCHECKED, 0);
-    ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_SETCHECK, _pProp->bHideFoldersInFileList ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_LONG,        BM_SETCHECK, _pProp->IsViewLong()      ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_SETCURSEL, (WPARAM)_pProp->GetFmtSize(), 0);
+    ::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_SETCURSEL, (WPARAM)_pProp->GetFmtDate(), 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_SEPEXT,      BM_SETCHECK, _pProp->IsAddExtToName()  ? BST_UNCHECKED : BST_CHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_BRACES,      BM_SETCHECK, _pProp->IsViewBraces()    ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTO,        BM_SETCHECK, _pProp->IsAutoUpdate()    ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN,      BM_SETCHECK, _pProp->IsShowHidden()    ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON,     BM_SETCHECK, _pProp->IsUseSystemIcons()? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV,     BM_SETCHECK, _pProp->IsAutoNavigate()  ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_SETCHECK, _pProp->IsUseFullTree()    ? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_SETCHECK, _pProp->IsHideFoldersInFileList() ? BST_CHECKED : BST_UNCHECKED, 0);
 
 
-    ::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME,     _pProp->nppExecProp.szAppName);
-    ::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH,   _pProp->nppExecProp.szScriptPath);
-    ::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,      std::to_wstring(_pProp->uTimeout).c_str());
-    ::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,  std::to_wstring(_pProp->maxHistorySize).c_str());
-    ::SetDlgItemText(_hSelf, IDC_EDIT_CPH,          _pProp->cphProgram.szAppName);
+    ::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME,     _pProp->GetNppExecProp().szAppName.c_str());
+    ::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH,   _pProp->GetNppExecProp().szScriptPath.c_str());
+    ::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,      std::to_wstring(_pProp->GetTimeout()).c_str());
+    ::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,  std::to_wstring(_pProp->GetMaxHistorySize()).c_str());
+    ::SetDlgItemText(_hSelf, IDC_EDIT_CPH,          _pProp->GetCphProgram().szAppName.c_str());
 
-    _logfont = _pProp->logfont;
+    _logfont = _pProp->GetLogFont();
     ::SetDlgItemText(_hSelf, IDC_BTN_CHOOSEFONT,    _logfont.lfFaceName);
 }
 
@@ -262,30 +264,35 @@ BOOL OptionDlg::GetParams()
 {
     BOOL bRet = TRUE;
 
-    _pProp->bViewBraces     = (::SendDlgItemMessage(_hSelf, IDC_CHECK_BRACES, BM_GETCHECK, 0, 0) == BST_CHECKED)        ? TRUE : FALSE;
-    _pProp->bAddExtToName   = (::SendDlgItemMessage(_hSelf, IDC_CHECK_SEPEXT, BM_GETCHECK, 0, 0) == BST_CHECKED)        ? FALSE : TRUE;
-    _pProp->bViewLong       = (::SendDlgItemMessage(_hSelf, IDC_CHECK_LONG, BM_GETCHECK, 0, 0) == BST_CHECKED)          ? TRUE : FALSE;
-    _pProp->fmtSize         = (SizeFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_GETCURSEL, 0, 0);
-    _pProp->fmtDate         = (DateFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_GETCURSEL, 0, 0);
-    _pProp->bAutoUpdate     = (::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTO, BM_GETCHECK, 0, 0) == BST_CHECKED)          ? TRUE : FALSE;
-    _pProp->bShowHidden     = (::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN, BM_GETCHECK, 0, 0) == BST_CHECKED)        ? TRUE : FALSE;
-    _pProp->bAutoNavigate   = (::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV, BM_GETCHECK, 0, 0) == BST_CHECKED)       ? TRUE : FALSE;
-    _pProp->bUseSystemIcons = (::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON, BM_GETCHECK, 0, 0) == BST_CHECKED)       ? TRUE : FALSE;
-    _pProp->useFullTree     = (::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_GETCHECK, 0, 0) == BST_CHECKED)   ? TRUE : FALSE;
-    _pProp->bHideFoldersInFileList = (::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_GETCHECK, 0, 0) == BST_CHECKED) ? TRUE : FALSE;
+    _pProp->SetViewBraces((::SendDlgItemMessage(_hSelf, IDC_CHECK_BRACES, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetAddExtToName((::SendDlgItemMessage(_hSelf, IDC_CHECK_SEPEXT, BM_GETCHECK, 0, 0) == BST_CHECKED) ? false : true);
+    _pProp->SetViewLong((::SendDlgItemMessage(_hSelf, IDC_CHECK_LONG, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetFmtSize((SizeFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_GETCURSEL, 0, 0));
+    _pProp->SetFmtDate((DateFmt)::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_GETCURSEL, 0, 0));
+    _pProp->SetAutoUpdate((::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTO, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetShowHidden((::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetAutoNavigate((::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetUseSystemIcons((::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetUseFullTree((::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetHideFoldersInFileList((::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_GETCHECK, 0, 0) == BST_CHECKED));
 
     WCHAR TEMP[MAX_PATH];
     ::GetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, TEMP, 6);
-    _pProp->uTimeout = (UINT)_wtoi(TEMP);
+    _pProp->SetTimeout((UINT)_wtoi(TEMP));
 
     ::GetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE, TEMP, 6);
-    _pProp->maxHistorySize = (UINT)_wtoi(TEMP);
+    _pProp->SetMaxHistorySize((UINT)_wtoi(TEMP));
 
-    ::GetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, _pProp->nppExecProp.szAppName, MAX_PATH);
-    ::GetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, _pProp->nppExecProp.szScriptPath, MAX_PATH);
-    ::GetDlgItemText(_hSelf, IDC_EDIT_CPH, _pProp->cphProgram.szAppName, MAX_PATH);
+    ::GetDlgItemText(_hSelf, IDC_EDIT_EXECNAME, TEMP, MAX_PATH);
+    _pProp->GetNppExecProp().szAppName = TEMP;
 
-    _pProp->logfont = _logfont;
+    ::GetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH, TEMP, MAX_PATH);
+    _pProp->GetNppExecProp().szScriptPath = TEMP;
+
+    ::GetDlgItemText(_hSelf, IDC_EDIT_CPH, TEMP, MAX_PATH);
+    _pProp->GetCphProgram().szAppName = TEMP;
+
+    _pProp->SetLogFont(_logfont);
 
     return bRet;
 }

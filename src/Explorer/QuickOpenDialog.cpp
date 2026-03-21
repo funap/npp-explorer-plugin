@@ -501,7 +501,7 @@ QuickOpenDlg::QuickOpenDlg()
     , _layout{}
     , _hWndResult(nullptr)
     , _hWndEdit(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
     , _progressBarRect()
     , _shouldAutoClose(true)
     , _needsRefresh(true)
@@ -512,9 +512,9 @@ QuickOpenDlg::~QuickOpenDlg()
 {
 }
 
-void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
+void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop)
 {
-    _pExProp = prop;
+    _pSettings = prop;
 
     Window::init(hInst, parent);
     create(IDD_QUICK_OPEN_DLG, FALSE);
@@ -828,7 +828,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         _hWndEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
         _hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
 
-        SetFont(_pExProp->defaultFont);
+        SetFont(_pSettings->GetDefaultFont());
 
         ListView_SetExtendedListViewStyle(_hWndResult, LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT);
         LVCOLUMN column{};

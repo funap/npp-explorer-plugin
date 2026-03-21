@@ -161,7 +161,7 @@ ExplorerDialog::ExplorerDialog()
     , _isLeftButtonDown(FALSE)
     , _hSplitterCursorUpDown(nullptr)
     , _hSplitterCursorLeftRight(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
     , _hCurWait(nullptr)
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
@@ -174,11 +174,11 @@ ExplorerDialog::~ExplorerDialog()
 }
 
 
-void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, ExProp *prop)
+void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, Settings *prop)
 {
     DockingDlgInterface::init(hInst, hParent);
 
-    _pExProp = prop;
+    _pSettings = prop;
     _FileList.initProp(prop);
 }
 
@@ -187,13 +187,13 @@ void ExplorerDialog::redraw()
     UpdateLayout();
 
     /* possible new imagelist -> update the window */
-    _hTreeCtrl.SetImageList(GetSmallImageList(_pExProp->bUseSystemIcons));
+    _hTreeCtrl.SetImageList(GetSmallImageList(_pSettings->IsUseSystemIcons()));
     ::SetTimer(_hSelf, EXT_UPDATEDEVICE, 0, nullptr);
     _FileList.redraw();
     ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
 
     /* and only when dialog is visible, select item again */
-    SelectItem(_pExProp->currentDir);
+    SelectItem(_pSettings->GetCurrentDir());
 
     ::SetEvent(g_hEvent[EID_UPDATE_USER]);
 };
@@ -214,7 +214,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
         ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
     }
     else if (willBeShown) {
-        if (_pExProp->bAutoUpdate == TRUE) {
+        if (_pSettings->IsAutoUpdate()) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
             ::SetTimer(_hSelf, EXT_UPDATEACTIVATE, 0, nullptr);
         } else {
@@ -313,8 +313,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                         path += "\\";
                     }
                     /* save current path */
-                    _pExProp->currentDir = path.wstring();
-                    DebugPrintf(L"pwd:{}", _pExProp->currentDir.c_str());
+                    _pSettings->SetCurrentDir(path.wstring());
+                    DebugPrintf(L"pwd:{}", _pSettings->GetCurrentDir().c_str());
                 }
                 if (_isSelNotifyEnable == TRUE) {
                     ::KillTimer(_hSelf, EXT_SELCHANGE);
@@ -395,10 +395,10 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case WM_DESTROY: {
         WCHAR szLastFilter[MAX_PATH];
 
-        _pExProp->vStrFilterHistory = _ComboFilter.getComboList();
+        _pSettings->SetFilterHistory(_ComboFilter.getComboList());
         _ComboFilter.getText(szLastFilter, MAX_PATH);
         if (wcslen(szLastFilter) != 0) {
-            _pExProp->fileFilter.setFilter(szLastFilter);
+            _pSettings->GetFileFilter().setFilter(szLastFilter);
         }
 
         ::SetEvent(g_hEvent[EID_THREAD_END]);
@@ -481,7 +481,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         }
         if (wParam == EXT_SELCHANGE) {
             ::KillTimer(_hSelf, EXT_SELCHANGE);
-            _FileList.viewPath(_pExProp->currentDir, TRUE);
+            _FileList.viewPath(_pSettings->GetCurrentDir(), TRUE);
             updateDockingDlg();
             return FALSE;
         }
@@ -536,7 +536,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             return TRUE;
         }
         case VK_TAB:
-            if (!_pExProp->useFullTree) {
+            if (!_pSettings->IsUseFullTree()) {
                 if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
                     ::SetFocus(_hFilter);
                 }
@@ -714,20 +714,20 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
         /* set cursor */
         if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
             SetCursor(_hSplitterCursorUpDown);
-            if (_pExProp->iSplitterPos < 50) {
-                    _pExProp->iSplitterPos = 50;
+            if (_pSettings->GetSplitterPos() < 50) {
+                    _pSettings->SetSplitterPos(50);
             }
-            else if (_pExProp->iSplitterPos > (rc.bottom - 100)) {
-                    _pExProp->iSplitterPos = rc.bottom - 100;
+            else if (_pSettings->GetSplitterPos() > (rc.bottom - 100)) {
+                    _pSettings->SetSplitterPos(rc.bottom - 100);
             }
         }
         else {
             SetCursor(_hSplitterCursorLeftRight);
-            if (_pExProp->iSplitterPosHorizontal < 50) {
-                    _pExProp->iSplitterPosHorizontal = 50;
+            if (_pSettings->GetSplitterPosHorizontal() < 50) {
+                    _pSettings->SetSplitterPosHorizontal(50);
             }
-            else if (_pExProp->iSplitterPosHorizontal > (rc.right - 50)) {
-                _pExProp->iSplitterPosHorizontal = rc.right - 50;
+            else if (_pSettings->GetSplitterPosHorizontal() > (rc.right - 50)) {
+                _pSettings->SetSplitterPosHorizontal(rc.right - 50);
             }
         }
         break;
@@ -739,14 +739,14 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
 
             if (_iDockedPos < CONT_TOP) {
                 if (_ptOldPos.y != pt.y) {
-                    _pExProp->iSplitterPos -= _ptOldPos.y - pt.y;
+                    _pSettings->SetSplitterPos(_pSettings->GetSplitterPos() - (_ptOldPos.y - pt.y));
                     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
                 }
                 _ptOldPos = pt;
             }
             else {
                 if (_ptOldPosHorizontal.x != pt.x) {
-                    _pExProp->iSplitterPosHorizontal -= _ptOldPosHorizontal.x - pt.x;
+                    _pSettings->SetSplitterPosHorizontal(_pSettings->GetSplitterPosHorizontal() - (_ptOldPosHorizontal.x - pt.x));
                     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
                 }
                 _ptOldPosHorizontal = pt;
@@ -836,7 +836,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
         break;
     }
     case IDM_EX_SEARCH_FIND:
-        Editor::Instance().LaunchFindFileDialog(_pExProp->currentDir);
+        Editor::Instance().LaunchFindFileDialog(_pSettings->GetCurrentDir());
         break;
     case IDM_EX_GO_TO_USER:
         gotoUserFolder();
@@ -930,9 +930,9 @@ void ExplorerDialog::NotifyEvent(DWORD event)
     switch(event) {
     case EID_INIT:
         /* initialize combo */
-        _ComboFilter.setComboList(_pExProp->vStrFilterHistory);
+        _ComboFilter.setComboList(_pSettings->GetFilterHistory());
         _ComboFilter.addText(L"*.*");
-        _ComboFilter.setText(_pExProp->fileFilter.getFilterString());
+        _ComboFilter.setText(_pSettings->GetFileFilter().getFilterString());
 
         /* initialize file list */
         _FileList.SetToolBarInfo(&_ToolBar , IDM_EX_PREV, IDM_EX_NEXT);
@@ -941,7 +941,7 @@ void ExplorerDialog::NotifyEvent(DWORD event)
         UpdateRoots();
 
         /* set data */
-        SelectItem(_pExProp->currentDir);
+        SelectItem(_pSettings->GetCurrentDir());
 
         /* Update "Go to Folder" icon */
         NotifyNewFile();
@@ -1014,8 +1014,8 @@ void ExplorerDialog::InitialDialog()
     _hSplitterCtrl  = ::GetDlgItem(_hSelf, IDC_BUTTON_SPLITTER);
     _hFilter        = ::GetDlgItem(_hSelf, IDC_COMBO_FILTER);
 
-    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
-    ::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
+    ::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* subclass tree */
     ::SetWindowLongPtr(_hTreeCtrl, GWLP_USERDATA, (LONG_PTR)this);
@@ -1028,7 +1028,7 @@ void ExplorerDialog::InitialDialog()
     _hDefaultSplitterProc = (WNDPROC)::SetWindowLongPtr(_hSplitterCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultSplitterProc);
 
     /* Load Image List */
-    ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pExProp->bUseSystemIcons));
+    ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pSettings->IsUseSystemIcons()));
 
     /* initial file list */
     _FileList.init(_hInst, _hSelf, _hListCtrl);
@@ -1233,7 +1233,7 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
         _hTreeCtrl.SelectItem(hItemSel);
         _hTreeCtrl.EnsureVisible(hItemSel);
 
-        _FileList.viewPath(_pExProp->currentDir, TRUE);
+        _FileList.viewPath(_pSettings->GetCurrentDir(), TRUE);
         updateDockingDlg();
     }
 
@@ -1254,7 +1254,7 @@ BOOL ExplorerDialog::gotoPath()
     szFolderName[0] = '\0';
 
     /* copy current path to show current position */
-    wcscpy(szFolderName, _pExProp->currentDir.c_str());
+    wcscpy(szFolderName, _pSettings->GetCurrentDir().c_str());
 
     dlg.init(_hInst, _hParent);
     for (;;) {
@@ -1304,7 +1304,7 @@ void ExplorerDialog::gotoCurrentFolder()
 
 void ExplorerDialog::gotoCurrentFile()
 {
-    if (_pExProp->useFullTree) {
+    if (_pSettings->IsUseFullTree()) {
         std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
         if (PathFileExists(currentPath.c_str())) {
             SelectItem(currentPath.wstring());
@@ -1338,7 +1338,7 @@ void ExplorerDialog::setFocusOnFolder()
 
 void ExplorerDialog::setFocusOnFile()
 {
-    if (!_pExProp->useFullTree) {
+    if (!_pSettings->IsUseFullTree()) {
         ::SetFocus(_FileList.getHSelf());
     }
     else {
@@ -1348,8 +1348,8 @@ void ExplorerDialog::setFocusOnFile()
 
 void ExplorerDialog::clearFilter()
 {
-    _pExProp->vStrFilterHistory.clear();
-    _pExProp->fileFilter.setFilter(L"*.*");
+    _pSettings->GetFilterHistory().clear();
+    _pSettings->GetFileFilter().setFilter(L"*.*");
     _ComboFilter.clearComboList();
     _ComboFilter.addText(L"*.*");
     _ComboFilter.setText(L"*.*");
@@ -1519,7 +1519,7 @@ void ExplorerDialog::UpdateAllExpandedItems()
 
 void ExplorerDialog::UpdatePath()
 {
-    if (!_pExProp->useFullTree) {
+    if (!_pSettings->IsUseFullTree()) {
         auto path = GetPath(_hTreeCtrl.GetSelection());
         _FileList.ToggleStackRec();
         _FileList.viewPath(path);
@@ -1612,7 +1612,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
             if (::IsValidFolder(findData) == TRUE) {
                 folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
             }
-            else if (_pExProp->useFullTree && ::IsValidFile(findData) == TRUE) {
+            else if (_pSettings->IsUseFullTree() && ::IsValidFile(findData) == TRUE) {
                 files.emplace_back(findData.cFileName, findData.dwFileAttributes);
             }
         } while (::FindNextFile(hFind, &findData));
@@ -1712,7 +1712,7 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
             if (::IsValidFolder(findData) == TRUE) {
                 folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
             }
-            else if (_pExProp->useFullTree && ::IsValidFile(findData) == TRUE) {
+            else if (_pSettings->IsUseFullTree() && ::IsValidFile(findData) == TRUE) {
                 files.emplace_back(findData.cFileName, findData.dwFileAttributes);
             }
         } while (FindNextFile(hFind, &findData));
@@ -1790,7 +1790,7 @@ void ExplorerDialog::UpdateLayout()
     getClientRect(rc);
 
     if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
-        INT splitterPos = _pExProp->iSplitterPos;
+        INT splitterPos = _pSettings->GetSplitterPos();
 
         if (splitterPos < 50) {
             splitterPos = 50;
@@ -1806,7 +1806,7 @@ void ExplorerDialog::UpdateLayout()
         auto toolBarHeight = _ToolBar.getHeight();
         auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
-        if (_pExProp->useFullTree) {
+        if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
             rc.bottom -= toolBarHeight;
@@ -1844,7 +1844,7 @@ void ExplorerDialog::UpdateLayout()
         }
     }
     else {
-        INT splitterPos = _pExProp->iSplitterPosHorizontal;
+        INT splitterPos = _pSettings->GetSplitterPosHorizontal();
 
         if (splitterPos < 50) {
             splitterPos = 50;
@@ -1860,7 +1860,7 @@ void ExplorerDialog::UpdateLayout()
         auto toolBarHeight = _ToolBar.getHeight();
         auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
-        if (_pExProp->useFullTree) {
+        if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
             rc.bottom -= toolBarHeight;

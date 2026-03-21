@@ -105,6 +105,9 @@
     <ClCompile Include="src\Explorer\Editor.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\Settings.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Explorer\version.rc">
@@ -245,6 +248,9 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\IEditor.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\Settings.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

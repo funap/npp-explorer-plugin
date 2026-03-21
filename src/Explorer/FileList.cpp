@@ -61,7 +61,7 @@ DWORD WINAPI FileOverlayThread(LPVOID lpParam)
 FileList::FileList(ExplorerContext *context)
     : _hHeader(nullptr)
     , _hImlListSys(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
     , _hImlParent(nullptr)
     , _hEvent{}
     , _hOverThread(nullptr)
@@ -118,7 +118,7 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
 
     /* set image list and icon */
     _hImlParent = GetSmallImageList(FALSE);
-    _hImlListSys = GetSmallImageList(_pExProp->bUseSystemIcons);
+    _hImlListSys = GetSmallImageList(_pSettings->IsUseSystemIcons());
     ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
 
     /* get header control and subclass it */
@@ -141,10 +141,10 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
     AddSuportedFormat(_hSelf, fmtetc);
 }
 
-void FileList::initProp(ExProp* prop)
+void FileList::initProp(Settings* prop)
 {
     /* set properties */
-    _pExProp = prop;
+    _pSettings = prop;
 }
 
 
@@ -333,7 +333,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         if (iPos < _uMaxElements) {
             /* test if overlay icon is need to be updated and if it's changed do a redraw */
             if (_vFileList[iPos].iOverlay == 0) {
-                ExtractIcons(_pExProp->currentDir.c_str(), _vFileList[iPos].strNameExt.c_str(),
+                ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iPos].strNameExt.c_str(),
                     type, &iIcon, &iSelected, &_vFileList[iPos].iOverlay);
             }
 
@@ -411,11 +411,11 @@ LRESULT FileList::runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
     switch (Message) {
     case WM_LBUTTONUP: {
         /* update here the header column width */
-        _pExProp->iColumnPosName = ListView_GetColumnWidth(_hSelf, 0);
-        _pExProp->iColumnPosExt  = ListView_GetColumnWidth(_hSelf, 1);
-        if (_pExProp->bViewLong == TRUE) {
-            _pExProp->iColumnPosSize = ListView_GetColumnWidth(_hSelf, 2);
-            _pExProp->iColumnPosDate = ListView_GetColumnWidth(_hSelf, 3);
+        _pSettings->SetColumnPosName(ListView_GetColumnWidth(_hSelf, 0));
+        _pSettings->SetColumnPosExt(ListView_GetColumnWidth(_hSelf, 1));
+        if (_pSettings->IsViewLong()) {
+            _pSettings->SetColumnPosSize(ListView_GetColumnWidth(_hSelf, 2));
+            _pSettings->SetColumnPosDate(ListView_GetColumnWidth(_hSelf, 3));
         }
         break;
     }
@@ -470,11 +470,11 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 
             INT iPos  = ((LPNMLISTVIEW)lParam)->iSubItem;
 
-            if (iPos != _pExProp->iSortPos) {
-                _pExProp->iSortPos = iPos;
+            if (iPos != _pSettings->GetSortPos()) {
+                _pSettings->SetSortPos(iPos);
             }
             else {
-                _pExProp->bAscending ^= TRUE;
+                _pSettings->SetAscending(!_pSettings->IsAscending());
             }
             SetOrder();
             UpdateList();
@@ -538,9 +538,9 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
             case CDDS_ITEMPREPAINT: {
                 auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
                 if (index >= static_cast<INT>(_uMaxFolders)) {
-                    std::wstring strFilePath = _pExProp->currentDir + _vFileList[index].strNameExt;
+                    std::wstring strFilePath = _pSettings->GetCurrentDir() + _vFileList[index].strNameExt;
                     if (IsFileOpen(strFilePath) == TRUE) {
-                        ::SelectObject(lpCD->nmcd.hdc, _pExProp->underlineFont);
+                        ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
                         ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
                     }
                 }
@@ -629,7 +629,7 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
     if (_vFileList[iItem].iIcon == -1) {
-        ExtractIcons(_pExProp->currentDir.c_str(), _vFileList[iItem].strNameExt.c_str(),
+        ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iItem].strNameExt.c_str(),
             type, &_vFileList[iItem].iIcon, &iIconSelected, NULL);
     }
     *piIcon     = _vFileList[iItem].iIcon;
@@ -642,7 +642,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     /* copy into temp */
     switch (iSubItem) {
     case SubItem::Name:
-        if ((iItem < (INT)_uMaxFolders) && (_pExProp->bViewBraces == TRUE)) {
+        if ((iItem < (INT)_uMaxFolders) && (_pSettings->IsViewBraces())) {
             swprintf(szItem, L"[%ls]", _vFileList[iItem].strName.c_str());
         }
         else {
@@ -650,7 +650,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
         }
         break;
     case SubItem::Extension:
-        if ((iItem < (INT)_uMaxFolders) || (_pExProp->bAddExtToName == FALSE)) {
+        if ((iItem < (INT)_uMaxFolders) || (!_pSettings->IsAddExtToName())) {
             wcscpy(szItem, _vFileList[iItem].strExt.c_str());
         }
         else {
@@ -695,7 +695,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
         /* get current filters */
         FileListData tempData;
         do {
-            if (_pExProp->bHideFoldersInFileList && (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+        if (_pSettings->IsHideFoldersInFileList() && (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
                 continue; // Skip directories if hideFoldersInContentView is true
             }
 
@@ -710,7 +710,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
                 tempData.strNameExt     = Find.cFileName;
                 tempData.strExt         = L"";
 
-                if (_pExProp->bViewLong == TRUE) {
+                if (_pSettings->IsViewLong()) {
                     tempData.strSize    = L"<DIR>";
                     tempData.i64Size    = 0;
                     GetDate(Find.ftLastWriteTime, tempData.strDate);
@@ -719,7 +719,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
 
                 vFoldersTemp.push_back(tempData);
             }
-            else if ((IsValidFile(Find) == TRUE) && (_pExProp->fileFilter.match(Find.cFileName) == TRUE)) {
+            else if ((IsValidFile(Find) == TRUE) && (_pSettings->GetFileFilter().match(Find.cFileName) == TRUE)) {
                 /* store for correct sorting the complete name (with extension) */
                 tempData.strNameExt     = Find.cFileName;
                 tempData.isParent       = FALSE;
@@ -739,13 +739,13 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
                     tempData.strExt     = L"";
                 }
 
-                if ((_pExProp->bAddExtToName == TRUE) && (extBeg != NULL)) {
+                if ((_pSettings->IsAddExtToName()) && (extBeg != NULL)) {
                     *extBeg = '.';
                 }
                 tempData.strName        = Find.cFileName;
 
 
-                if (_pExProp->bViewLong == TRUE) {
+                if (_pSettings->IsViewLong()) {
                     tempData.i64Size    = (((INT64)Find.nFileSizeHigh) << 32) + Find.nFileSizeLow;
                     GetSize(tempData.i64Size, tempData.strSize);
                     tempData.i64Date    = (((INT64)Find.ftLastWriteTime.dwHighDateTime) << 32) + Find.ftLastWriteTime.dwLowDateTime;
@@ -763,7 +763,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
                 tempData.strNameExt     = Find.cFileName;
                 tempData.strExt         = L"";
 
-                if (_pExProp->bViewLong == TRUE) {
+                if (_pSettings->IsViewLong()) {
                     tempData.strSize    = L"<DIR>";
                     tempData.i64Size    = 0;
                     GetDate(Find.ftLastWriteTime, tempData.strDate);
@@ -816,8 +816,8 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
 
 void FileList::filterFiles(LPCTSTR currentFilter)
 {
-    _pExProp->fileFilter.setFilter(currentFilter);
-    viewPath(_pExProp->currentDir, TRUE);
+    _pSettings->GetFileFilter().setFilter(currentFilter);
+    viewPath(_pSettings->GetCurrentDir(), TRUE);
 }
 
 void FileList::SelectFolder(LPCTSTR filePath)
@@ -866,7 +866,7 @@ void FileList::UpdateList()
             return resultNameExt < 0;
         }
 
-        switch (_pExProp->iSortPos) {
+        switch (_pSettings->GetSortPos()) {
         case SubItem::Name:
             result = resultNameExt;
             break;
@@ -887,7 +887,7 @@ void FileList::UpdateList()
             result = resultNameExt;
         }
 
-        if (!_pExProp->bAscending) {
+        if (!_pSettings->IsAscending()) {
             result *= -1;
         }
     
@@ -912,47 +912,47 @@ void FileList::SetColumns()
     ListView_DeleteColumn(_hSelf, 1);
     ListView_DeleteColumn(_hSelf, 0);
 
-    if ((_bOldAddExtToName != _pExProp->bAddExtToName) && (_pExProp->iSortPos > 0)) {
-        if (_pExProp->bAddExtToName == FALSE) {
-            _pExProp->iSortPos++;
+    if ((_bOldAddExtToName != _pSettings->IsAddExtToName()) && (_pSettings->GetSortPos() > 0)) {
+        if (!_pSettings->IsAddExtToName()) {
+            _pSettings->SetSortPos(_pSettings->GetSortPos() + 1);
         }
         else {
-            _pExProp->iSortPos--;
+            _pSettings->SetSortPos(_pSettings->GetSortPos() - 1);
         }
 
-        _bOldAddExtToName = _pExProp->bAddExtToName;
+        _bOldAddExtToName = _pSettings->IsAddExtToName();
     }
-    if (_bOldViewLong != _pExProp->bViewLong) {
-        if ((_pExProp->bViewLong == FALSE) &&
-            (((_pExProp->iSortPos > 0) && (_pExProp->bAddExtToName == TRUE)) ||
-                ((_pExProp->iSortPos > 1) && (_pExProp->bAddExtToName == FALSE)))) {
-            _pExProp->iSortPos = 0;
+    if (_bOldViewLong != _pSettings->IsViewLong()) {
+        if (!_pSettings->IsViewLong() &&
+            (((_pSettings->GetSortPos() > 0) && (_pSettings->IsAddExtToName())) ||
+                ((_pSettings->GetSortPos() > 1) && (!_pSettings->IsAddExtToName())))) {
+            _pSettings->SetSortPos(0);
         }
-        _bOldViewLong = _pExProp->bViewLong;
+        _bOldViewLong = _pSettings->IsViewLong();
     }
 
     ColSetup.mask       = LVCF_TEXT | LVCF_FMT | LVCF_WIDTH;
     ColSetup.fmt        = LVCFMT_LEFT;
     ColSetup.pszText    = const_cast<LPTSTR>(cColumns[0]);
     ColSetup.cchTextMax = (int)wcslen(cColumns[0]);
-    ColSetup.cx         = _pExProp->iColumnPosName;
+    ColSetup.cx         = _pSettings->GetColumnPosName();
     ListView_InsertColumn(_hSelf, 0, &ColSetup);
     ColSetup.pszText    = const_cast<LPTSTR>(cColumns[1]);
     ColSetup.cchTextMax = (int)wcslen(cColumns[1]);
-    ColSetup.cx         = _pExProp->iColumnPosExt;
+    ColSetup.cx         = _pSettings->GetColumnPosExt();
     ListView_InsertColumn(_hSelf, 1, &ColSetup);
 
-    if (_pExProp->bViewLong)
+    if (_pSettings->IsViewLong())
     {
         ColSetup.fmt        = LVCFMT_RIGHT;
         ColSetup.pszText    = const_cast<LPTSTR>(cColumns[2]);
         ColSetup.cchTextMax = (int)wcslen(cColumns[2]);
-        ColSetup.cx         = _pExProp->iColumnPosSize;
+        ColSetup.cx         = _pSettings->GetColumnPosSize();
         ListView_InsertColumn(_hSelf, 2, &ColSetup);
         ColSetup.fmt        = LVCFMT_LEFT;
         ColSetup.pszText    = const_cast<LPTSTR>(cColumns[3]);
         ColSetup.cchTextMax = (int)wcslen(cColumns[3]);
-        ColSetup.cx         = _pExProp->iColumnPosDate;
+        ColSetup.cx         = _pSettings->GetColumnPosDate();
         ListView_InsertColumn(_hSelf, 3, &ColSetup);
     }
     SetOrder();
@@ -968,8 +968,8 @@ void FileList::SetOrder()
         Header_GetItem(_hHeader, i, &hdItem);
 
         hdItem.fmt &= ~(HDF_SORTUP | HDF_SORTDOWN);
-        if (i == _pExProp->iSortPos) {
-            hdItem.fmt |= _pExProp->bAscending ? HDF_SORTUP : HDF_SORTDOWN;
+        if (i == _pSettings->GetSortPos()) {
+            hdItem.fmt |= _pSettings->IsAscending() ? HDF_SORTUP : HDF_SORTDOWN;
         }
         Header_SetItem(_hHeader, i, &hdItem);
     }
@@ -1006,16 +1006,16 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
             }
 
             if (uList < _uMaxFolders) {
-                paths.push_back(_pExProp->currentDir + _vFileList[uList].strName + L"\\");
+                paths.push_back(_pSettings->GetCurrentDir() + _vFileList[uList].strName + L"\\");
             }
             else {
-                paths.push_back(_pExProp->currentDir + _vFileList[uList].strNameExt);
+                paths.push_back(_pSettings->GetCurrentDir() + _vFileList[uList].strNameExt);
             }
         }
     }
 
     if (paths.empty()) {
-        paths.push_back(_pExProp->currentDir);
+        paths.push_back(_pSettings->GetCurrentDir());
     }
 
     const auto hasStandardMenu = (!isParent || (paths.size() != 1));
@@ -1126,10 +1126,10 @@ void FileList::onPaste()
         return;
     }
     if (hEffect[0] == 2) {
-        doPaste(_pExProp->currentDir.c_str(), hFiles, DROPEFFECT_MOVE);
+        doPaste(_pSettings->GetCurrentDir().c_str(), hFiles, DROPEFFECT_MOVE);
     }
     else if (hEffect[0] == 5) {
-        doPaste(_pExProp->currentDir.c_str(), hFiles, DROPEFFECT_COPY);
+        doPaste(_pSettings->GetCurrentDir().c_str(), hFiles, DROPEFFECT_COPY);
     }
     ::GlobalUnlock(hFiles);
     ::GlobalUnlock(hEffect);
@@ -1141,7 +1141,7 @@ void FileList::onPaste()
 
 void FileList::onDelete(bool immediate)
 {
-    SIZE_T  lengthPath  = _pExProp->currentDir.size();
+    SIZE_T  lengthPath  = _pSettings->GetCurrentDir().size();
     UINT    bufSize     = ListView_GetSelectedCount(_hSelf) * MAX_PATH;
     LPTSTR  lpszFiles   = new WCHAR[bufSize];
     ::ZeroMemory(lpszFiles, bufSize);
@@ -1153,7 +1153,7 @@ void FileList::onDelete(bool immediate)
             if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
                 continue;
             }
-            wcscpy(&lpszFiles[offset], _pExProp->currentDir.c_str());
+            wcscpy(&lpszFiles[offset], _pSettings->GetCurrentDir().c_str());
             wcscpy(&lpszFiles[offset+lengthPath], _vFileList[i].strNameExt.c_str());
             offset += lengthPath + _vFileList[i].strNameExt.size() + 1;
         }
@@ -1204,11 +1204,11 @@ void FileList::GetSize(INT64 fileSize, std::wstring & str)
     auto displayFileSize = static_cast<double>(fileSize);
     size_t iSizeIndex = 0;
 
-    switch (_pExProp->fmtSize) {
-    case SFMT_BYTES:
+    switch (_pSettings->GetFmtSize()) {
+    case SizeFmt::SFMT_BYTES:
         iSizeIndex = 0;
         break;
-    case SFMT_KBYTE:
+    case SizeFmt::SFMT_KBYTE:
         iSizeIndex = 1;
         if (fileSize != 0) {
             displayFileSize += 1023.0;
@@ -1224,7 +1224,7 @@ void FileList::GetSize(INT64 fileSize, std::wstring & str)
     }
 
     int precision = 0;
-    if (_pExProp->fmtSize == SFMT_DYNAMIC_EX) {
+    if (_pSettings->GetFmtSize() == SizeFmt::SFMT_DYNAMIC_EX) {
         if (iSizeIndex == 0) {
             precision = 0;
         }
@@ -1265,7 +1265,7 @@ void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
     FileTimeToLocalFileTime(&ftLastWriteTime, &ftLocalTime);
     FileTimeToSystemTime(&ftLocalTime, &sysTime);
 
-    if (_pExProp->fmtDate == DFMT_ENG) {
+    if (_pSettings->GetFmtDate() == DateFmt::DFMT_ENG) {
         swprintf(TEMP, L"%02d/%02d/%02d %02d:%02d", sysTime.wYear % 100, sysTime.wMonth, sysTime.wDay, sysTime.wHour, sysTime.wMinute);
     }
     else {
@@ -1323,7 +1323,7 @@ void FileList::PushDir(const std::wstring& path)
             _vDirStack.push_back(StackInfo);
         }
 
-        while (_pExProp->maxHistorySize + 1 < _vDirStack.size()) {
+        while (_pSettings->GetMaxHistorySize() + 1 < _vDirStack.size()) {
             _vDirStack.erase(_vDirStack.begin());
         }
         _itrPos = _vDirStack.end() - 1;
@@ -1465,7 +1465,7 @@ void FileList::SetItems(std::vector<std::wstring> vStrItems)
  */
 void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect)
 {
-    SIZE_T parsz = _pExProp->currentDir.size();
+    SIZE_T parsz = _pSettings->GetCurrentDir().size();
     SIZE_T bufsz = sizeof(DROPFILES) + sizeof(WCHAR);
 
     /* get buffer size */
@@ -1505,7 +1505,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
             if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
                 continue;
             }
-            wcscpy(&szPath[offset], _pExProp->currentDir.c_str());
+            wcscpy(&szPath[offset], _pSettings->GetCurrentDir().c_str());
             wcscpy(&szPath[offset+parsz], _vFileList[i].strNameExt.c_str());
             offset += parsz + _vFileList[i].strNameExt.size() + 1;
         }
@@ -1572,7 +1572,7 @@ bool FileList::OnDrop(FORMATETC* /* pFmtEtc*/, STGMEDIUM& medium, DWORD* pdwEffe
 
     /* get target */
     WCHAR pszFilesTo[MAX_PATH];
-    wcscpy(pszFilesTo, _pExProp->currentDir.c_str());
+    wcscpy(pszFilesTo, _pSettings->GetCurrentDir().c_str());
 
     /* get position */
     LVHITTESTINFO hittest = {};

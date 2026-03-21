@@ -37,7 +37,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "../NppPlugin/nppexec_msgs.h"
 
 /* global explorer params */
-extern ExProp exProp;
+extern Settings settings;
 
 namespace {
     constexpr UINT_PTR CONTEXT_MENU_SUBCLASS_ID = 1;
@@ -231,13 +231,13 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
         .srcModuleName    = PathFindFileName(szPath),
         .info             = &dwExecVer,
     };
-    Editor::Instance().SendMsgToPlugin(exProp.nppExecProp.szAppName, &ci);
+    Editor::Instance().SendMsgToPlugin(settings.GetNppExecProp().szAppName, &ci);
 
     /* get acivity state of NppExec */
     ci.internalMsg      = NPEM_GETSTATE;
     ci.srcModuleName    = PathFindFileName(szPath);
     ci.info             = &dwExecState;
-    Editor::Instance().SendMsgToPlugin(exProp.nppExecProp.szAppName, &ci);
+    Editor::Instance().SendMsgToPlugin(settings.GetNppExecProp().szAppName, &ci);
 
     /* Add notepad menu items */
     if (isFolder) {
@@ -260,14 +260,14 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
         _strNppScripts.clear();
 
         /* add backslash if necessary */
-        if ((exProp.nppExecProp.szScriptPath[0] == '.') &&
-            (exProp.nppExecProp.szScriptPath[1] == '.')) {
+        if ((settings.GetNppExecProp().szScriptPath[0] == '.') &&
+            (settings.GetNppExecProp().szScriptPath[1] == '.')) {
             /* module path of notepad */
             GetModuleFileName(hInst, TEMP, sizeof(TEMP));
             PathRemoveFileSpec(TEMP);
-            PathAppend(TEMP, exProp.nppExecProp.szScriptPath);
+            PathAppend(TEMP, settings.GetNppExecProp().szScriptPath.c_str());
         } else {
-            _tcsncpy(TEMP, exProp.nppExecProp.szScriptPath, MAX_PATH-1);
+            _tcsncpy(TEMP, settings.GetNppExecProp().szScriptPath.c_str(), MAX_PATH-1);
         }
         if (TEMP[wcslen(TEMP) - 1] != '\\') {
             wcscat(TEMP, L"\\");
@@ -298,7 +298,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     }
     ::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, L"Open Command Window Here");
     ::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_FOLDER, L"Set as Root Folder");
-    if (!exProp.rootFolder.empty()) {
+    if (!settings.GetRootFolder().empty()) {
         ::AppendMenu(hMainMenu, MF_STRING, CTX_GO_TO_ROOT_FOLDER, L"Go to Root Folder");
         ::AppendMenu(hMainMenu, MF_STRING, CTX_CLEAR_ROOT_FOLDER, L"Clear Root Folder");
     }
@@ -848,7 +848,7 @@ void ContextMenu::openPrompt()
                 path.erase(pos, path.size());
             }
         }
-        ::ShellExecute(_hWndNpp, L"open", exProp.cphProgram.szAppName, nullptr, path.c_str(), SW_SHOW);
+        ::ShellExecute(_hWndNpp, L"open", settings.GetCphProgram().szAppName.c_str(), nullptr, path.c_str(), SW_SHOW);
     }
 }
 
@@ -864,18 +864,18 @@ void ContextMenu::setRootFolder()
         }
     }
 
-    exProp.rootFolder = path;
+    settings.SetRootFolder(path);
 }
 
 void ContextMenu::gotoRootFolder()
 {
     extern ExplorerDialog explorerDlg;
-    explorerDlg.gotoFileLocation(exProp.rootFolder);
+    explorerDlg.gotoFileLocation(settings.GetRootFolder());
 }
 
 void ContextMenu::clearRootFolder()
 {
-    exProp.rootFolder.clear();
+    settings.SetRootFolder(L"");
 }
 
 
@@ -974,14 +974,14 @@ void ContextMenu::openScriptPath(HMODULE hInst)
 {
     WCHAR TEMP[MAX_PATH];
 
-    if (exProp.nppExecProp.szScriptPath[0] == '.') {
+    if (settings.GetNppExecProp().szScriptPath[0] == '.') {
         /* module path of notepad */
         GetModuleFileName(hInst, TEMP, _countof(TEMP));
         PathRemoveFileSpec(TEMP);
-        PathAppend(TEMP, exProp.nppExecProp.szScriptPath);
+        PathAppend(TEMP, settings.GetNppExecProp().szScriptPath.c_str());
     }
     else {
-        wcscpy(TEMP, exProp.nppExecProp.szScriptPath);
+        wcscpy(TEMP, settings.GetNppExecProp().szScriptPath.c_str());
     }
     ::SendMessage(_hWndParent, EXM_OPENDIR, 0, (LPARAM)TEMP);
 }
@@ -991,14 +991,14 @@ void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
     WCHAR szScriptPath[MAX_PATH];
 
     /* concatinate execute command */
-    if (exProp.nppExecProp.szScriptPath[0] == '.') {
+    if (settings.GetNppExecProp().szScriptPath[0] == '.') {
         /* module path of notepad */
         GetModuleFileName(hInst, szScriptPath, _countof(szScriptPath));
         PathRemoveFileSpec(szScriptPath);
-        PathAppend(szScriptPath, exProp.nppExecProp.szScriptPath);
+        PathAppend(szScriptPath, settings.GetNppExecProp().szScriptPath.c_str());
     }
     else {
-        wcscpy(szScriptPath, exProp.nppExecProp.szScriptPath);
+        wcscpy(szScriptPath, settings.GetNppExecProp().szScriptPath.c_str());
     }
     if (szScriptPath[wcslen(szScriptPath) - 1] != '\\') {
         wcscat(szScriptPath, L"\\");

@@ -53,7 +53,7 @@ public:
     FavesDialog();
     ~FavesDialog();
 
-    void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
+    void init(HINSTANCE hInst, HWND hParent, Settings *prop);
 
     virtual void redraw() {
         ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
@@ -133,7 +133,7 @@ private:
 
     BOOL            _addToSession;
     FavesItemPtr    _peOpenLink;
-    ExProp*         _pExProp;
+    Settings*       _pSettings;
 
     /* database */
     FavesModel      _model;
