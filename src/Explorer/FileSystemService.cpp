@@ -1,8 +1,10 @@
 #include "FileSystemService.h"
 #include <shlobj.h>
 #include <shlwapi.h>
+#include <winnetwk.h>
 #include <wrl/client.h>
 #include <algorithm>
+#include <format>
 
 FileSystemService& FileSystemService::Instance()
 {
@@ -39,6 +41,7 @@ std::optional<std::wstring> FileSystemService::GetVolumeName(const std::wstring&
 bool FileSystemService::HaveChildren(const std::wstring& folderPath, bool useFullTree, bool showHidden)
 {
     std::wstring searchPath = folderPath;
+    if (searchPath.empty()) return false;
     if (searchPath.back() != L'\\') {
         searchPath.append(L"\\");
     }
@@ -70,10 +73,11 @@ bool FileSystemService::HaveChildren(const std::wstring& folderPath, bool useFul
     return hasChildren;
 }
 
-std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::wstring& path, bool useFullTree, bool showHidden)
+std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::wstring& path, bool showHidden, bool includeParent)
 {
     std::vector<FileSystemEntry> entries;
     std::wstring findPath = path;
+    if (findPath.empty()) return entries;
     if (findPath.back() != L'\\') {
         findPath.push_back(L'\\');
     }
@@ -83,17 +87,20 @@ std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::w
     HANDLE hFind = ::FindFirstFile(findPath.c_str(), &findData);
     if (hFind != INVALID_HANDLE_VALUE) {
         do {
-            bool isDirectory = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
             bool isHidden = (findData.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0;
-            bool isDot = (wcscmp(findData.cFileName, L".") == 0 || wcscmp(findData.cFileName, L"..") == 0);
+            bool isParent = (wcscmp(findData.cFileName, L"..") == 0);
+            bool isCurrent = (wcscmp(findData.cFileName, L".") == 0);
 
-            if (isDot || (isHidden && !showHidden) || findData.cFileName[0] == L'?') {
+            if (isCurrent || (isHidden && !showHidden) || findData.cFileName[0] == L'?') {
                 continue;
             }
 
-            if (isDirectory || useFullTree) {
-                entries.emplace_back(findData.cFileName, findData.dwFileAttributes);
+            if (isParent && !includeParent) {
+                continue;
             }
+
+            unsigned __int64 fileSize = (static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow;
+            entries.emplace_back(findData.cFileName, findData.dwFileAttributes, fileSize, findData.ftLastWriteTime, isParent);
         } while (::FindNextFile(hFind, &findData));
         ::FindClose(hFind);
     }
@@ -163,7 +170,7 @@ int FileSystemService::MoveFiles(HWND hWnd, const std::vector<std::wstring>& fro
 BOOL FileSystemService::ConvertNetPathName(const std::wstring& pathName, std::wstring& remotePath)
 {
     DWORD driveList = ::GetLogicalDrives();
-    WCHAR volumeName[4] = L" :\\";
+    WCHAR volumeName[3] = L" :";
     WCHAR remoteName[MAX_PATH];
 
     for (INT i = 0; i < 26; ++i) {
@@ -174,7 +181,11 @@ BOOL FileSystemService::ConvertNetPathName(const std::wstring& pathName, std::ws
             if (NO_ERROR == WNetGetConnection(volumeName, remoteName, &dwRemoteLength)) {
                 if (pathName.find(remoteName) == 0) {
                     remotePath = volumeName;
-                    remotePath += pathName.substr(wcslen(remoteName));
+                    std::wstring subPath = pathName.substr(wcslen(remoteName));
+                    if (!subPath.empty() && subPath.front() != L'\\') {
+                        remotePath += L"\\";
+                    }
+                    remotePath += subPath;
                     return TRUE;
                 }
             }
