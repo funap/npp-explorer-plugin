@@ -848,8 +848,8 @@ void FileList::UpdateList()
             result = lhs.FileSize() - rhs.FileSize();
             break;
         case SubItem::Date: {
-            unsigned __int64 lhsDate = (static_cast<unsigned __int64>(lhs.LastWriteTime().dwHighDateTime) << 32) + lhs.LastWriteTime().dwLowDateTime;
-            unsigned __int64 rhsDate = (static_cast<unsigned __int64>(rhs.LastWriteTime().dwHighDateTime) << 32) + rhs.LastWriteTime().dwLowDateTime;
+            unsigned __int64 lhsDate = lhs.LastWriteTime();
+            unsigned __int64 rhsDate = rhs.LastWriteTime();
             result = lhsDate - rhsDate;
             break;
         }
@@ -864,7 +864,7 @@ void FileList::UpdateList()
         if (!_pSettings->IsAscending()) {
             result *= -1;
         }
-    
+
         return result < 0;
     });
 
@@ -1160,7 +1160,7 @@ BOOL FileList::FindNextItemInList(LPUINT puPos)
 }
 
 
-void FileList::GetSize(INT64 fileSize, std::wstring & str)
+void FileList::GetSize(unsigned __int64 fileSize, std::wstring & str)
 {
     constexpr std::array<const WCHAR*, 4> SIZE_UNITS{ L"bytes", L"KB", L"MB", L"GB"};
 
@@ -1219,11 +1219,15 @@ void FileList::GetSize(INT64 fileSize, std::wstring & str)
     str = ss.str();
 }
 
-void FileList::GetDate(FILETIME ftLastWriteTime, std::wstring & str)
+void FileList::GetDate(unsigned __int64 lastWriteTime, std::wstring & str)
 {
+    FILETIME    ftLastWriteTime;
     FILETIME    ftLocalTime;
     SYSTEMTIME  sysTime;
     WCHAR       TEMP[18];
+
+    ftLastWriteTime.dwLowDateTime = static_cast<DWORD>(lastWriteTime & 0xFFFFFFFF);
+    ftLastWriteTime.dwHighDateTime = static_cast<DWORD>(lastWriteTime >> 32);
 
     FileTimeToLocalFileTime(&ftLastWriteTime, &ftLocalTime);
     FileTimeToSystemTime(&ftLocalTime, &sysTime);
