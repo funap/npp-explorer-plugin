@@ -771,7 +771,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
                     }
                     newFilePath /= szFileName;
 
-                    if (SUCCEEDED(FileSystemService::Instance().CreateNewFile(newFilePath.wstring()))) {
+                    if (FileSystemService::Instance().CreateNewFile(newFilePath.wstring())) {
                         ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
                     }
                     break;
@@ -1096,7 +1096,7 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
         WCHAR szLongPath[MAX_PATH] = {};
         std::wstring remotePath;
         /* convert possible net path name and get the full path name for compare */
-        if (FileSystemService::Instance().ConvertNetPathName(path.wstring(), remotePath) == TRUE) {
+        if (FileSystemService::Instance().ConvertNetPathName(path.wstring(), remotePath)) {
             ::GetLongPathName(remotePath.c_str(), szLongPath, MAX_PATH);
         }
         else {
@@ -2068,7 +2068,7 @@ void ExplorerDialog::Open(const std::wstring &path)
 
         /* open possible link */
         std::wstring resolvedPath;
-        if (SUCCEEDED(FileSystemService::Instance().ResolveShortCut(filePath, resolvedPath))) {
+        if (FileSystemService::Instance().ResolveShortCut(filePath, resolvedPath)) {
             if (::PathIsDirectory(resolvedPath.c_str()) != FALSE) {
                 SelectItem(resolvedPath);
             }
