@@ -650,7 +650,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     switch (iSubItem) {
     case SubItem::Name: {
         std::wstring name = _vFileList[iItem].Name();
-        if (!_vFileList[iItem].IsDirectory() || !_vFileList[iItem].IsParent()) {
+        if (!_vFileList[iItem].IsDirectory()) {
             size_t extBegPos = name.find_last_of(L'.');
             if (extBegPos != std::wstring::npos && extBegPos > 0 && !_pSettings->IsAddExtToName()) {
                 name = name.substr(0, extBegPos);
@@ -848,9 +848,9 @@ void FileList::UpdateList()
             result = lhs.FileSize() - rhs.FileSize();
             break;
         case SubItem::Date: {
-            unsigned __int64 lhsDate = lhs.LastWriteTime();
-            unsigned __int64 rhsDate = rhs.LastWriteTime();
-            result = lhsDate - rhsDate;
+            time_t lhsDate = lhs.LastWriteTime();
+            time_t rhsDate = rhs.LastWriteTime();
+            result = static_cast<INT64>(lhsDate - rhsDate);
             break;
         }
         default:
@@ -1160,7 +1160,7 @@ BOOL FileList::FindNextItemInList(LPUINT puPos)
 }
 
 
-void FileList::GetSize(unsigned __int64 fileSize, std::wstring & str)
+void FileList::GetSize(size_t fileSize, std::wstring & str)
 {
     constexpr std::array<const WCHAR*, 4> SIZE_UNITS{ L"bytes", L"KB", L"MB", L"GB"};
 
@@ -1219,24 +1219,21 @@ void FileList::GetSize(unsigned __int64 fileSize, std::wstring & str)
     str = ss.str();
 }
 
-void FileList::GetDate(unsigned __int64 lastWriteTime, std::wstring & str)
+void FileList::GetDate(time_t lastWriteTime, std::wstring & str)
 {
-    FILETIME    ftLastWriteTime;
-    FILETIME    ftLocalTime;
-    SYSTEMTIME  sysTime;
+    struct tm   tm_time;
     WCHAR       TEMP[18];
 
-    ftLastWriteTime.dwLowDateTime = static_cast<DWORD>(lastWriteTime & 0xFFFFFFFF);
-    ftLastWriteTime.dwHighDateTime = static_cast<DWORD>(lastWriteTime >> 32);
-
-    FileTimeToLocalFileTime(&ftLastWriteTime, &ftLocalTime);
-    FileTimeToSystemTime(&ftLocalTime, &sysTime);
+    if (localtime_s(&tm_time, &lastWriteTime) != 0) {
+        str = L"";
+        return;
+    }
 
     if (_pSettings->GetFmtDate() == DateFmt::DFMT_ENG) {
-        swprintf(TEMP, L"%02d/%02d/%02d %02d:%02d", sysTime.wYear % 100, sysTime.wMonth, sysTime.wDay, sysTime.wHour, sysTime.wMinute);
+        swprintf(TEMP, L"%02d/%02d/%02d %02d:%02d", (tm_time.tm_year + 1900) % 100, tm_time.tm_mon + 1, tm_time.tm_mday, tm_time.tm_hour, tm_time.tm_min);
     }
     else {
-        swprintf(TEMP, L"%02d.%02d.%04d %02d:%02d", sysTime.wDay, sysTime.wMonth, sysTime.wYear, sysTime.wHour, sysTime.wMinute);
+        swprintf(TEMP, L"%02d.%02d.%04d %02d:%02d", tm_time.tm_mday, tm_time.tm_mon + 1, tm_time.tm_year + 1900, tm_time.tm_hour, tm_time.tm_min);
     }
 
     str = TEMP;

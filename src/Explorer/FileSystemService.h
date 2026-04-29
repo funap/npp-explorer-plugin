@@ -3,10 +3,11 @@
 #include <string>
 #include <vector>
 #include <optional>
+#include <ctime>
 
 class FileSystemEntry {
 public:
-    FileSystemEntry(const std::wstring& name, unsigned int attributes, unsigned __int64 fileSize, unsigned __int64 lastWriteTime, bool isParent = false)
+    FileSystemEntry(const std::wstring& name, unsigned int attributes, size_t fileSize, time_t lastWriteTime, bool isParent = false)
         : _name(name)
         , _attributes(attributes)
         , _fileSize(fileSize)
@@ -19,8 +20,8 @@ public:
 
     const std::wstring& Name() const { return _name; }
     unsigned int Attributes() const { return _attributes; }
-    unsigned __int64 FileSize() const { return _fileSize; }
-    unsigned __int64 LastWriteTime() const { return _lastWriteTime; }
+    size_t FileSize() const { return _fileSize; }
+    time_t LastWriteTime() const { return _lastWriteTime; }
 
     bool IsDirectory() const { return (_attributes & 0x00000010) != 0; } // FILE_ATTRIBUTE_DIRECTORY
     bool IsHidden() const { return (_attributes & 0x00000002) != 0; }    // FILE_ATTRIBUTE_HIDDEN
@@ -37,8 +38,8 @@ public:
 private:
     std::wstring _name;
     unsigned int _attributes;
-    unsigned __int64 _fileSize;
-    unsigned __int64 _lastWriteTime;
+    size_t _fileSize;
+    time_t _lastWriteTime;
     bool _isParent;
 
     mutable int _iIcon;

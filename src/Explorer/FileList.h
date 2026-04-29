@@ -148,8 +148,8 @@ protected:
         ListView_SetSelectionMark(_hSelf, item);
     };
 
-    void GetSize(unsigned __int64 size, std::wstring & str);
-    void GetDate(unsigned __int64 lastWriteTime, std::wstring & str);
+    void GetSize(size_t size, std::wstring & str);
+    void GetDate(time_t lastWriteTime, std::wstring & str);
 
 private:    /* for thread */
 
