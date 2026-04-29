@@ -1565,7 +1565,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
         return;
     }
 
-    auto entries = FileSystemService::Instance().GetDirectoryEntries(path, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
+    auto entries = FileSystemService::Instance().GetDirectoryEntries(path, _pSettings->IsShowHidden());
 
     if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
@@ -1573,20 +1573,20 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
 
         /* find folders */
         for (const auto& entry : entries) {
-            if (entry.isDirectory) {
+            if (entry.IsDirectory()) {
                 folders.push_back(entry);
             }
-            else {
+            else if (_pSettings->IsUseFullTree()) {
                 files.push_back(entry);
             }
         }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
         std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
 
         /* update tree */
@@ -1595,9 +1595,9 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                 std::wstring name = _hTreeCtrl.GetItemText(hCurrentItem);
                 if (!name.empty()) {
                     /* compare current item and the current folder name */
-                    while ((name != entry.name) && (hCurrentItem != nullptr)) {
+                    while ((name != entry.Name()) && (hCurrentItem != nullptr)) {
                         /* if it's not equal delete or add new item */
-                        if (FindFolderAfter(entry.name.c_str(), hCurrentItem) == TRUE) {
+                        if (FindFolderAfter(entry.Name().c_str(), hCurrentItem) == TRUE) {
                             HTREEITEM pPrevItem = hCurrentItem;
                             hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                             _hTreeCtrl.DeleteItem(pPrevItem);
@@ -1607,10 +1607,10 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
 
                             /* Note: If hCurrentItem is the first item in the list pPrevItem is nullptr */
                             if (pPrevItem == nullptr) {
-                                hCurrentItem = InsertChildFolder(entry.name, parentItem, TVI_FIRST);
+                                hCurrentItem = InsertChildFolder(entry.Name(), parentItem, TVI_FIRST);
                             }
                             else {
-                                hCurrentItem = InsertChildFolder(entry.name, parentItem, pPrevItem);
+                                hCurrentItem = InsertChildFolder(entry.Name(), parentItem, pPrevItem);
                             }
                         }
 
@@ -1629,7 +1629,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                     INT iIconOverlayed = 0;
                     ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
 
-                    BOOL bHidden = ((entry.attributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+                    BOOL bHidden = entry.IsHidden();
                     _hTreeCtrl.UpdateItem(hCurrentItem, name, iIconNormal, iIconSelected, iIconOverlayed, bHidden, haveChildren);
 
                     /* update recursive */
@@ -1641,7 +1641,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
                 else {
-                    hCurrentItem = InsertChildFolder(entry.name, parentItem);
+                    hCurrentItem = InsertChildFolder(entry.Name(), parentItem);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
             }
@@ -1660,31 +1660,31 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
 {
     auto parentFolderPath = GetPath(parentItem);
 
-    auto entries = FileSystemService::Instance().GetDirectoryEntries(parentFolderPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
+    auto entries = FileSystemService::Instance().GetDirectoryEntries(parentFolderPath, _pSettings->IsShowHidden());
 
     if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
         for (const auto& entry : entries) {
-            if (entry.isDirectory) {
+            if (entry.IsDirectory()) {
                 folders.push_back(entry);
             }
-            else {
+            else if (_pSettings->IsUseFullTree()) {
                 files.push_back(entry);
             }
         }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
         std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
 
         for (const auto* entries_ptr : { &folders, &files }) {
             for (const auto& entry : *entries_ptr) {
-                if (InsertChildFolder(entry.name, parentItem) == nullptr) {
+                if (InsertChildFolder(entry.Name(), parentItem) == nullptr) {
                     break;
                 }
             }

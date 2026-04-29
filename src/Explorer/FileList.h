@@ -45,23 +45,7 @@ static const WORD DotPattern[] =
     0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 };
 
-struct FileListData {
-    BOOL            isParent{};
-    INT             iIcon{};
-    INT             iOverlay{};
-    BOOL            isHidden{};
-    BOOL            isDirectory{};
-    std::wstring    strName{};
-    std::wstring    strExt{};
-    std::wstring    strSize{};
-    std::wstring    strDate{};
-    /* not visible, only for sorting */
-    std::wstring    strNameExt{};
-    INT64           i64Size{};
-    INT64           i64Date{};
-    /* not visible, remember state */
-    UINT            state{};
-};
+#include "FileSystemService.h"
 
 
 class FileList : public Window, public CIDropTarget
@@ -200,7 +184,7 @@ private:    /* for thread */
     SIZE_T                          _uMaxFolders;
     SIZE_T                          _uMaxElements;
     SIZE_T                          _uMaxElementsOld;
-    std::vector<FileListData>       _vFileList;
+    std::vector<FileSystemEntry>    _vFileList;
 
     /* search in list by typing of characters */
     std::wstring                    _searchQuery;
