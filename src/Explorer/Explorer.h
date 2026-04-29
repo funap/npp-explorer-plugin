@@ -110,8 +110,6 @@ bool IsValidFile(const WIN32_FIND_DATA & Find);
 HIMAGELIST GetSmallImageList(BOOL bSystem);
 void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
-/* Resolve Links */
-
 /* current open files */
 void UpdateDocs();
 void UpdateCurrUsedDocs(LPTSTR *ppFiles, UINT numFiles);
