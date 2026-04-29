@@ -105,8 +105,6 @@ bool IsValidFileName(LPTSTR pszFileName);
 bool IsValidFolder(const WIN32_FIND_DATA & Find);
 bool IsValidParentFolder(const WIN32_FIND_DATA & Find);
 bool IsValidFile(const WIN32_FIND_DATA & Find);
-BOOL HaveChildren(const std::wstring &folderPath);
-BOOL ConvertNetPathName(LPCTSTR pPathName, LPTSTR pRemotePath, UINT length);
 
 /* Get Image Lists */
 HIMAGELIST GetSmallImageList(BOOL bSystem);
