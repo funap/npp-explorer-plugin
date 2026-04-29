@@ -101,8 +101,11 @@ std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::w
                 continue;
             }
 
-            unsigned __int64 fileSize = (static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow;
-            unsigned __int64 lastWriteTime = (static_cast<unsigned __int64>(findData.ftLastWriteTime.dwHighDateTime) << 32) + findData.ftLastWriteTime.dwLowDateTime;
+            size_t fileSize = (static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow;
+
+            unsigned __int64 ull = (static_cast<unsigned __int64>(findData.ftLastWriteTime.dwHighDateTime) << 32) + findData.ftLastWriteTime.dwLowDateTime;
+            time_t lastWriteTime = static_cast<time_t>((ull - 116444736000000000ULL) / 10000000ULL);
+
             entries.emplace_back(findData.cFileName, static_cast<unsigned int>(findData.dwFileAttributes), fileSize, lastWriteTime, isParent);
         } while (::FindNextFile(hFind, &findData));
         ::FindClose(hFind);

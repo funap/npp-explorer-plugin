@@ -111,7 +111,6 @@ HIMAGELIST GetSmallImageList(BOOL bSystem);
 void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
 /* Resolve Links */
-HRESULT ResolveShortCut(const std::wstring& shortcutPath, LPWSTR lpszFilePath, int maxBuf);
 
 /* current open files */
 void UpdateDocs();
