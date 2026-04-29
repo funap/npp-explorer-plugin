@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Editor.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
+#include "FileSystemService.h"
 
 namespace {
 
@@ -113,30 +114,6 @@ LPCTSTR GetNameStrFromCmd(UINT resourceId)
     }
     return nullptr;
 }
-
-std::optional<std::wstring> GetVolumeName(LPCWSTR drivePath)
-{
-    DWORD volumeNameSize = MAX_PATH;
-    std::wstring volumeName(volumeNameSize, L'\0');
-
-    if (::GetVolumeInformation(drivePath, &volumeName[0], volumeNameSize, nullptr, nullptr, nullptr, nullptr, 0)) {
-        volumeName.resize(wcslen(volumeName.c_str()));
-        return volumeName;
-    }
-    else {
-        return std::nullopt;
-    }
-}
-
-struct FileSystemEntry {
-    std::wstring    name;
-    DWORD           attributes;
-    FileSystemEntry(const WCHAR* fileName, DWORD fileAttributes)
-        : name(fileName)
-        , attributes(fileAttributes)
-    {
-    }
-};
 
 } // namespace
 
@@ -458,7 +435,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case EXM_USER_ICONBAR:
         tb_cmd(wParam);
         return TRUE;
-    case WM_TIMER: 
+    case WM_TIMER:
         if (wParam == EXT_UPDATEDEVICE) {
             ::KillTimer(_hSelf, EXT_UPDATEDEVICE);
             ::SetEvent(g_hEvent[EID_UPDATE_DEVICE]);
@@ -794,8 +771,9 @@ void ExplorerDialog::tb_cmd(WPARAM message)
                     }
                     newFilePath /= szFileName;
 
-                    ::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
-                    ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                    if (SUCCEEDED(FileSystemService::Instance().CreateNewFile(newFilePath.wstring()))) {
+                        ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                    }
                     break;
                 }
             }
@@ -823,7 +801,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
                     }
                     newFolderPath /= szFolderName;
 
-                    if (::CreateDirectory(newFolderPath.c_str(), nullptr) == FALSE) {
+                    if (FileSystemService::Instance().CreateNewDirectory(newFolderPath.wstring()) == false) {
                         ::MessageBox(_hParent, L"Folder couldn't be created.", L"Error", MB_OK);
                     }
                     break;
@@ -1116,10 +1094,10 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
 
     auto longPath = [](const std::filesystem::path& path) -> std::filesystem::path {
         WCHAR szLongPath[MAX_PATH] = {};
-        WCHAR szRemotePath[MAX_PATH] = {};
+        std::wstring remotePath;
         /* convert possible net path name and get the full path name for compare */
-        if (ConvertNetPathName(path.c_str(), szRemotePath, MAX_PATH) == TRUE) {
-            ::GetLongPathName(szRemotePath, szLongPath, MAX_PATH);
+        if (FileSystemService::Instance().ConvertNetPathName(path.wstring(), remotePath) == TRUE) {
+            ::GetLongPathName(remotePath.c_str(), szLongPath, MAX_PATH);
         }
         else {
             ::GetLongPathName(path.c_str(), szLongPath, MAX_PATH);
@@ -1369,17 +1347,7 @@ void ExplorerDialog::onDelete(bool immediate)
         path.pop_back();
     }
 
-    WCHAR szzFrom[MAX_PATH] = {};
-    path.copy(szzFrom, MAX_PATH);
-
-    /* delete folder into recycle bin */
-    SHFILEOPSTRUCT fileOp = {
-        .hwnd   = _hParent,
-        .wFunc  = FO_DELETE,
-        .pFrom  = szzFrom,
-        .fFlags = static_cast<FILEOP_FLAGS>((immediate ? 0 : FOF_ALLOWUNDO)),
-    };
-    SHFileOperation(&fileOp);
+    FileSystemService::Instance().DeleteFiles(_hParent, { path }, immediate);
 }
 
 void ExplorerDialog::onCut()
@@ -1437,24 +1405,25 @@ void ExplorerDialog::onPaste()
  */
 void ExplorerDialog::UpdateRoots()
 {
-    const DWORD driveList = ::GetLogicalDrives();
+    auto drives = FileSystemService::Instance().GetLogicalDrives();
 
     HTREEITEM hCurrentItem = _hTreeCtrl.GetNextItem(TVI_ROOT, TVGN_CHILD);
 
-    WCHAR drivePathName[] = L" :\\";
-
     for (INT i = 0; i < 26; i++) {
         const WCHAR driveLetter = L'A' + i;
-        drivePathName[0] = driveLetter;
+        std::wstring drivePath = L"A:\\";
+        drivePath[0] = driveLetter;
 
-        if (0x01 & (driveList >> i)) {
-            auto volumeInfo = GetVolumeName(drivePathName);
+        auto it = std::find(drives.begin(), drives.end(), drivePath);
+
+        if (it != drives.end()) {
+            auto volumeInfo = FileSystemService::Instance().GetVolumeName(drivePath);
             std::wstring volumeName = std::format(L"{}:", driveLetter);
             bool haveChildren = false;
 
             if (volumeInfo) {
                 volumeName = std::format(L"{}: [{}]", driveLetter, *volumeInfo);
-                haveChildren = HaveChildren(drivePathName);
+                haveChildren = FileSystemService::Instance().HaveChildren(drivePath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
             }
 
             if (hCurrentItem != nullptr) {
@@ -1464,7 +1433,7 @@ void ExplorerDialog::UpdateRoots()
                     int iIconNormal = 0;
                     int iIconSelected = 0;
                     int iIconOverlayed = 0;
-                    ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
@@ -1473,7 +1442,7 @@ void ExplorerDialog::UpdateRoots()
                     int iIconNormal = 0;
                     int iIconSelected = 0;
                     int iIconOverlayed = 0;
-                    ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     _hTreeCtrl.DeleteChildren(hCurrentItem);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
@@ -1553,7 +1522,7 @@ HTREEITEM ExplorerDialog::InsertChildFolder(const std::wstring& childFolderName,
     /* look if children test id allowed */
     BOOL haveChildren = FALSE;
     if (bChildrenTest == TRUE) {
-        haveChildren = HaveChildren(path);
+        haveChildren = FileSystemService::Instance().HaveChildren(path, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
     }
 
     /* insert item */
@@ -1588,47 +1557,41 @@ BOOL ExplorerDialog::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
     return isFound;
 }
 
-void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentItem, BOOL doRecursive)
+void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive)
 {
-    std::wstring findPath = path;
     HTREEITEM    hCurrentItem = _hTreeCtrl.GetNextItem(parentItem, TVGN_CHILD);
 
-    if (findPath.empty()) {
+    if (path.empty()) {
         return;
     }
-    if (findPath.back() != '\\') {
-        findPath.push_back(L'\\');
-    }
-    findPath.push_back(L'*');
 
-    WIN32_FIND_DATA findData = { 0 };
-    HANDLE  hFind = ::FindFirstFile(findPath.c_str(), &findData);
-    if (hFind != INVALID_HANDLE_VALUE) {
+    auto entries = FileSystemService::Instance().GetDirectoryEntries(path, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
+
+    if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
 
         /* find folders */
-        do {
-            if (::IsValidFolder(findData) == TRUE) {
-                folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
+        for (const auto& entry : entries) {
+            if (entry.isDirectory) {
+                folders.push_back(entry);
             }
-            else if (_pSettings->IsUseFullTree() && ::IsValidFile(findData) == TRUE) {
-                files.emplace_back(findData.cFileName, findData.dwFileAttributes);
+            else {
+                files.push_back(entry);
             }
-        } while (::FindNextFile(hFind, &findData));
-        ::FindClose(hFind);
+        }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
             return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
         });
-        std::sort(files.begin(), files.end(), [](const auto &lhs, const auto &rhs) {
+        std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
             return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
         });
 
         /* update tree */
-        for (const auto *entries : { &folders, &files }) {
-            for (const auto& entry : *entries) {
+        for (const auto* entries_ptr : { &folders, &files }) {
+            for (const auto& entry : *entries_ptr) {
                 std::wstring name = _hTreeCtrl.GetItemText(hCurrentItem);
                 if (!name.empty()) {
                     /* compare current item and the current folder name */
@@ -1658,7 +1621,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
 
                     /* update icons and expandable information */
                     std::wstring currentPath = GetPath(hCurrentItem);
-                    BOOL haveChildren = HaveChildren(currentPath);
+                    BOOL haveChildren = FileSystemService::Instance().HaveChildren(currentPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
 
                     /* get icons and update item */
                     INT iIconNormal = 0;
@@ -1697,27 +1660,19 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
 {
     auto parentFolderPath = GetPath(parentItem);
 
-    /* add wildcard */
-    parentFolderPath.append(L"*");
+    auto entries = FileSystemService::Instance().GetDirectoryEntries(parentFolderPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
 
-    /* find first file */
-    WIN32_FIND_DATA findData = {};
-    HANDLE hFind = ::FindFirstFile(parentFolderPath.c_str(), &findData);
-
-    /* if not found -> exit */
-    if (hFind != INVALID_HANDLE_VALUE) {
+    if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
-        do {
-            if (::IsValidFolder(findData) == TRUE) {
-                folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
+        for (const auto& entry : entries) {
+            if (entry.isDirectory) {
+                folders.push_back(entry);
             }
-            else if (_pSettings->IsUseFullTree() && ::IsValidFile(findData) == TRUE) {
-                files.emplace_back(findData.cFileName, findData.dwFileAttributes);
+            else {
+                files.push_back(entry);
             }
-        } while (FindNextFile(hFind, &findData));
-
-        ::FindClose(hFind);
+        }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
@@ -1727,8 +1682,8 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
             return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
         });
 
-        for (const auto *entries : { &folders, &files }) {
-            for (const auto& entry : *entries) {
+        for (const auto* entries_ptr : { &folders, &files }) {
+            for (const auto& entry : *entries_ptr) {
                 if (InsertChildFolder(entry.name, parentItem) == nullptr) {
                     break;
                 }
@@ -2112,13 +2067,13 @@ void ExplorerDialog::Open(const std::wstring &path)
         filePath += path;
 
         /* open possible link */
-        WCHAR resolvedPath[MAX_PATH];
-        if (ResolveShortCut(filePath, resolvedPath, MAX_PATH) == S_OK) {
-            if (::PathIsDirectory(resolvedPath) != FALSE) {
+        std::wstring resolvedPath;
+        if (SUCCEEDED(FileSystemService::Instance().ResolveShortCut(filePath, resolvedPath))) {
+            if (::PathIsDirectory(resolvedPath.c_str()) != FALSE) {
                 SelectItem(resolvedPath);
             }
             else {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath);
+                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath.c_str());
             }
         }
         else {

@@ -36,6 +36,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Editor.h"
 #include "PropDlg.h"
 #include "resource.h"
+#include "FileSystemService.h"
 #include "StringUtil.h"
 #include "ThemeRenderer.h"
 #include "../NppPlugin/menuCmdID.h"
@@ -1328,9 +1329,9 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
         }
         case FAVES_FILE: {
             /* open possible link */
-            WCHAR pszFilePath[MAX_PATH];
-            if (ResolveShortCut(pElem->Link(), pszFilePath, MAX_PATH) == S_OK) {
-                Editor::Instance().DoOpen(pszFilePath);
+            std::wstring resolvedPath;
+            if (SUCCEEDED(FileSystemService::Instance().ResolveShortCut(pElem->Link(), resolvedPath))) {
+                Editor::Instance().DoOpen(resolvedPath);
             } else {
                 Editor::Instance().DoOpen(pElem->Link());
             }
@@ -1400,7 +1401,7 @@ void FavesDialog::ReadSettings()
 {
     std::filesystem::path favorites_dat(_pSettings->GetConfigDir());
     favorites_dat /= FAVES_DATA;
-    
+
     if (!std::filesystem::exists(favorites_dat)) {
         _model.Clear();
         return;
@@ -1425,4 +1426,3 @@ void FavesDialog::SaveSettings()
         ::MessageBoxA(_hParent, e.what(), "Error", MB_OK | MB_ICONERROR);
     }
 }
-

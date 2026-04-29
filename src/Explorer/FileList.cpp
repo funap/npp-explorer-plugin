@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileList.h"
 #include "resource.h"
 #include "FileFilter.h"
+#include "FileSystemService.h"
 
 #include <windows.h>
 #include <algorithm>
@@ -669,16 +670,9 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
 
 void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
 {
-    std::wstring findName = currentDir;
-    if (findName.empty()) {
+    if (currentDir.empty()) {
         return;
     }
-
-    /* add backslash if necessary */
-    if (findName.back() != L'\\') {
-        findName.push_back(L'\\');
-    }
-    findName.push_back(L'*');
 
     /* end thread if it is in run mode */
     ::SetEvent(_hEvent[FL_EVT_INT]);
@@ -687,68 +681,76 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
     _uMaxElementsOld = _uMaxElements;
 
     /* find every element in folder */
-    WIN32_FIND_DATA Find{};
-    auto *hFind = ::FindFirstFile(findName.c_str(), &Find);
     std::vector<FileListData> vFoldersTemp;
     std::vector<FileListData> vFilesTemp;
+
+    std::wstring findName = currentDir;
+    if (findName.back() != L'\\') {
+        findName.push_back(L'\\');
+    }
+    findName.push_back(L'*');
+
+    WIN32_FIND_DATA Find{};
+    auto* hFind = ::FindFirstFile(findName.c_str(), &Find);
     if (hFind != INVALID_HANDLE_VALUE) {
-        /* get current filters */
-        FileListData tempData;
         do {
-        if (_pSettings->IsHideFoldersInFileList() && (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
+            if (_pSettings->IsHideFoldersInFileList() && (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) {
                 continue; // Skip directories if hideFoldersInContentView is true
             }
 
             if (IsValidFolder(Find) == TRUE) {
                 /* get data in order of list elements */
-                tempData.isParent       = FALSE;
-                tempData.iIcon          = -1;
-                tempData.iOverlay       = 0;
-                tempData.isDirectory    = TRUE;
-                tempData.isHidden       = ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
-                tempData.strName        = Find.cFileName;
-                tempData.strNameExt     = Find.cFileName;
-                tempData.strExt         = L"";
+                FileListData tempData;
+                tempData.isParent = FALSE;
+                tempData.iIcon = -1;
+                tempData.iOverlay = 0;
+                tempData.isDirectory = TRUE;
+                tempData.isHidden = ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+                tempData.strName = Find.cFileName;
+                tempData.strNameExt = Find.cFileName;
+                tempData.strExt = L"";
 
                 if (_pSettings->IsViewLong()) {
-                    tempData.strSize    = L"<DIR>";
-                    tempData.i64Size    = 0;
+                    tempData.strSize = L"<DIR>";
+                    tempData.i64Size = 0;
                     GetDate(Find.ftLastWriteTime, tempData.strDate);
-                    tempData.i64Date    = 0;
+                    tempData.i64Date = 0;
                 }
 
                 vFoldersTemp.push_back(tempData);
             }
             else if ((IsValidFile(Find) == TRUE) && (_pSettings->GetFileFilter().match(Find.cFileName) == TRUE)) {
                 /* store for correct sorting the complete name (with extension) */
-                tempData.strNameExt     = Find.cFileName;
-                tempData.isParent       = FALSE;
-                tempData.iIcon          = -1;
-                tempData.iOverlay       = 0;
-                tempData.isDirectory    = FALSE;
-                tempData.isHidden       = ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+                FileListData tempData;
+                tempData.strNameExt = Find.cFileName;
+                tempData.isParent = FALSE;
+                tempData.iIcon = -1;
+                tempData.iOverlay = 0;
+                tempData.isDirectory = FALSE;
+                tempData.isHidden = ((Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) != 0);
 
                 /* extract name and extension */
-                LPTSTR extBeg = wcsrchr(&Find.cFileName[1], '.');
+                std::wstring fileName = Find.cFileName;
+                size_t extBegPos = fileName.find_last_of(L'.');
 
-                if (extBeg != NULL) {
-                    *extBeg = '\0';
-                    tempData.strExt     = &extBeg[1];
+                if (extBegPos != std::wstring::npos && extBegPos > 0) {
+                    tempData.strExt = fileName.substr(extBegPos + 1);
+                    if (_pSettings->IsAddExtToName()) {
+                        tempData.strName = fileName;
+                    }
+                    else {
+                        tempData.strName = fileName.substr(0, extBegPos);
+                    }
                 }
                 else {
-                    tempData.strExt     = L"";
+                    tempData.strExt = L"";
+                    tempData.strName = fileName;
                 }
-
-                if ((_pSettings->IsAddExtToName()) && (extBeg != NULL)) {
-                    *extBeg = '.';
-                }
-                tempData.strName        = Find.cFileName;
-
 
                 if (_pSettings->IsViewLong()) {
-                    tempData.i64Size    = (((INT64)Find.nFileSizeHigh) << 32) + Find.nFileSizeLow;
+                    tempData.i64Size = (((INT64)Find.nFileSizeHigh) << 32) + Find.nFileSizeLow;
                     GetSize(tempData.i64Size, tempData.strSize);
-                    tempData.i64Date    = (((INT64)Find.ftLastWriteTime.dwHighDateTime) << 32) + Find.ftLastWriteTime.dwLowDateTime;
+                    tempData.i64Date = (((INT64)Find.ftLastWriteTime.dwHighDateTime) << 32) + Find.ftLastWriteTime.dwLowDateTime;
                     GetDate(Find.ftLastWriteTime, tempData.strDate);
                 }
 
@@ -756,25 +758,24 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
             }
             else if ((IsValidParentFolder(Find) == TRUE) && !PathIsRoot(currentDir.c_str())) {
                 /* if 'Find' is not a folder but a parent one */
-                tempData.isParent       = TRUE;
-                tempData.isHidden       = FALSE;
-                tempData.isDirectory    = TRUE;
-                tempData.strName        = Find.cFileName;
-                tempData.strNameExt     = Find.cFileName;
-                tempData.strExt         = L"";
+                FileListData tempData;
+                tempData.isParent = TRUE;
+                tempData.isHidden = FALSE;
+                tempData.isDirectory = TRUE;
+                tempData.strName = Find.cFileName;
+                tempData.strNameExt = Find.cFileName;
+                tempData.strExt = L"";
 
                 if (_pSettings->IsViewLong()) {
-                    tempData.strSize    = L"<DIR>";
-                    tempData.i64Size    = 0;
+                    tempData.strSize = L"<DIR>";
+                    tempData.i64Size = 0;
                     GetDate(Find.ftLastWriteTime, tempData.strDate);
-                    tempData.i64Date    = 0;
+                    tempData.i64Date = 0;
                 }
 
                 vFoldersTemp.push_back(tempData);
             }
         } while (FindNextFile(hFind, &Find));
-
-        /* close file search */
         ::FindClose(hFind);
     }
 
@@ -1141,31 +1142,20 @@ void FileList::onPaste()
 
 void FileList::onDelete(bool immediate)
 {
-    SIZE_T  lengthPath  = _pSettings->GetCurrentDir().size();
-    UINT    bufSize     = ListView_GetSelectedCount(_hSelf) * MAX_PATH;
-    LPTSTR  lpszFiles   = new WCHAR[bufSize];
-    ::ZeroMemory(lpszFiles, bufSize);
+    std::vector<std::wstring> filesToDelete;
 
-    /* add files to payload and seperate with "\0" */
-    SIZE_T offset = 0;
     for (SIZE_T i = 0; i < _uMaxElements; i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
             if ((i == 0) && (_vFileList[i].isParent == TRUE)) {
                 continue;
             }
-            wcscpy(&lpszFiles[offset], _pSettings->GetCurrentDir().c_str());
-            wcscpy(&lpszFiles[offset+lengthPath], _vFileList[i].strNameExt.c_str());
-            offset += lengthPath + _vFileList[i].strNameExt.size() + 1;
+            filesToDelete.push_back(_pSettings->GetCurrentDir() + _vFileList[i].strNameExt);
         }
     }
 
-    /* delete folder into recycle bin */
-    SHFILEOPSTRUCT fileOp   = {0};
-    fileOp.hwnd             = _hParent;
-    fileOp.pFrom            = lpszFiles;
-    fileOp.fFlags           = (immediate ? 0 : FOF_ALLOWUNDO);
-    fileOp.wFunc            = FO_DELETE;
-    SHFileOperation(&fileOp);
+    if (!filesToDelete.empty()) {
+        FileSystemService::Instance().DeleteFiles(_hParent, filesToDelete, immediate);
+    }
 }
 
 BOOL FileList::FindNextItemInList(LPUINT puPos)
@@ -1595,63 +1585,48 @@ bool FileList::OnDrop(FORMATETC* /* pFmtEtc*/, STGMEDIUM& medium, DWORD* pdwEffe
     return true;
 }
 
-bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
+bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD& dwEffect)
 {
     /* get files from and to, to fill struct */
-    UINT    headerSize      = sizeof(DROPFILES);
-    SIZE_T  payloadSize     = ::GlobalSize(hData) - headerSize;
-    LPVOID  pPld            = (LPBYTE)hData + headerSize;
-    LPTSTR  lpszFilesFrom   = nullptr;
+    UINT    headerSize = sizeof(DROPFILES);
+    SIZE_T  payloadSize = ::GlobalSize(hData) - headerSize;
+    LPVOID  pPld = (LPBYTE)hData + headerSize;
+    std::vector<std::wstring> filesFrom;
 
     if (((LPDROPFILES)hData)->fWide == TRUE) {
-        lpszFilesFrom = (LPWSTR)pPld;
+        LPCWSTR p = (LPCWSTR)pPld;
+        while (*p) {
+            filesFrom.push_back(p);
+            p += wcslen(p) + 1;
+        }
     }
     else {
-        lpszFilesFrom = new WCHAR[payloadSize];
-        ::MultiByteToWideChar(CP_ACP, 0, (LPCSTR)pPld, (int)payloadSize, lpszFilesFrom, (int)payloadSize);
+        LPCSTR p = (LPCSTR)pPld;
+        while (*p) {
+            int len = ::MultiByteToWideChar(CP_ACP, 0, p, -1, nullptr, 0);
+            std::wstring wstr(len, L'\0');
+            ::MultiByteToWideChar(CP_ACP, 0, p, -1, &wstr[0], len);
+            wstr.resize(len - 1);
+            filesFrom.push_back(wstr);
+            p += strlen(p) + 1;
+        }
     }
 
-    if (lpszFilesFrom != NULL) {
-        UINT count = 0;
-        SIZE_T length = payloadSize;
-        if (((LPDROPFILES)hData)->fWide == TRUE) {
-            length = payloadSize / 2;
-        }
-        for (UINT i = 0; i < length-1; i++) {
-            if (lpszFilesFrom[i] == '\0') {
-                count++;
-            }
-        }
+    if (!filesFrom.empty()) {
+        const std::wstring message = (dwEffect == DROPEFFECT_MOVE)
+            ? std::format(L"Move {} file(s)/folder(s) to:\n\n{}", filesFrom.size(), pszTo)
+            : std::format(L"Copy {} file(s)/folder(s) to:\n\n{}", filesFrom.size(), pszTo);
 
-        WCHAR text[MAX_PATH + 32];
-        if (dwEffect == DROPEFFECT_MOVE) {
-            swprintf(text, L"Move %d file(s)/folder(s) to:\n\n%ls", count, pszTo);
-        }
-        else {// dwEffect == DROPEFFECT_COPY
-            swprintf(text, L"Copy %d file(s)/folder(s) to:\n\n%ls", count, pszTo);
-        }
-
-        if (::MessageBox(_hSelf, text, L"Explorer", MB_YESNO) == IDYES) {
-            // TODO move or copy the file views into other window in dependency to keystate
-            SHFILEOPSTRUCT fileOp = {};
-            fileOp.hwnd         = _hParent;
-            fileOp.pFrom        = lpszFilesFrom;
-            fileOp.pTo          = pszTo;
-            fileOp.fFlags       = FOF_RENAMEONCOLLISION;
+        if (::MessageBox(_hSelf, message.c_str(), L"Explorer", MB_YESNO) == IDYES) {
             if (dwEffect == DROPEFFECT_MOVE) {
-                fileOp.wFunc    = FO_MOVE;
+                FileSystemService::Instance().MoveFiles(_hParent, filesFrom, pszTo);
             }
             else {
-                fileOp.wFunc    = FO_COPY;
+                FileSystemService::Instance().CopyFiles(_hParent, filesFrom, pszTo);
             }
-            SHFileOperation(&fileOp);
 
             ::KillTimer(_hParent, EXT_UPDATEACTIVATEPATH);
             ::SetTimer(_hParent, EXT_UPDATEACTIVATEPATH, 200, NULL);
-        }
-
-        if (((LPDROPFILES)hData)->fWide == FALSE) {
-            delete [] lpszFilesFrom;
         }
     }
     return true;

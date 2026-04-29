@@ -252,6 +252,7 @@
     <ClCompile Include="src\Explorer\FileDlg.cpp" />
     <ClCompile Include="src\Explorer\FileFilter.cpp" />
     <ClCompile Include="src\Explorer\FileList.cpp" />
+    <ClCompile Include="src/Explorer/FileSystemService.cpp" />
     <ClCompile Include="src\Explorer\FileSystemWatcher.cpp" />
     <ClCompile Include="src\Explorer\FuzzyMatcher.cpp" />
     <ClCompile Include="src\Explorer\HelpDialog.cpp" />
@@ -293,6 +294,7 @@
     <ClInclude Include="src\Explorer\FileDlg.h" />
     <ClInclude Include="src\Explorer\FileFilter.h" />
     <ClInclude Include="src\Explorer\FileList.h" />
+    <ClInclude Include="src/Explorer/FileSystemService.h" />
     <ClInclude Include="src\Explorer\FileSystemWatcher.h" />
     <ClInclude Include="src\Explorer\FuzzyMatcher.h" />
     <ClInclude Include="src\Explorer\HelpDialog.h" />

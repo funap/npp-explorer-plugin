@@ -484,7 +484,7 @@ bool IsValidFolder(const WIN32_FIND_DATA & Find)
     return (Find.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
         && (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || settings.IsShowHidden())
         && (_tcscmp(Find.cFileName, L".") != 0)
-        && (_tcscmp(Find.cFileName, L"..") != 0) 
+        && (_tcscmp(Find.cFileName, L"..") != 0)
         && (Find.cFileName[0] != '?');
 }
 
@@ -500,67 +500,6 @@ bool IsValidFile(const WIN32_FIND_DATA & Find)
         && (!(Find.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN) || settings.IsShowHidden());
 }
 
-BOOL HaveChildren(const std::wstring &folderPath)
-{
-    std::wstring searchPath = folderPath;
-    if (searchPath.back() != '\\') {
-        searchPath.append(L"\\");
-    }
-    /* add wildcard */
-    searchPath.append(L"*");
-
-    WIN32_FIND_DATA findData{};
-    HANDLE hFind = ::FindFirstFile(searchPath.c_str(), &findData);
-    if (hFind == INVALID_HANDLE_VALUE) {
-        return FALSE;
-    }
-
-    BOOL bFound = TRUE;
-    BOOL bRet = FALSE;
-    do {
-        if (IsValidFolder(findData) == TRUE) {
-            bFound = FALSE;
-            bRet = TRUE;
-            break;
-        }
-        if (settings.IsUseFullTree() && IsValidFile(findData) == TRUE) {
-            bFound = FALSE;
-            bRet = TRUE;
-            break;
-        }
-
-    } while ((FindNextFile(hFind, &findData)) && (bFound == TRUE));
-
-    ::FindClose(hFind);
-
-    return bRet;
-}
-
-BOOL ConvertNetPathName(LPCTSTR pPathName, LPTSTR pRemotePath, UINT length)
-{
-    DWORD driveList      = ::GetLogicalDrives();
-    WCHAR volumeName[MAX_PATH];
-    WCHAR remoteName[MAX_PATH];
-
-    for (INT i = 0; i < 26; ++i) {
-        if (0x01 & (driveList >> i)) {
-            _stprintf(volumeName, L"%c:", 'A' + i);
-
-            /* call get connection twice to get the real size */
-            DWORD dwRemoteLength = 1;
-            if (ERROR_MORE_DATA == WNetGetConnection(volumeName, remoteName, &dwRemoteLength)) {
-                if ((dwRemoteLength < MAX_PATH) && (NO_ERROR == WNetGetConnection(volumeName, remoteName, &dwRemoteLength))) {
-                    if (_tcsstr(pPathName, remoteName) != nullptr) {
-                        wcscpy(pRemotePath, volumeName);
-                        _tcsncat(pRemotePath, &pPathName[dwRemoteLength - 1], length - 2);
-                        return TRUE;
-                    }
-                }
-            }
-        }
-    }
-    return FALSE;
-}
 
 // Get system images
 HIMAGELIST GetSmallImageList(BOOL bSystem)
@@ -700,42 +639,6 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
     }
 }
 
-// Resolve files if they are shortcuts
-HRESULT ResolveShortCut(const std::wstring &shortcutPath, LPWSTR lpszFilePath, int maxBuf)
-{
-    Microsoft::WRL::ComPtr<IShellLink> shellLink;
-    HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink));
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    Microsoft::WRL::ComPtr<IPersistFile> persistFile;
-    hr = shellLink.As(&persistFile);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    hr = persistFile->Load(shortcutPath.c_str(), STGM_READ);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    hr = shellLink->Resolve(nullptr, SLR_UPDATE);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    hr = shellLink->GetPath(lpszFilePath, maxBuf, nullptr, SLGP_RAWPATH);
-    if (FAILED(hr)) {
-        return hr;
-    }
-
-    if (::PathIsDirectory(lpszFilePath) && lpszFilePath[wcslen(lpszFilePath) - 1] != L'\\') {
-        wcsncat_s(lpszFilePath, maxBuf, L"\\", 1);
-    }
-
-    return S_OK;
-}
 
 
 // Current docs
