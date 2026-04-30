@@ -42,6 +42,7 @@ struct ThemeColors
     COLORREF primary        = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
     COLORREF primary_bg     = ::GetSysColor(COLOR_HIGHLIGHT);
     COLORREF primary_border = ::GetSysColor(COLOR_ACTIVEBORDER);
+    COLORREF hover_bg       = ::GetSysColor(COLOR_HOTLIGHT);
 };
 
 
@@ -55,18 +56,9 @@ struct Brushes
     Brush primary;        // for primary/highlighted text
     Brush primary_bg;     // for primary/highlighted background
     Brush primary_border; // for primary element borders
+    Brush hover_bg;       // for hover background
 };
 
-class IListViewDataProvider {
-public:
-    virtual ~IListViewDataProvider() = default;
-    virtual size_t GetMaxFolders() const = 0;
-    virtual std::wstring GetItemName(size_t index) const = 0;
-    virtual bool IsItemParent(size_t index) const = 0;
-    virtual bool IsFileOpen(size_t index) const = 0;
-    virtual HFONT GetUnderlineFont() const = 0;
-    virtual HIMAGELIST GetParentImageList() const = 0;
-};
 
 class ThemeRenderer
 {
@@ -120,5 +112,8 @@ private:
     ThemeColors  m_colors;
     Brushes m_brushes;
     std::set<HWND>  m_windows;
+
+    int     m_hotHeaderItem = -1;
+    HWND    m_hHeaderTracked = nullptr;
 };
 

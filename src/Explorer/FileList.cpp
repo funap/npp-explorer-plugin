@@ -103,7 +103,6 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
     /* this is the list element */
     Window::init(hInst, hParent);
     _hSelf = hParentList;
-    ::SetWindowLongPtr(_hSelf, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(static_cast<IListViewDataProvider*>(this)));
 
     /* create semaphore for thead */
     _hSemaphore = ::CreateSemaphore(nullptr, 1, 1, nullptr);
@@ -544,8 +543,42 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
             UpdateSelItems();
             break;
         case NM_CUSTOMDRAW: {
-            // Handled by ThemeRenderer
-            return FALSE;
+            LPNMLVCUSTOMDRAW lpCD = (LPNMLVCUSTOMDRAW)lParam;
+            switch (lpCD->nmcd.dwDrawStage) {
+            case CDDS_PREPAINT:
+                ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYITEMDRAW);
+                return TRUE;
+            case CDDS_ITEMPREPAINT: {
+                auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+                LRESULT res = CDRF_DODEFAULT;
+                if (index >= static_cast<INT>(_uMaxFolders)) {
+                    if (IsFileOpen(index)) {
+                        ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
+                        res |= CDRF_NEWFONT;
+                    }
+                }
+                if (_vFileList[index].IsParent()) {
+                    res |= CDRF_NOTIFYPOSTPAINT;
+                }
+                ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, res);
+                return TRUE;
+            }
+            case CDDS_ITEMPOSTPAINT: {
+                auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+                if (_vFileList[index].IsParent()) {
+                    RECT rc {};
+                    ListView_GetSubItemRect(_hSelf, index, lpCD->iSubItem, LVIR_ICON, &rc);
+                    UINT state = ListView_GetItemState(_hSelf, index, LVIS_SELECTED | LVIS_DROPHILITED);
+                    bool isSelected = ((state & LVIS_SELECTED) ? (::GetFocus() == _hSelf) : ((state & LVIS_DROPHILITED) == LVIS_DROPHILITED));
+                    ImageList_Draw(_hImlParent, ICON_PARENT, lpCD->nmcd.hdc, rc.left, rc.top, ILD_NORMAL | (isSelected ? ILD_SELECTED : 0));
+                }
+                ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_DODEFAULT);
+                return TRUE;
+            }
+            default:
+                return FALSE;
+            }
+            break;
         }
         default:
             break;

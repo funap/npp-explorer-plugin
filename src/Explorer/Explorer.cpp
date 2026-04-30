@@ -303,6 +303,7 @@ void UpdateThemeColor()
         .primary            = editorColors.text,
         .primary_bg         = editorColors.hotBackground,
         .primary_border     = editorColors.hotEdge,
+        .hover_bg           = editorColors.hotBackground,
     };
     auto isDarkMode = IsDarkColor(colors.body_bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
