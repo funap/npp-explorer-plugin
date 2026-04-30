@@ -28,6 +28,7 @@
 #include <memory>
 #include <set>
 #include <stdexcept>
+#include <string>
 
 #include "Graphics.h"
 
@@ -54,6 +55,17 @@ struct Brushes
     Brush primary;        // for primary/highlighted text
     Brush primary_bg;     // for primary/highlighted background
     Brush primary_border; // for primary element borders
+};
+
+class IListViewDataProvider {
+public:
+    virtual ~IListViewDataProvider() = default;
+    virtual size_t GetMaxFolders() const = 0;
+    virtual std::wstring GetItemName(size_t index) const = 0;
+    virtual bool IsItemParent(size_t index) const = 0;
+    virtual bool IsFileOpen(size_t index) const = 0;
+    virtual HFONT GetUnderlineFont() const = 0;
+    virtual HIMAGELIST GetParentImageList() const = 0;
 };
 
 class ThemeRenderer
@@ -101,6 +113,8 @@ private:
     LRESULT RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT HeaderProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     BOOL    m_isDarkMode;
     ThemeColors  m_colors;

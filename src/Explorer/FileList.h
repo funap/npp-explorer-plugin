@@ -46,9 +46,10 @@ static const WORD DotPattern[] =
 };
 
 #include "FileSystemService.h"
+#include "ThemeRenderer.h"
 
 
-class FileList : public Window, public CIDropTarget
+class FileList : public Window, public CIDropTarget, public IListViewDataProvider
 {
 public:
     FileList() = delete;
@@ -57,6 +58,17 @@ public:
 
     void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
     void initProp(Settings* prop);
+
+    // IListViewDataProvider
+    virtual size_t GetMaxFolders() const override { return _uMaxFolders; }
+    virtual std::wstring GetItemName(size_t index) const override { return _vFileList[index].Name(); }
+    virtual bool IsItemParent(size_t index) const override { return _vFileList[index].IsParent(); }
+    virtual bool IsFileOpen(size_t index) const override;
+    virtual HFONT GetUnderlineFont() const override { return _pSettings->GetUnderlineFont(); }
+    virtual HIMAGELIST GetParentImageList() const override { return _hImlParent; }
+
+    bool IsItemHidden(size_t index) const { return _vFileList[index].IsHidden(); }
+    Settings* GetSettings() const { return _pSettings; }
 
     void viewPath(const std::wstring& currentDir, BOOL redraw = FALSE);
 

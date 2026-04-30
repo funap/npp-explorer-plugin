@@ -26,12 +26,15 @@
 #include <uxtheme.h>
 #include <Vsstyle.h>
 #include <Vssym32.h>
+#include "FileList.h"
 
 namespace {
 constexpr UINT_PTR WINDOW_SUBCLASS_ID   = 0;
 constexpr UINT_PTR REBAR_SUBCLASS_ID    = 1;
 constexpr UINT_PTR BUTTON_SUBCLASS_ID   = 2;
 constexpr UINT_PTR EDIT_SUBCLASS_ID     = 3;
+constexpr UINT_PTR LISTVIEW_SUBCLASS_ID = 4;
+constexpr UINT_PTR HEADER_SUBCLASS_ID   = 5;
 
 auto GetClassName(HWND hwnd) -> std::wstring
 {
@@ -135,6 +138,16 @@ void ThemeRenderer::Register(HWND hwnd)
         else if (className == WC_EDIT) {
             ::SetWindowSubclass(childWindow, DefaultSubclassProc, EDIT_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
         }
+        else if (className == WC_LISTVIEW) {
+            ::SetWindowSubclass(childWindow, DefaultSubclassProc, LISTVIEW_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
+            HWND hHeader = ListView_GetHeader(childWindow);
+            if (hHeader) {
+                ::SetWindowSubclass(hHeader, DefaultSubclassProc, HEADER_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
+            }
+        }
+        else if (className == WC_TREEVIEW) {
+            ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
+        }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
 
@@ -164,6 +177,16 @@ void ThemeRenderer::ApplyTheme(HWND hwnd)
             ListView_SetTextColor(childWindow, self->m_colors.secondary);
             ListView_SetTextBkColor(childWindow, CLR_NONE);
             ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
+
+            HWND hHeader = ListView_GetHeader(childWindow);
+            if (hHeader) {
+                ::SetWindowSubclass(hHeader, DefaultSubclassProc, HEADER_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(self));
+            }
+        }
+        else if (className == WC_TREEVIEW) {
+            TreeView_SetBkColor(childWindow, self->m_colors.secondary_bg);
+            TreeView_SetTextColor(childWindow, self->m_colors.secondary);
+            ::SetWindowTheme(childWindow, self->m_isDarkMode ? L"DarkMode_Explorer" : L"Explorer", nullptr);
         }
         return TRUE;
     }, reinterpret_cast<LPARAM>(this));
@@ -181,6 +204,10 @@ LRESULT CALLBACK ThemeRenderer::DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM
         return self->ButtonProc(hWnd, uMsg, wParam, lParam);
     case EDIT_SUBCLASS_ID:
         return self->EditProc(hWnd, uMsg, wParam, lParam);
+    case LISTVIEW_SUBCLASS_ID:
+        return self->ListViewProc(hWnd, uMsg, wParam, lParam);
+    case HEADER_SUBCLASS_ID:
+        return self->HeaderProc(hWnd, uMsg, wParam, lParam);
     default:
         break;
     }
@@ -202,6 +229,54 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
         ::SetTextColor(hdc, m_colors.secondary);
         ::SetBkColor(hdc, m_colors.secondary_bg);
         return (LRESULT)(HBRUSH)m_brushes.secondary_bg;
+    }
+    case WM_NOTIFY: {
+        LPNMHDR nmhdr = (LPNMHDR)lParam;
+        if (nmhdr->code == NM_CUSTOMDRAW) {
+            std::wstring className = GetClassName(nmhdr->hwndFrom);
+            if (className == WC_LISTVIEW) {
+                LPNMLVCUSTOMDRAW lpCD = (LPNMLVCUSTOMDRAW)lParam;
+                switch (lpCD->nmcd.dwDrawStage) {
+                case CDDS_PREPAINT:
+                    return CDRF_NOTIFYITEMDRAW;
+                case CDDS_ITEMPREPAINT: {
+                    auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+                    IListViewDataProvider* pDataProvider = reinterpret_cast<IListViewDataProvider*>(::GetWindowLongPtr(nmhdr->hwndFrom, GWLP_USERDATA));
+
+                    if (m_isDarkMode) {
+                        lpCD->clrText = m_colors.secondary;
+                        lpCD->clrTextBk = m_colors.secondary_bg;
+
+                        if (lpCD->nmcd.uItemState & CDIS_SELECTED) {
+                            lpCD->clrText = m_colors.primary;
+                            lpCD->clrTextBk = m_colors.primary_bg;
+                        }
+                    }
+
+                    if (pDataProvider) {
+                        if (pDataProvider->IsFileOpen(index)) {
+                            ::SelectObject(lpCD->nmcd.hdc, pDataProvider->GetUnderlineFont());
+                        }
+                    }
+
+                    return CDRF_NEWFONT | CDRF_NOTIFYPOSTPAINT;
+                }
+                case CDDS_ITEMPOSTPAINT: {
+                    auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
+                    IListViewDataProvider* pDataProvider = reinterpret_cast<IListViewDataProvider*>(::GetWindowLongPtr(nmhdr->hwndFrom, GWLP_USERDATA));
+                    if (pDataProvider && pDataProvider->IsItemParent(index)) {
+                        RECT rc {};
+                        ListView_GetSubItemRect(nmhdr->hwndFrom, index, lpCD->iSubItem, LVIR_ICON, &rc);
+                        UINT state = ListView_GetItemState(nmhdr->hwndFrom, index, LVIS_SELECTED | LVIS_DROPHILITED);
+                        bool isSelected = ((state & LVIS_SELECTED) ? (::GetFocus() == nmhdr->hwndFrom) : ((state & LVIS_DROPHILITED) == LVIS_DROPHILITED));
+                        ImageList_Draw(pDataProvider->GetParentImageList(), ICON_PARENT, lpCD->nmcd.hdc, rc.left, rc.top, ILD_NORMAL | (isSelected ? ILD_SELECTED : 0));
+                    }
+                    return CDRF_DODEFAULT;
+                }
+                }
+            }
+        }
+        break;
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, REBAR_SUBCLASS_ID);
@@ -266,7 +341,88 @@ LRESULT ThemeRenderer::EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPar
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, EDIT_SUBCLASS_ID);
-        m_windows.erase(hWnd);
+        break;
+    }
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT ThemeRenderer::ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg) {
+    case WM_NCDESTROY:
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, LISTVIEW_SUBCLASS_ID);
+        break;
+    }
+    return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT ThemeRenderer::HeaderProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg) {
+    case WM_PAINT: {
+        if (!m_isDarkMode) break;
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hWnd, &ps);
+
+        RECT rcHeader;
+        GetClientRect(hWnd, &rcHeader);
+
+        // Fill background
+        FillRect(hdc, &rcHeader, m_brushes.secondary_bg);
+
+        int count = Header_GetItemCount(hWnd);
+        for (int i = 0; i < count; i++) {
+            RECT rcItem;
+            Header_GetItemRect(hWnd, i, &rcItem);
+
+            // Draw text
+            WCHAR text[MAX_PATH];
+            HDITEM hdi = { .mask = HDI_TEXT | HDI_FORMAT, .pszText = text, .cchTextMax = MAX_PATH };
+            Header_GetItem(hWnd, i, &hdi);
+
+            SetTextColor(hdc, m_colors.secondary);
+            SetBkMode(hdc, TRANSPARENT);
+
+            RECT rcText = rcItem;
+            rcText.left += 6;
+            DrawText(hdc, text, -1, &rcText, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_END_ELLIPSIS);
+
+            // Draw sort arrow
+            if (hdi.fmt & (HDF_SORTUP | HDF_SORTDOWN)) {
+                HPEN hPen = CreatePen(PS_SOLID, 1, m_colors.secondary);
+                HPEN hOldPen = (HPEN)SelectObject(hdc, hPen);
+
+                int x = rcItem.right - 15;
+                int y = rcItem.top + (rcItem.bottom - rcItem.top) / 2;
+
+                if (hdi.fmt & HDF_SORTUP) {
+                    MoveToEx(hdc, x, y + 2, nullptr);
+                    LineTo(hdc, x + 4, y - 2);
+                    LineTo(hdc, x + 8, y + 2);
+                    LineTo(hdc, x, y + 2);
+                } else {
+                    MoveToEx(hdc, x, y - 2, nullptr);
+                    LineTo(hdc, x + 4, y + 2);
+                    LineTo(hdc, x + 8, y - 2);
+                    LineTo(hdc, x, y - 2);
+                }
+
+                SelectObject(hdc, hOldPen);
+                DeleteObject(hPen);
+            }
+
+            // Draw separator
+            if (i < count - 1) {
+                RECT rcSep = { rcItem.right - 1, rcItem.top + 4, rcItem.right, rcItem.bottom - 4 };
+                FillRect(hdc, &rcSep, m_brushes.border);
+            }
+        }
+
+        EndPaint(hWnd, &ps);
+        return 0;
+    }
+    case WM_NCDESTROY:
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, HEADER_SUBCLASS_ID);
         break;
     }
     return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
