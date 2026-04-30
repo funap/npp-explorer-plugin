@@ -165,12 +165,14 @@ std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::w
             bool isParent = (wcscmp(findData.cFileName, L"..") == 0);
             bool isCurrent = (wcscmp(findData.cFileName, L".") == 0);
 
-            if (isCurrent || (isHidden && !showHidden) || findData.cFileName[0] == L'?') {
-                continue;
+            if (isParent) {
+                if (!includeParent) continue;
+                // Always include parent if requested, even if hidden
             }
-
-            if (isParent && !includeParent) {
-                continue;
+            else {
+                if (isCurrent || (isHidden && !showHidden) || findData.cFileName[0] == L'?') {
+                    continue;
+                }
             }
 
             size_t fileSize = static_cast<size_t>((static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow);
