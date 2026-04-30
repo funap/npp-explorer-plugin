@@ -718,7 +718,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
     std::vector<FileSystemEntry> vFoldersTemp;
     std::vector<FileSystemEntry> vFilesTemp;
 
-    auto entries = FileSystemService::Instance().GetDirectoryEntries(currentDir, _pSettings->IsShowHidden(), true);
+    auto entries = FileSystemService::GetDirectoryEntries(currentDir, _pSettings->IsShowHidden(), true);
 
     for (const auto& entry : entries) {
         if (entry.IsDirectory()) {
@@ -1127,7 +1127,7 @@ void FileList::onDelete(bool immediate)
     }
 
     if (!filesToDelete.empty()) {
-        FileSystemService::Instance().DeleteFiles(_hParent, filesToDelete, immediate);
+        FileSystemService::DeleteFiles(_hParent, filesToDelete, immediate);
     }
 }
 
@@ -1593,10 +1593,10 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD& dwEffect)
 
         if (::MessageBox(_hSelf, message.c_str(), L"Explorer", MB_YESNO) == IDYES) {
             if (dwEffect == DROPEFFECT_MOVE) {
-                FileSystemService::Instance().MoveFiles(_hParent, filesFrom, pszTo);
+                FileSystemService::MoveFiles(_hParent, filesFrom, pszTo);
             }
             else {
-                FileSystemService::Instance().CopyFiles(_hParent, filesFrom, pszTo);
+                FileSystemService::CopyFiles(_hParent, filesFrom, pszTo);
             }
 
             ::KillTimer(_hParent, EXT_UPDATEACTIVATEPATH);

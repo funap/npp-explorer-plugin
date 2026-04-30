@@ -8,11 +8,83 @@
 #include <algorithm>
 #include <format>
 
-FileSystemService& FileSystemService::Instance()
+FileSystemEntry::FileSystemEntry(const std::wstring& name, unsigned int attributes, size_t fileSize, time_t lastWriteTime, bool isParent)
+    : _name(name)
+    , _attributes(attributes)
+    , _fileSize(fileSize)
+    , _lastWriteTime(lastWriteTime)
+    , _isParent(isParent)
+    , _iIcon(-1)
+    , _iOverlay(0)
+    , _state(0)
 {
-    static FileSystemService instance;
-    return instance;
 }
+
+const std::wstring& FileSystemEntry::Name() const
+{
+    return _name;
+}
+
+unsigned int FileSystemEntry::Attributes() const
+{
+    return _attributes;
+}
+
+size_t FileSystemEntry::FileSize() const
+{
+    return _fileSize;
+}
+
+time_t FileSystemEntry::LastWriteTime() const
+{
+    return _lastWriteTime;
+}
+
+bool FileSystemEntry::IsDirectory() const
+{
+    return (_attributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
+}
+
+bool FileSystemEntry::IsHidden() const
+{
+    return (_attributes & FILE_ATTRIBUTE_HIDDEN) != 0;
+}
+
+bool FileSystemEntry::IsParent() const
+{
+    return _isParent;
+}
+
+int FileSystemEntry::Icon() const
+{
+    return _iIcon;
+}
+
+void FileSystemEntry::SetIcon(int icon) const
+{
+    _iIcon = icon;
+}
+
+int FileSystemEntry::Overlay() const
+{
+    return _iOverlay;
+}
+
+void FileSystemEntry::SetOverlay(int overlay) const
+{
+    _iOverlay = overlay;
+}
+
+unsigned int FileSystemEntry::State() const
+{
+    return _state;
+}
+
+void FileSystemEntry::SetState(unsigned int state) const
+{
+    _state = state;
+}
+
 
 std::vector<std::wstring> FileSystemService::GetLogicalDrives()
 {
@@ -101,7 +173,7 @@ std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::w
                 continue;
             }
 
-            size_t fileSize = (static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow;
+            size_t fileSize = static_cast<size_t>((static_cast<unsigned __int64>(findData.nFileSizeHigh) << 32) + findData.nFileSizeLow);
 
             unsigned __int64 ull = (static_cast<unsigned __int64>(findData.ftLastWriteTime.dwHighDateTime) << 32) + findData.ftLastWriteTime.dwLowDateTime;
             time_t lastWriteTime = static_cast<time_t>((ull - 116444736000000000ULL) / 10000000ULL);
@@ -192,12 +264,12 @@ bool FileSystemService::ConvertNetPathName(const std::wstring& pathName, std::ws
                         remotePath += L"\\";
                     }
                     remotePath += subPath;
-                    return TRUE;
+                    return true;
                 }
             }
         }
     }
-    return FALSE;
+    return false;
 }
 
 bool FileSystemService::ResolveShortCut(const std::wstring& shortcutPath, std::wstring& resolvedPath)

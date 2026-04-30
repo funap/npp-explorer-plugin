@@ -1330,7 +1330,7 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
         case FAVES_FILE: {
             /* open possible link */
             std::wstring resolvedPath;
-            if (FileSystemService::Instance().ResolveShortCut(pElem->Link(), resolvedPath)) {
+            if (FileSystemService::ResolveShortCut(pElem->Link(), resolvedPath)) {
                 Editor::Instance().DoOpen(resolvedPath);
             } else {
                 Editor::Instance().DoOpen(pElem->Link());
