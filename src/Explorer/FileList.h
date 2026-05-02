@@ -46,7 +46,6 @@ static const WORD DotPattern[] =
 };
 
 #include "FileSystemService.h"
-#include "ThemeRenderer.h"
 
 
 class FileList : public Window, public CIDropTarget

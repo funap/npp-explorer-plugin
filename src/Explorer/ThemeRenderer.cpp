@@ -115,7 +115,6 @@ void ThemeRenderer::SetTheme(BOOL isDarkMode, const ThemeColors& colors)
     m_brushes.primary.CreateSolidBrush(colors.primary);
     m_brushes.primary_bg.CreateSolidBrush(colors.primary_bg);
     m_brushes.primary_border.CreateSolidBrush(colors.primary_border);
-    m_brushes.hover_bg.CreateSolidBrush(colors.hover_bg);
 
     for (const auto& hwnd : m_windows) {
         ApplyTheme(hwnd);
@@ -244,7 +243,7 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
                         }
                         else if (lpCD->nmcd.uItemState & CDIS_HOT) {
                             lpCD->clrText = m_colors.primary;
-                            lpCD->clrTextBk = m_colors.hover_bg;
+                            lpCD->clrTextBk = m_colors.primary_bg;
                         }
 
                         LRESULT res = ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -355,7 +354,7 @@ LRESULT ThemeRenderer::HeaderProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
             Header_GetItemRect(hWnd, i, &rcItem);
 
             if (i == m_hotHeaderItem && m_hHeaderTracked == hWnd) {
-                FillRect(hdc, &rcItem, m_brushes.hover_bg);
+                FillRect(hdc, &rcItem, m_brushes.primary_bg);
             }
 
             // Draw text

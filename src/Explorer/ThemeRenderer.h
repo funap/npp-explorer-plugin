@@ -42,7 +42,6 @@ struct ThemeColors
     COLORREF primary        = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
     COLORREF primary_bg     = ::GetSysColor(COLOR_HIGHLIGHT);
     COLORREF primary_border = ::GetSysColor(COLOR_ACTIVEBORDER);
-    COLORREF hover_bg       = ::GetSysColor(COLOR_HOTLIGHT);
 };
 
 
@@ -56,7 +55,6 @@ struct Brushes
     Brush primary;        // for primary/highlighted text
     Brush primary_bg;     // for primary/highlighted background
     Brush primary_border; // for primary element borders
-    Brush hover_bg;       // for hover background
 };
 
 
