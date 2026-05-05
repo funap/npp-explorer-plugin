@@ -1605,3 +1605,12 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD& dwEffect)
     }
     return true;
 }
+
+void FileList::UpdateFromModel(const std::vector<FileSystemEntry>& entries) {
+    _vFileList.clear();
+    for (const auto& entry : entries) {
+        _vFileList.push_back(entry);
+    }
+    filterFiles(nullptr);
+    UpdateList();
+}

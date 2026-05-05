@@ -85,6 +85,7 @@ public:
     void OffsetItr(INT offsetItr, std::vector<std::wstring> & vStrItems);   // get offset directory
     void UpdateSelItems();
     void SetItems(std::vector<std::wstring> vStrItems);
+    void UpdateFromModel(const std::vector<FileSystemEntry>& entries);
 
     void UpdateOverlayIcon();
     void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);

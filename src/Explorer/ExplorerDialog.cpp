@@ -50,6 +50,32 @@ void DebugPrintf(std::wformat_string<Args...> format, Args&&... args)
     OutputDebugString(message.c_str());
 }
 
+HANDLE g_hEvent[EID_MAX]    = {nullptr};
+HANDLE g_hThread            = nullptr;
+
+DWORD WINAPI UpdateThread(LPVOID lpParam)
+{
+    DWORD   dwWaitResult    = EID_INIT;
+    ExplorerDialog* dlg     = (ExplorerDialog*)lpParam;
+
+    CoInitialize(nullptr);
+    dlg->NotifyEvent(dwWaitResult);
+
+    for (;;) {
+        dwWaitResult = ::WaitForMultipleObjects(EID_MAX_THREAD, g_hEvent, FALSE, INFINITE);
+        if (dwWaitResult == EID_THREAD_END) {
+            DebugPrintf(L"UpdateThread() : EID_THREAD_END");
+            break;
+        }
+        if (dwWaitResult < EID_MAX) {
+            DebugPrintf(L"UpdateThread() : NotifyEvent({})", dwWaitResult);
+            dlg->NotifyEvent(dwWaitResult);
+        }
+    }
+
+    CoUninitialize();
+    return 0;
+}
 
 ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_FAVORITES,      IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_TB_FAVES,       0},
@@ -117,14 +143,12 @@ ExplorerDialog::ExplorerDialog()
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
     , _iDockedPos(CONT_LEFT)
-    , _model(std::make_shared<ExplorerModel>())
 {
 }
 
 ExplorerDialog::~ExplorerDialog()
 {
     _workerThread.Stop();
-    if (_model) _model->RemoveObserver(this);
 }
 
 
@@ -185,10 +209,15 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     switch (Message) {
     case WM_INITDIALOG: {
         InitialDialog();
-        _model->AddObserver(this);
 
-        // EID_INIT -> TaskInit
-        _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
+        /* create events */
+        for (int i = 0; i < EID_MAX; i++) {
+            g_hEvent[i] = ::CreateEvent(nullptr, FALSE, FALSE, nullptr);
+        }
+
+        /* create thread */
+        DWORD dwThreadId = 0;
+        g_hThread = ::CreateThread(nullptr, 0, UpdateThread, this, 0, &dwThreadId);
         break;
     }
     case WM_COMMAND:  {
@@ -277,12 +306,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 if (tvi.hItem != _hItemExpand) {
                     if (!(tvi.state & TVIS_EXPANDED)) {
                         _hItemExpand = tvi.hItem;
-                        if (!_hTreeCtrl.GetChild(_hItemExpand)) {
-                            FetchChildren(_hItemExpand);
-                        } else {
-                            const auto path = GetPath(_hItemExpand);
-                            UpdateChildren(path, _hItemExpand);
-                        }
+                        SetEvent(g_hEvent[EID_EXPAND_ITEM]);
                     }
                 } else {
                     _hItemExpand = nullptr;
@@ -355,8 +379,31 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
             _pSettings->GetFileFilter().setFilter(szLastFilter);
         }
 
+        ::SetEvent(g_hEvent[EID_THREAD_END]);
         if (::WaitForSingleObject(_hExploreVolumeThread, 50) != WAIT_OBJECT_0) {
             ::Sleep(1);
+        }
+        if (::WaitForSingleObject(g_hThread, 300) != WAIT_OBJECT_0) {
+            DebugPrintf(L"ExplorerDialog::run_dlgProc() => WM_DESTROY => TerminateThread!!");
+            // https://github.com/funap/npp-explorer-plugin/issues/4
+            // Failsafe for [Bug] Incompatibility with NppMenuSearch plugin #4
+            // TreeView_xxx function in TreeView class won't return.
+            // Force thread termination because the thread was deadlock.
+            ::TerminateThread(g_hThread, 0);
+            ::Sleep(1);
+        }
+
+
+        /* destroy events */
+        for (int i = 0; i < EID_MAX; i++) {
+            ::CloseHandle(g_hEvent[i]);
+            g_hEvent[i] = nullptr;
+        }
+
+        /* destroy thread */
+        if (g_hThread) {
+            ::CloseHandle(g_hThread);
+            g_hThread = nullptr;
         }
 
         _ToolBar.destroy();
@@ -397,35 +444,22 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case WM_TIMER:
         if (wParam == EXT_UPDATEDEVICE) {
             ::KillTimer(_hSelf, EXT_UPDATEDEVICE);
-            _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
+            ::SetEvent(g_hEvent[EID_UPDATE_DEVICE]);
             return FALSE;
         }
         if (wParam == EXT_UPDATEACTIVATE) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
-            UpdateAllExpandedItems(); UpdatePath();
+            ::SetEvent(g_hEvent[EID_UPDATE_ACTIVATE]);
             return FALSE;
         }
         if (wParam == EXT_UPDATEACTIVATEPATH) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
-            {
-        HTREEITEM hItem         = _hTreeCtrl.GetSelection();
-        HTREEITEM hParentItem   = _hTreeCtrl.GetParent(hItem);
-
-        if (hParentItem != nullptr) {
-            auto path = GetPath(hParentItem);
-            UpdateChildren(path, hParentItem, FALSE);
-        }
-        if (hItem != nullptr) {
-            auto path = GetPath(hItem);
-            UpdateChildren(path, hItem, FALSE);
-            UpdatePath();
-        }
-    }
+            ::SetEvent(g_hEvent[EID_UPDATE_ACTIVATEPATH]);
             return FALSE;
         }
         if (wParam == EXT_AUTOGOTOFILE) {
             ::KillTimer(_hSelf, EXT_AUTOGOTOFILE);
-            gotoCurrentFile();
+            ::SetEvent(g_hEvent[EID_UPDATE_GOTOCURRENTFILE]);
             return FALSE;
         }
         if (wParam == EXT_SELCHANGE) {
@@ -869,6 +903,92 @@ void ExplorerDialog::tb_not(LPNMTOOLBAR lpnmtb)
     _FileList.ToggleStackRec();
 }
 
+void ExplorerDialog::NotifyEvent(DWORD event)
+{
+    LONG_PTR oldCur = ::SetClassLongPtr(_hSelf, GCLP_HCURSOR, (LONG_PTR)_hCurWait);
+    ::EnableWindow(_hSelf, FALSE);
+    POINT pt {};
+    ::GetCursorPos(&pt);
+    ::SetCursorPos(pt.x, pt.y);
+
+    switch(event) {
+    case EID_INIT:
+        /* initialize combo */
+        _ComboFilter.setComboList(_pSettings->GetFilterHistory());
+        _ComboFilter.addText(L"*.*");
+        _ComboFilter.setText(_pSettings->GetFileFilter().getFilterString());
+
+        /* initialize file list */
+        _FileList.SetToolBarInfo(&_ToolBar , IDM_EX_PREV, IDM_EX_NEXT);
+
+        /* initial tree */
+        UpdateRoots();
+
+        /* set data */
+        SelectItem(_pSettings->GetCurrentDir());
+
+        /* Update "Go to Folder" icon */
+        NotifyNewFile();
+        break;
+    case EID_UPDATE_DEVICE:
+        UpdateRoots();
+        break;
+    case EID_UPDATE_USER:
+        UpdateRoots();
+        UpdateAllExpandedItems();
+        UpdatePath();
+        break;
+    case EID_UPDATE_ACTIVATE:
+        UpdateAllExpandedItems();
+        UpdatePath();
+        break;
+    case EID_UPDATE_ACTIVATEPATH: {
+        HTREEITEM hItem         = _hTreeCtrl.GetSelection();
+        HTREEITEM hParentItem   = _hTreeCtrl.GetParent(hItem);
+
+        if (hParentItem != nullptr) {
+            auto path = GetPath(hParentItem);
+            UpdateChildren(path, hParentItem, FALSE);
+        }
+        if (hItem != nullptr) {
+            auto path = GetPath(hItem);
+            UpdateChildren(path, hItem, FALSE);
+            UpdatePath();
+        }
+        break;
+    }
+    case EID_UPDATE_GOTOCURRENTFILE:
+        gotoCurrentFile();
+        break;
+    case EID_EXPAND_ITEM:
+        if (!_hTreeCtrl.GetChild(_hItemExpand)) {
+            FetchChildren(_hItemExpand);
+        } else {
+            /* set cursor back before tree is updated for faster access */
+            ::SetClassLongPtr(_hSelf, GCLP_HCURSOR, oldCur);
+            ::EnableWindow(_hSelf, TRUE);
+            ::GetCursorPos(&pt);
+            ::SetCursorPos(pt.x, pt.y);
+
+            const auto path = GetPath(_hItemExpand);
+            UpdateChildren(path, _hItemExpand);
+
+            _hTreeCtrl.Expand(_hItemExpand, TVE_EXPAND);
+            return;
+        }
+        _hTreeCtrl.Expand(_hItemExpand, TVE_EXPAND);
+        break;
+    default:
+        break;
+    }
+
+    ::SetClassLongPtr(_hSelf, GCLP_HCURSOR, oldCur);
+    ::EnableWindow(_hSelf, TRUE);
+    ::GetCursorPos(&pt);
+    ::SetCursorPos(pt.x, pt.y);
+}
+
+
 void ExplorerDialog::InitialDialog()
 {
     _workerThread.Start(this);
@@ -1080,7 +1200,7 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
             if (_hTreeCtrl.GetChild(hItem) == nullptr) {
                 /* if no child item available, draw them */
                 _hTreeCtrl.SelectItem(hItem);
-                FetchChildren(hItem);
+                FetchChildrenSync(hItem);
             }
             hItem = _hTreeCtrl.GetChild(hItem);
         } else {
@@ -1298,52 +1418,69 @@ void ExplorerDialog::onPaste()
  */
 void ExplorerDialog::UpdateRoots()
 {
-    auto root = _model->Root();
-    if (!root) return;
+    auto drives = FileSystemService::GetLogicalDrives();
 
     HTREEITEM hCurrentItem = _hTreeCtrl.GetNextItem(TVI_ROOT, TVGN_CHILD);
 
-    auto drives = root->Children();
+    for (INT i = 0; i < 26; i++) {
+        const WCHAR driveLetter = L'A' + i;
+        std::wstring drivePath = L"A:\\";
+        drivePath[0] = driveLetter;
 
-    for (const auto& driveEntry : drives) {
-        std::wstring volumeName = driveEntry->FSEntry().Name();
-        std::wstring drivePath = driveEntry->Path();
-        wchar_t driveLetter = drivePath[0];
+        auto it = std::find(drives.begin(), drives.end(), drivePath);
 
-        bool haveChildren = FileSystemService::HaveChildren(drivePath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
+        if (it != drives.end()) {
+            auto volumeInfo = FileSystemService::GetVolumeName(drivePath);
+            std::wstring volumeName = std::format(L"{}:", driveLetter);
+            bool haveChildren = false;
 
-        if (hCurrentItem != nullptr) {
-            auto currentItemName = _hTreeCtrl.GetItemText(hCurrentItem);
-            if (volumeName == currentItemName) {
-                // if names are equal, go to next item in tree
-                int iIconNormal = 0;
-                int iIconSelected = 0;
-                int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
-                hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+            if (volumeInfo) {
+                volumeName = std::format(L"{}: [{}]", driveLetter, *volumeInfo);
+                haveChildren = FileSystemService::HaveChildren(drivePath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
             }
-            else if (!currentItemName.empty() && (driveLetter == currentItemName.front())) {
-                // if names are not the same but the drive letter are equal, rename item
-                int iIconNormal = 0;
-                int iIconSelected = 0;
-                int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
-                _hTreeCtrl.DeleteChildren(hCurrentItem);
-                hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+
+            if (hCurrentItem != nullptr) {
+                auto currentItemName = _hTreeCtrl.GetItemText(hCurrentItem);
+                if (volumeName == currentItemName) {
+                    // if names are equal, go to next item in tree
+                    int iIconNormal = 0;
+                    int iIconSelected = 0;
+                    int iIconOverlayed = 0;
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
+                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+                }
+                else if (!currentItemName.empty() && (driveLetter == currentItemName.front())) {
+                    // if names are not the same but the drive letter are equal, rename item
+                    int iIconNormal = 0;
+                    int iIconSelected = 0;
+                    int iIconOverlayed = 0;
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
+                    _hTreeCtrl.DeleteChildren(hCurrentItem);
+                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+                }
+                else {
+                    // insert the device when new and not present before
+                    HTREEITEM hItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_PREVIOUS);
+                    InsertChildFolder(volumeName, TVI_ROOT, hItem, volumeInfo.has_value());
+                }
             }
             else {
-                // insert the device when new and not present before
-                HTREEITEM hItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_PREVIOUS);
-                InsertChildFolder(volumeName, TVI_ROOT, hItem, true);
+                InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, volumeInfo.has_value());
+            }
+        } else {
+            // get current volume name in list and test if name is changed
+            if (hCurrentItem != nullptr) {
+                auto currentItemName = _hTreeCtrl.GetItemText(hCurrentItem);
+                if (!currentItemName.empty() && (driveLetter == currentItemName[0])) {
+                    HTREEITEM pPrevItem = hCurrentItem;
+                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
+                    _hTreeCtrl.DeleteItem(pPrevItem);
+                }
             }
         }
-        else {
-            InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, true);
-        }
     }
-
 }
 
 void ExplorerDialog::UpdateAllExpandedItems()
@@ -1435,22 +1572,11 @@ BOOL ExplorerDialog::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
 
 void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive)
 {
-    // For now, this is just bridging the old style call.
-    // The model-driven approach would be to find the entry and enqueue a TaskUpdateDirectory.
-    // However, since we need to do it by finding an entry:
+    HTREEITEM    hCurrentItem = _hTreeCtrl.GetNextItem(parentItem, TVGN_CHILD);
 
-    // We can just keep the legacy update via FileSystemService for synchronous parts like SelectItem where we wait,
-    // but the plan says "When an ExplorerEntry is updated, update the TreeView directly from the UI thread".
-
-    // For a real composite pattern, we'd traverse the model to find the entry for `path`.
-    // In this interim step, we enqueue a TaskUpdateDirectory for a temporary entry, or we do a full model match.
-    // Given the complexity of retrofitting TreeView hit-test without storing Entry pointers in lParam, we can store
-    // the ExplorerEntry pointer in the TreeView lParam!
-
-    // Let's rely on standard logic for now if we don't have it in model, OR we'll implement it shortly.
-    HTREEITEM hCurrentItem = _hTreeCtrl.GetNextItem(parentItem, TVGN_CHILD);
-
-    if (path.empty()) return;
+    if (path.empty()) {
+        return;
+    }
 
     auto entries = FileSystemService::GetDirectoryEntries(path, _pSettings->IsShowHidden());
 
@@ -1458,6 +1584,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
 
+        /* find folders */
         for (const auto& entry : entries) {
             if (entry.IsDirectory()) {
                 folders.push_back(entry);
@@ -1467,6 +1594,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
             }
         }
 
+        /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
             return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
@@ -1474,11 +1602,14 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
             return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
 
+        /* update tree */
         for (const auto* entries_ptr : { &folders, &files }) {
             for (const auto& entry : *entries_ptr) {
                 std::wstring name = _hTreeCtrl.GetItemText(hCurrentItem);
                 if (!name.empty()) {
+                    /* compare current item and the current folder name */
                     while ((name != entry.Name()) && (hCurrentItem != nullptr)) {
+                        /* if it's not equal delete or add new item */
                         if (FindFolderAfter(entry.Name().c_str(), hCurrentItem) == TRUE) {
                             HTREEITEM pPrevItem = hCurrentItem;
                             hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
@@ -1486,6 +1617,8 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                         }
                         else {
                             HTREEITEM pPrevItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_PREVIOUS);
+
+                            /* Note: If hCurrentItem is the first item in the list pPrevItem is nullptr */
                             if (pPrevItem == nullptr) {
                                 hCurrentItem = InsertChildFolder(entry.Name(), parentItem, TVI_FIRST);
                             }
@@ -1499,19 +1632,25 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                         }
                     }
 
+                    /* update icons and expandable information */
                     std::wstring currentPath = GetPath(hCurrentItem);
                     BOOL haveChildren = FileSystemService::HaveChildren(currentPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
 
-                    INT iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
+                    /* get icons and update item */
+                    INT iIconNormal = 0;
+                    INT iIconSelected = 0;
+                    INT iIconOverlayed = 0;
                     ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
 
                     BOOL bHidden = entry.IsHidden();
                     _hTreeCtrl.UpdateItem(hCurrentItem, name, iIconNormal, iIconSelected, iIconOverlayed, bHidden, haveChildren);
 
+                    /* update recursive */
                     if ((doRecursive) && _hTreeCtrl.IsItemExpanded(hCurrentItem)) {
                         UpdateChildren(currentPath, hCurrentItem);
                     }
 
+                    /* select next item */
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
                 else {
@@ -1521,6 +1660,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
             }
         }
 
+        /* delete possible not existed items */
         while (hCurrentItem != nullptr) {
             HTREEITEM pPrevItem = hCurrentItem;
             hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
@@ -1531,21 +1671,39 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
 
 void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
 {
-    // To properly use ExplorerModel here, we would:
-    // 1. Get the path for parentItem.
-    // 2. Find the ExplorerEntry for it.
-    // 3. Enqueue a TaskUpdateDirectory for it.
-    // 4. Return immediately.
-    // 5. In OnEntryUpdated, we'd actually add the children.
-    // Since tree view needs it instantly for expanding, we might have a placeholder.
-
-    // For now we will create a temporary entry and enqueue it, and handle it async.
     auto parentFolderPath = GetPath(parentItem);
-    auto tempEntry = std::make_shared<ExplorerEntry>(parentFolderPath, FileSystemEntry(parentFolderPath, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
-    _workerThread.Enqueue(std::make_unique<TaskUpdateDirectory>(_model, tempEntry, _pSettings));
+
+    auto entries = FileSystemService::GetDirectoryEntries(parentFolderPath, _pSettings->IsShowHidden());
+
+    if (!entries.empty()) {
+        std::vector<FileSystemEntry> folders;
+        std::vector<FileSystemEntry> files;
+        for (const auto& entry : entries) {
+            if (entry.IsDirectory()) {
+                folders.push_back(entry);
+            }
+            else if (_pSettings->IsUseFullTree()) {
+                files.push_back(entry);
+            }
+        }
+
+        /* sort data */
+        std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
+        });
+        std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
+        });
+
+        for (const auto* entries_ptr : { &folders, &files }) {
+            for (const auto& entry : *entries_ptr) {
+                if (InsertChildFolder(entry.Name(), parentItem) == nullptr) {
+                    break;
+                }
+            }
+        }
+    }
 }
-
-
 
 std::wstring ExplorerDialog::GetPath(HTREEITEM currentItem) const
 {
@@ -1939,7 +2097,7 @@ void ExplorerDialog::Open(const std::wstring &path)
 
 void ExplorerDialog::Refresh()
 {
-    UpdateRoots(); UpdateAllExpandedItems(); UpdatePath();
+    ::SetEvent(g_hEvent[EID_UPDATE_USER]);
 }
 
 bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
@@ -2001,89 +2159,4 @@ void ExplorerDialog::ShowContextMenu(POINT screenLocation, const std::vector<std
     ContextMenu cm;
     cm.SetObjects(paths);
     cm.ShowContextMenu(_hInst, _hParent, _hSelf, screenLocation, hasStandardMenu);
-}
-
-void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
-    if (!isCreated()) return;
-
-    if (entry == _model->Root()) {
-        UpdateRoots();
-        _FileList.SetToolBarInfo(&_ToolBar , IDM_EX_PREV, IDM_EX_NEXT);
-        SelectItem(_pSettings->GetCurrentDir());
-        NotifyNewFile();
-    } else {
-        // Find HTREEITEM by path matching (as we don't store pointers in lParam yet)
-        // Since we know the path, we can traverse down the tree to find it, or simply:
-        auto pathSegments = [&]() {
-            std::vector<std::wstring> segments;
-            std::wstring path = entry->Path();
-            size_t pos = 0;
-            while ((pos = path.find(L"\\")) != std::wstring::npos) {
-                if (pos > 0) segments.push_back(path.substr(0, pos));
-                path.erase(0, pos + 1);
-            }
-            if (!path.empty()) segments.push_back(path);
-            return segments;
-        }();
-
-        HTREEITEM hItem = _hTreeCtrl.GetRoot();
-        bool isRoot = true;
-
-        for (const auto& segment : pathSegments) {
-            bool found = false;
-            while (hItem != nullptr) {
-                auto itemName = _hTreeCtrl.GetItemText(hItem);
-                if (isRoot && ('A' <= itemName[0] && itemName[0] <= 'Z')) {
-                    itemName.resize(2);
-                }
-
-                if (segment == itemName || (isRoot && segment.size() >= 2 && segment[0] == itemName[0] && segment[1] == ':')) {
-                    found = true;
-                    isRoot = false;
-                    break;
-                }
-                hItem = _hTreeCtrl.GetNextItem(hItem, TVGN_NEXT);
-            }
-            if (!found) {
-                hItem = nullptr;
-                break;
-            }
-            // we found the current segment, if it's not the last we go to its child
-            if (segment != pathSegments.back()) {
-                hItem = _hTreeCtrl.GetChild(hItem);
-            }
-        }
-
-        if (hItem != nullptr) {
-            // We found the HTREEITEM, insert its children from ExplorerEntry
-            HTREEITEM hCurrentChild = _hTreeCtrl.GetNextItem(hItem, TVGN_CHILD);
-
-            auto children = entry->Children();
-            std::vector<std::shared_ptr<ExplorerEntry>> folders;
-            std::vector<std::shared_ptr<ExplorerEntry>> files;
-
-            for (const auto& child : children) {
-                if (child->FSEntry().IsDirectory()) {
-                    folders.push_back(child);
-                } else if (_pSettings->IsUseFullTree()) {
-                    files.push_back(child);
-                }
-            }
-
-            std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-                return ::StrCmpLogicalW(lhs->FSEntry().Name().c_str(), rhs->FSEntry().Name().c_str()) < 0;
-            });
-            std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-                return ::StrCmpLogicalW(lhs->FSEntry().Name().c_str(), rhs->FSEntry().Name().c_str()) < 0;
-            });
-
-            for (const auto* entries_ptr : { &folders, &files }) {
-                for (const auto& childEntry : *entries_ptr) {
-                    if (InsertChildFolder(childEntry->FSEntry().Name(), hItem) == nullptr) {
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }

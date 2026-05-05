@@ -18,12 +18,18 @@ public:
     std::vector<std::shared_ptr<ExplorerEntry>> Children() const;
 
     bool HasLoadedChildren() const;
+    void SetHaveChildren(bool haveChildren);
+    bool HaveChildren() const;
+    void SetSelectedIcon(int icon);
+    int SelectedIcon() const;
 
 private:
     std::wstring _path;
     FileSystemEntry _fsEntry;
     std::vector<std::shared_ptr<ExplorerEntry>> _children;
     bool _hasLoadedChildren;
+    bool _haveChildren{false};
+    int _iIconSelected{0};
 };
 
 class IExplorerModelObserver {
@@ -38,6 +44,7 @@ public:
 
     void SetRoot(std::shared_ptr<ExplorerEntry> root);
     std::shared_ptr<ExplorerEntry> Root() const;
+    std::shared_ptr<ExplorerEntry> FindEntry(const std::wstring& path) const;
 
     void AddObserver(IExplorerModelObserver* observer);
     void RemoveObserver(IExplorerModelObserver* observer);

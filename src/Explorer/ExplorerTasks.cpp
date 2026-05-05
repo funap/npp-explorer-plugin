@@ -1,4 +1,5 @@
 #include "ExplorerTasks.h"
+#include "Explorer.h"
 
 TaskInit::TaskInit(std::shared_ptr<ExplorerModel> model, Settings* settings)
     : _model(model), _settings(settings) {}
@@ -43,11 +44,32 @@ void TaskUpdateDirectory::Execute() {
             childPath += L"\\";
         }
         childPath += fsEntry.Name();
-        _children.push_back(std::make_shared<ExplorerEntry>(childPath, fsEntry));
+
+        bool haveChildren = FileSystemService::HaveChildren(childPath, _settings->IsUseFullTree(), _settings->IsShowHidden());
+
+        auto newEntry = std::make_shared<ExplorerEntry>(childPath, fsEntry);
+        newEntry->SetHaveChildren(haveChildren);
+
+        INT iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
+        ExtractIcons(childPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+        newEntry->FSEntry().SetIcon(iIconNormal);
+        newEntry->SetSelectedIcon(iIconSelected);
+        newEntry->FSEntry().SetOverlay(iIconOverlayed);
+
+        _children.push_back(newEntry);
     }
 }
 
 void TaskUpdateDirectory::OnCompleted() {
-    _entry->SetChildren(_children);
-    _model->NotifyEntryUpdated(_entry);
+    // If the entry is part of the model, we just update it.
+    // If it was a temporary entry, we should try to find it in the model and update THAT one.
+    auto existingEntry = _model->FindEntry(_entry->Path());
+    if (existingEntry) {
+        existingEntry->SetChildren(_children);
+        _model->NotifyEntryUpdated(existingEntry);
+    } else {
+        // Fallback for detached entries
+        _entry->SetChildren(_children);
+        _model->NotifyEntryUpdated(_entry);
+    }
 }

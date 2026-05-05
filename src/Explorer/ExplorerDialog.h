@@ -91,6 +91,7 @@ protected:
     void InitialDialog();
     void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
     void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
+    void OnEntryUpdatedForFileList(std::shared_ptr<ExplorerEntry> entry);
 
     void UpdateRoots();
     void UpdateAllExpandedItems();
@@ -112,7 +113,9 @@ protected:
     BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
     void UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive = TRUE);
     HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+    HTREEITEM InsertChildEntry(std::shared_ptr<ExplorerEntry> childEntry, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST);
     void FetchChildren(HTREEITEM parentItem);
+        void FetchChildrenSync(HTREEITEM parentItem);
     std::wstring GetPath(HTREEITEM currentItem) const;
     void UpdateLayout();
 private:
