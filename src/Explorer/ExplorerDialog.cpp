@@ -1546,7 +1546,6 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
 }
 
 
-}
 
 std::wstring ExplorerDialog::GetPath(HTREEITEM currentItem) const
 {
