@@ -111,6 +111,12 @@
     <ClCompile Include="src\Explorer\WorkerThread.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerModel.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerTasks.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Explorer\version.rc">
@@ -257,6 +263,12 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\Settings.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerModel.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerTasks.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

@@ -31,20 +31,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TreeView.h"
 #include "ToolBar.h"
 #include "WorkerThread.h"
+#include "ExplorerModel.h"
+#include "ExplorerTasks.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
-
-enum EventID {
-    EID_INIT = 0,
-    EID_UPDATE_USER,
-    EID_UPDATE_DEVICE,
-    EID_UPDATE_ACTIVATE,
-    EID_UPDATE_ACTIVATEPATH,
-    EID_UPDATE_GOTOCURRENTFILE,
-    EID_EXPAND_ITEM,
-    EID_THREAD_END,
-    EID_MAX_THREAD,
-    EID_MAX,
-};
 
 struct GetVolumeInfo {
     LPCTSTR     pszDrivePathName;
@@ -53,7 +42,7 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback, public IExplorerModelObserver
 {
 public:
     ExplorerDialog();
@@ -76,7 +65,6 @@ public:
         _bStartupFinish = TRUE;
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
-    void NotifyEvent(DWORD event);
     void SetFont(HFONT font);
     bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
     void NavigateBack() override;
@@ -101,7 +89,8 @@ protected:
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
     void InitialDialog();
-    void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task);
+    void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
+    void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
 
     void UpdateRoots();
     void UpdateAllExpandedItems();
@@ -171,4 +160,5 @@ private:
     INT         _iDockedPos;
 
     WorkerThread _workerThread;
+    std::shared_ptr<ExplorerModel> _model;
 };
