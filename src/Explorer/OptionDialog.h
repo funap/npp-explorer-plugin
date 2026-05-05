@@ -32,7 +32,7 @@ public:
     OptionDlg();
     ~OptionDlg();
 
-    INT_PTR doDialog(ExProp *prop);
+    INT_PTR doDialog(Settings *prop);
 
     void destroy() override {}
 
@@ -47,5 +47,5 @@ private:
     /* Handles */
     LOGFONT _logfont;
 
-    ExProp* _pProp;
+    Settings* _pProp;
 };

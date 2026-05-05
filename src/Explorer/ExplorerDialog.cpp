@@ -29,15 +29,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <list>
 #include <string>
 #include <optional>
+#include <format>
 
 #include "Explorer.h"
 #include "ExplorerResource.h"
 #include "ContextMenu.h"
 #include "NewDlg.h"
-#include "NppInterface.h"
-#include "StringUtil.h"
+#include "Editor.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
+#include "FileSystemService.h"
 
 namespace {
 
@@ -114,30 +115,6 @@ LPCTSTR GetNameStrFromCmd(UINT resourceId)
     return nullptr;
 }
 
-std::optional<std::wstring> GetVolumeName(LPCWSTR drivePath)
-{
-    DWORD volumeNameSize = MAX_PATH;
-    std::wstring volumeName(volumeNameSize, L'\0');
-
-    if (::GetVolumeInformation(drivePath, &volumeName[0], volumeNameSize, nullptr, nullptr, nullptr, nullptr, 0)) {
-        volumeName.resize(wcslen(volumeName.c_str()));
-        return volumeName;
-    }
-    else {
-        return std::nullopt;
-    }
-}
-
-struct FileSystemEntry {
-    std::wstring    name;
-    DWORD           attributes;
-    FileSystemEntry(const WCHAR* fileName, DWORD fileAttributes)
-        : name(fileName)
-        , attributes(fileAttributes)
-    {
-    }
-};
-
 } // namespace
 
 
@@ -161,7 +138,7 @@ ExplorerDialog::ExplorerDialog()
     , _isLeftButtonDown(FALSE)
     , _hSplitterCursorUpDown(nullptr)
     , _hSplitterCursorLeftRight(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
     , _hCurWait(nullptr)
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
@@ -175,11 +152,11 @@ ExplorerDialog::~ExplorerDialog()
 }
 
 
-void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, ExProp *prop)
+void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, Settings *prop)
 {
     DockingDlgInterface::init(hInst, hParent);
 
-    _pExProp = prop;
+    _pSettings = prop;
     _FileList.initProp(prop);
 }
 
@@ -188,13 +165,13 @@ void ExplorerDialog::redraw()
     UpdateLayout();
 
     /* possible new imagelist -> update the window */
-    _hTreeCtrl.SetImageList(GetSmallImageList(_pExProp->bUseSystemIcons));
+    _hTreeCtrl.SetImageList(GetSmallImageList(_pSettings->IsUseSystemIcons()));
     ::SetTimer(_hSelf, EXT_UPDATEDEVICE, 0, nullptr);
     _FileList.redraw();
     ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
 
     /* and only when dialog is visible, select item again */
-    SelectItem(_pExProp->currentDir);
+    SelectItem(_pSettings->GetCurrentDir());
 
     Refresh();
 };
@@ -215,7 +192,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
         ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
     }
     else if (willBeShown) {
-        if (_pExProp->bAutoUpdate == TRUE) {
+        if (_pSettings->IsAutoUpdate()) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
             ::SetTimer(_hSelf, EXT_UPDATEACTIVATE, 0, nullptr);
         } else {
@@ -282,7 +259,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 if (item != nullptr) {
                     const auto path = GetPath(item);
                     if (!PathIsDirectory(path.c_str())) {
-                        NppInterface::doOpen(path);
+                        Editor::Instance().DoOpen(path);
                     }
                 }
                 break;
@@ -314,8 +291,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                         path += "\\";
                     }
                     /* save current path */
-                    _pExProp->currentDir = path.wstring();
-                    DebugPrintf(L"pwd:{}", _pExProp->currentDir.c_str());
+                    _pSettings->SetCurrentDir(path.wstring());
+                    DebugPrintf(L"pwd:{}", _pSettings->GetCurrentDir().c_str());
                 }
                 if (_isSelNotifyEnable == TRUE) {
                     ::KillTimer(_hSelf, EXT_SELCHANGE);
@@ -396,10 +373,10 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case WM_DESTROY: {
         WCHAR szLastFilter[MAX_PATH];
 
-        _pExProp->vStrFilterHistory = _ComboFilter.getComboList();
+        _pSettings->SetFilterHistory(_ComboFilter.getComboList());
         _ComboFilter.getText(szLastFilter, MAX_PATH);
         if (wcslen(szLastFilter) != 0) {
-            _pExProp->fileFilter.setFilter(szLastFilter);
+            _pSettings->GetFileFilter().setFilter(szLastFilter);
         }
 
         ::SetEvent(g_hEvent[EID_THREAD_END]);
@@ -487,7 +464,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         }
         if (wParam == EXT_SELCHANGE) {
             ::KillTimer(_hSelf, EXT_SELCHANGE);
-            _FileList.viewPath(_pExProp->currentDir, TRUE);
+            _FileList.viewPath(_pSettings->GetCurrentDir(), TRUE);
             updateDockingDlg();
             return FALSE;
         }
@@ -537,12 +514,12 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 _hTreeCtrl.Expand(hItem, TVE_TOGGLE);
             }
             else {
-                NppInterface::doOpen(path);
+                Editor::Instance().DoOpen(path);
             }
             return TRUE;
         }
         case VK_TAB:
-            if (!_pExProp->useFullTree) {
+            if (!_pSettings->IsUseFullTree()) {
                 if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
                     ::SetFocus(_hFilter);
                 }
@@ -581,7 +558,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             return TRUE;
         }
         if (VK_ESCAPE == wParam) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
         break;
@@ -720,20 +697,20 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
         /* set cursor */
         if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
             SetCursor(_hSplitterCursorUpDown);
-            if (_pExProp->iSplitterPos < 50) {
-                    _pExProp->iSplitterPos = 50;
+            if (_pSettings->GetSplitterPos() < 50) {
+                    _pSettings->SetSplitterPos(50);
             }
-            else if (_pExProp->iSplitterPos > (rc.bottom - 100)) {
-                    _pExProp->iSplitterPos = rc.bottom - 100;
+            else if (_pSettings->GetSplitterPos() > (rc.bottom - 100)) {
+                    _pSettings->SetSplitterPos(rc.bottom - 100);
             }
         }
         else {
             SetCursor(_hSplitterCursorLeftRight);
-            if (_pExProp->iSplitterPosHorizontal < 50) {
-                    _pExProp->iSplitterPosHorizontal = 50;
+            if (_pSettings->GetSplitterPosHorizontal() < 50) {
+                    _pSettings->SetSplitterPosHorizontal(50);
             }
-            else if (_pExProp->iSplitterPosHorizontal > (rc.right - 50)) {
-                _pExProp->iSplitterPosHorizontal = rc.right - 50;
+            else if (_pSettings->GetSplitterPosHorizontal() > (rc.right - 50)) {
+                _pSettings->SetSplitterPosHorizontal(rc.right - 50);
             }
         }
         break;
@@ -745,14 +722,14 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
 
             if (_iDockedPos < CONT_TOP) {
                 if (_ptOldPos.y != pt.y) {
-                    _pExProp->iSplitterPos -= _ptOldPos.y - pt.y;
+                    _pSettings->SetSplitterPos(_pSettings->GetSplitterPos() - (_ptOldPos.y - pt.y));
                     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
                 }
                 _ptOldPos = pt;
             }
             else {
                 if (_ptOldPosHorizontal.x != pt.x) {
-                    _pExProp->iSplitterPosHorizontal -= _ptOldPosHorizontal.x - pt.x;
+                    _pSettings->SetSplitterPosHorizontal(_pSettings->GetSplitterPosHorizontal() - (_ptOldPosHorizontal.x - pt.x));
                     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
                 }
                 _ptOldPosHorizontal = pt;
@@ -800,8 +777,9 @@ void ExplorerDialog::tb_cmd(WPARAM message)
                     }
                     newFilePath /= szFileName;
 
-                    ::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
-                    ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                    if (FileSystemService::CreateNewFile(newFilePath.wstring())) {
+                        ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                    }
                     break;
                 }
             }
@@ -829,7 +807,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
                     }
                     newFolderPath /= szFolderName;
 
-                    if (::CreateDirectory(newFolderPath.c_str(), nullptr) == FALSE) {
+                    if (FileSystemService::CreateNewDirectory(newFolderPath.wstring()) == false) {
                         ::MessageBox(_hParent, L"Folder couldn't be created.", L"Error", MB_OK);
                     }
                     break;
@@ -842,7 +820,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
         break;
     }
     case IDM_EX_SEARCH_FIND:
-        ::SendMessage(_hParent, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)_pExProp->currentDir.c_str(), NULL);
+        Editor::Instance().LaunchFindFileDialog(_pSettings->GetCurrentDir());
         break;
     case IDM_EX_GO_TO_USER:
         gotoUserFolder();
@@ -936,9 +914,9 @@ void ExplorerDialog::NotifyEvent(DWORD event)
     switch(event) {
     case EID_INIT:
         /* initialize combo */
-        _ComboFilter.setComboList(_pExProp->vStrFilterHistory);
+        _ComboFilter.setComboList(_pSettings->GetFilterHistory());
         _ComboFilter.addText(L"*.*");
-        _ComboFilter.setText(_pExProp->fileFilter.getFilterString());
+        _ComboFilter.setText(_pSettings->GetFileFilter().getFilterString());
 
         /* initialize file list */
         _FileList.SetToolBarInfo(&_ToolBar , IDM_EX_PREV, IDM_EX_NEXT);
@@ -947,7 +925,7 @@ void ExplorerDialog::NotifyEvent(DWORD event)
         UpdateRoots();
 
         /* set data */
-        SelectItem(_pExProp->currentDir);
+        SelectItem(_pSettings->GetCurrentDir());
 
         /* Update "Go to Folder" icon */
         NotifyNewFile();
@@ -1022,8 +1000,8 @@ void ExplorerDialog::InitialDialog()
     _hSplitterCtrl  = ::GetDlgItem(_hSelf, IDC_BUTTON_SPLITTER);
     _hFilter        = ::GetDlgItem(_hSelf, IDC_COMBO_FILTER);
 
-    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
-    ::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
+    ::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* subclass tree */
     ::SetWindowLongPtr(_hTreeCtrl, GWLP_USERDATA, (LONG_PTR)this);
@@ -1036,7 +1014,7 @@ void ExplorerDialog::InitialDialog()
     _hDefaultSplitterProc = (WNDPROC)::SetWindowLongPtr(_hSplitterCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultSplitterProc);
 
     /* Load Image List */
-    ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pExProp->bUseSystemIcons));
+    ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pSettings->IsUseSystemIcons()));
 
     /* initial file list */
     _FileList.init(_hInst, _hSelf, _hListCtrl);
@@ -1080,7 +1058,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1099,7 +1077,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1129,10 +1107,10 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
 
     auto longPath = [](const std::filesystem::path& path) -> std::filesystem::path {
         WCHAR szLongPath[MAX_PATH] = {};
-        WCHAR szRemotePath[MAX_PATH] = {};
+        std::wstring remotePath;
         /* convert possible net path name and get the full path name for compare */
-        if (ConvertNetPathName(path.c_str(), szRemotePath, MAX_PATH) == TRUE) {
-            ::GetLongPathName(szRemotePath, szLongPath, MAX_PATH);
+        if (FileSystemService::ConvertNetPathName(path.wstring(), remotePath)) {
+            ::GetLongPathName(remotePath.c_str(), szLongPath, MAX_PATH);
         }
         else {
             ::GetLongPathName(path.c_str(), szLongPath, MAX_PATH);
@@ -1246,7 +1224,7 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
         _hTreeCtrl.SelectItem(hItemSel);
         _hTreeCtrl.EnsureVisible(hItemSel);
 
-        _FileList.viewPath(_pExProp->currentDir, TRUE);
+        _FileList.viewPath(_pSettings->GetCurrentDir(), TRUE);
         updateDockingDlg();
     }
 
@@ -1267,7 +1245,7 @@ BOOL ExplorerDialog::gotoPath()
     szFolderName[0] = '\0';
 
     /* copy current path to show current position */
-    wcscpy(szFolderName, _pExProp->currentDir.c_str());
+    wcscpy(szFolderName, _pSettings->GetCurrentDir().c_str());
 
     dlg.init(_hInst, _hParent);
     for (;;) {
@@ -1307,28 +1285,30 @@ void ExplorerDialog::gotoUserFolder()
 
 void ExplorerDialog::gotoCurrentFolder()
 {
-    WCHAR pathName[MAX_PATH];
-    ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
-    wcscat(pathName, L"\\");
-    SelectItem(pathName);
+    std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+    if (!currentDir.empty()) {
+        if (currentDir.back() != '\\') currentDir.push_back('\\');
+        SelectItem(currentDir);
+    }
     setFocusOnFile();
 }
 
 void ExplorerDialog::gotoCurrentFile()
 {
-    WCHAR pathName[MAX_PATH];
-    if (_pExProp->useFullTree) {
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)pathName);
-        if (PathFileExists(pathName)) {
-            SelectItem(pathName);
+    if (_pSettings->IsUseFullTree()) {
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        if (PathFileExists(currentPath.c_str())) {
+            SelectItem(currentPath.wstring());
         }
     }
     else {
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)pathName);
-        wcscat(pathName, L"\\");
-        SelectItem(pathName);
-        _FileList.SelectCurFile();
-        setFocusOnFile();
+        std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+        if (!currentDir.empty()) {
+            if (currentDir.back() != '\\') currentDir.push_back('\\');
+            SelectItem(currentDir);
+            _FileList.SelectCurFile();
+            setFocusOnFile();
+        }
     }
 }
 
@@ -1349,7 +1329,7 @@ void ExplorerDialog::setFocusOnFolder()
 
 void ExplorerDialog::setFocusOnFile()
 {
-    if (!_pExProp->useFullTree) {
+    if (!_pSettings->IsUseFullTree()) {
         ::SetFocus(_FileList.getHSelf());
     }
     else {
@@ -1359,8 +1339,8 @@ void ExplorerDialog::setFocusOnFile()
 
 void ExplorerDialog::clearFilter()
 {
-    _pExProp->vStrFilterHistory.clear();
-    _pExProp->fileFilter.setFilter(L"*.*");
+    _pSettings->GetFilterHistory().clear();
+    _pSettings->GetFileFilter().setFilter(L"*.*");
     _ComboFilter.clearComboList();
     _ComboFilter.addText(L"*.*");
     _ComboFilter.setText(L"*.*");
@@ -1380,17 +1360,7 @@ void ExplorerDialog::onDelete(bool immediate)
         path.pop_back();
     }
 
-    WCHAR szzFrom[MAX_PATH] = {};
-    path.copy(szzFrom, MAX_PATH);
-
-    /* delete folder into recycle bin */
-    SHFILEOPSTRUCT fileOp = {
-        .hwnd   = _hParent,
-        .wFunc  = FO_DELETE,
-        .pFrom  = szzFrom,
-        .fFlags = static_cast<FILEOP_FLAGS>((immediate ? 0 : FOF_ALLOWUNDO)),
-    };
-    SHFileOperation(&fileOp);
+    FileSystemService::DeleteFiles(_hParent, { path }, immediate);
 }
 
 void ExplorerDialog::onCut()
@@ -1448,24 +1418,25 @@ void ExplorerDialog::onPaste()
  */
 void ExplorerDialog::UpdateRoots()
 {
-    const DWORD driveList = ::GetLogicalDrives();
+    auto drives = FileSystemService::GetLogicalDrives();
 
     HTREEITEM hCurrentItem = _hTreeCtrl.GetNextItem(TVI_ROOT, TVGN_CHILD);
 
-    WCHAR drivePathName[] = L" :\\";
-
     for (INT i = 0; i < 26; i++) {
         const WCHAR driveLetter = L'A' + i;
-        drivePathName[0] = driveLetter;
+        std::wstring drivePath = L"A:\\";
+        drivePath[0] = driveLetter;
 
-        if (0x01 & (driveList >> i)) {
-            auto volumeInfo = GetVolumeName(drivePathName);
+        auto it = std::find(drives.begin(), drives.end(), drivePath);
+
+        if (it != drives.end()) {
+            auto volumeInfo = FileSystemService::GetVolumeName(drivePath);
             std::wstring volumeName = std::format(L"{}:", driveLetter);
             bool haveChildren = false;
 
             if (volumeInfo) {
                 volumeName = std::format(L"{}: [{}]", driveLetter, *volumeInfo);
-                haveChildren = HaveChildren(drivePathName);
+                haveChildren = FileSystemService::HaveChildren(drivePath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
             }
 
             if (hCurrentItem != nullptr) {
@@ -1475,7 +1446,7 @@ void ExplorerDialog::UpdateRoots()
                     int iIconNormal = 0;
                     int iIconSelected = 0;
                     int iIconOverlayed = 0;
-                    ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
@@ -1484,7 +1455,7 @@ void ExplorerDialog::UpdateRoots()
                     int iIconNormal = 0;
                     int iIconSelected = 0;
                     int iIconOverlayed = 0;
-                    ExtractIcons(drivePathName, nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
                     _hTreeCtrl.DeleteChildren(hCurrentItem);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
@@ -1530,7 +1501,7 @@ void ExplorerDialog::UpdateAllExpandedItems()
 
 void ExplorerDialog::UpdatePath()
 {
-    if (!_pExProp->useFullTree) {
+    if (!_pSettings->IsUseFullTree()) {
         auto path = GetPath(_hTreeCtrl.GetSelection());
         _FileList.ToggleStackRec();
         _FileList.viewPath(path);
@@ -1564,7 +1535,7 @@ HTREEITEM ExplorerDialog::InsertChildFolder(const std::wstring& childFolderName,
     /* look if children test id allowed */
     BOOL haveChildren = FALSE;
     if (bChildrenTest == TRUE) {
-        haveChildren = HaveChildren(path);
+        haveChildren = FileSystemService::HaveChildren(path, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
     }
 
     /* insert item */
@@ -1599,53 +1570,47 @@ BOOL ExplorerDialog::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
     return isFound;
 }
 
-void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentItem, BOOL doRecursive)
+void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive)
 {
-    std::wstring findPath = path;
     HTREEITEM    hCurrentItem = _hTreeCtrl.GetNextItem(parentItem, TVGN_CHILD);
 
-    if (findPath.empty()) {
+    if (path.empty()) {
         return;
     }
-    if (findPath.back() != '\\') {
-        findPath.push_back(L'\\');
-    }
-    findPath.push_back(L'*');
 
-    WIN32_FIND_DATA findData = { 0 };
-    HANDLE  hFind = ::FindFirstFile(findPath.c_str(), &findData);
-    if (hFind != INVALID_HANDLE_VALUE) {
+    auto entries = FileSystemService::GetDirectoryEntries(path, _pSettings->IsShowHidden());
+
+    if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
 
         /* find folders */
-        do {
-            if (::IsValidFolder(findData) == TRUE) {
-                folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
+        for (const auto& entry : entries) {
+            if (entry.IsDirectory()) {
+                folders.push_back(entry);
             }
-            else if (_pExProp->useFullTree && ::IsValidFile(findData) == TRUE) {
-                files.emplace_back(findData.cFileName, findData.dwFileAttributes);
+            else if (_pSettings->IsUseFullTree()) {
+                files.push_back(entry);
             }
-        } while (::FindNextFile(hFind, &findData));
-        ::FindClose(hFind);
+        }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
-        std::sort(files.begin(), files.end(), [](const auto &lhs, const auto &rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+        std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
 
         /* update tree */
-        for (const auto *entries : { &folders, &files }) {
-            for (const auto& entry : *entries) {
+        for (const auto* entries_ptr : { &folders, &files }) {
+            for (const auto& entry : *entries_ptr) {
                 std::wstring name = _hTreeCtrl.GetItemText(hCurrentItem);
                 if (!name.empty()) {
                     /* compare current item and the current folder name */
-                    while ((name != entry.name) && (hCurrentItem != nullptr)) {
+                    while ((name != entry.Name()) && (hCurrentItem != nullptr)) {
                         /* if it's not equal delete or add new item */
-                        if (FindFolderAfter(entry.name.c_str(), hCurrentItem) == TRUE) {
+                        if (FindFolderAfter(entry.Name().c_str(), hCurrentItem) == TRUE) {
                             HTREEITEM pPrevItem = hCurrentItem;
                             hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                             _hTreeCtrl.DeleteItem(pPrevItem);
@@ -1655,10 +1620,10 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
 
                             /* Note: If hCurrentItem is the first item in the list pPrevItem is nullptr */
                             if (pPrevItem == nullptr) {
-                                hCurrentItem = InsertChildFolder(entry.name, parentItem, TVI_FIRST);
+                                hCurrentItem = InsertChildFolder(entry.Name(), parentItem, TVI_FIRST);
                             }
                             else {
-                                hCurrentItem = InsertChildFolder(entry.name, parentItem, pPrevItem);
+                                hCurrentItem = InsertChildFolder(entry.Name(), parentItem, pPrevItem);
                             }
                         }
 
@@ -1669,7 +1634,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
 
                     /* update icons and expandable information */
                     std::wstring currentPath = GetPath(hCurrentItem);
-                    BOOL haveChildren = HaveChildren(currentPath);
+                    BOOL haveChildren = FileSystemService::HaveChildren(currentPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
 
                     /* get icons and update item */
                     INT iIconNormal = 0;
@@ -1677,7 +1642,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
                     INT iIconOverlayed = 0;
                     ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
 
-                    BOOL bHidden = ((entry.attributes & FILE_ATTRIBUTE_HIDDEN) != 0);
+                    BOOL bHidden = entry.IsHidden();
                     _hTreeCtrl.UpdateItem(hCurrentItem, name, iIconNormal, iIconSelected, iIconOverlayed, bHidden, haveChildren);
 
                     /* update recursive */
@@ -1689,7 +1654,7 @@ void ExplorerDialog::UpdateChildren(const std::wstring &path, HTREEITEM parentIt
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
                 else {
-                    hCurrentItem = InsertChildFolder(entry.name, parentItem);
+                    hCurrentItem = InsertChildFolder(entry.Name(), parentItem);
                     hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
                 }
             }
@@ -1708,39 +1673,31 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
 {
     auto parentFolderPath = GetPath(parentItem);
 
-    /* add wildcard */
-    parentFolderPath.append(L"*");
+    auto entries = FileSystemService::GetDirectoryEntries(parentFolderPath, _pSettings->IsShowHidden());
 
-    /* find first file */
-    WIN32_FIND_DATA findData = {};
-    HANDLE hFind = ::FindFirstFile(parentFolderPath.c_str(), &findData);
-
-    /* if not found -> exit */
-    if (hFind != INVALID_HANDLE_VALUE) {
+    if (!entries.empty()) {
         std::vector<FileSystemEntry> folders;
         std::vector<FileSystemEntry> files;
-        do {
-            if (::IsValidFolder(findData) == TRUE) {
-                folders.emplace_back(findData.cFileName, findData.dwFileAttributes);
+        for (const auto& entry : entries) {
+            if (entry.IsDirectory()) {
+                folders.push_back(entry);
             }
-            else if (_pExProp->useFullTree && ::IsValidFile(findData) == TRUE) {
-                files.emplace_back(findData.cFileName, findData.dwFileAttributes);
+            else if (_pSettings->IsUseFullTree()) {
+                files.push_back(entry);
             }
-        } while (FindNextFile(hFind, &findData));
-
-        ::FindClose(hFind);
+        }
 
         /* sort data */
         std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
         std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.name.c_str(), rhs.name.c_str()) < 0;
+            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
         });
 
-        for (const auto *entries : { &folders, &files }) {
-            for (const auto& entry : *entries) {
-                if (InsertChildFolder(entry.name, parentItem) == nullptr) {
+        for (const auto* entries_ptr : { &folders, &files }) {
+            for (const auto& entry : *entries_ptr) {
+                if (InsertChildFolder(entry.Name(), parentItem) == nullptr) {
                     break;
                 }
             }
@@ -1801,7 +1758,7 @@ void ExplorerDialog::UpdateLayout()
     getClientRect(rc);
 
     if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
-        INT splitterPos = _pExProp->iSplitterPos;
+        INT splitterPos = _pSettings->GetSplitterPos();
 
         if (splitterPos < 50) {
             splitterPos = 50;
@@ -1817,7 +1774,7 @@ void ExplorerDialog::UpdateLayout()
         auto toolBarHeight = _ToolBar.getHeight();
         auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
-        if (_pExProp->useFullTree) {
+        if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
             rc.bottom -= toolBarHeight;
@@ -1855,7 +1812,7 @@ void ExplorerDialog::UpdateLayout()
         }
     }
     else {
-        INT splitterPos = _pExProp->iSplitterPosHorizontal;
+        INT splitterPos = _pSettings->GetSplitterPosHorizontal();
 
         if (splitterPos < 50) {
             splitterPos = 50;
@@ -1871,7 +1828,7 @@ void ExplorerDialog::UpdateLayout()
         auto toolBarHeight = _ToolBar.getHeight();
         auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
-        if (_pExProp->useFullTree) {
+        if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
             rc.bottom -= toolBarHeight;
@@ -2123,13 +2080,13 @@ void ExplorerDialog::Open(const std::wstring &path)
         filePath += path;
 
         /* open possible link */
-        WCHAR resolvedPath[MAX_PATH];
-        if (ResolveShortCut(filePath, resolvedPath, MAX_PATH) == S_OK) {
-            if (::PathIsDirectory(resolvedPath) != FALSE) {
+        std::wstring resolvedPath;
+        if (FileSystemService::ResolveShortCut(filePath, resolvedPath)) {
+            if (::PathIsDirectory(resolvedPath.c_str()) != FALSE) {
                 SelectItem(resolvedPath);
             }
             else {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath);
+                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath.c_str());
             }
         }
         else {
@@ -2172,8 +2129,8 @@ bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
         }
 
         const std::wstring message = (dwEffect == DROPEFFECT_MOVE)
-            ? StringUtil::format(L"Move %d file(s)/folder(s) to:\n\n%s", count, pszTo)
-            : StringUtil::format(L"Copy %d file(s)/folder(s) to:\n\n%s", count, pszTo);
+            ? std::format(L"Move {} file(s)/folder(s) to:\n\n{}", count, pszTo)
+            : std::format(L"Copy {} file(s)/folder(s) to:\n\n{}", count, pszTo);
 
         if (::MessageBox(_hSelf, message.c_str(), L"Explorer", MB_YESNO) == IDYES) {
             // TODO move or copy the file views into other window in dependency to keystate

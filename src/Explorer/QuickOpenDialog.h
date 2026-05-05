@@ -42,7 +42,7 @@ public:
     QuickOpenDlg();
     ~QuickOpenDlg();
 
-    void init(HINSTANCE hInst, HWND parent, ExProp* prop);
+    void init(HINSTANCE hInst, HWND parent, Settings* prop);
     void show();
     void setRootPath(const std::filesystem::path& rootPath);
     void close();
@@ -74,7 +74,7 @@ private:
     Layout              _layout;
     HWND                _hWndResult;
     HWND                _hWndEdit;
-    ExProp*             _pExProp;
+    Settings*           _pSettings;
     RECT                _progressBarRect;
     bool                _shouldAutoClose;
     bool                _needsRefresh;

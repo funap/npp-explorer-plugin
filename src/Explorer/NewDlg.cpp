@@ -40,7 +40,7 @@ INT_PTR CALLBACK NewDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
             ::SetWindowText(_hSelf, _pszWndName);
         }
 
-        _stprintf(szDesc, L"%s:", _pDesc);
+        _stprintf(szDesc, L"%ls:", _pDesc);
         ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_NEW_DESC), szDesc);
 
         ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NEW), _pFileName);

@@ -29,13 +29,17 @@
 #include <execution>
 #include <list>
 #include <string_view>
+#include <memory>
+#include <optional>
+#include <condition_variable>
 
 #include <shlwapi.h>
 #include <windowsx.h>
 
 #include "ExplorerResource.h"
 #include "FuzzyMatcher.h"
-#include "NppInterface.h"
+#include "Editor.h"
+#include "ThemeRenderer.h"
 
 namespace {
     constexpr UINT WM_UPDATE_RESULT_LIST = WM_USER + 1;
@@ -497,7 +501,7 @@ QuickOpenDlg::QuickOpenDlg()
     , _layout{}
     , _hWndResult(nullptr)
     , _hWndEdit(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
     , _progressBarRect()
     , _shouldAutoClose(true)
     , _needsRefresh(true)
@@ -508,12 +512,13 @@ QuickOpenDlg::~QuickOpenDlg()
 {
 }
 
-void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, ExProp* prop)
+void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop)
 {
-    _pExProp = prop;
+    _pSettings = prop;
 
     Window::init(hInst, parent);
     create(IDD_QUICK_OPEN_DLG, FALSE);
+    ThemeRenderer::Instance().Register(_hSelf);
 
     _filesystemWatcher.Created([this](const std::wstring& path) {
         if (IsFile(path)) {
@@ -556,7 +561,7 @@ void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
 
 void QuickOpenDlg::show()
 {
-    std::wstring selectedText = NppInterface::getSelectedText();
+    std::wstring selectedText = Editor::Instance().GetSelectedText();
     if (!selectedText.empty()) {
         ::Edit_SetText(_hWndEdit, selectedText.c_str());
     }
@@ -640,29 +645,25 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     if (ODA_FOCUS == (drawItem->itemAction & ODA_FOCUS)) {
         return TRUE;
     }
-
     const HDC& hdc = drawItem->hDC;
-    COLORREF backgroundColor        = RGB(255, 255, 255);
-    COLORREF backgroundMatchColor   = RGB(252, 234, 128);
-    COLORREF textColor1             = RGB(  0,   0,   0);
+    ThemeRenderer& theme = ThemeRenderer::Instance();
+
+    COLORREF backgroundMatchColor   = RGB(254, 230, 177);
+    COLORREF matchColor             = RGB(0, 0, 0);
+    COLORREF backgroundColor        = theme.GetColors().secondary_bg;
+    COLORREF textColor1             = theme.GetColors().secondary;
     COLORREF textColor2             = RGB(128, 128, 128);
-
+    HBRUSH   backgroundBrush        = theme.GetBrush(ThemeRenderer::BrushType::SecondaryBg);
     if (ODS_SELECTED == ((drawItem->itemState) & (ODS_SELECTED))) {
-        backgroundColor             = RGB(230, 231, 239);
-        backgroundMatchColor        = RGB(252, 234, 128);
-        textColor1                  = RGB(  0,   0,   0);
-        textColor2                  = RGB(128, 128, 128);
+        backgroundColor             = theme.GetColors().primary_bg;
+        textColor1                  = theme.GetColors().primary;
+        backgroundBrush             = theme.GetBrush(ThemeRenderer::BrushType::PrimaryBg);
     }
-
-    // Fill background
-    const HBRUSH hBrush = ::CreateSolidBrush(backgroundColor);
-    ::FillRect(hdc, &drawItem->rcItem, hBrush);
-    ::DeleteObject(hBrush);
+    ::FillRect(hdc, &drawItem->rcItem, backgroundBrush);
 
     RECT drawPosition = drawItem->rcItem;
     drawPosition.top += _layout.itemMargin;
     drawPosition.left = drawItem->rcItem.left + _layout.itemMarginLeft;
-    ::SetTextColor(hdc, textColor1);
     ::SetBkMode(hdc, OPAQUE);
 
     RECT calcRect = {};
@@ -676,10 +677,12 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
     if (type == QuickOpenEntry::MATCH_TYPE::FILE) {
         for (size_t i = 0; i < filename.length(); ++i) {
             if ((itr != last) && (i == *itr)) {
+                ::SetTextColor(hdc, matchColor);
                 ::SetBkColor(hdc, backgroundMatchColor);
                 ++itr;
             }
             else {
+                ::SetTextColor(hdc, textColor1);
                 ::SetBkColor(hdc, backgroundColor);
             }
             ::DrawText(hdc, &filename[i], 1, &drawPosition, DT_SINGLELINE);
@@ -688,6 +691,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
         }
     }
     else {
+        ::SetTextColor(hdc, textColor1);
         ::SetBkColor(hdc, backgroundColor);
         ::DrawText(hdc, filename.data(), static_cast<INT>(filename.length()), &drawPosition, DT_SINGLELINE);
         ::DrawText(hdc, filename.data(), static_cast<INT>(filename.length()), &calcRect, DT_SINGLELINE | DT_CALCRECT);
@@ -695,14 +699,16 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 
     drawPosition.top += calcRect.bottom;
     drawPosition.left = drawItem->rcItem.left + _layout.itemMarginLeft;
-    ::SetTextColor(hdc, textColor2);
+
     if (type == QuickOpenEntry::MATCH_TYPE::PATH) {
         for (size_t i = 0; i < path.length(); ++i) {
             if ((itr != last) && (i == *itr)) {
+                ::SetTextColor(hdc, matchColor);
                 ::SetBkColor(hdc, backgroundMatchColor);
                 ++itr;
             }
             else {
+                ::SetTextColor(hdc, textColor2);
                 ::SetBkColor(hdc, backgroundColor);
             }
             ::DrawText(hdc, &path[i], 1, &drawPosition, DT_SINGLELINE);
@@ -711,6 +717,7 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
         }
     }
     else {
+        ::SetTextColor(hdc, textColor2);
         ::SetBkColor(hdc, backgroundColor);
         ::DrawText(hdc, path.data(), static_cast<INT>(path.length()), &drawPosition, DT_SINGLELINE);
     }
@@ -757,7 +764,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
             if (!_directoryReader.IsReading()) {
                 ::KillTimer(_hSelf, UPDATE_PROGRESSBAR);
             }
-            ::InvalidateRect(_hSelf, &_progressBarRect, FALSE);
+            ::InvalidateRect(_hSelf, &_progressBarRect, TRUE);
             ::UpdateWindow(_hSelf);
             ret = TRUE;
             break;
@@ -765,18 +772,10 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
             break;
         }
         break;
-    case WM_PRINTCLIENT:
     case WM_PAINT:
     {
-        HDC hDC = (Message == WM_PRINTCLIENT)
-            ? reinterpret_cast<HDC>(wParam)
-            : GetDCEx(_hSelf, nullptr, DCX_INTERSECTUPDATE | DCX_CACHE | DCX_CLIPCHILDREN | DCX_CLIPSIBLINGS);
-
-        // Erase progressbar background
-        const COLORREF backgroundColor = ::GetSysColor(COLOR_3DFACE);
-        const HBRUSH hBkBrush = ::CreateSolidBrush(backgroundColor);
-        ::FillRect(hDC, &_progressBarRect, hBkBrush);
-        ::DeleteObject(hBkBrush);
+        PAINTSTRUCT ps;
+        HDC hDC = ::BeginPaint(_hSelf, &ps);
 
         // draw progress bar
         if (_directoryReader.IsReading()) {
@@ -796,8 +795,8 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
             ::FillRect(hDC, &barRect, hPbBrush);
             ::DeleteObject(hPbBrush);
         }
-
-        ret = FALSE; // continue default proc
+        EndPaint(_hSelf, &ps);
+        ret = TRUE;
         break;
     }
     case WM_COMMAND :
@@ -829,7 +828,7 @@ INT_PTR CALLBACK QuickOpenDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM l
         _hWndEdit = ::GetDlgItem(_hSelf, IDC_EDIT_SEARCH);
         _hWndResult = ::GetDlgItem(_hSelf, IDC_LIST_RESULTS);
 
-        SetFont(_pExProp->defaultFont);
+        SetFont(_pSettings->GetDefaultFont());
 
         ListView_SetExtendedListViewStyle(_hWndResult, LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT);
         LVCOLUMN column{};
@@ -887,7 +886,7 @@ void QuickOpenDlg::openSelectedItem() const
     const int index = ListView_GetSelectionMark(_hWndResult);
     if (0 <= index) {
         if (static_cast<SIZE_T>(index) < _results.size()) {
-            NppInterface::doOpen(_results[index]->FullPath());
+            Editor::Instance().DoOpen(_results[index]->FullPath());
         }
     }
 }

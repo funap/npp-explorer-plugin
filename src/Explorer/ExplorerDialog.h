@@ -59,7 +59,7 @@ public:
     ExplorerDialog();
     ~ExplorerDialog();
 
-    void init(HINSTANCE hInst, HWND hParent, ExProp *prop);
+    void init(HINSTANCE hInst, HWND hParent, Settings *prop);
     void redraw();
     void destroy() override {};
     void doDialog(bool willBeShown = true);
@@ -159,7 +159,7 @@ private:
     BOOL        _isLeftButtonDown;
     HCURSOR     _hSplitterCursorUpDown;
     HCURSOR     _hSplitterCursorLeftRight;
-    ExProp*     _pExProp;
+    Settings*   _pSettings;
 
     /* thread variable */
     HCURSOR     _hCurWait;

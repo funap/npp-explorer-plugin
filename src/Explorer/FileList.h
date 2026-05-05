@@ -45,23 +45,7 @@ static const WORD DotPattern[] =
     0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 };
 
-struct FileListData {
-    BOOL            isParent{};
-    INT             iIcon{};
-    INT             iOverlay{};
-    BOOL            isHidden{};
-    BOOL            isDirectory{};
-    std::wstring    strName{};
-    std::wstring    strExt{};
-    std::wstring    strSize{};
-    std::wstring    strDate{};
-    /* not visible, only for sorting */
-    std::wstring    strNameExt{};
-    INT64           i64Size{};
-    INT64           i64Date{};
-    /* not visible, remember state */
-    UINT            state{};
-};
+#include "FileSystemService.h"
 
 
 class FileList : public Window, public CIDropTarget
@@ -72,7 +56,7 @@ public:
     ~FileList();
 
     void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
-    void initProp(ExProp* prop);
+    void initProp(Settings* prop);
 
     void viewPath(const std::wstring& currentDir, BOOL redraw = FALSE);
 
@@ -85,7 +69,7 @@ public:
 
     virtual void destroy() {};
     virtual void redraw() {
-        _hImlListSys = GetSmallImageList(_pExProp->bUseSystemIcons);
+        _hImlListSys = GetSmallImageList(_pSettings->IsUseSystemIcons());
         ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
         SetColumns();
         Window::redraw();
@@ -164,8 +148,8 @@ protected:
         ListView_SetSelectionMark(_hSelf, item);
     };
 
-    void GetSize(INT64 size, std::wstring & str);
-    void GetDate(FILETIME ftLastWriteTime, std::wstring & str);
+    void GetSize(size_t size, std::wstring & str);
+    void GetDate(time_t lastWriteTime, std::wstring & str);
 
 private:    /* for thread */
 
@@ -185,7 +169,7 @@ private:    /* for thread */
     HWND                            _hHeader;
     HIMAGELIST                      _hImlListSys;
 
-    ExProp*                         _pExProp;
+    Settings*                       _pSettings;
 
     /* file list owner drawn */
     HIMAGELIST                      _hImlParent;
@@ -200,13 +184,13 @@ private:    /* for thread */
     SIZE_T                          _uMaxFolders;
     SIZE_T                          _uMaxElements;
     SIZE_T                          _uMaxElementsOld;
-    std::vector<FileListData>       _vFileList;
+    std::vector<FileSystemEntry>    _vFileList;
 
     /* search in list by typing of characters */
     std::wstring                    _searchQuery;
 
-    BOOL                            _bOldAddExtToName;
-    BOOL                            _bOldViewLong;
+    bool                            _bOldAddExtToName;
+    bool                            _bOldViewLong;
 
     /* stack for prev and next dir */
     BOOL                            _isStackRec;

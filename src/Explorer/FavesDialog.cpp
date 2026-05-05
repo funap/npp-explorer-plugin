@@ -27,13 +27,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <Vsstyle.h>
 #include <Vssym32.h>
 
+#include <format>
+
 #include "Explorer.h"
 #include "ExplorerDialog.h"
 #include "ExplorerResource.h"
 #include "NewDlg.h"
-#include "NppInterface.h"
+#include "Editor.h"
 #include "PropDlg.h"
 #include "resource.h"
+#include "FileSystemService.h"
 #include "StringUtil.h"
 #include "ThemeRenderer.h"
 #include "../NppPlugin/menuCmdID.h"
@@ -51,7 +54,7 @@ ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_LINK_EDIT,          IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKEDIT,        0}
 };
 
-WCHAR FAVES_DATA[] = L"\\Favorites.dat";
+WCHAR FAVES_DATA[] = L"Favorites.dat";
 
 LinkDlg MapPropDlg(int root) {
     switch (root) {
@@ -92,22 +95,20 @@ FavesDialog::FavesDialog()
     , _hTreeCutCopy(nullptr)
     , _addToSession(FALSE)
     , _peOpenLink(nullptr)
-    , _pExProp(nullptr)
+    , _pSettings(nullptr)
 {
 }
 
 FavesDialog::~FavesDialog()
 {
-    ImageList_Destroy(_hImageList);
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, HWND hParent, ExProp *prop)
+void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop)
 {
-    _pExProp = prop;
+    _pSettings = prop;
     DockingDlgInterface::init(hInst, hParent);
 
-    /* init database */
     ReadSettings();
 }
 
@@ -146,15 +147,13 @@ void FavesDialog::SaveSession()
 void FavesDialog::NotifyNewFile()
 {
     if (isCreated() && isVisible()) {
-        WCHAR TEMP[MAX_PATH] = {};
-
         /* update "new file link" icon */
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
-        _ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(TEMP));
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        _ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(currentPath.c_str()));
 
         /* update "new folder link" icon */
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
-        _ToolBar.enable(IDM_EX_LINK_NEW_FOLDER, (wcslen(TEMP) != 0));
+        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        _ToolBar.enable(IDM_EX_LINK_NEW_FOLDER, (!currentDir.empty()));
     }
 }
 
@@ -233,7 +232,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         const auto *elem = reinterpret_cast<FavesItemPtr>(_hTreeCtrl.GetParam(hItem));
                         if (elem && (elem->Type() == FAVES_FILE) && elem->IsLink()) {
                             if (IsFileOpen(elem->Link()) == TRUE) {
-                                ::SelectObject(cd->nmcd.hdc, _pExProp->underlineFont);
+                                ::SelectObject(cd->nmcd.hdc, _pSettings->GetUnderlineFont());
                             }
                         }
                         SetBkMode(cd->nmcd.hdc, TRANSPARENT);
@@ -241,7 +240,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         COLORREF textColor = TreeView_GetTextColor(nmhdr->hwndFrom);
                         SetTextColor(cd->nmcd.hdc, textColor);
                         ::DrawText(cd->nmcd.hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER);
-                        ::SelectObject(cd->nmcd.hdc, _pExProp->defaultFont);
+                        ::SelectObject(cd->nmcd.hdc, _pSettings->GetDefaultFont());
 
                         const SIZE iconSize = {
                             .cx = GetSystemMetrics(SM_CXSMICON),
@@ -249,7 +248,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         };
                         const INT top = (textRect.top + textRect.bottom - iconSize.cy) / 2;
                         const INT left = textRect.left - iconSize.cx - GetSystemMetrics(SM_CXEDGE);
-                        if ((_pExProp->bUseSystemIcons == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->uParam & FAVES_PARAM_USERIMAGE)))) {
+                        if ((_pSettings->IsUseSystemIcons() == FALSE) || (elem && (elem->IsGroup() || (elem->Type() == FAVES_WEB) || (elem->Data() & FAVES_PARAM_USERIMAGE)))) {
                             ImageList_DrawEx(_hImageList, tvi.iImage, cd->nmcd.hdc, left, top, iconSize.cx, iconSize.cy, CLR_NONE, CLR_NONE, ILD_TRANSPARENT | ILD_SCALE);
                         }
                         else {
@@ -343,7 +342,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         INT count = _hTreeCtrl.GetChildrenCount(item);
                         if (count > 0) {
                             // Check non-existent files
-                            auto sessionFiles = NppInterface::getSessionFiles(pElem->Link());
+                            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
                             int nonExistentFileCount = 0;
                             for (auto &&file : sessionFiles) {
                                 if (!::PathFileExists(file.c_str())) {
@@ -352,9 +351,9 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                             }
 
                             // make tooltip text.
-                            tipText += StringUtil::format(L"\nThis session has %d files", count);
+                            tipText += std::format(L"\nThis session has {} files", count);
                             if (nonExistentFileCount > 0) {
-                                tipText += StringUtil::format(L" (%d are non-existent)", nonExistentFileCount);
+                                tipText += std::format(L" ({} are non-existent)", nonExistentFileCount);
                             }
                             tipText += L".";
                         }
@@ -419,7 +418,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     case WM_COMMAND:
         // ESC key has been pressed
         if (LOWORD(wParam) == IDCANCEL) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
 
@@ -459,7 +458,7 @@ LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         break;
     case WM_KEYDOWN:
         if (VK_ESCAPE == wParam) {
-            NppInterface::setFocusToCurrentEdit();
+            Editor::Instance().SetFocusToCurrentEdit();
             return TRUE;
         }
         if (wParam == VK_RETURN) {
@@ -517,18 +516,16 @@ void FavesDialog::tb_cmd(UINT message)
         toggleExplorerDialog();
         break;
     case IDM_EX_LINK_NEW_FILE: {
-        WCHAR TEMP[MAX_PATH] = {};
-        ::SendMessage(_hParent, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)TEMP);
-        if (PathFileExists(TEMP)) {
-            AddToFavorties(FALSE, TEMP);
+        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        if (PathFileExists(currentPath.c_str())) {
+            AddToFavorties(FALSE, const_cast<LPTSTR>(currentPath.c_str()));
         }
         break;
     }
     case IDM_EX_LINK_NEW_FOLDER: {
-        WCHAR TEMP[MAX_PATH] = {};
-        ::SendMessage(_hParent, NPPM_GETCURRENTDIRECTORY, 0, (LPARAM)TEMP);
-        if (wcslen(TEMP) != 0) {
-            AddToFavorties(TRUE, TEMP);
+        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        if (!currentDir.empty()) {
+            AddToFavorties(TRUE, const_cast<LPTSTR>(currentDir.c_str()));
         }
         break;
     }
@@ -567,7 +564,7 @@ void FavesDialog::InitialDialog()
     ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)_hImageListSys);
 
     // set font
-    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pExProp->defaultFont, TRUE);
+    ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* create toolbar */
     _ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
@@ -621,13 +618,11 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
     }
 
     if (destination->Type() == source->Type()) {
-        auto newItem = std::make_unique<FavesItem>(destination, source->Type(), source->Name(), source->Link());
-        newItem->uParam = source->uParam;
-        newItem->CopyChildren(source);
+        auto newItem = std::make_unique<FavesItem>(destination, source);
         destination->AddChild(std::move(newItem));
 
         if (_isCut == TRUE) {
-            auto *parent = source->m_parent;
+            auto *parent = source->Parent();
             source->Remove();
 
             auto *parentTreeItem = _hTreeCtrl.GetParent(_hTreeCutCopy);
@@ -648,7 +643,7 @@ void FavesDialog::PasteItem(HTREEITEM hItem)
     }
     else {
         WCHAR msgBoxTxt[128];
-        _stprintf(msgBoxTxt, L"Could only be paste into %s", source->Root()->Name().c_str());
+        _stprintf(msgBoxTxt, L"Could only be paste into %ls", source->Root()->Name().c_str());
         ::MessageBox(_hParent, msgBoxTxt, L"Error", MB_OK);
     }
 }
@@ -789,8 +784,8 @@ void FavesDialog::AddSaveSession(HTREEITEM hItem, BOOL bSave)
 
         /* if the parent element is LINK element -> replace informations */
         if (pElem->IsLink()) {
-            pElem->m_name = pszName;
-            pElem->m_link = pszLink;
+            pElem->Name(pszName);
+            pElem->Link(pszLink);
         }
         else {
             /* push information back */
@@ -885,7 +880,7 @@ void FavesDialog::EditItem(HTREEITEM hItem)
 
         if (pElem->IsGroup()) {
             /* get data of current selected element */
-            wcscpy(pszName, pElem->m_name.c_str());
+            wcscpy(pszName, pElem->Name().c_str());
             /* rename comment */
             wcscpy(pszDesc, L"Properties");
             wcscpy(pszComm, L"Favorites");
@@ -896,20 +891,20 @@ void FavesDialog::EditItem(HTREEITEM hItem)
 
             /* open dialog */
             if (dlgNew.doDialog(pszName, pszDesc) == TRUE) {
-                pElem->m_name = pszName;
+                pElem->Name(pszName);
                 needsUpdate = TRUE;
             }
         }
         else if (pElem->IsLink()) {
             /* get data of current selected element */
-            wcscpy(pszName, pElem->m_name.c_str());
-            wcscpy(pszLink, pElem->m_link.c_str());
+            wcscpy(pszName, pElem->Name().c_str());
+            wcscpy(pszLink, pElem->Link().c_str());
             wcscpy(pszDesc, L"Properties");
 
             PropDlg dlgProp;
             dlgProp.init(_hInst, _hParent);
             dlgProp.setRoot(pElem->Root(), ICON_FILE);
-            dlgProp.setSelectedGroup(pElem->m_parent);
+            dlgProp.setSelectedGroup(pElem->Parent());
             if (dlgProp.doDialog(pszName, pszLink, pszDesc, MapPropDlg(type)) == TRUE) {
                 auto *group = dlgProp.getSelectedGroup();
                 auto *selectedGroup = _hTreeCtrl.FindTreeItemByParam(group);
@@ -920,8 +915,8 @@ void FavesDialog::EditItem(HTREEITEM hItem)
                     RefreshTree(selectedGroup);
                 }
                 else {
-                    pElem->m_name = pszName;
-                    pElem->m_link = pszLink;
+                    pElem->Name(pszName);
+                    pElem->Link(pszLink);
                 }
                 needsUpdate = TRUE;
             }
@@ -1018,12 +1013,10 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
             case FM_NEWGROUP: {
                 LPTSTR pszName = (LPTSTR)new WCHAR[MAX_PATH];
                 LPTSTR pszDesc = (LPTSTR)new WCHAR[MAX_PATH];
-                LPTSTR pszComm = (LPTSTR)new WCHAR[MAX_PATH];
 
                 pszName[0] = '\0';
 
-                wcscpy(pszComm, L"New group in %s");
-                _stprintf(pszDesc, pszComm, pElem->Root()->Name().c_str());
+                _stprintf(pszDesc, L"New group in %ls", pElem->Root()->Name().c_str());
 
                 /* init new dialog */
                 NewDlg dlgNew;
@@ -1044,7 +1037,6 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
 
                 delete [] pszName;
                 delete [] pszDesc;
-                delete [] pszComm;
                 break;
             }
             case FM_COPY:
@@ -1083,7 +1075,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
                 ::AppendMenu(hMenu, MF_STRING, FM_SAVESESSION, L"Save Current Session");
             }
 
-            if ((type != FAVES_FILE) || (pElem->m_parent->Type() != FAVES_SESSION)) {
+            if ((type != FAVES_FILE) || (pElem->Parent()->Type() != FAVES_SESSION)) {
                 ::AppendMenu(hMenu, MF_SEPARATOR, 0, 0);
                 ::AppendMenu(hMenu, MF_STRING, FM_COPY, L"Copy");
                 ::AppendMenu(hMenu, MF_STRING, FM_CUT, L"Cut");
@@ -1169,7 +1161,7 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
         parentElement->SortChildren();
 
         /* update elements in parent tree */
-        for (auto&& child : parentElement->m_children) {
+        for (auto&& child : parentElement->Children()) {
             BOOL haveChildren   = FALSE;
             INT iIconNormal     = 0;
             INT iIconSelected   = 0;
@@ -1213,7 +1205,7 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
             }
 
             /* control item expand state and correct if necessary */
-            BOOL isTreeExp = _hTreeCtrl.IsItemExpanded(hCurrentItem);
+            bool isTreeExp = _hTreeCtrl.IsItemExpanded(hCurrentItem);
 
             /* toggle if state is not equal */
             if (isTreeExp != child->IsExpanded()) {
@@ -1248,10 +1240,10 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
     if (session->IsGroup()) {
         return;
     }
-    session->m_children.clear();
+    session->ClearChildren();
 
     BOOL hasMissingFile = FALSE;
-    auto sessionFiles = NppInterface::getSessionFiles(session->Link());
+    auto sessionFiles = Editor::Instance().GetSessionFiles(session->Link());
     for (const auto &path : sessionFiles) {
         auto newItem = std::make_unique<FavesItem>(session, FAVES_FILE, path.substr(path.find_last_of(L'\\') + 1), path);
         INT iIconNormal = 0;
@@ -1261,7 +1253,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
             ExtractIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
         }
         else {
-            newItem->uParam |= FAVES_PARAM_USERIMAGE;
+            newItem->Data(FAVES_PARAM_USERIMAGE);
             iIconNormal = ICON_MISSING_FILE;
             iIconSelected = iIconNormal;
             hasMissingFile = TRUE;
@@ -1271,11 +1263,11 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
     }
 
     if (hasMissingFile) {
-        session->uParam |= FAVES_PARAM_USERIMAGE;
+        session->Data(FAVES_PARAM_USERIMAGE);
         _hTreeCtrl.SetItemIcons(hItem, ICON_WARN_SESSION, ICON_WARN_SESSION, 0);
     }
     else {
-        session->uParam |= FAVES_PARAM_USERIMAGE;
+        session->Data(FAVES_PARAM_USERIMAGE);
         _hTreeCtrl.SetItemIcons(hItem, ICON_SESSION, ICON_SESSION, 0);
     }
 }
@@ -1337,11 +1329,11 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
         }
         case FAVES_FILE: {
             /* open possible link */
-            WCHAR pszFilePath[MAX_PATH];
-            if (ResolveShortCut(pElem->Link(), pszFilePath, MAX_PATH) == S_OK) {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pszFilePath);
+            std::wstring resolvedPath;
+            if (FileSystemService::ResolveShortCut(pElem->Link(), resolvedPath)) {
+                Editor::Instance().DoOpen(resolvedPath);
             } else {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)pElem->Link().c_str());
+                Editor::Instance().DoOpen(pElem->Link());
             }
             break;
         }
@@ -1350,7 +1342,7 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
             break;
         case FAVES_SESSION: {
             // Check non-existent files
-            auto sessionFiles = NppInterface::getSessionFiles(pElem->Link());
+            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
             int nonExistentFileCount = 0;
             for (auto&& file : sessionFiles) {
                 if (!::PathFileExists(file.c_str())) {
@@ -1358,7 +1350,10 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
                 }
             }
             if (0 < nonExistentFileCount) {
-                if (IDCANCEL == ::MessageBox(_hSelf, StringUtil::format(L"This session has %d non-existent files. Processing will delete all non-existent files in the session. Are you sure you want to continue?", nonExistentFileCount).c_str(), L"Open Session", MB_OKCANCEL | MB_ICONWARNING)) {
+                const std::wstring msg = std::format(L"This session has {} non-existent files. "
+                                                     L"Processing will delete all non-existent files in the session. Are you sure you want to continue?",
+                                                     nonExistentFileCount);
+                if (IDCANCEL == ::MessageBox(_hSelf, msg.c_str(), L"Open Session", MB_OKCANCEL | MB_ICONWARNING)) {
                     return;
                 }
             }
@@ -1404,210 +1399,30 @@ void FavesDialog::ExpandElementsRecursive(HTREEITEM hItem)
 
 void FavesDialog::ReadSettings()
 {
-    extern WCHAR configPath[MAX_PATH];
-    LPTSTR       readFilePath = (LPTSTR)new WCHAR[MAX_PATH];
-    DWORD        hasRead      = 0;
-    HANDLE       hFile        = nullptr;
+    std::filesystem::path favorites_dat(_pSettings->GetConfigDir());
+    favorites_dat /= FAVES_DATA;
 
-    /* fill out tree and vDB */
-    wcscpy(readFilePath, configPath);
-    wcscat(readFilePath, FAVES_DATA);
-
-    hFile = ::CreateFile(readFilePath, GENERIC_READ, 0, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    if (hFile != INVALID_HANDLE_VALUE) {
-        DWORD    size = ::GetFileSize(hFile, nullptr);
-
-        if (size != -1) {
-            LPTSTR ptr  = nullptr;
-            LPTSTR data = (LPTSTR)new WCHAR[size / sizeof(WCHAR)];
-
-            if (data != nullptr) {
-                /* read data from file */
-                ::ReadFile(hFile, data, size, &hasRead, nullptr);
-
-                WCHAR    szBOM = 0xFEFF;
-                if (data[0] != szBOM) {
-                    ::MessageBox(_hParent, L"Error in file 'Favorites.dat'", L"Error", MB_OK | MB_ICONERROR);
-                }
-                else {
-                    ptr = data + 1;
-                    ptr = _tcstok(ptr, L"\n");
-
-                    /* finally, fill out the tree and the vDB */
-                    for (auto *root : {_model.FolderRoot(), _model.FileRoot(), _model.WebRoot(), _model.SessionRoot()}) {
-                        /* error */
-                        if (ptr == nullptr) {
-                            break;
-                        }
-
-                        /* step over name tag */
-                        if (_tcscmp(root->m_name.c_str(), ptr) == 0) {
-                            ptr = _tcstok(nullptr, L"\n");
-                            if (ptr == nullptr) {
-                                break;
-                            }
-                            if (_tcsstr(ptr, L"Expand=") == ptr) {
-                                root->IsExpanded(ptr[7] == '1');
-                                ptr = _tcstok(nullptr, L"\n");
-                            }
-                        }
-                        else {
-                            ::MessageBox(_hSelf, L"Error in file 'Favorites.dat'", L"Error", MB_OK);
-                            break;
-                        }
-
-                        /* now read the information */
-                        ReadElementTreeRecursive(root->Type(), root, &ptr);
-                    }
-                }
-                delete [] data;
-            }
-        }
-
-        ::CloseHandle(hFile);
+    if (!std::filesystem::exists(favorites_dat)) {
+        _model.Clear();
+        return;
     }
 
-    delete [] readFilePath;
-}
-
-
-void FavesDialog::ReadElementTreeRecursive(FavesType type, FavesItemPtr elem, LPTSTR* ptr)
-{
-    while (1) {
-        if (*ptr == nullptr) {
-            /* reached end of file -> leave */
-            break;
-        }
-        if (_tcscmp(*ptr, L"#LINK") == 0) {
-            std::wstring name;
-            std::wstring link;
-
-            // get element name
-            *ptr = _tcstok(nullptr, L"\n");
-            if (_tcsstr(*ptr, L"\tName=") == *ptr) {
-                name = &(*ptr)[6];
-                *ptr = _tcstok(nullptr, L"\n");
-            }
-            else {
-                ::MessageBox(_hSelf, L"Error in file 'Favorites.dat'\nName in LINK not correct!", L"Error", MB_OK);
-            }
-
-            // get next element link
-            if (_tcsstr(*ptr, L"\tLink=") == *ptr) {
-                link = &(*ptr)[6];
-                *ptr = _tcstok(nullptr, L"\n");
-            }
-            else {
-                ::MessageBox(_hSelf, L"Error in file 'Favorites.dat'\nLink in LINK not correct!", L"Error", MB_OK);
-            }
-
-            auto newItem = std::make_unique<FavesItem>(elem, type, name, link);
-            elem->AddChild(std::move(newItem));
-        }
-        else if ((_tcscmp(*ptr, L"#GROUP") == 0) || (_tcscmp(*ptr, L"#GROUP") == 0)) {
-            // group is found, get information and fill out the struct
-
-            /* get element name */
-            std::wstring name;
-            *ptr = _tcstok(nullptr, L"\n");
-            if (_tcsstr(*ptr, L"\tName=") == *ptr) {
-                name = &(*ptr)[6];
-                *ptr = _tcstok(nullptr, L"\n");
-            }
-            else {
-                ::MessageBox(_hSelf, L"Error in file 'Favorites.dat'\nName in GROUP not correct!", L"Error", MB_OK);
-            }
-
-            BOOL isExpanded = false;
-            if (_tcsstr(*ptr, L"\tExpand=") == *ptr) {
-                if ((*ptr)[8] == '1') {
-                    isExpanded = true;
-                }
-                *ptr = _tcstok(nullptr, L"\n");
-            }
-
-            auto newItem = std::make_unique<FavesItem>(elem, type, name);
-            newItem->IsExpanded(isExpanded);
-            ReadElementTreeRecursive(type, newItem.get(), ptr);
-            elem->m_children.push_back(std::move(newItem));
-        }
-        else if (_tcscmp(*ptr, L"") == 0) {
-            /* step over empty lines */
-            *ptr = _tcstok(nullptr, L"\n");
-        }
-        else if (_tcscmp(*ptr, L"#END") == 0) {
-            /* on group end leave the recursion */
-            *ptr = _tcstok(nullptr, L"\n");
-            break;
-        }
-        else {
-            /* there is garbage information/tag */
-            break;
-        }
+    try {
+        _model.Load(favorites_dat);
+    }
+    catch (const std::exception& e) {
+        ::MessageBoxA(_hParent, e.what(), "Error", MB_OK | MB_ICONERROR);
     }
 }
-
 
 void FavesDialog::SaveSettings()
 {
-    extern WCHAR configPath[MAX_PATH];
-    LPTSTR       saveFilePath = (LPTSTR)new WCHAR[MAX_PATH];
-    DWORD        hasWritten   = 0;
-    HANDLE       hFile        = nullptr;
-    BYTE         szBOM[]      = {0xFF, 0xFE};
-
-    wcscpy(saveFilePath, configPath);
-    wcscat(saveFilePath, FAVES_DATA);
-
-    hFile = ::CreateFile(saveFilePath, GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-
-    if (hFile != INVALID_HANDLE_VALUE) {
-        ::WriteFile(hFile, szBOM, sizeof(szBOM), &hasWritten, nullptr);
-
-        for (auto *root : { _model.FolderRoot(), _model.FileRoot(), _model.WebRoot(), _model.SessionRoot() }) {
-            std::wstring temp = StringUtil::format(L"%s\nExpand=%i\n\n", root->Name().c_str(), root->IsExpanded());
-            ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
-            SaveElementTreeRecursive(root, hFile);
-        }
-
-        ::CloseHandle(hFile);
+    std::filesystem::path favorites_dat(_pSettings->GetConfigDir());
+    favorites_dat /= FAVES_DATA;
+    try {
+        _model.Save(favorites_dat);
     }
-    else {
-        ErrorMessage(GetLastError());
-    }
-
-    delete [] saveFilePath;
-}
-
-
-void FavesDialog::SaveElementTreeRecursive(FavesItemPtr pElem, HANDLE hFile)
-{
-    DWORD        hasWritten = 0;
-
-    /* delete elements of child items */
-    for (auto&& child : pElem->m_children) {
-        if (child->IsGroup()) {
-            ::WriteFile(hFile, L"#GROUP\n", (DWORD)wcslen(L"#GROUP\n") * sizeof(WCHAR), &hasWritten, nullptr);
-
-            std::wstring temp = StringUtil::format(L"\tName=%s\n", child->Name().c_str());
-            ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
-
-            temp = StringUtil::format(L"\tExpand=%i\n\n", child->IsExpanded());
-            ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
-
-            SaveElementTreeRecursive(child.get(), hFile);
-
-            ::WriteFile(hFile, L"#END\n\n", (DWORD)wcslen(L"#END\n\n") * sizeof(WCHAR), &hasWritten, nullptr);
-        }
-        else if (child->IsLink()) {
-            ::WriteFile(hFile, L"#LINK\n", (DWORD)wcslen(L"#LINK\n") * sizeof(WCHAR), &hasWritten, nullptr);
-
-            std::wstring temp = StringUtil::format(L"\tName=%s\n", child->Name().c_str());
-            ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
-
-            temp = StringUtil::format(L"\tLink=%s\n\n", child->Link().c_str());
-            ::WriteFile(hFile, temp.c_str(), (DWORD)temp.length() * sizeof(WCHAR), &hasWritten, nullptr);
-        }
+    catch (const std::exception& e) {
+        ::MessageBoxA(_hParent, e.what(), "Error", MB_OK | MB_ICONERROR);
     }
 }
