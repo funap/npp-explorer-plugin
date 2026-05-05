@@ -1343,56 +1343,7 @@ void ExplorerDialog::UpdateRoots()
             InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, true);
         }
     }
-}:", driveLetter);
-            bool haveChildren = false;
 
-            if (volumeInfo) {
-                volumeName = std::format(L"{}: [{}]", driveLetter, *volumeInfo);
-                haveChildren = FileSystemService::HaveChildren(drivePath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
-            }
-
-            if (hCurrentItem != nullptr) {
-                auto currentItemName = _hTreeCtrl.GetItemText(hCurrentItem);
-                if (volumeName == currentItemName) {
-                    // if names are equal, go to next item in tree
-                    int iIconNormal = 0;
-                    int iIconSelected = 0;
-                    int iIconOverlayed = 0;
-                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                    _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
-                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
-                }
-                else if (!currentItemName.empty() && (driveLetter == currentItemName.front())) {
-                    // if names are not the same but the drive letter are equal, rename item
-                    int iIconNormal = 0;
-                    int iIconSelected = 0;
-                    int iIconOverlayed = 0;
-                    ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                    _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
-                    _hTreeCtrl.DeleteChildren(hCurrentItem);
-                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
-                }
-                else {
-                    // insert the device when new and not present before
-                    HTREEITEM hItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_PREVIOUS);
-                    InsertChildFolder(volumeName, TVI_ROOT, hItem, volumeInfo.has_value());
-                }
-            }
-            else {
-                InsertChildFolder(volumeName, TVI_ROOT, TVI_LAST, volumeInfo.has_value());
-            }
-        } else {
-            // get current volume name in list and test if name is changed
-            if (hCurrentItem != nullptr) {
-                auto currentItemName = _hTreeCtrl.GetItemText(hCurrentItem);
-                if (!currentItemName.empty() && (driveLetter == currentItemName[0])) {
-                    HTREEITEM pPrevItem = hCurrentItem;
-                    hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
-                    _hTreeCtrl.DeleteItem(pPrevItem);
-                }
-            }
-        }
-    }
 }
 
 void ExplorerDialog::UpdateAllExpandedItems()
@@ -1594,27 +1545,7 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
     _workerThread.Enqueue(std::make_unique<TaskUpdateDirectory>(_model, tempEntry, _pSettings));
 }
 
-            else if (_pSettings->IsUseFullTree()) {
-                files.push_back(entry);
-            }
-        }
 
-        /* sort data */
-        std::sort(folders.begin(), folders.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
-        });
-        std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) {
-            return ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str()) < 0;
-        });
-
-        for (const auto* entries_ptr : { &folders, &files }) {
-            for (const auto& entry : *entries_ptr) {
-                if (InsertChildFolder(entry.Name(), parentItem) == nullptr) {
-                    break;
-                }
-            }
-        }
-    }
 }
 
 std::wstring ExplorerDialog::GetPath(HTREEITEM currentItem) const
