@@ -2084,6 +2084,11 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                     }
                 }
             }
+
+            if (hItem == _hItemExpand) {
+                _hTreeCtrl.Expand(hItem, TVE_EXPAND);
+                _hItemExpand = nullptr;
+            }
         }
     }
 }
