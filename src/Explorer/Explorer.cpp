@@ -515,12 +515,12 @@ HIMAGELIST GetSmallImageList(BOOL bSystem)
     return ghImgList;
 }
 
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected)
 {
     SHFILEINFO  sfi{};
     SIZE_T      length = wcslen(currentPath) - 1;
     WCHAR       TEMP[MAX_PATH];
-    UINT        stOverlay = (piIconOverlayed ? SHGFI_OVERLAYINDEX : 0);
+    UINT        stOverlay = 0;
 
     wcscpy(TEMP, currentPath);
     if (TEMP[length] == '*') {
@@ -542,15 +542,15 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
                 0,
                 &sfi,
                 sizeof(SHFILEINFO),
-                SHGFI_ICON | SHGFI_SMALLICON | stOverlay);
+                SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
             ::DestroyIcon(sfi.hIcon);
 
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
-                FILE_ATTRIBUTE_NORMAL,
+                ((type == DEVT_DIRECTORY || type == DEVT_DRIVE) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL),
                 &sfi,
                 sizeof(SHFILEINFO),
-                SHGFI_ICON | SHGFI_SMALLICON | stOverlay | SHGFI_USEFILEATTRIBUTES);
+                SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
 
             /* find drive icon in own image list */
             UINT onPos = 0;
@@ -581,9 +581,7 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
             *piIconNormal   = ICON_FILE;
             *piIconSelected = ICON_FILE;
         }
-        if (piIconOverlayed != nullptr) {
-            *piIconOverlayed = 0;
-        }
+
     }
     else {
         /* get normal and overlayed icon */
@@ -593,42 +591,40 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
                 0,
                 &sfi,
                 sizeof(SHFILEINFO),
-                SHGFI_ICON | SHGFI_SMALLICON | stOverlay);
+                SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
             ::DestroyIcon(sfi.hIcon);
 
             if (type == DEVT_DRIVE) {
                 ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
                 SHGetFileInfo(TEMP,
-                    FILE_ATTRIBUTE_NORMAL,
+                    ((type == DEVT_DIRECTORY || type == DEVT_DRIVE) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL),
                     &sfi,
                     sizeof(SHFILEINFO),
-                    SHGFI_ICON | SHGFI_SMALLICON | stOverlay | SHGFI_USEFILEATTRIBUTES);
+                    SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
                 ::DestroyIcon(sfi.hIcon);
             }
         }
         else {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
-                FILE_ATTRIBUTE_NORMAL,
+                ((type == DEVT_DIRECTORY || type == DEVT_DRIVE) ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL),
                 &sfi,
                 sizeof(SHFILEINFO),
-                SHGFI_ICON | SHGFI_SMALLICON | stOverlay | SHGFI_USEFILEATTRIBUTES);
+                SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES);
             ::DestroyIcon(sfi.hIcon);
         }
 
         *piIconNormal = sfi.iIcon & 0x00ffffff;
-        if (piIconOverlayed != nullptr) {
-            *piIconOverlayed = sfi.iIcon >> 24;
-        }
+
 
         /* get selected (open) icon */
         if (type == DEVT_DIRECTORY) {
             ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
             SHGetFileInfo(TEMP,
-                0,
+                FILE_ATTRIBUTE_DIRECTORY,
                 &sfi,
                 sizeof(SHFILEINFO),
-                SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
+                SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON | SHGFI_USEFILEATTRIBUTES);
             ::DestroyIcon(sfi.hIcon);
 
             *piIconSelected = sfi.iIcon;
@@ -642,6 +638,54 @@ void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piI
 
 
 // Current docs
+void GetCompleteIcon(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+{
+    SHFILEINFO  sfi{};
+    SIZE_T      length = wcslen(currentPath) - 1;
+    WCHAR       TEMP[MAX_PATH];
+    UINT        stOverlay = (piIconOverlayed ? SHGFI_OVERLAYINDEX : 0);
+
+    wcscpy(TEMP, currentPath);
+    if (TEMP[length] == '*') {
+        TEMP[length] = '\0';
+    }
+    else if (TEMP[length] != '\\') {
+        wcscat(TEMP, L"\\");
+    }
+
+    if (fileName != nullptr) {
+        wcscat(TEMP, fileName);
+    }
+
+    ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
+    SHGetFileInfo(TEMP,
+        0,
+        &sfi,
+        sizeof(SHFILEINFO),
+        SHGFI_ICON | SHGFI_SMALLICON | stOverlay);
+    ::DestroyIcon(sfi.hIcon);
+
+    *piIconNormal = sfi.iIcon & 0x00ffffff;
+    if (piIconOverlayed != nullptr) {
+        *piIconOverlayed = (sfi.iIcon >> 24) & 0xFF;
+    }
+
+    if (type == DEVT_DIRECTORY) {
+        ::ZeroMemory(&sfi, sizeof(SHFILEINFO));
+        SHGetFileInfo(TEMP,
+            0,
+            &sfi,
+            sizeof(SHFILEINFO),
+            SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
+        ::DestroyIcon(sfi.hIcon);
+
+        *piIconSelected = sfi.iIcon;
+    }
+    else {
+        *piIconSelected = *piIconNormal;
+    }
+}
+
 void UpdateDocs()
 {
     g_HSource = Editor::Instance().GetCurrentScintilla();

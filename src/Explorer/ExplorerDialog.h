@@ -94,6 +94,7 @@ protected:
 
     void UpdateRoots();
     void UpdateAllExpandedItems();
+    void UpdateTreeItemCompleteIcon(HTREEITEM hItem, int icon, int selIcon, int overlay);
     void UpdatePath();
 
     BOOL SelectItem(const std::filesystem::path& path);

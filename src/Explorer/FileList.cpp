@@ -324,29 +324,14 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         }
         break;
     }
-    case EXM_UPDATE_OVERICON:
+    case EXM_REDRAW_ITEM:
     {
-        INT         iIcon       = 0;
-        INT         iSelected   = 0;
-        RECT        rcIcon      = {0};
-        UINT        iPos        = (UINT)wParam;
-        DevType     type        = (DevType)lParam;
+        RECT rcIcon = {0};
+        UINT iPos = (UINT)wParam;
 
         if (iPos < _uMaxElements) {
-            /* test if overlay icon is need to be updated and if it's changed do a redraw */
-            if (_vFileList[iPos].Overlay() == 0) {
-                int overlay = 0;
-                ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iPos].Name().c_str(),
-                    type, &iIcon, &iSelected, &overlay);
-                _vFileList[iPos].SetOverlay(overlay);
-            }
-
-            if (_vFileList[iPos].Overlay() != 0) {
-                ListView_GetSubItemRect(_hSelf, iPos, 0, LVIR_ICON, &rcIcon);
-                ::RedrawWindow(_hSelf, &rcIcon, NULL, TRUE);
-            }
-
-            ::SetEvent(_hEvent[FL_EVT_NEXT]);
+            ListView_GetSubItemRect(_hSelf, iPos, 0, LVIR_ICON, &rcIcon);
+            ::RedrawWindow(_hSelf, &rcIcon, NULL, TRUE);
         }
         break;
     }
@@ -607,15 +592,22 @@ void FileList::UpdateOverlayIcon()
         case FL_EVT_NEXT:
             if (::WaitForSingleObject(_hEvent[FL_EVT_INT], 1) == WAIT_TIMEOUT) {
                 if (i < _uMaxFolders) {
-                    ::PostMessage(_hSelf, EXM_UPDATE_OVERICON, i, (LPARAM)DEVT_DIRECTORY);
+                    if (_vFileList[i].Overlay() == 0) {
+                        _context->GetWorkerThread()->Enqueue(std::make_unique<TaskGetCompleteIconFileList>(_hSelf, this, i, _pSettings->GetCurrentDir(), _vFileList[i].Name(), DEVT_DIRECTORY));
+                    }
+                    i++;
+                    ::SetEvent(_hEvent[FL_EVT_NEXT]);
                 }
                 else if (i < _uMaxElements) {
-                    ::PostMessage(_hSelf, EXM_UPDATE_OVERICON, i, (LPARAM)DEVT_FILE);
+                    if (_vFileList[i].Overlay() == 0) {
+                        _context->GetWorkerThread()->Enqueue(std::make_unique<TaskGetCompleteIconFileList>(_hSelf, this, i, _pSettings->GetCurrentDir(), _vFileList[i].Name(), DEVT_FILE));
+                    }
+                    i++;
+                    ::SetEvent(_hEvent[FL_EVT_NEXT]);
                 }
                 else {
                     LIST_UNLOCK();
                 }
-                i++;
             }
             else {
                 ::SetEvent(_hEvent[FL_EVT_INT]);
@@ -633,9 +625,9 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
     if (_vFileList[iItem].Icon() == -1) {
-        int icon, overlay;
+        int icon = 0, overlay = 0;
         ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iItem].Name().c_str(),
-            type, &icon, &iIconSelected, &overlay);
+            type, &icon, &iIconSelected);
         _vFileList[iItem].SetIcon(icon);
         _vFileList[iItem].SetOverlay(overlay);
     }
@@ -1604,4 +1596,16 @@ bool FileList::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD& dwEffect)
         }
     }
     return true;
+}
+
+void FileList::SetCompleteIconAsync(UINT iItem, const std::wstring& expectedName, int icon, int overlay) {
+    if (iItem < _uMaxElements) {
+        LIST_LOCK();
+        if (_vFileList[iItem].Name() == expectedName) {
+            _vFileList[iItem].SetIcon(icon);
+            _vFileList[iItem].SetOverlay(overlay);
+            ::PostMessage(_hSelf, EXM_REDRAW_ITEM, iItem, 0);
+        }
+        LIST_UNLOCK();
+    }
 }

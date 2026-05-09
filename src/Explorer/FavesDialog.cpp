@@ -1177,11 +1177,11 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
                 switch (child->Type()) {
                 case FAVES_FOLDER:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected);
                     break;
                 case FAVES_FILE:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected);
                     break;
                 case FAVES_SESSION:
                     haveChildren    = (0 != ::SendMessage(_hParent, NPPM_GETNBSESSIONFILES, 0, (LPARAM)child->Link().c_str()));
@@ -1198,10 +1198,10 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
 
             /* update or add new item */
             if (hCurrentItem != nullptr) {
-                _hTreeCtrl.UpdateItem(hCurrentItem, child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren, child.get());
+                _hTreeCtrl.UpdateItem(hCurrentItem, child->Name(), iIconNormal, iIconSelected, 0, 0, haveChildren, child.get());
             }
             else {
-                hCurrentItem = _hTreeCtrl.InsertItem(child->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hParentItem, TVI_LAST, haveChildren, child.get());
+                hCurrentItem = _hTreeCtrl.InsertItem(child->Name(), iIconNormal, iIconSelected, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             }
 
             /* control item expand state and correct if necessary */
@@ -1250,7 +1250,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
         INT iIconSelected = 0;
         INT iIconOverlayed = 0;
         if (::PathFileExists(newItem->Link().c_str())) {
-            ExtractIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            ExtractIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected);
         }
         else {
             newItem->Data(FAVES_PARAM_USERIMAGE);
@@ -1258,7 +1258,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
             iIconSelected = iIconNormal;
             hasMissingFile = TRUE;
         }
-        _hTreeCtrl.InsertItem(newItem->Name(), iIconNormal, iIconSelected, iIconOverlayed, 0, hItem, TVI_LAST, FALSE, newItem.get());
+        _hTreeCtrl.InsertItem(newItem->Name(), iIconNormal, iIconSelected, 0, 0, hItem, TVI_LAST, FALSE, newItem.get());
         session->AddChild(std::move(newItem));
     }
 

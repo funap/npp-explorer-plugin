@@ -87,6 +87,7 @@ public:
     void SetItems(std::vector<std::wstring> vStrItems);
 
     void UpdateOverlayIcon();
+    void SetCompleteIconAsync(UINT iItem, const std::wstring& expectedName, int icon, int overlay);
     void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
 
 

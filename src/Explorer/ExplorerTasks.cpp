@@ -51,3 +51,33 @@ void TaskUpdateDirectory::OnCompleted() {
     _entry->SetChildren(_children);
     _model->NotifyEntryUpdated(_entry);
 }
+
+#include "ExplorerDialog.h"
+#include "FileList.h"
+#include "Explorer.h"
+
+TaskGetCompleteIconTree::TaskGetCompleteIconTree(HWND hDlg, ExplorerDialog* dialog, HTREEITEM hItem, const std::wstring& path, DevType type)
+    : _hDlg(hDlg), _dialog(dialog), _hItem(hItem), _path(path), _type(type) {}
+
+void TaskGetCompleteIconTree::Execute() {
+    GetCompleteIcon(_path.c_str(), nullptr, _type, &_iconNormal, &_iconSelected, &_overlay);
+}
+
+void TaskGetCompleteIconTree::OnCompleted() {
+    if (::IsWindow(_hDlg) && _dialog) {
+        _dialog->UpdateTreeItemCompleteIcon(_hItem, _iconNormal, _iconSelected, _overlay);
+    }
+}
+
+TaskGetCompleteIconFileList::TaskGetCompleteIconFileList(HWND hList, FileList* fileList, UINT iItem, const std::wstring& path, const std::wstring& name, DevType type)
+    : _hList(hList), _fileList(fileList), _iItem(iItem), _path(path), _name(name), _type(type) {}
+
+void TaskGetCompleteIconFileList::Execute() {
+    GetCompleteIcon(_path.c_str(), _name.c_str(), _type, &_iconNormal, &_iconSelected, &_overlay);
+}
+
+void TaskGetCompleteIconFileList::OnCompleted() {
+    if (::IsWindow(_hList) && _fileList) {
+        _fileList->SetCompleteIconAsync(_iItem, _name, _iconNormal, _overlay);
+    }
+}

@@ -1319,8 +1319,9 @@ void ExplorerDialog::UpdateRoots()
                 int iIconNormal = 0;
                 int iIconSelected = 0;
                 int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
+                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected);
+                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, 0, 0, haveChildren);
+                _workerThread.Enqueue(std::make_unique<TaskGetCompleteIconTree>(_hSelf, this, hCurrentItem, drivePath, DEVT_DRIVE));
                 hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
             }
             else if (!currentItemName.empty() && (driveLetter == currentItemName.front())) {
@@ -1328,8 +1329,9 @@ void ExplorerDialog::UpdateRoots()
                 int iIconNormal = 0;
                 int iIconSelected = 0;
                 int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
-                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, iIconOverlayed, 0, haveChildren);
+                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected);
+                _hTreeCtrl.UpdateItem(hCurrentItem, volumeName, iIconNormal, iIconSelected, 0, 0, haveChildren);
+                _workerThread.Enqueue(std::make_unique<TaskGetCompleteIconTree>(_hSelf, this, hCurrentItem, drivePath, DEVT_DRIVE));
                 _hTreeCtrl.DeleteChildren(hCurrentItem);
                 hCurrentItem = _hTreeCtrl.GetNextItem(hCurrentItem, TVGN_NEXT);
             }
@@ -1407,10 +1409,13 @@ HTREEITEM ExplorerDialog::InsertChildFolder(const std::wstring& childFolderName,
     INT iIconOverlayed  = 0;
 
     /* get icons */
-    ExtractIcons(path.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+    ExtractIcons(path.c_str(), nullptr, devType, &iIconNormal, &iIconSelected);
 
     /* set item */
-    return _hTreeCtrl.InsertItem(childFolderName, iIconNormal, iIconSelected, iIconOverlayed, bHidden, parentItem, insertAfter, haveChildren);
+    HTREEITEM hNewItem = _hTreeCtrl.InsertItem(childFolderName, iIconNormal, iIconSelected, 0, bHidden, parentItem, insertAfter, haveChildren);
+
+    _workerThread.Enqueue(std::make_unique<TaskGetCompleteIconTree>(_hSelf, this, hNewItem, path, devType));
+    return hNewItem;
 }
 
 BOOL ExplorerDialog::FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem)
@@ -1503,10 +1508,12 @@ void ExplorerDialog::UpdateChildren(const std::wstring& path, HTREEITEM parentIt
                     BOOL haveChildren = FileSystemService::HaveChildren(currentPath, _pSettings->IsUseFullTree(), _pSettings->IsShowHidden());
 
                     INT iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
-                    ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    ExtractIcons(currentPath.c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected);
 
                     BOOL bHidden = entry.IsHidden();
-                    _hTreeCtrl.UpdateItem(hCurrentItem, name, iIconNormal, iIconSelected, iIconOverlayed, bHidden, haveChildren);
+                    _hTreeCtrl.UpdateItem(hCurrentItem, name, iIconNormal, iIconSelected, 0, bHidden, haveChildren);
+
+                    _workerThread.Enqueue(std::make_unique<TaskGetCompleteIconTree>(_hSelf, this, hCurrentItem, currentPath, DEVT_DIRECTORY));
 
                     if ((doRecursive) && _hTreeCtrl.IsItemExpanded(hCurrentItem)) {
                         UpdateChildren(currentPath, hCurrentItem);
@@ -2090,5 +2097,13 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                 _hItemExpand = nullptr;
             }
         }
+    }
+}
+
+void ExplorerDialog::UpdateTreeItemCompleteIcon(HTREEITEM hItem, int icon, int selIcon, int overlay)
+{
+    int iIconNormal, iIconSelected, iIconOverlayed;
+    if (_hTreeCtrl.GetItemIcons(hItem, &iIconNormal, &iIconSelected, &iIconOverlayed)) {
+        _hTreeCtrl.SetItemIcons(hItem, icon, selIcon, overlay);
     }
 }

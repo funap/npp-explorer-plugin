@@ -157,7 +157,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define	   EXX_MESSAGES		 30800
 	#define EXM_CHANGECOMBO					(EXX_MESSAGES + 1)
 	#define EXM_OPENDIR						(EXX_MESSAGES + 2)
-	#define EXM_UPDATE_OVERICON				(EXX_MESSAGES + 6)
+	#define EXM_REDRAW_ITEM				(EXX_MESSAGES + 6)
 	#define EXM_QUERYDROP					(EXX_MESSAGES + 7)
 	#define EXM_DRAGLEAVE					(EXX_MESSAGES + 8)
 	#define	EXM_OPENLINK					(EXX_MESSAGES + 9)
