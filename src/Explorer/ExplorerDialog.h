@@ -73,6 +73,7 @@ public:
     void Open(const std::wstring& path) override;
     void Refresh() override;
     void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
+    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
 protected:
     /* Subclassing tree */
     LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -110,12 +111,13 @@ protected:
     void tb_not(LPNMTOOLBAR lpnmtb);
 
     BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-    void UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive = TRUE);
-    HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+    HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL isDirectory = TRUE, BOOL isHidden = FALSE, BOOL haveChildren = TRUE);
     void FetchChildren(HTREEITEM parentItem);
     std::wstring GetPath(HTREEITEM currentItem) const;
     void UpdateLayout();
+    void ResumePendingSelection();
 private:
+    std::vector<std::wstring> _pendingSelectPathSegments;
     /* Handles */
     BOOL        _bStartupFinish;
     HANDLE      _hExploreVolumeThread;

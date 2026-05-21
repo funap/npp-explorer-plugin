@@ -26,14 +26,19 @@
 #include <string>
 #include <vector>
 
+#include <memory>
+
+class IAsyncTask;
+
 class ExplorerContext
 {
 public:
-    ~ExplorerContext() = default;
+    virtual ~ExplorerContext() = default;
     virtual void NavigateBack() = 0;
     virtual void NavigateForward() = 0;
     virtual void NavigateTo(const std::wstring& path) = 0;
     virtual void Open(const std::wstring& path) = 0;
     virtual void Refresh() = 0;
     virtual void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu) = 0;
+    virtual void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) = 0;
 };

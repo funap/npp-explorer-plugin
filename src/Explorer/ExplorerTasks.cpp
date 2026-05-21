@@ -1,4 +1,5 @@
 #include "ExplorerTasks.h"
+#include "FileList.h"
 
 TaskInit::TaskInit(std::shared_ptr<ExplorerModel> model, Settings* settings)
     : _model(model), _settings(settings) {}
@@ -50,4 +51,15 @@ void TaskUpdateDirectory::Execute() {
 void TaskUpdateDirectory::OnCompleted() {
     _entry->SetChildren(_children);
     _model->NotifyEntryUpdated(_entry);
+}
+
+TaskLoadFileList::TaskLoadFileList(const std::wstring& currentDir, Settings* settings, FileList* fileList)
+    : _currentDir(currentDir), _settings(settings), _fileList(fileList) {}
+
+void TaskLoadFileList::Execute() {
+    _entries = FileSystemService::GetDirectoryEntries(_currentDir, _settings->IsShowHidden(), true);
+}
+
+void TaskLoadFileList::OnCompleted() {
+    _fileList->OnEntriesLoaded(_currentDir, std::move(_entries));
 }

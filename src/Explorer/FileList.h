@@ -59,6 +59,7 @@ public:
     void initProp(Settings* prop);
 
     void viewPath(const std::wstring& currentDir, BOOL redraw = FALSE);
+    void OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries);
 
     BOOL notify(WPARAM wParam, LPARAM lParam);
 
@@ -207,4 +208,6 @@ private:    /* for thread */
 
     std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
     ExplorerContext*                _context;
+    std::wstring                    _pendingLoadDir;
+    BOOL                            _pendingRedraw;
 };

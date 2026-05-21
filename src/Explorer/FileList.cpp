@@ -18,6 +18,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "FileList.h"
+#include "ExplorerTasks.h"
 #include "resource.h"
 #include "FileFilter.h"
 #include "FileSystemService.h"
@@ -713,12 +714,23 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
 
     /* clear data */
     _uMaxElementsOld = _uMaxElements;
+    _pendingLoadDir = currentDir;
+    _pendingRedraw = redraw;
 
-    /* find every element in folder */
+    /* add current dir to stack */
+    PushDir(currentDir);
+
+    _context->EnqueueAsyncTask(std::make_unique<TaskLoadFileList>(currentDir, _pSettings, this));
+}
+
+void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries)
+{
+    if (currentDir != _pendingLoadDir) {
+        return;
+    }
+
     std::vector<FileSystemEntry> vFoldersTemp;
     std::vector<FileSystemEntry> vFilesTemp;
-
-    auto entries = FileSystemService::GetDirectoryEntries(currentDir, _pSettings->IsShowHidden(), true);
 
     for (const auto& entry : entries) {
         if (entry.IsDirectory()) {
@@ -743,9 +755,6 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
         }
     }
 
-    /* add current dir to stack */
-    PushDir(currentDir);
-
     LIST_LOCK();
 
     /* delete old global list */
@@ -769,7 +778,7 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
     UpdateList();
 
     /* select first entry */
-    if (redraw == TRUE) {
+    if (_pendingRedraw == TRUE) {
         SetFocusItem(0);
     }
 

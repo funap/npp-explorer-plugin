@@ -33,3 +33,19 @@ private:
     Settings* _settings;
     std::vector<std::shared_ptr<ExplorerEntry>> _children;
 };
+
+class FileList;
+
+class TaskLoadFileList : public IAsyncTask {
+public:
+    TaskLoadFileList(const std::wstring& currentDir, Settings* settings, FileList* fileList);
+
+    void Execute() override;
+    void OnCompleted() override;
+
+private:
+    std::wstring _currentDir;
+    Settings* _settings;
+    FileList* _fileList;
+    std::vector<FileSystemEntry> _entries;
+};
