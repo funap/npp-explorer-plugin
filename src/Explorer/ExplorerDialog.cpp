@@ -1385,7 +1385,26 @@ HTREEITEM ExplorerDialog::InsertChildFolder(const std::wstring& childFolderName,
     INT iIconOverlayed  = 0;
 
     /* get icons */
-    ExtractIcons(path.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+    if (devType == DEVT_DRIVE) {
+        ExtractIcons(path.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+    }
+    else {
+        if (!_pSettings->IsUseSystemIcons()) {
+            iIconNormal = ICON_FOLDER;
+            iIconSelected = ICON_FOLDER;
+            iIconOverlayed = 0;
+        }
+        else {
+            SHFILEINFO sfi{};
+            SHGetFileInfo(path.c_str(), FILE_ATTRIBUTE_DIRECTORY, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+            iIconNormal = sfi.iIcon & 0x00ffffff;
+            iIconOverlayed = sfi.iIcon >> 24;
+
+            SHFILEINFO sfiOpen{};
+            SHGetFileInfo(path.c_str(), FILE_ATTRIBUTE_DIRECTORY, &sfiOpen, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
+            iIconSelected = sfiOpen.iIcon & 0x00ffffff;
+        }
+    }
 
     /* set item */
     return _hTreeCtrl.InsertItem(childFolderName, iIconNormal, iIconSelected, iIconOverlayed, isHidden, parentItem, insertAfter, haveChildren);
@@ -1989,7 +2008,26 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                         std::wstring currentPath = GetPath(hCurrentChild);
                         INT iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
                         DevType devType = (hItem == TVI_ROOT ? DEVT_DRIVE : DEVT_DIRECTORY);
-                        ExtractIcons(currentPath.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                        if (devType == DEVT_DRIVE) {
+                            ExtractIcons(currentPath.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                        }
+                        else {
+                            if (!_pSettings->IsUseSystemIcons()) {
+                                iIconNormal = ICON_FOLDER;
+                                iIconSelected = ICON_FOLDER;
+                                iIconOverlayed = 0;
+                            }
+                            else {
+                                SHFILEINFO sfi{};
+                                SHGetFileInfo(currentPath.c_str(), FILE_ATTRIBUTE_DIRECTORY, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+                                iIconNormal = sfi.iIcon & 0x00ffffff;
+                                iIconOverlayed = sfi.iIcon >> 24;
+
+                                SHFILEINFO sfiOpen{};
+                                SHGetFileInfo(currentPath.c_str(), FILE_ATTRIBUTE_DIRECTORY, &sfiOpen, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
+                                iIconSelected = sfiOpen.iIcon & 0x00ffffff;
+                            }
+                        }
 
                         BOOL bHidden = childEntry->FSEntry().IsHidden();
                         BOOL haveChildren = childEntry->FSEntry().IsDirectory();
@@ -2010,6 +2048,19 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                 _hTreeCtrl.DeleteItem(pPrevItem);
             }
 
+            _hTreeCtrl.SetItemHasChildren(hItem, _hTreeCtrl.GetChild(hItem) != nullptr);
+
+            HTREEITEM child = _hTreeCtrl.GetChild(hItem);
+            while (child != nullptr) {
+                std::wstring childPath = GetPath(child);
+                if (::PathIsDirectory(childPath.c_str())) {
+                    if (!_hTreeCtrl.IsItemExpanded(child) && _hTreeCtrl.GetChild(child) == nullptr) {
+                        EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, child, childPath, _pSettings));
+                    }
+                }
+                child = _hTreeCtrl.GetNextItem(child, TVGN_NEXT);
+            }
+
             if (hItem == _hItemExpand) {
                 _hTreeCtrl.Expand(hItem, TVE_EXPAND);
                 _hItemExpand = nullptr;
@@ -2017,5 +2068,12 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
 
             ResumePendingSelection();
         }
+    }
+}
+
+void ExplorerDialog::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren)
+{
+    if (GetPath(hItem) == path) {
+        _hTreeCtrl.SetItemHasChildren(hItem, hasChildren);
     }
 }

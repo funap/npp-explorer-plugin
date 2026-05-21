@@ -6,6 +6,26 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <windows.h>
+#include <commctrl.h>
+
+class ExplorerDialog;
+
+class TaskCheckFolderChildren : public IAsyncTask {
+public:
+    TaskCheckFolderChildren(ExplorerDialog* dialog, HTREEITEM hItem, const std::wstring& path, Settings* settings);
+
+    void Execute() override;
+    void OnCompleted() override;
+
+private:
+    ExplorerDialog* _dialog;
+    HTREEITEM _hItem;
+    std::wstring _path;
+    Settings* _settings;
+    bool _hasChildren{false};
+};
+
 
 class TaskInit : public IAsyncTask {
 public:

@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shellapi.h>
 #include <functional>
 #include <optional>
+#include <mutex>
 
 struct StaInfo {
     std::wstring                strPath;
@@ -47,6 +48,18 @@ static const WORD DotPattern[] =
 
 #include "FileSystemService.h"
 
+struct IconWorkItem {
+    UINT index;
+    std::wstring name;
+    DevType type;
+};
+
+struct IconResult {
+    std::wstring workDir;
+    UINT index;
+    int icon;
+    int overlay;
+};
 
 class FileList : public Window, public CIDropTarget
 {
@@ -154,19 +167,6 @@ protected:
 
 private:    /* for thread */
 
-    void LIST_LOCK() {
-        while (_hSemaphore) {
-            if (::WaitForSingleObject(_hSemaphore, 50) == WAIT_OBJECT_0) {
-                return;
-            }
-        }
-    };
-    void LIST_UNLOCK() {
-        if (_hSemaphore) {
-            ::ReleaseSemaphore(_hSemaphore, 1, NULL);
-        }
-    };
-
     HWND                            _hHeader;
     HIMAGELIST                      _hImlListSys;
 
@@ -175,10 +175,13 @@ private:    /* for thread */
     /* file list owner drawn */
     HIMAGELIST                      _hImlParent;
 
-    enum eOverThEv { FL_EVT_EXIT, FL_EVT_INT, FL_EVT_START, FL_EVT_NEXT, FL_EVT_MAX };
+    enum eOverThEv { FL_EVT_EXIT, FL_EVT_START, FL_EVT_MAX };
     HANDLE                          _hEvent[FL_EVT_MAX];
     HANDLE                          _hOverThread;
-    HANDLE                          _hSemaphore;
+
+    std::vector<IconWorkItem>       _vWorkItems;
+    std::wstring                    _workDir;
+    std::mutex                      _workMutex;
 
     /* stores the path here for sorting        */
     /* Note: _vFolder will not be sorted    */

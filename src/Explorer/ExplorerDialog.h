@@ -74,6 +74,7 @@ public:
     void Refresh() override;
     void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
     void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
+    void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
 protected:
     /* Subclassing tree */
     LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);

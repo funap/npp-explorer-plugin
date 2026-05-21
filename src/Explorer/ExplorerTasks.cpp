@@ -1,5 +1,6 @@
 #include "ExplorerTasks.h"
 #include "FileList.h"
+#include "ExplorerDialog.h"
 
 TaskInit::TaskInit(std::shared_ptr<ExplorerModel> model, Settings* settings)
     : _model(model), _settings(settings) {}
@@ -63,3 +64,15 @@ void TaskLoadFileList::Execute() {
 void TaskLoadFileList::OnCompleted() {
     _fileList->OnEntriesLoaded(_currentDir, std::move(_entries));
 }
+
+TaskCheckFolderChildren::TaskCheckFolderChildren(ExplorerDialog* dialog, HTREEITEM hItem, const std::wstring& path, Settings* settings)
+    : _dialog(dialog), _hItem(hItem), _path(path), _settings(settings) {}
+
+void TaskCheckFolderChildren::Execute() {
+    _hasChildren = FileSystemService::HaveChildren(_path, _settings->IsUseFullTree(), _settings->IsShowHidden());
+}
+
+void TaskCheckFolderChildren::OnCompleted() {
+    _dialog->OnFolderChildrenChecked(_hItem, _path, _hasChildren);
+}
+

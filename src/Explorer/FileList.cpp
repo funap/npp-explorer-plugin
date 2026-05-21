@@ -24,6 +24,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileSystemService.h"
 
 #include <windows.h>
+#include <mutex>
 #include <algorithm>
 #include <sstream>
 #include <format>
@@ -68,7 +69,6 @@ FileList::FileList(ExplorerContext *context)
     , _hImlParent(nullptr)
     , _hEvent{}
     , _hOverThread(nullptr)
-    , _hSemaphore(nullptr)
     , _uMaxFolders(0)
     , _uMaxElements(0)
     , _uMaxElementsOld(0)
@@ -95,9 +95,6 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
     /* this is the list element */
     Window::init(hInst, hParent);
     _hSelf = hParentList;
-
-    /* create semaphore for thead */
-    _hSemaphore = ::CreateSemaphore(nullptr, 1, 1, nullptr);
 
     /* create events for thread */
     for (INT i = 0; i < FL_EVT_MAX; i++) {
@@ -267,9 +264,10 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
     {
         ImageList_Destroy(_hImlParent);
 
-        if (_hSemaphore) {
+        if (_hOverThread) {
             ::SetEvent(_hEvent[FL_EVT_EXIT]);
 
+            ::WaitForSingleObject(_hOverThread, 2000);
             ::CloseHandle(_hOverThread);
             _hOverThread = nullptr;
 
@@ -277,9 +275,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
                 ::CloseHandle(_hEvent[i]);
                 _hEvent[i] = nullptr;
             }
-
-            ::CloseHandle(_hSemaphore);
-            _hSemaphore = nullptr;
         }
 
         _vDirStack.clear();
@@ -325,29 +320,22 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         }
         break;
     }
-    case EXM_UPDATE_OVERICON:
+    case EXM_UPDATE_ICON_RESULT:
     {
-        INT         iIcon       = 0;
-        INT         iSelected   = 0;
-        RECT        rcIcon      = {0};
-        UINT        iPos        = (UINT)wParam;
-        DevType     type        = (DevType)lParam;
+        IconResult* result = reinterpret_cast<IconResult*>(lParam);
+        if (result) {
+            if (result->workDir == _pSettings->GetCurrentDir()) {
+                UINT iPos = result->index;
+                if (iPos < _uMaxElements) {
+                    _vFileList[iPos].SetIcon(result->icon);
+                    _vFileList[iPos].SetOverlay(result->overlay);
 
-        if (iPos < _uMaxElements) {
-            /* test if overlay icon is need to be updated and if it's changed do a redraw */
-            if (_vFileList[iPos].Overlay() == 0) {
-                int overlay = 0;
-                ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iPos].Name().c_str(),
-                    type, &iIcon, &iSelected, &overlay);
-                _vFileList[iPos].SetOverlay(overlay);
+                    RECT rcIcon = {0};
+                    ListView_GetSubItemRect(_hSelf, iPos, 0, LVIR_ICON, &rcIcon);
+                    ::RedrawWindow(_hSelf, &rcIcon, NULL, TRUE);
+                }
             }
-
-            if (_vFileList[iPos].Overlay() != 0) {
-                ListView_GetSubItemRect(_hSelf, iPos, 0, LVIR_ICON, &rcIcon);
-                ::RedrawWindow(_hSelf, &rcIcon, NULL, TRUE);
-            }
-
-            ::SetEvent(_hEvent[FL_EVT_NEXT]);
+            delete result;
         }
         break;
     }
@@ -578,67 +566,75 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 
 void FileList::UpdateOverlayIcon()
 {
-    SIZE_T i = 0;
+    ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
     while (true) {
-        DWORD dwCase = ::WaitForMultipleObjects(FL_EVT_MAX, _hEvent, FALSE, INFINITE);
+        HANDLE waitHandles[2] = { _hEvent[FL_EVT_EXIT], _hEvent[FL_EVT_START] };
+        DWORD waitRes = ::WaitForMultipleObjects(2, waitHandles, FALSE, INFINITE);
 
-        switch (dwCase) {
-        case FL_EVT_EXIT:
-            LIST_UNLOCK();
-            return;
-        case FL_EVT_INT:
-            i = _uMaxElements;
-            LIST_UNLOCK();
-            break;
-        case FL_EVT_START:
-            i = 0;
-            if (_vFileList.empty()) {
-                break;
-            }
-            LIST_LOCK();
-
-            /* step over parent icon */
-            if ((_uMaxFolders != 0) && (_vFileList[0].IsParent() == FALSE)) {
-                i = 1;
-            }
-
-            ::SetEvent(_hEvent[FL_EVT_NEXT]);
-            break;
-        case FL_EVT_NEXT:
-            if (::WaitForSingleObject(_hEvent[FL_EVT_INT], 1) == WAIT_TIMEOUT) {
-                if (i < _uMaxFolders) {
-                    ::PostMessage(_hSelf, EXM_UPDATE_OVERICON, i, (LPARAM)DEVT_DIRECTORY);
-                }
-                else if (i < _uMaxElements) {
-                    ::PostMessage(_hSelf, EXM_UPDATE_OVERICON, i, (LPARAM)DEVT_FILE);
-                }
-                else {
-                    LIST_UNLOCK();
-                }
-                i++;
-            }
-            else {
-                ::SetEvent(_hEvent[FL_EVT_INT]);
-            }
-            break;
-        default:
+        if (waitRes == WAIT_OBJECT_0) {
+            // FL_EVT_EXIT
             break;
         }
+
+        // FL_EVT_START
+        std::vector<IconWorkItem> localWorkItems;
+        std::wstring localWorkDir;
+
+        {
+            std::lock_guard<std::mutex> lock(_workMutex);
+            localWorkItems = _vWorkItems;
+            localWorkDir = _workDir;
+        }
+
+        for (const auto& item : localWorkItems) {
+            if (::WaitForSingleObject(_hEvent[FL_EVT_EXIT], 0) == WAIT_OBJECT_0) {
+                goto exit_thread;
+            }
+            if (::WaitForSingleObject(_hEvent[FL_EVT_START], 0) == WAIT_OBJECT_0) {
+                break;
+            }
+
+            int icon = -1, iconSelected = -1, overlay = 0;
+            ExtractIcons(localWorkDir.c_str(), item.name.c_str(), item.type, &icon, &iconSelected, &overlay);
+
+            IconResult* result = new IconResult{ localWorkDir, item.index, icon, overlay };
+            if (!::PostMessage(_hSelf, EXM_UPDATE_ICON_RESULT, 0, (LPARAM)result)) {
+                delete result;
+            }
+        }
     }
+
+exit_thread:
+    ::CoUninitialize();
 }
 
 void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL pbHidden)
 {
-    INT     iIconSelected   = 0;
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
     if (_vFileList[iItem].Icon() == -1) {
-        int icon, overlay;
-        ExtractIcons(_pSettings->GetCurrentDir().c_str(), _vFileList[iItem].Name().c_str(),
-            type, &icon, &iIconSelected, &overlay);
-        _vFileList[iItem].SetIcon(icon);
-        _vFileList[iItem].SetOverlay(overlay);
+        if (!_pSettings->IsUseSystemIcons()) {
+            _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
+            _vFileList[iItem].SetOverlay(0);
+        }
+        else {
+            SHFILEINFO sfi{};
+            if (type == DEVT_DIRECTORY) {
+                SHGetFileInfo(L"folder", FILE_ATTRIBUTE_DIRECTORY, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+            }
+            else {
+                std::wstring name = _vFileList[iItem].Name();
+                size_t extBegPos = name.find_last_of(L'.');
+                std::wstring ext = L".txt";
+                if (extBegPos != std::wstring::npos && extBegPos > 0) {
+                    ext = name.substr(extBegPos);
+                }
+                SHGetFileInfo(ext.c_str(), FILE_ATTRIBUTE_NORMAL, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
+            }
+            _vFileList[iItem].SetIcon(sfi.iIcon & 0x00ffffff);
+            _vFileList[iItem].SetOverlay(sfi.iIcon >> 24);
+        }
     }
     *piIcon     = _vFileList[iItem].Icon();
     *piOverlay  = _vFileList[iItem].Overlay();
@@ -709,8 +705,12 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
         return;
     }
 
-    /* end thread if it is in run mode */
-    ::SetEvent(_hEvent[FL_EVT_INT]);
+    {
+        std::lock_guard<std::mutex> lock(_workMutex);
+        _vWorkItems.clear();
+        _workDir.clear();
+    }
+    ::SetEvent(_hEvent[FL_EVT_START]);
 
     /* clear data */
     _uMaxElementsOld = _uMaxElements;
@@ -755,8 +755,6 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
         }
     }
 
-    LIST_LOCK();
-
     /* delete old global list */
     _vFileList.clear();
 
@@ -782,7 +780,21 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
         SetFocusItem(0);
     }
 
-    LIST_UNLOCK();
+    {
+        std::lock_guard<std::mutex> lock(_workMutex);
+        _vWorkItems.clear();
+        _workDir = currentDir;
+        for (UINT i = 0; i < _uMaxElements; ++i) {
+            if (_vFileList[i].IsParent()) {
+                continue;
+            }
+            IconWorkItem item;
+            item.index = i;
+            item.name = _vFileList[i].Name();
+            item.type = (i < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
+            _vWorkItems.push_back(item);
+        }
+    }
 
     /* start with update of overlay icons */
     ::SetEvent(_hEvent[FL_EVT_START]);
