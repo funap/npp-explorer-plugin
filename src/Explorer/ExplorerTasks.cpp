@@ -76,3 +76,37 @@ void TaskCheckFolderChildren::OnCompleted() {
     _dialog->OnFolderChildrenChecked(_hItem, _path, _hasChildren);
 }
 
+TaskExtractIcons::TaskExtractIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<bool> cancelToken)
+    : _fileList(fileList), _hListWnd(hListWnd), _workDir(workDir), _vWorkItems(std::move(workItems)), _cancelToken(cancelToken) {}
+
+void TaskExtractIcons::Execute() {
+    ::CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+
+    for (const auto& item : _vWorkItems) {
+        if (_cancelToken && *_cancelToken) {
+            break;
+        }
+
+        int icon = 0;
+        int iconSelected = 0;
+        int overlay = 0;
+
+        ExtractIcons(_workDir.c_str(), item.name.c_str(), item.type, &icon, &iconSelected, &overlay);
+
+        if (_cancelToken && *_cancelToken) {
+            break;
+        }
+
+        IconResult* result = new IconResult{ _workDir, item.index, icon, overlay };
+        if (!::PostMessage(_hListWnd, EXM_UPDATE_ICON_RESULT, 0, (LPARAM)result)) {
+            delete result;
+        }
+    }
+
+    ::CoUninitialize();
+}
+
+void TaskExtractIcons::OnCompleted() {
+    // Incrementally posted results to FileList, nothing to do on complete.
+}
+

@@ -55,6 +55,7 @@ private:
 };
 
 class FileList;
+struct IconWorkItem;
 
 class TaskLoadFileList : public IAsyncTask {
 public:
@@ -68,4 +69,19 @@ private:
     Settings* _settings;
     FileList* _fileList;
     std::vector<FileSystemEntry> _entries;
+};
+
+class TaskExtractIcons : public IAsyncTask {
+public:
+    TaskExtractIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<bool> cancelToken);
+
+    void Execute() override;
+    void OnCompleted() override;
+
+private:
+    FileList* _fileList;
+    HWND _hListWnd;
+    std::wstring _workDir;
+    std::vector<IconWorkItem> _vWorkItems;
+    std::shared_ptr<bool> _cancelToken;
 };

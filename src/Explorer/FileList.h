@@ -100,7 +100,6 @@ public:
     void UpdateSelItems();
     void SetItems(std::vector<std::wstring> vStrItems);
 
-    void UpdateOverlayIcon();
     void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
 
 
@@ -175,13 +174,7 @@ private:    /* for thread */
     /* file list owner drawn */
     HIMAGELIST                      _hImlParent;
 
-    enum eOverThEv { FL_EVT_EXIT, FL_EVT_START, FL_EVT_MAX };
-    HANDLE                          _hEvent[FL_EVT_MAX];
-    HANDLE                          _hOverThread;
-
-    std::vector<IconWorkItem>       _vWorkItems;
-    std::wstring                    _workDir;
-    std::mutex                      _workMutex;
+    std::shared_ptr<bool>           _cancelToken;
 
     /* stores the path here for sorting        */
     /* Note: _vFolder will not be sorted    */

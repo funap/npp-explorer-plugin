@@ -21,6 +21,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <string>
 #include <vector>
+#include <set>
 #include <shlwapi.h>
 #include <filesystem>
 
@@ -164,4 +165,7 @@ private:
 
     WorkerThread _workerThread;
     std::shared_ptr<ExplorerModel> _model;
+    std::set<HTREEITEM> _checkedItems;
+
+    void CheckVisibleFolderChildren();
 };

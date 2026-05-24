@@ -284,6 +284,10 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 }
                 break;
             }
+            case TVN_ITEMEXPANDED: {
+                CheckVisibleFolderChildren();
+                break;
+            }
             case TVN_BEGINDRAG: {
                 CIDropSource dropSrc;
                 CIDataObject dataObj(&dropSrc);
@@ -337,6 +341,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
             return TRUE;
         }
         UpdateLayout();
+        CheckVisibleFolderChildren();
         break;
     case WM_PAINT:
         ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
@@ -624,7 +629,12 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         break;
     }
 
-    return ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
+    LRESULT lResult = ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
+    if (Message == WM_VSCROLL || Message == WM_HSCROLL || Message == WM_MOUSEWHEEL || 
+        Message == WM_KEYUP || Message == WM_KEYDOWN) {
+        CheckVisibleFolderChildren();
+    }
+    return lResult;
 }
 
 /****************************************************************************
@@ -1295,6 +1305,7 @@ void ExplorerDialog::onPaste()
  */
 void ExplorerDialog::UpdateRoots()
 {
+    _checkedItems.clear();
     auto root = _model->Root();
     if (!root) return;
 
@@ -1385,7 +1396,7 @@ HTREEITEM ExplorerDialog::InsertChildFolder(const std::wstring& childFolderName,
     INT iIconOverlayed  = 0;
 
     /* get icons */
-    if (devType == DEVT_DRIVE) {
+    if (devType == DEVT_DRIVE || !::PathIsNetworkPath(path.c_str())) {
         ExtractIcons(path.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
     }
     else {
@@ -2008,7 +2019,7 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                         std::wstring currentPath = GetPath(hCurrentChild);
                         INT iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
                         DevType devType = (hItem == TVI_ROOT ? DEVT_DRIVE : DEVT_DIRECTORY);
-                        if (devType == DEVT_DRIVE) {
+                        if (devType == DEVT_DRIVE || !::PathIsNetworkPath(currentPath.c_str())) {
                             ExtractIcons(currentPath.c_str(), nullptr, devType, &iIconNormal, &iIconSelected, &iIconOverlayed);
                         }
                         else {
@@ -2055,7 +2066,13 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                 std::wstring childPath = GetPath(child);
                 if (::PathIsDirectory(childPath.c_str())) {
                     if (!_hTreeCtrl.IsItemExpanded(child) && _hTreeCtrl.GetChild(child) == nullptr) {
-                        EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, child, childPath, _pSettings));
+                        RECT rect;
+                        if (_hTreeCtrl.GetItemRect(child, &rect, FALSE)) {
+                            if (_checkedItems.find(child) == _checkedItems.end()) {
+                                _checkedItems.insert(child);
+                                EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, child, childPath, _pSettings));
+                            }
+                        }
                     }
                 }
                 child = _hTreeCtrl.GetNextItem(child, TVGN_NEXT);
@@ -2067,6 +2084,7 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
             }
 
             ResumePendingSelection();
+            CheckVisibleFolderChildren();
         }
     }
 }
@@ -2075,5 +2093,35 @@ void ExplorerDialog::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring
 {
     if (GetPath(hItem) == path) {
         _hTreeCtrl.SetItemHasChildren(hItem, hasChildren);
+    }
+}
+
+void ExplorerDialog::CheckVisibleFolderChildren()
+{
+    HTREEITEM hItem = _hTreeCtrl.GetNextItem(nullptr, TVGN_FIRSTVISIBLE);
+    bool seenVisible = false;
+
+    while (hItem != nullptr) {
+        RECT rect;
+        if (!_hTreeCtrl.GetItemRect(hItem, &rect, FALSE)) {
+            if (seenVisible) {
+                break;
+            }
+        }
+        else {
+            seenVisible = true;
+
+            std::wstring childPath = GetPath(hItem);
+            if (::PathIsDirectory(childPath.c_str())) {
+                if (!_hTreeCtrl.IsItemExpanded(hItem) && _hTreeCtrl.GetChild(hItem) == nullptr) {
+                    if (_checkedItems.find(hItem) == _checkedItems.end()) {
+                        _checkedItems.insert(hItem);
+                        EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, hItem, childPath, _pSettings));
+                    }
+                }
+            }
+        }
+
+        hItem = _hTreeCtrl.GetNextItem(hItem, TVGN_NEXTVISIBLE);
     }
 }
