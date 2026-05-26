@@ -35,6 +35,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "QuickOpenDialog.h"
 #include "../NppPlugin/menuCmdID.h"
 #include "../NppPlugin/nppexec_msgs.h"
+#include "ExplorerModel.h"
 
 /* global explorer params */
 extern Settings settings;
@@ -219,7 +220,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     /************************************* modification for notepad ***********************************/
     HMENU   hMainMenu       = ::CreatePopupMenu();
     HMENU   hMenuNppExec    = ::CreatePopupMenu();
-    BOOL    isFolder        = ('\\' == _strFirstElement.back());
+    BOOL    isFolder        = (_entries[0]->FSEntry().IsDirectory());
     DWORD   dwExecVer       = 0;
     DWORD   dwExecState     = 0;
     WCHAR   szPath[MAX_PATH];
@@ -474,19 +475,23 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
     }
 }
 
-void ContextMenu::SetObjects(const std::wstring &strObject)
+void ContextMenu::SetObjects(std::shared_ptr<ExplorerEntry> entry)
 {
-    // only one object is passed
-    std::vector<std::wstring> strArray;
-    strArray.push_back(strObject);  // create a CStringArray with one element
-
-    SetObjects (strArray);              // and pass it to SetObjects (vector<string> strArray)
-                                        // for further processing
+    std::vector<std::shared_ptr<ExplorerEntry>> entries;
+    entries.push_back(entry);
+    SetObjects(entries);
 }
 
 
-void ContextMenu::SetObjects(const std::vector<std::wstring> &strArray)
+void ContextMenu::SetObjects(const std::vector<std::shared_ptr<ExplorerEntry>> &entries)
 {
+    _entries = entries;
+
+    std::vector<std::wstring> strArray;
+    for (const auto& entry : entries) {
+        strArray.push_back(entry->Path());
+    }
+
     // store also the string for later menu use
     _strFirstElement    = strArray[0];
     _strArray           = strArray;
@@ -721,10 +726,10 @@ void ContextMenu::quickOpen()
     auto path = _strArray[0];
 
     // remove file name
-    if (path.at(path.size() - 1) != '\\') {
-        SIZE_T pos = path.rfind(L"\\", path.size() - 1);
+    if (!_entries[0]->FSEntry().IsDirectory()) {
+        SIZE_T pos = path.rfind(L"\\");
         if (std::wstring::npos != pos) {
-            path.erase(pos, path.size());
+            path.erase(pos);
         }
     }
 
@@ -840,12 +845,13 @@ void ContextMenu::openFileInNewInstance()
 
 void ContextMenu::openPrompt()
 {
-    for (auto &path : _strArray) {
+    for (size_t i = 0; i < _strArray.size(); i++) {
+        auto path = _strArray[i];
         /* is file */
-        if (path.at(path.size() - 1) != '\\') {
-            SIZE_T pos = path.rfind(L'\\', path.size() - 1);
+        if (!_entries[i]->FSEntry().IsDirectory()) {
+            SIZE_T pos = path.rfind(L'\\');
             if (std::wstring::npos != pos) {
-                path.erase(pos, path.size());
+                path.erase(pos);
             }
         }
         ::ShellExecute(_hWndNpp, L"open", settings.GetCphProgram().szAppName.c_str(), nullptr, path.c_str(), SW_SHOW);
@@ -857,10 +863,10 @@ void ContextMenu::setRootFolder()
     auto path = _strArray[0];
 
     // remove file name
-    if (path.at(path.size() - 1) != '\\') {
-        SIZE_T pos = path.rfind(L"\\", path.size() - 1);
+    if (!_entries[0]->FSEntry().IsDirectory()) {
+        SIZE_T pos = path.rfind(L"\\");
         if (std::wstring::npos != pos) {
-            path.erase(pos, path.size());
+            path.erase(pos);
         }
     }
 
@@ -884,10 +890,10 @@ void ContextMenu::addToFaves()
     extern FavesDialog favesDlg;
 
     /* test if only one file is selected */
-    if (_strArray.size() > 1) {
-        const BOOL isFolder = ('\\' == _strArray[0].back());
-        for (auto&& path : _strArray) {
-            if (isFolder != ('\\' == path.back())) {
+    if (_entries.size() > 1) {
+        const bool isFolder = _entries[0]->FSEntry().IsDirectory();
+        for (const auto& entry : _entries) {
+            if (isFolder != entry->FSEntry().IsDirectory()) {
                 ::MessageBox(_hWndNpp, L"Files and folders cannot be added at the same time!", L"Error", MB_OK);
                 return;
             }
@@ -895,7 +901,7 @@ void ContextMenu::addToFaves()
         favesDlg.AddToFavorties(isFolder, std::move(_strArray));
     }
     else {
-        BOOL isFolder = ('\\' == _strArray[0].back());
+        bool isFolder = _entries[0]->FSEntry().IsDirectory();
         favesDlg.AddToFavorties(isFolder, _strArray[0].data());
     }
 }

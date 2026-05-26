@@ -1,4 +1,5 @@
 #include "ExplorerModel.h"
+#include "FileSystemService.h"
 #include <algorithm>
 
 ExplorerEntry::ExplorerEntry(const std::wstring& path, const FileSystemEntry& fsEntry)
@@ -8,7 +9,13 @@ ExplorerEntry::ExplorerEntry(const std::wstring& path, const FileSystemEntry& fs
 {
 }
 
-const std::wstring& ExplorerEntry::Path() const {
+std::wstring ExplorerEntry::Path() const {
+    if (!_path.empty()) {
+        return _path;
+    }
+    if (auto p = _parent.lock()) {
+        return FileSystemService::CombinePath(p->Path(), _fsEntry.Name());
+    }
     return _path;
 }
 
@@ -18,6 +25,9 @@ const FileSystemEntry& ExplorerEntry::FSEntry() const {
 
 void ExplorerEntry::SetChildren(std::vector<std::shared_ptr<ExplorerEntry>> children) {
     _children = std::move(children);
+    for (auto& child : _children) {
+        child->_parent = const_cast<ExplorerEntry*>(this)->shared_from_this();
+    }
     _hasLoadedChildren = true;
 }
 

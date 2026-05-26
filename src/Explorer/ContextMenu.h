@@ -31,14 +31,16 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 
+class ExplorerEntry;
+
 class ContextMenu
 {
 public:
     ContextMenu();
     ~ContextMenu();
 
-    void SetObjects(const std::wstring &strObject);
-    void SetObjects(const std::vector<std::wstring> &strArray);
+    void SetObjects(std::shared_ptr<ExplorerEntry> entry);
+    void SetObjects(const std::vector<std::shared_ptr<ExplorerEntry>> &entries);
     UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:
@@ -92,4 +94,5 @@ private:
     std::wstring                _strFirstElement;
     std::vector<std::wstring>   _strArray;
     std::vector<std::wstring>   _strNppScripts;
+    std::vector<std::shared_ptr<ExplorerEntry>> _entries;
 };

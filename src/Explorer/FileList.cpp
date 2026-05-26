@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "resource.h"
 #include "FileFilter.h"
 #include "FileSystemService.h"
+#include "ExplorerModel.h"
 
 #include <windows.h>
 #include <mutex>
@@ -252,7 +253,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         ImageList_Destroy(_hImlParent);
 
         if (_cancelToken) {
-            *_cancelToken = true;
+            _cancelToken->store(true);
         }
 
         _vDirStack.clear();
@@ -308,9 +309,10 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
                 }
                 return p;
             };
-            if (_wcsicmp(normalizePath(result->workDir).c_str(), normalizePath(_pSettings->GetCurrentDir()).c_str()) == 0) {
+            if (result->generation == _currentGeneration &&
+                _wcsicmp(normalizePath(result->workDir).c_str(), normalizePath(_pSettings->GetCurrentDir()).c_str()) == 0) {
                 UINT iPos = result->index;
-                if (iPos < _uMaxElements && iPos < _vFileList.size()) {
+                if (iPos < _uMaxElements && iPos < _vFileList.size() && _vFileList[iPos].Name() == result->fileName) {
                     _vFileList[iPos].SetIcon(result->icon);
                     _vFileList[iPos].SetOverlay(result->overlay);
 
@@ -517,7 +519,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
             case CDDS_ITEMPREPAINT: {
                 auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
                 if (index >= static_cast<INT>(_uMaxFolders)) {
-                    std::wstring strFilePath = _pSettings->GetCurrentDir() + _vFileList[index].Name();
+                    std::wstring strFilePath = _vFileList[index].fullPath;
                     if (IsFileOpen(strFilePath) == TRUE) {
                         ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
                         ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
@@ -557,27 +559,8 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
     if (_vFileList[iItem].Icon() == -1) {
-        if (!_pSettings->IsUseSystemIcons()) {
-            _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
-            _vFileList[iItem].SetOverlay(0);
-        }
-        else {
-            SHFILEINFO sfi{};
-            if (type == DEVT_DIRECTORY) {
-                SHGetFileInfo(L"folder", FILE_ATTRIBUTE_DIRECTORY, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
-            }
-            else {
-                std::wstring name = _vFileList[iItem].Name();
-                size_t extBegPos = name.find_last_of(L'.');
-                std::wstring ext = L".txt";
-                if (extBegPos != std::wstring::npos && extBegPos > 0) {
-                    ext = name.substr(extBegPos);
-                }
-                SHGetFileInfo(ext.c_str(), FILE_ATTRIBUTE_NORMAL, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
-            }
-            _vFileList[iItem].SetIcon(sfi.iIcon & 0x00ffffff);
-            _vFileList[iItem].SetOverlay(sfi.iIcon >> 24);
-        }
+        _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
+        _vFileList[iItem].SetOverlay(0);
     }
     *piIcon     = _vFileList[iItem].Icon();
     *piOverlay  = _vFileList[iItem].Overlay();
@@ -649,9 +632,13 @@ void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
     }
 
     if (_cancelToken) {
-        *_cancelToken = true;
+        _cancelToken->store(true);
     }
-    _cancelToken = std::make_shared<bool>(false);
+    _cancelToken = std::make_shared<std::atomic<bool>>(false);
+    _currentGeneration++;
+    // Cancel only FileList-category tasks so in-flight TreeView tasks
+    // (e.g. directory scans, icon extraction) are not inadvertently cancelled.
+    _context->ClearPendingTasks(TaskCategory::FileList);
 
     /* clear data */
     _uMaxElementsOld = _uMaxElements;
@@ -707,10 +694,10 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
 
     /* set temporal list as global */
     for (const auto& folder : vFoldersTemp) {
-        _vFileList.push_back(folder);
+        _vFileList.push_back(FileListItem{ folder, currentDir });
     }
     for (const auto &file : vFilesTemp) {
-        _vFileList.push_back(file);
+        _vFileList.push_back(FileListItem{ file, currentDir });
     }
 
     /* set max elements in list */
@@ -739,7 +726,7 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
         workItems.push_back(item);
     }
 
-    _context->EnqueueAsyncTask(std::make_unique<TaskExtractIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken));
+    _context->EnqueueAsyncTask(std::make_unique<TaskExtractIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
 }
 
 void FileList::filterFiles(LPCTSTR currentFilter)
@@ -779,7 +766,7 @@ void FileList::SelectFile(const std::wstring &fileName)
 
 void FileList::UpdateList()
 {
-    std::sort(_vFileList.begin(), _vFileList.end(), [&](const FileSystemEntry& lhs, const FileSystemEntry& rhs) {
+    std::sort(_vFileList.begin(), _vFileList.end(), [&](const FileListItem& lhs, const FileListItem& rhs) {
         if (lhs.IsParent() != rhs.IsParent()) {
             return lhs.IsParent() > rhs.IsParent();
         }
@@ -929,7 +916,7 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
     }
 
     bool isParent = false;
-    std::vector<std::wstring> paths;
+    std::vector<std::shared_ptr<ExplorerEntry>> entries;
 
     /* create data */
     for (UINT uList = 0; uList < _uMaxElements; uList++) {
@@ -942,21 +929,17 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
                 }
             }
 
-            if (uList < _uMaxFolders) {
-                paths.push_back(_pSettings->GetCurrentDir() + _vFileList[uList].Name() + L"\\");
-            }
-            else {
-                paths.push_back(_pSettings->GetCurrentDir() + _vFileList[uList].Name());
-            }
+            entries.push_back(std::make_shared<ExplorerEntry>(_vFileList[uList].fullPath, _vFileList[uList].fsEntry));
         }
     }
 
-    if (paths.empty()) {
-        paths.push_back(_pSettings->GetCurrentDir());
+    if (entries.empty()) {
+        FileSystemEntry currentDirFsEntry(_pSettings->GetCurrentDir(), FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
+        entries.push_back(std::make_shared<ExplorerEntry>(_pSettings->GetCurrentDir(), currentDirFsEntry));
     }
 
-    const auto hasStandardMenu = (!isParent || (paths.size() != 1));
-    _context->ShowContextMenu(screenLocation.value(), paths, hasStandardMenu);
+    const auto hasStandardMenu = (!isParent || (entries.size() != 1));
+    _context->ShowContextMenu(screenLocation.value(), entries, hasStandardMenu);
 }
 
 void FileList::onLMouseBtnDbl()
@@ -1085,7 +1068,7 @@ void FileList::onDelete(bool immediate)
             if ((i == 0) && (_vFileList[i].IsParent())) {
                 continue;
             }
-            filesToDelete.push_back(_pSettings->GetCurrentDir() + _vFileList[i].Name());
+            filesToDelete.push_back(_vFileList[i].fullPath);
         }
     }
 
@@ -1392,7 +1375,6 @@ void FileList::SetItems(std::vector<std::wstring> vStrItems)
  */
 void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect)
 {
-    SIZE_T parsz = _pSettings->GetCurrentDir().size();
     SIZE_T bufsz = sizeof(DROPFILES) + sizeof(WCHAR);
 
     /* get buffer size */
@@ -1401,7 +1383,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
             if ((i == 0) && (_vFileList[i].IsParent())) {
                 continue;
             }
-            bufsz += (parsz + _vFileList[i].Name().size() + 1) * sizeof(WCHAR);
+            bufsz += (_vFileList[i].fullPath.size() + 1) * sizeof(WCHAR);
         }
     }
 
@@ -1432,9 +1414,8 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
             if ((i == 0) && (_vFileList[i].IsParent())) {
                 continue;
             }
-            wcscpy(&szPath[offset], _pSettings->GetCurrentDir().c_str());
-            wcscpy(&szPath[offset+parsz], _vFileList[i].Name().c_str());
-            offset += parsz + _vFileList[i].Name().size() + 1;
+            wcscpy(&szPath[offset], _vFileList[i].fullPath.c_str());
+            offset += _vFileList[i].fullPath.size() + 1;
         }
     }
 

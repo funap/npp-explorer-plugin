@@ -91,8 +91,13 @@ BOOL TreeView::UpdateItem(HTREEITEM hItem,
     auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
     itemName.copy(szItemName.get(), MAX_PATH);
 
+    UINT mask = TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT | TVIF_CHILDREN | TVIF_STATE;
+    if (lParam != nullptr) {
+        mask |= TVIF_PARAM;
+    }
+
     TVITEM item{
-        .mask           = TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT | TVIF_CHILDREN | TVIF_STATE,
+        .mask           = mask,
         .hItem          = hItem,
         .state          = static_cast<UINT>(INDEXTOOVERLAYMASK(nOverlayedImage)),
         .stateMask      = TVIS_OVERLAYMASK,
@@ -242,9 +247,15 @@ std::vector<std::wstring> TreeView::GetItemPathFromRoot(HTREEITEM currentItem) c
     std::vector<std::wstring> result;
 
     if (currentItem != TVI_ROOT) {
-        while (currentItem != nullptr) {
+        int loopCount = 0;
+        while (currentItem != nullptr && loopCount < 256) {
             result.emplace_back(GetItemText(currentItem));
-            currentItem = TreeView_GetNextItem(_wnd, currentItem, TVGN_PARENT);
+            HTREEITEM parent = TreeView_GetNextItem(_wnd, currentItem, TVGN_PARENT);
+            if (parent == currentItem) {
+                break;
+            }
+            currentItem = parent;
+            loopCount++;
         }
     }
 

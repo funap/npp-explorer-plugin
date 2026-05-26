@@ -33,6 +33,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <functional>
 #include <optional>
 #include <mutex>
+#include <atomic>
+
 
 struct StaInfo {
     std::wstring                strPath;
@@ -54,11 +56,42 @@ struct IconWorkItem {
     DevType type;
 };
 
+struct FileListItem {
+    FileSystemEntry fsEntry;
+    std::wstring fullPath;
+    mutable int icon{-1};
+    mutable int overlay{0};
+    mutable unsigned int state{0};
+
+    FileListItem(const FileSystemEntry& entry, const std::wstring& parentDir)
+        : fsEntry(entry)
+    {
+        fullPath = FileSystemService::CombinePath(parentDir, entry.Name());
+    }
+
+    const std::wstring& Name() const { return fsEntry.Name(); }
+    unsigned int Attributes() const { return fsEntry.Attributes(); }
+    size_t FileSize() const { return fsEntry.FileSize(); }
+    time_t LastWriteTime() const { return fsEntry.LastWriteTime(); }
+    bool IsDirectory() const { return fsEntry.IsDirectory(); }
+    bool IsHidden() const { return fsEntry.IsHidden(); }
+    bool IsParent() const { return fsEntry.IsParent(); }
+
+    int Icon() const { return icon; }
+    void SetIcon(int i) const { icon = i; }
+    int Overlay() const { return overlay; }
+    void SetOverlay(int o) const { overlay = o; }
+    unsigned int State() const { return state; }
+    void SetState(unsigned int s) const { state = s; }
+};
+
 struct IconResult {
     std::wstring workDir;
     UINT index;
     int icon;
     int overlay;
+    uint64_t generation;
+    std::wstring fileName;
 };
 
 class FileList : public Window, public CIDropTarget
@@ -174,14 +207,15 @@ private:    /* for thread */
     /* file list owner drawn */
     HIMAGELIST                      _hImlParent;
 
-    std::shared_ptr<bool>           _cancelToken;
+    std::shared_ptr<std::atomic<bool>> _cancelToken;
+    uint64_t                        _currentGeneration{0};
 
     /* stores the path here for sorting        */
     /* Note: _vFolder will not be sorted    */
     SIZE_T                          _uMaxFolders;
     SIZE_T                          _uMaxElements;
     SIZE_T                          _uMaxElementsOld;
-    std::vector<FileSystemEntry>    _vFileList;
+    std::vector<FileListItem>       _vFileList;
 
     /* search in list by typing of characters */
     std::wstring                    _searchQuery;

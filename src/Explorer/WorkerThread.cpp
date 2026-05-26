@@ -21,6 +21,7 @@
 // THE SOFTWARE.
 
 #include "WorkerThread.h"
+#include <objbase.h>
 
 WorkerThread::WorkerThread()
 {
@@ -51,28 +52,71 @@ void WorkerThread::Stop()
 void WorkerThread::Enqueue(std::unique_ptr<IAsyncTask> task) {
     {
         std::unique_lock<std::mutex> lock(_taskQueueMutex);
-        _taskQueue.push(std::move(task));
+        if (task->GetPriority() == TaskPriority::High) {
+            _highPriorityQueue.push_back(std::move(task));
+        } else {
+            _lowPriorityQueue.push_back(std::move(task));
+        }
     }
     _taskQueueCv.notify_one();
 }
 
+void WorkerThread::ClearPendingTasks(std::optional<TaskCategory> category) {
+    std::unique_lock<std::mutex> lock(_taskQueueMutex);
+    if (!category.has_value()) {
+        // No category filter: clear all tasks
+        _highPriorityQueue.clear();
+        _lowPriorityQueue.clear();
+    } else {
+        // Category filter: remove only tasks matching the given category
+        auto removeMatching = [&](std::deque<std::unique_ptr<IAsyncTask>>& queue) {
+            queue.erase(
+                std::remove_if(queue.begin(), queue.end(), [&](const std::unique_ptr<IAsyncTask>& t) {
+                    return t->GetCategory() == *category;
+                }),
+                queue.end()
+            );
+        };
+        removeMatching(_highPriorityQueue);
+        removeMatching(_lowPriorityQueue);
+    }
+}
+
 void WorkerThread::Run() {
+    // Use MTA (Multi-Threaded Apartment) for background worker thread.
+    // STA requires a message loop which this thread does not run, and could
+    // cause deadlocks when shell extensions internally use COM marshalling.
+    ::CoInitializeEx(nullptr, COINIT_MULTITHREADED);
+
     while (_running) {
         std::unique_ptr<IAsyncTask> task;
         {
             std::unique_lock<std::mutex> lock(_taskQueueMutex);
-            _taskQueueCv.wait(lock, [this] { return !_taskQueue.empty() || !_running; });
+            _taskQueueCv.wait(lock, [this] { 
+                return !_highPriorityQueue.empty() || !_lowPriorityQueue.empty() || !_running; 
+            });
             if (!_running) {
                 break;
             }
-            task = std::move(_taskQueue.front());
-            _taskQueue.pop();
+            
+            if (!_highPriorityQueue.empty()) {
+                task = std::move(_highPriorityQueue.front());
+                _highPriorityQueue.pop_front();
+            } else if (!_lowPriorityQueue.empty()) {
+                task = std::move(_lowPriorityQueue.front());
+                _lowPriorityQueue.pop_front();
+            }
         }
 
-        task->Execute();
+        if (task) {
+            task->Execute();
 
-        if (_callback) {
-            _callback->OnAsyncTaskCompleted(std::move(task));
+            if (_callback) {
+                _callback->OnAsyncTaskCompleted(std::move(task));
+            }
         }
     }
+
+    ::CoUninitialize();
 }
+

@@ -22,16 +22,31 @@
 
 #pragma once
 
-#include <queue>
+#include <deque>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include <optional>
+#include <functional>
+
+enum class TaskPriority {
+    High,
+    Low
+};
+
+enum class TaskCategory {
+    General,
+    TreeView,
+    FileList,
+};
 
 class IAsyncTask {
 public:
     virtual ~IAsyncTask() {}
     virtual void Execute() = 0;
     virtual void OnCompleted() = 0;
+    virtual TaskPriority GetPriority() const { return TaskPriority::Low; }
+    virtual TaskCategory GetCategory() const { return TaskCategory::General; }
 };
 
 class IAsyncTaskCallback {
@@ -49,9 +64,11 @@ public:
     void Start(IAsyncTaskCallback* callback);
     void Stop();
     void Enqueue(std::unique_ptr<IAsyncTask> task);
+    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
 
 private:
-    std::queue<std::unique_ptr<IAsyncTask>> _taskQueue;
+    std::deque<std::unique_ptr<IAsyncTask>> _highPriorityQueue;
+    std::deque<std::unique_ptr<IAsyncTask>> _lowPriorityQueue;
     std::mutex              _taskQueueMutex;
     std::condition_variable _taskQueueCv;
     std::thread             _thread;
@@ -60,3 +77,4 @@ private:
 
     void Run();
 };
+

@@ -25,10 +25,12 @@
 #include <windows.h>
 #include <string>
 #include <vector>
+#include <optional>
 
 #include <memory>
+#include "WorkerThread.h"
 
-class IAsyncTask;
+class ExplorerEntry;
 
 class ExplorerContext
 {
@@ -39,6 +41,7 @@ public:
     virtual void NavigateTo(const std::wstring& path) = 0;
     virtual void Open(const std::wstring& path) = 0;
     virtual void Refresh() = 0;
-    virtual void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu) = 0;
+    virtual void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu) = 0;
     virtual void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) = 0;
+    virtual void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) = 0;
 };

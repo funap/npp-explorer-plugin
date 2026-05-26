@@ -11,7 +11,7 @@ class ExplorerEntry : public std::enable_shared_from_this<ExplorerEntry> {
 public:
     ExplorerEntry(const std::wstring& path, const FileSystemEntry& fsEntry);
 
-    const std::wstring& Path() const;
+    std::wstring Path() const;
     const FileSystemEntry& FSEntry() const;
 
     void SetChildren(std::vector<std::shared_ptr<ExplorerEntry>> children);
@@ -20,6 +20,7 @@ public:
     bool HasLoadedChildren() const;
 
 private:
+    std::weak_ptr<ExplorerEntry> _parent;
     std::wstring _path;
     FileSystemEntry _fsEntry;
     std::vector<std::shared_ptr<ExplorerEntry>> _children;

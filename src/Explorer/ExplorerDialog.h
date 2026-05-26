@@ -22,8 +22,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <string>
 #include <vector>
 #include <set>
-#include <shlwapi.h>
 #include <filesystem>
+#include <optional>
 
 #include "ComboOrgi.h"
 #include "Explorer.h"
@@ -35,6 +35,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerModel.h"
 #include "ExplorerTasks.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
+
+// Forward declaration only: avoids circular include with TreeModelSynchronizer.h
+class TreeModelSynchronizer;
 
 struct GetVolumeInfo {
     LPCTSTR     pszDrivePathName;
@@ -73,9 +76,15 @@ public:
     void NavigateTo(const std::wstring& path) override;
     void Open(const std::wstring& path) override;
     void Refresh() override;
-    void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
+    void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true) override;
     void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
+    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) override;
     void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
+
+    // The following helpers are also used by TreeModelSynchronizer:
+    BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
+    HTREEITEM InsertChildFolder(std::shared_ptr<ExplorerEntry> entry, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL isDirectory = TRUE, BOOL isHidden = FALSE, BOOL haveChildren = TRUE);
+    std::wstring GetPath(HTREEITEM currentItem) const;
 protected:
     /* Subclassing tree */
     LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -112,10 +121,8 @@ protected:
     void tb_cmd(WPARAM message);
     void tb_not(LPNMTOOLBAR lpnmtb);
 
-    BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-    HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL isDirectory = TRUE, BOOL isHidden = FALSE, BOOL haveChildren = TRUE);
+    HTREEITEM FindTreeItemByPath(const std::wstring& path);
     void FetchChildren(HTREEITEM parentItem);
-    std::wstring GetPath(HTREEITEM currentItem) const;
     void UpdateLayout();
     void ResumePendingSelection();
 private:
