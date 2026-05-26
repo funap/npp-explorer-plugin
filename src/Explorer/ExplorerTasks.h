@@ -67,11 +67,12 @@ private:
 };
 
 class FileList;
+class ExplorerViewModel;
 struct IconWorkItem;
 
 class TaskLoadFileList : public IAsyncTask {
 public:
-    TaskLoadFileList(const std::wstring& currentDir, Settings* settings, FileList* fileList);
+    TaskLoadFileList(const std::wstring& currentDir, Settings* settings, ExplorerViewModel* viewModel);
 
     void Execute() override;
     void OnCompleted() override;
@@ -81,7 +82,7 @@ public:
 private:
     std::wstring _currentDir;
     Settings* _settings;
-    FileList* _fileList;
+    ExplorerViewModel* _viewModel;
     std::vector<FileSystemEntry> _entries;
 };
 

@@ -94,18 +94,22 @@ struct IconResult {
     std::wstring fileName;
 };
 
-class FileList : public Window, public CIDropTarget
+#include "ExplorerViewModel.h"
+
+class FileList : public Window, public CIDropTarget, public IExplorerViewModelObserver
 {
 public:
     FileList() = delete;
-    explicit FileList(ExplorerContext* context);
+    FileList(ExplorerViewModel* viewModel, ExplorerContext* context);
     ~FileList();
 
     void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
     void initProp(Settings* prop);
 
-    void viewPath(const std::wstring& currentDir, BOOL redraw = FALSE);
-    void OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries);
+    // IExplorerViewModelObserver implementation
+    void OnCurrentDirectoryChanged(const std::wstring& path) override;
+    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override;
+    void OnNavigationStateChanged() override {};
 
     BOOL notify(WPARAM wParam, LPARAM lParam);
 
@@ -122,19 +126,10 @@ public:
         Window::redraw();
     };
 
-    void ToggleStackRec();                      // enables/disable trace of viewed directories
-    void ResetDirStack();                       // resets the stack
-    void SetToolBarInfo(ToolBar *toolBar, UINT idUndo, UINT idRedo);        // set dependency to a toolbar element
-    bool GetPrevDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems); // get previous directory
-    bool GetNextDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems); // get next directory
-    INT  GetPrevDirs(LPTSTR *pszPathes);        // get previous directorys
-    INT  GetNextDirs(LPTSTR *pszPathes);        // get next directorys
-    void OffsetItr(INT offsetItr, std::vector<std::wstring> & vStrItems);   // get offset directory
     void UpdateSelItems();
-    void SetItems(std::vector<std::wstring> vStrItems);
+    void SetItems(const std::vector<std::wstring>& vStrItems);
 
     void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
-
 
     virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect);
 
@@ -163,7 +158,6 @@ protected:
 
     BOOL FindNextItemInList(LPUINT puPos);
 
-
     void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
     void onLMouseBtnDbl();
 
@@ -176,9 +170,6 @@ protected:
 
     void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
     bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
-
-    void PushDir(const std::wstring& path);
-    void UpdateToolBarElements();
 
     void SetFocusItem(SIZE_T item) {
         /* select first entry */
@@ -223,20 +214,12 @@ private:    /* for thread */
     bool                            _bOldAddExtToName;
     bool                            _bOldViewLong;
 
-    /* stack for prev and next dir */
-    BOOL                            _isStackRec;
-    std::vector<StaInfo>            _vDirStack;
-    std::vector<StaInfo>::iterator  _itrPos;
-
-    ToolBar*                        _pToolBar;
-    UINT                            _idRedo;
-    UINT                            _idUndo;
-
     /* scrolling on DnD */
     BOOL                            _isScrolling;
     BOOL                            _isDnDStarted;
 
     std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
+    ExplorerViewModel*              _viewModel;
     ExplorerContext*                _context;
     std::wstring                    _pendingLoadDir;
     BOOL                            _pendingRedraw;

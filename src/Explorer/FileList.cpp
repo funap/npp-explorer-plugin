@@ -58,7 +58,7 @@ namespace SubItem {
 
 
 
-FileList::FileList(ExplorerContext *context)
+FileList::FileList(ExplorerViewModel *viewModel, ExplorerContext *context)
     : _hHeader(nullptr)
     , _hImlListSys(nullptr)
     , _pSettings(nullptr)
@@ -69,20 +69,18 @@ FileList::FileList(ExplorerContext *context)
     , _uMaxElementsOld(0)
     , _bOldAddExtToName(FALSE)
     , _bOldViewLong(FALSE)
-    , _isStackRec(TRUE)
-    , _itrPos()
-    , _pToolBar(nullptr)
-    , _idRedo(0)
-    , _idUndo(0)
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
     , _onCharHandler(nullptr)
+    , _viewModel(viewModel)
     , _context(context)
 {
+    _viewModel->AddObserver(this);
 }
 
 FileList::~FileList()
 {
+    _viewModel->RemoveObserver(this);
 }
 
 void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
@@ -166,7 +164,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             onDelete();
             return TRUE;
         case SHORTCUT_REFRESH:
-            _context->Refresh();
+            _viewModel->Refresh();
             return TRUE;
         default:
             if (_onCharHandler) {
@@ -190,7 +188,7 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             }
             break;
         case VK_F5:
-            _context->Refresh();
+            _viewModel->Refresh();
             return TRUE;
         default:
 
@@ -215,11 +213,11 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
     case WM_SYSKEYDOWN:
         if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000) {
             if (wParam == VK_LEFT) {
-                _context->NavigateBack();
+                _viewModel->NavigateBack();
                 return TRUE;
             }
             if (wParam == VK_RIGHT) {
-                _context->NavigateForward();
+                _viewModel->NavigateForward();
                 return TRUE;
             }
         }
@@ -256,7 +254,6 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             _cancelToken->store(true);
         }
 
-        _vDirStack.clear();
         _vFileList.clear();
         ::RemoveWindowSubclass(hwnd, wndDefaultListProc, LIST_SUBCLASS_ID);
         break;
@@ -472,7 +469,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 UINT i = ListView_GetSelectionMark(_hSelf);
                 if (i != -1) {
                     if (i < _uMaxFolders) {
-                        _context->NavigateTo(_vFileList[i].Name());
+                        _viewModel->NavigateTo(_vFileList[i].Name());
                     } else {
                         _context->Open(_vFileList[i].Name());
                     }
@@ -480,7 +477,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 break;
             }
             case VK_BACK:
-                _context->NavigateTo(L"..");
+                _viewModel->NavigateTo(L"..");
                 break;
             default:
                 break;
@@ -625,33 +622,21 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     }
 }
 
-void FileList::viewPath(const std::wstring& currentDir, BOOL redraw)
+void FileList::OnCurrentDirectoryChanged(const std::wstring& path)
 {
-    if (currentDir.empty()) {
-        return;
-    }
-
     if (_cancelToken) {
         _cancelToken->store(true);
     }
     _cancelToken = std::make_shared<std::atomic<bool>>(false);
     _currentGeneration++;
-    // Cancel only FileList-category tasks so in-flight TreeView tasks
-    // (e.g. directory scans, icon extraction) are not inadvertently cancelled.
-    _context->ClearPendingTasks(TaskCategory::FileList);
 
     /* clear data */
     _uMaxElementsOld = _uMaxElements;
-    _pendingLoadDir = currentDir;
-    _pendingRedraw = redraw;
-
-    /* add current dir to stack */
-    PushDir(currentDir);
-
-    _context->EnqueueAsyncTask(std::make_unique<TaskLoadFileList>(currentDir, _pSettings, this));
+    _pendingLoadDir = path;
+    _pendingRedraw = TRUE;
 }
 
-void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries)
+void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const std::vector<FileSystemEntry>& entries)
 {
     auto normalizePath = [](std::wstring p) {
         if (!p.empty() && p.back() == '\\') {
@@ -714,6 +699,21 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
         SetFocusItem(0);
     }
 
+    // Restore previous selection
+    auto prevSel = _viewModel->GetCurrentSelection();
+    if (!prevSel.empty()) {
+        for (UINT iItem = 0; iItem < _uMaxElements; iItem++) {
+            ListView_SetItemState(_hSelf, iItem, 0, 0xFF);
+        }
+        for (const auto& name : prevSel) {
+            for (SIZE_T i = 0; i < _uMaxElements; i++) {
+                if (_vFileList[i].Name() == name) {
+                    ListView_SetItemState(_hSelf, i, LVIS_SELECTED | LVIS_FOCUSED, 0xFF);
+                }
+            }
+        }
+    }
+
     std::vector<IconWorkItem> workItems;
     for (UINT i = 0; i < _uMaxElements; ++i) {
         if (_vFileList[i].IsParent()) {
@@ -726,13 +726,12 @@ void FileList::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileS
         workItems.push_back(item);
     }
 
-    _context->EnqueueAsyncTask(std::make_unique<TaskExtractIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
+    _viewModel->EnqueueAsyncTask(std::make_unique<TaskExtractIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
 }
 
 void FileList::filterFiles(LPCTSTR currentFilter)
 {
-    _pSettings->GetFileFilter().setFilter(currentFilter);
-    viewPath(_pSettings->GetCurrentDir(), TRUE);
+    _viewModel->SetFilter(currentFilter);
 }
 
 void FileList::SelectFolder(LPCTSTR filePath)
@@ -948,7 +947,7 @@ void FileList::onLMouseBtnDbl()
 
     if (selRow != -1) {
         if (selRow < _uMaxFolders) {
-            _context->NavigateTo(_vFileList[selRow].Name());
+            _viewModel->NavigateTo(_vFileList[selRow].Name());
         }
         else {
             _context->Open(_vFileList[selRow].Name());
@@ -1195,156 +1194,26 @@ void FileList::setDefaultOnCharHandler(std::function<BOOL(UINT, UINT, UINT)> onC
 /**************************************************************************************
  * Stack functions
  */
-void FileList::SetToolBarInfo(ToolBar *toolBar, UINT idUndo, UINT idRedo)
-{
-    _pToolBar   = toolBar;
-    _idUndo     = idUndo;
-    _idRedo     = idRedo;
-    ResetDirStack();
-}
-
-void FileList::ResetDirStack()
-{
-    _vDirStack.clear();
-    _itrPos = _vDirStack.end();
-    UpdateToolBarElements();
-}
-
-void FileList::ToggleStackRec()
-{
-    _isStackRec ^= TRUE;
-}
-
-void FileList::PushDir(const std::wstring& path)
-{
-    if (_isStackRec == TRUE) {
-        StaInfo StackInfo {
-            .strPath = path,
-        };
-
-        if (_itrPos != _vDirStack.end()) {
-            _vDirStack.erase(_itrPos + 1, _vDirStack.end());
-
-            if (_wcsicmp(path.c_str(), _itrPos->strPath.c_str()) != 0) {
-                _vDirStack.push_back(StackInfo);
-            }
-        }
-        else {
-            _vDirStack.push_back(StackInfo);
-        }
-
-        while (_pSettings->GetMaxHistorySize() + 1 < _vDirStack.size()) {
-            _vDirStack.erase(_vDirStack.begin());
-        }
-        _itrPos = _vDirStack.end() - 1;
-
-    }
-
-    UpdateToolBarElements();
-}
-
-bool FileList::GetPrevDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems)
-{
-    if (_vDirStack.size() > 1) {
-        if (_itrPos != _vDirStack.begin()) {
-            _itrPos--;
-            wcscpy(pszPath, _itrPos->strPath.c_str());
-            vStrItems = _itrPos->vStrItems;
-            return true;
-        }
-    }
-    return false;
-}
-
-bool FileList::GetNextDir(LPTSTR pszPath, std::vector<std::wstring> & vStrItems)
-{
-    if (_vDirStack.size() > 1) {
-        if (_itrPos != _vDirStack.end() - 1) {
-            _itrPos++;
-            wcscpy(pszPath, _itrPos->strPath.c_str());
-            vStrItems = _itrPos->vStrItems;
-            return true;
-        }
-    }
-    return false;
-}
-
-INT FileList::GetPrevDirs(LPTSTR *pszPathes)
-{
-    INT i = 0;
-    std::vector<StaInfo>::iterator itr = _itrPos;
-
-    if (_vDirStack.size() > 1) {
-        while (1) {
-            if (itr != _vDirStack.begin()) {
-                itr--;
-                if (pszPathes) {
-                    wcscpy(pszPathes[i], itr->strPath.c_str());
-                }
-            } else {
-                break;
-            }
-            i++;
-        }
-    }
-    return i;
-}
-
-INT FileList::GetNextDirs(LPTSTR *pszPathes)
-{
-    INT i = 0;
-    std::vector<StaInfo>::iterator itr = _itrPos;
-
-    if (_vDirStack.size() > 1) {
-        while (1) {
-            if (itr != _vDirStack.end() - 1) {
-                itr++;
-                if (pszPathes) {
-                    wcscpy(pszPathes[i], itr->strPath.c_str());
-                }
-            } else {
-                break;
-            }
-            i++;
-        }
-    }
-    return i;
-}
-
-void FileList::OffsetItr(INT offsetItr, std::vector<std::wstring> & vStrItems)
-{
-    _itrPos += offsetItr;
-    vStrItems = _itrPos->vStrItems;
-    UpdateToolBarElements();
-}
-
-void FileList::UpdateToolBarElements()
-{
-    bool canRedo = !_vDirStack.empty() && (_itrPos != _vDirStack.end() - 1);
-    _pToolBar->enable(_idRedo, canRedo);
-    _pToolBar->enable(_idUndo, _itrPos != _vDirStack.begin());
-}
-
 void FileList::UpdateSelItems()
 {
-    if (_isStackRec == TRUE) {
-        _itrPos->vStrItems.clear();
-
-        for (UINT i = 0; i < _uMaxElements; i++) {
-            if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-                _itrPos->vStrItems.push_back(_vFileList[i].Name());
-            }
+    std::vector<std::wstring> selected;
+    for (UINT i = 0; i < _uMaxElements; i++) {
+        if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
+            selected.push_back(_vFileList[i].Name());
         }
     }
+    _viewModel->UpdateSelection(selected);
 }
 
-void FileList::SetItems(std::vector<std::wstring> vStrItems)
+void FileList::SetItems(const std::vector<std::wstring>& vStrItems)
 {
+    std::vector<std::wstring> itemsCopy = vStrItems;
     UINT selType = LVIS_SELANDFOC;
 
     for (UINT i = 0; i < _uMaxElements; i++) {
-        for (UINT itemPos = 0; itemPos < vStrItems.size(); itemPos++) {
-            if (_vFileList[i].Name() == vStrItems[itemPos]) {
+        bool match = false;
+        for (UINT itemPos = 0; itemPos < itemsCopy.size(); itemPos++) {
+            if (_vFileList[i].Name() == itemsCopy[itemPos]) {
                 ListView_SetItemState(_hSelf, i, selType, 0xFF);
 
                 /* set first item in view */
@@ -1354,17 +1223,18 @@ void FileList::SetItems(std::vector<std::wstring> vStrItems)
                 }
 
                 /* delete last found item to be faster in compare */
-                vStrItems.erase(vStrItems.begin() + itemPos);
+                itemsCopy.erase(itemsCopy.begin() + itemPos);
 
-                /* if last item were delete return from function */
-                if (vStrItems.empty()) {
-                    return;
-                }
-
+                match = true;
                 selType = LVIS_SELECTED;
                 break;
             }
+        }
+        if (!match) {
             ListView_SetItemState(_hSelf, i, 0, 0xFF);
+        }
+        if (itemsCopy.empty()) {
+            return;
         }
     }
 }

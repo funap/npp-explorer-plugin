@@ -277,6 +277,7 @@
     <ClCompile Include="src\Explorer\UTF16Stream.cpp" />
     <ClCompile Include="src\Explorer\ExplorerModel.cpp" />
     <ClCompile Include="src\Explorer\ExplorerTasks.cpp" />
+    <ClCompile Include="src\Explorer\ExplorerViewModel.cpp" />
     <ClCompile Include="src\Explorer\TreeModelSynchronizer.cpp" />
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
@@ -323,6 +324,7 @@
     <ClInclude Include="src\Explorer\WorkerThread.h" />
     <ClInclude Include="src\Explorer\ExplorerModel.h" />
     <ClInclude Include="src\Explorer\ExplorerTasks.h" />
+    <ClInclude Include="src\Explorer\ExplorerViewModel.h" />
     <ClInclude Include="src\Explorer\TreeModelSynchronizer.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\Docking.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\DockingDlgInterface.h" />

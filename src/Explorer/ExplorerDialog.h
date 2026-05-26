@@ -46,7 +46,9 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback, public IExplorerModelObserver
+#include "ExplorerViewModel.h"
+
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback, public IExplorerModelObserver, public IExplorerViewModelObserver
 {
 public:
     ExplorerDialog();
@@ -104,6 +106,11 @@ protected:
     void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
     void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
 
+    // IExplorerViewModelObserver overrides
+    void OnCurrentDirectoryChanged(const std::wstring& path) override;
+    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override {};
+    void OnNavigationStateChanged() override;
+
     void UpdateRoots();
     void UpdateAllExpandedItems();
     void UpdatePath();
@@ -126,6 +133,8 @@ protected:
     void UpdateLayout();
     void ResumePendingSelection();
 private:
+    std::shared_ptr<ExplorerModel> _model;
+    std::shared_ptr<ExplorerViewModel> _viewModel;
     std::vector<std::wstring> _pendingSelectPathSegments;
     /* Handles */
     BOOL        _bStartupFinish;
@@ -171,7 +180,6 @@ private:
     INT         _iDockedPos;
 
     WorkerThread _workerThread;
-    std::shared_ptr<ExplorerModel> _model;
     std::set<HTREEITEM> _checkedItems;
 
     void CheckVisibleFolderChildren();
