@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 //
 // Copyright (c) 2026 funap
 //
@@ -108,13 +108,19 @@ void TreeModelSynchronizer::Synchronize(
         BOOL haveChildren = childEntry->FSEntry().IsDirectory();
         std::wstring name = treeCtrl.GetItemText(hItem);
 
+        // Retrieve the current icons from the View to preserve them during update
+        INT iIconNormal   = ICON_FOLDER;
+        INT iIconSelected = ICON_FOLDER;
+        INT iIconOverlay  = 0;
+        treeCtrl.GetItemIcons(hItem, &iIconNormal, &iIconSelected, &iIconOverlay);
+
         auto* pOld = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(treeCtrl.GetParam(hItem));
         if (pOld != nullptr) {
             *pOld = childEntry;
-            treeCtrl.UpdateItem(hItem, name, ICON_FOLDER, ICON_FOLDER, 0, bHidden, haveChildren, nullptr);
+            treeCtrl.UpdateItem(hItem, name, iIconNormal, iIconSelected, iIconOverlay, bHidden, haveChildren, nullptr);
         } else {
             auto* pNew = new std::shared_ptr<ExplorerEntry>(childEntry);
-            treeCtrl.UpdateItem(hItem, name, ICON_FOLDER, ICON_FOLDER, 0, bHidden, haveChildren, pNew);
+            treeCtrl.UpdateItem(hItem, name, iIconNormal, iIconSelected, iIconOverlay, bHidden, haveChildren, pNew);
         }
 
         enqueueIcon(hItem);

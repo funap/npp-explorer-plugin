@@ -1800,8 +1800,6 @@ void ExplorerDialog::NavigateTo(const std::wstring &path)
     _viewModel->NavigateTo(path);
 }
 
-
-
 void ExplorerDialog::Open(const std::wstring &path)
 {
     if (!path.empty()) {

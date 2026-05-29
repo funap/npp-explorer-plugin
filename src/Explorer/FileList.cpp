@@ -56,8 +56,6 @@ namespace SubItem {
 }
 }
 
-
-
 FileList::FileList(ExplorerViewModel *viewModel, ExplorerContext *context)
     : _hHeader(nullptr)
     , _hImlListSys(nullptr)
@@ -88,8 +86,6 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
     /* this is the list element */
     Window::init(hInst, hParent);
     _hSelf = hParentList;
-
-
 
     /* keep sure to support virtual list with icons */
     LONG_PTR style = ::GetWindowLongPtr(_hSelf, GWL_STYLE);
@@ -549,8 +545,6 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
     return FALSE;
 }
 
-
-
 void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL pbHidden)
 {
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
@@ -558,6 +552,13 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
     if (_vFileList[iItem].Icon() == -1) {
         _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
         _vFileList[iItem].SetOverlay(0);
+        if (_pSettings->IsUseSystemIcons()) {
+            SHFILEINFO sfi{};
+            std::wstring pathStr = _vFileList[iItem].fullPath;
+            if (::SHGetFileInfo(pathStr.c_str(), _vFileList[iItem].Attributes(), &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON)) {
+                _vFileList[iItem].SetIcon(sfi.iIcon & 0x00ffffff);
+            }
+        }
     }
     *piIcon     = _vFileList[iItem].Icon();
     *piOverlay  = _vFileList[iItem].Overlay();
