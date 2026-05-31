@@ -213,8 +213,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
             ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
             return TRUE;
         }
-        if ((HWND)lParam == _ToolBar.getHSelf()) {
-            tb_cmd(LOWORD(wParam));
+        if (HIWORD(wParam) == 0) {
+            HandleToolBarCommand(LOWORD(wParam));
             return TRUE;
         }
         break;
@@ -328,7 +328,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
             return _FileList.notify(wParam, lParam);
         }
         else if ((nmhdr->hwndFrom == _ToolBar.getHSelf()) && (nmhdr->code == TBN_DROPDOWN)) {
-            tb_not((LPNMTOOLBAR)lParam);
+            HandleToolBarDropDown((LPNMTOOLBAR)lParam);
             return TBDDRET_NODEFAULT;
         }
         else if ((nmhdr->hwndFrom == _Rebar.getHSelf()) && (nmhdr->code == RBN_CHEVRONPUSHED)) {
@@ -338,7 +338,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 pt.x = lpnm->rc.left;
                 pt.y = lpnm->rc.bottom;
                 ClientToScreen(nmhdr->hwndFrom, &pt);
-                tb_cmd(_ToolBar.doPopop(pt));
+                HandleToolBarCommand(_ToolBar.doPopop(pt));
                 return TRUE;
             }
             break;
@@ -428,7 +428,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         NavigateTo((LPTSTR)lParam);
         return TRUE;
     case EXM_USER_ICONBAR:
-        tb_cmd(wParam);
+        HandleToolBarCommand(wParam);
         return TRUE;
     case EXM_ASYNCTASK_COMPLETED: {
         _viewModel->ProcessTaskCompleted(reinterpret_cast<IAsyncTask*>(wParam));
@@ -464,7 +464,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         }
         if (wParam == EXT_AUTOGOTOFILE) {
             ::KillTimer(_hSelf, EXT_AUTOGOTOFILE);
-            gotoCurrentFile();
+            GotoCurrentFile();
             return FALSE;
         }
         if (wParam == EXT_SELCHANGE) {
@@ -484,26 +484,28 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
 /****************************************************************************
  * Message handling of tree
  */
-LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
-    switch (Message) {
+    switch (Message){
     case WM_GETDLGCODE: {
         return DLGC_WANTALLKEYS | ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
     }
     case WM_CHAR: {
         /* do selection of items by user keyword typing or cut/copy/paste */
         switch (wParam) {
+        case SHORTCUT_ALL:
+            return TRUE;
         case SHORTCUT_CUT:
-            onCut();
+            OnCut();
             return TRUE;
         case SHORTCUT_COPY:
-            onCopy();
+            OnCopy();
             return TRUE;
         case SHORTCUT_PASTE:
-            onPaste();
+            OnPaste();
             return TRUE;
         case SHORTCUT_DELETE:
-            onDelete();
+            OnDelete();
             return TRUE;
         case SHORTCUT_REFRESH:
             Refresh();
@@ -561,7 +563,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         break;
     case WM_KEYDOWN: {
         if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000)) {
-            onDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
+            OnDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
             return TRUE;
         }
         if (wParam == VK_F5) {
@@ -691,7 +693,7 @@ LRESULT ExplorerDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
 /****************************************************************************
  * Message handling of header
  */
-LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT ExplorerDialog::RunSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message){
     case WM_LBUTTONDOWN: {
@@ -772,7 +774,7 @@ LRESULT ExplorerDialog::runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, 
     return ::CallWindowProc(_hDefaultSplitterProc, hwnd, Message, wParam, lParam);
 }
 
-void ExplorerDialog::tb_cmd(WPARAM message)
+void ExplorerDialog::HandleToolBarCommand(WPARAM message)
 {
     switch (message) {
     case IDM_EX_PREV:
@@ -843,16 +845,16 @@ void ExplorerDialog::tb_cmd(WPARAM message)
         Editor::Instance().LaunchFindFileDialog(_pSettings->GetCurrentDir());
         break;
     case IDM_EX_GO_TO_USER:
-        gotoUserFolder();
+        GotoUserFolder();
         break;
     case IDM_EX_GO_TO_FOLDER:
-        gotoCurrentFile();
+        GotoCurrentFile();
         break;
     case IDM_EX_TERMINAL:
-        openTerminal();
+        OpenTerminal();
         break;
     case IDM_EX_FAVORITES:
-        toggleFavesDialog();
+        ToggleFavesDialog();
         break;
     case IDM_EX_UPDATE:
         Refresh();
@@ -862,7 +864,7 @@ void ExplorerDialog::tb_cmd(WPARAM message)
     }
 }
 
-void ExplorerDialog::tb_not(LPNMTOOLBAR lpnmtb)
+void ExplorerDialog::HandleToolBarDropDown(LPNMTOOLBAR lpnmtb)
 {
     INT iElements = 0;
 
@@ -932,13 +934,13 @@ void ExplorerDialog::InitialDialog()
 
     /* subclass tree */
     ::SetWindowLongPtr(_hTreeCtrl, GWLP_USERDATA, (LONG_PTR)this);
-    _hDefaultTreeProc = (WNDPROC)::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultTreeProc);
+    _hDefaultTreeProc = (WNDPROC)::SetWindowLongPtr(_hTreeCtrl, GWLP_WNDPROC, (LONG_PTR)WndDefaultTreeProc);
 
     /* subclass splitter */
     _hSplitterCursorUpDown      = ::LoadCursor(_hInst, MAKEINTRESOURCE(IDC_UPDOWN));
     _hSplitterCursorLeftRight   = ::LoadCursor(_hInst, MAKEINTRESOURCE(IDC_LEFTRIGHT));
     ::SetWindowLongPtr(_hSplitterCtrl, GWLP_USERDATA, (LONG_PTR)this);
-    _hDefaultSplitterProc = (WNDPROC)::SetWindowLongPtr(_hSplitterCtrl, GWLP_WNDPROC, (LONG_PTR)wndDefaultSplitterProc);
+    _hDefaultSplitterProc = (WNDPROC)::SetWindowLongPtr(_hSplitterCtrl, GWLP_WNDPROC, (LONG_PTR)WndDefaultSplitterProc);
 
     /* Load Image List */
     ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(_pSettings->IsUseSystemIcons()));
@@ -1173,7 +1175,7 @@ void ExplorerDialog::ResumePendingSelection()
     }
 }
 
-BOOL ExplorerDialog::gotoPath()
+BOOL ExplorerDialog::GotoPath()
 {
     /* newDlg is exactly what I need */
     NewDlg  dlg;
@@ -1211,26 +1213,26 @@ BOOL ExplorerDialog::gotoPath()
     return bResult;
 }
 
-void ExplorerDialog::gotoUserFolder()
+void ExplorerDialog::GotoUserFolder()
 {
     WCHAR pathName[MAX_PATH];
 
     if (SHGetSpecialFolderPath(nullptr, pathName, CSIDL_PROFILE, FALSE) == TRUE) {
         _viewModel->NavigateTo(pathName);
     }
-    setFocusOnFile();
+    SetFocusOnFile();
 }
 
-void ExplorerDialog::gotoCurrentFolder()
+void ExplorerDialog::GotoCurrentFolder()
 {
     std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
     if (!currentDir.empty()) {
         _viewModel->NavigateTo(currentDir);
     }
-    setFocusOnFile();
+    SetFocusOnFile();
 }
 
-void ExplorerDialog::gotoCurrentFile()
+void ExplorerDialog::GotoCurrentFile()
 {
     if (_pSettings->IsUseFullTree()) {
         std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
@@ -1243,27 +1245,27 @@ void ExplorerDialog::gotoCurrentFile()
         if (!currentDir.empty()) {
             _viewModel->NavigateTo(currentDir);
             _FileList.SelectCurFile();
-            setFocusOnFile();
+            SetFocusOnFile();
         }
     }
 }
 
-void ExplorerDialog::gotoFileLocation(const std::wstring& filePath)
+void ExplorerDialog::GotoFileLocation(const std::wstring& filePath)
 {
     _viewModel->NavigateTo(filePath);
 
     std::wstring fileName = filePath.substr(filePath.find_last_of(L'\\') + 1);
     _FileList.SelectFile(fileName);
 
-    setFocusOnFile();
+    SetFocusOnFile();
 }
 
-void ExplorerDialog::setFocusOnFolder()
+void ExplorerDialog::SetFocusOnFolder()
 {
     ::SetFocus(_hTreeCtrl);
 }
 
-void ExplorerDialog::setFocusOnFile()
+void ExplorerDialog::SetFocusOnFile()
 {
     if (!_pSettings->IsUseFullTree()) {
         ::SetFocus(_FileList.getHSelf());
@@ -1273,7 +1275,7 @@ void ExplorerDialog::setFocusOnFile()
     }
 }
 
-void ExplorerDialog::clearFilter()
+void ExplorerDialog::ClearFilter()
 {
     _pSettings->GetFilterHistory().clear();
     _pSettings->GetFileFilter().setFilter(L"*.*");
@@ -1286,7 +1288,7 @@ void ExplorerDialog::clearFilter()
 /**************************************************************************
  * Shortcut functions
  */
-void ExplorerDialog::onDelete(bool immediate)
+void ExplorerDialog::OnDelete(bool immediate)
 {
     HTREEITEM hItem = _hTreeCtrl.GetSelection();
     auto path = GetPath(hItem);
@@ -1322,19 +1324,19 @@ void ExplorerDialog::onDelete(bool immediate)
     }
 }
 
-void ExplorerDialog::onCut()
+void ExplorerDialog::OnCut()
 {
     CIDataObject dataObj(nullptr);
     FolderExChange(nullptr, &dataObj, DROPEFFECT_MOVE);
 }
 
-void ExplorerDialog::onCopy()
+void ExplorerDialog::OnCopy()
 {
     CIDataObject dataObj(nullptr);
     FolderExChange(nullptr, &dataObj, DROPEFFECT_COPY);
 }
 
-void ExplorerDialog::onPaste()
+void ExplorerDialog::OnPaste()
 {
     /* Insure desired format is there, and open clipboard */
     if (!::IsClipboardFormatAvailable(CF_HDROP)) {
@@ -1360,9 +1362,9 @@ void ExplorerDialog::onPaste()
     auto filesTo = GetPath(_hTreeCtrl.GetSelection());
 
     if (hEffect[0] == 2) {
-        doPaste(filesTo.c_str(), hFiles, DROPEFFECT_MOVE);
+        DoPaste(filesTo.c_str(), hFiles, DROPEFFECT_MOVE);
     } else if (hEffect[0] == 5) {
-        doPaste(filesTo.c_str(), hFiles, DROPEFFECT_COPY);
+        DoPaste(filesTo.c_str(), hFiles, DROPEFFECT_COPY);
     }
     ::GlobalUnlock(hFiles);
     ::GlobalUnlock(hEffect);
@@ -1801,7 +1803,7 @@ bool ExplorerDialog::OnDrop(FORMATETC* /* pFmtEtc */, STGMEDIUM& medium, DWORD* 
     /* get target */
     auto path = GetPath(_hTreeCtrl.GetDropHilightItem());
 
-    doPaste(path.c_str(), hFiles, *pdwEffect);
+    DoPaste(path.c_str(), hFiles, *pdwEffect);
     ::CloseClipboard();
 
     _hTreeCtrl.SelectDropTarget( NULL);
@@ -1857,7 +1859,7 @@ void ExplorerDialog::Refresh()
     _viewModel->Refresh();
 }
 
-bool ExplorerDialog::doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
+bool ExplorerDialog::DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
 {
     /* get files from and to, to fill struct */
     UINT    headerSize      = sizeof(DROPFILES);

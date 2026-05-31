@@ -137,7 +137,7 @@ LPCONTEXTMENU ContextMenu::GetContextMenu()
     return contextMenu;
 }
 
-LRESULT CALLBACK ContextMenu::defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+LRESULT CALLBACK ContextMenu::DefaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
     auto* cm = reinterpret_cast<ContextMenu*>(dwRefData);
     return cm->HookWndProc(hWnd, message, wParam, lParam);
@@ -214,7 +214,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     // only subclass if its version 2 or 3
     BOOL bWindowSubclassed = FALSE;
     if ((nullptr != _contextMenu2) || (nullptr != _contextMenu3)) {
-        bWindowSubclassed = SetWindowSubclass(hWndParent, defaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
+        bWindowSubclassed = SetWindowSubclass(hWndParent, DefaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID, reinterpret_cast<DWORD_PTR>(this));
     }
 
     /************************************* modification for notepad ***********************************/
@@ -375,7 +375,7 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     UINT idCommand = ::TrackPopupMenu(hMainMenu, TPM_RETURNCMD, pt.x, pt.y, 0, hWndParent, nullptr);
 
     if (bWindowSubclassed) {
-        ::RemoveWindowSubclass(hWndParent, defaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID);
+        ::RemoveWindowSubclass(hWndParent, DefaultHookWndProc, CONTEXT_MENU_SUBCLASS_ID);
     }
 
     // see if returned idCommand belongs to shell menu entries but not for renaming (19)
@@ -417,59 +417,59 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
 {
     switch (idCommand) {
     case CTX_QUICK_OPEN:
-        quickOpen();
+        QuickOpen();
         break;
     case CTX_RENAME:
         Rename();
         break;
     case CTX_NEW_FILE:
-        newFile();
+        NewFile();
         break;
     case CTX_NEW_FOLDER:
-        newFolder();
+        NewFolder();
         break;
     case CTX_FIND_IN_FILES:
-        findInFiles();
+        FindInFiles();
         break;
     case CTX_OPEN:
-        openFile();
+        OpenFile();
         break;
     case CTX_OPEN_DIFF_VIEW:
-        openFileInOtherView();
+        OpenFileInOtherView();
         break;
     case CTX_OPEN_NEW_INST:
-        openFileInNewInstance();
+        OpenFileInNewInstance();
         break;
     case CTX_OPEN_CMD:
-        openPrompt();
+        OpenPrompt();
         break;
     case CTX_SET_AS_ROOT_FOLDER:
-        setRootFolder();
+        SetRootFolder();
         break;
     case CTX_GO_TO_ROOT_FOLDER:
-        gotoRootFolder();
+        GotoRootFolder();
         break;
     case CTX_CLEAR_ROOT_FOLDER:
-        clearRootFolder();
+        ClearRootFolder();
         break;
     case CTX_ADD_TO_FAVES:
-        addToFaves();
+        AddToFaves();
         break;
     case CTX_RELATIVE_PATH:
-        addRelativePathsCB();
+        AddRelativePathsCB();
         break;
     case CTX_FULL_PATH:
-        addFullPathsCB();
+        AddFullPathsCB();
         break;
     case CTX_FULL_FILES:
-        addFileNamesCB();
+        AddFileNamesCB();
         break;
     case CTX_GOTO_SCRIPT_PATH:
-        openScriptPath(_hInst);
+        OpenScriptPath(_hInst);
         break;
     default: /* and greater */
         if ((idCommand >= CTX_START_SCRIPT) && (idCommand <= (CTX_START_SCRIPT + _strNppScripts.size()))) {
-            startNppExec(_hInst, idCommand - CTX_START_SCRIPT);
+            StartNppExec(_hInst, idCommand - CTX_START_SCRIPT);
         }
         break;
     }
@@ -725,7 +725,7 @@ void ContextMenu::Rename()
     }
 }
 
-void ContextMenu::quickOpen()
+void ContextMenu::QuickOpen()
 {
     auto path = _strArray[0];
 
@@ -742,7 +742,7 @@ void ContextMenu::quickOpen()
     quickOpenDlg.show();
 }
 
-void ContextMenu::newFile()
+void ContextMenu::NewFile()
 {
     NewDlg  dlg;
     BOOL    bLeave = FALSE;
@@ -773,7 +773,7 @@ void ContextMenu::newFile()
     }
 }
 
-void ContextMenu::newFolder()
+void ContextMenu::NewFolder()
 {
     NewDlg  dlg;
     BOOL    bLeave = FALSE;
@@ -805,19 +805,19 @@ void ContextMenu::newFolder()
     }
 }
 
-void ContextMenu::findInFiles()
+void ContextMenu::FindInFiles()
 {
     Editor::Instance().LaunchFindFileDialog(_strFirstElement);
 }
 
-void ContextMenu::openFile()
+void ContextMenu::OpenFile()
 {
     for (const auto &path : _strArray) {
         Editor::Instance().DoOpen(path);
     }
 }
 
-void ContextMenu::openFileInOtherView()
+void ContextMenu::OpenFileInOtherView()
 {
     BOOL isFirstItem = TRUE;
     for (const auto &path : _strArray) {
@@ -829,7 +829,7 @@ void ContextMenu::openFileInOtherView()
     }
 }
 
-void ContextMenu::openFileInNewInstance()
+void ContextMenu::OpenFileInNewInstance()
 {
     std::wstring    args2Exec;
     WCHAR           szNpp[MAX_PATH];
@@ -847,7 +847,7 @@ void ContextMenu::openFileInNewInstance()
     ::ShellExecute(_hWndNpp, L"open", szNpp, args2Exec.c_str(), L".", SW_SHOW);
 }
 
-void ContextMenu::openPrompt()
+void ContextMenu::OpenPrompt()
 {
     for (size_t i = 0; i < _strArray.size(); i++) {
         auto path = _strArray[i];
@@ -862,7 +862,7 @@ void ContextMenu::openPrompt()
     }
 }
 
-void ContextMenu::setRootFolder()
+void ContextMenu::SetRootFolder()
 {
     auto path = _strArray[0];
 
@@ -877,19 +877,19 @@ void ContextMenu::setRootFolder()
     settings.SetRootFolder(path);
 }
 
-void ContextMenu::gotoRootFolder()
+void ContextMenu::GotoRootFolder()
 {
     extern ExplorerDialog explorerDlg;
-    explorerDlg.gotoFileLocation(settings.GetRootFolder());
+    explorerDlg.GotoFileLocation(settings.GetRootFolder());
 }
 
-void ContextMenu::clearRootFolder()
+void ContextMenu::ClearRootFolder()
 {
     settings.SetRootFolder(L"");
 }
 
 
-void ContextMenu::addToFaves()
+void ContextMenu::AddToFaves()
 {
     extern FavesDialog favesDlg;
 
@@ -910,7 +910,7 @@ void ContextMenu::addToFaves()
     }
 }
 
-void ContextMenu::addRelativePathsCB()
+void ContextMenu::AddRelativePathsCB()
 {
     const std::wstring currentDirectory = Editor::Instance().GetCurrentDirectory().wstring();
     if (currentDirectory.empty()) {
@@ -933,7 +933,7 @@ void ContextMenu::addRelativePathsCB()
     Str2CB(relativePaths.c_str());
 }
 
-void ContextMenu::addFullPathsCB()
+void ContextMenu::AddFullPathsCB()
 {
     std::wstring temp;
     BOOL isFirstItem = TRUE;
@@ -949,7 +949,7 @@ void ContextMenu::addFullPathsCB()
     Str2CB(temp.c_str());
 }
 
-void ContextMenu::addFileNamesCB()
+void ContextMenu::AddFileNamesCB()
 {
     std::wstring temp;
     BOOL isFirstItem = TRUE;
@@ -980,7 +980,7 @@ void ContextMenu::addFileNamesCB()
     Str2CB(temp.c_str());
 }
 
-void ContextMenu::openScriptPath(HMODULE hInst)
+void ContextMenu::OpenScriptPath(HMODULE hInst)
 {
     WCHAR TEMP[MAX_PATH];
 
@@ -996,7 +996,7 @@ void ContextMenu::openScriptPath(HMODULE hInst)
     ::SendMessage(_hWndParent, EXM_OPENDIR, 0, (LPARAM)TEMP);
 }
 
-void ContextMenu::startNppExec(HMODULE hInst, UINT cmdID)
+void ContextMenu::StartNppExec(HMODULE hInst, UINT cmdID)
 {
     WCHAR szScriptPath[MAX_PATH];
 

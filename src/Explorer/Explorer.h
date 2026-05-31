@@ -80,23 +80,23 @@ enum ScDir {
 
 
 
-void toggleExplorerDialog();
-void toggleFavesDialog();
-void openQuickOpenDlg();
+void ToggleExplorerDialog();
+void ToggleFavesDialog();
+void OpenQuickOpenDlg();
 
-void gotoPath();
-void gotoUserFolder();
-void gotoCurrentFolder();
-void gotoRootFolder();
-void gotoCurrentFile();
-void showExplorerDialogOnFolder();
-void showExplorerDialogOnFile();
-void showFavesDialog();
-void clearFilter();
+void GotoPath();
+void GotoUserFolder();
+void GotoCurrentFolder();
+void GotoRootFolder();
+void GotoCurrentFile();
+void ShowExplorerDialogOnFolder();
+void ShowExplorerDialogOnFile();
+void ShowFavesDialog();
+void ClearFilter();
 
-void openOptionDlg();
-void openHelpDlg();
-void openTerminal();
+void OpenOptionDlg();
+void OpenHelpDlg();
+void OpenTerminal();
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 

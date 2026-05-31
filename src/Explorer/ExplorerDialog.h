@@ -58,16 +58,16 @@ public:
     void redraw();
     void destroy() override {};
     void doDialog(bool willBeShown = true);
-    BOOL gotoPath();
-    void gotoUserFolder();
-    void gotoCurrentFolder();
-    void gotoCurrentFile();
-    void gotoFileLocation(const std::wstring& filePath);
-    void clearFilter();
-    void setFocusOnFolder();
-    void setFocusOnFile();
+    BOOL GotoPath();
+    void GotoUserFolder();
+    void GotoCurrentFolder();
+    void GotoCurrentFile();
+    void GotoFileLocation(const std::wstring& filePath);
+    void ClearFilter();
+    void SetFocusOnFolder();
+    void SetFocusOnFile();
     void NotifyNewFile();
-    void initFinish() {
+    void InitFinish() {
         _bStartupFinish = TRUE;
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
@@ -90,15 +90,15 @@ public:
     std::wstring GetPath(HTREEITEM currentItem) const;
 protected:
     /* Subclassing tree */
-    LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runTreeProc(hwnd, Message, wParam, lParam));
+    LRESULT RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->RunTreeProc(hwnd, Message, wParam, lParam));
     };
 
     /* Subclassing splitter */
-    LRESULT runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK wndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runSplitterProc(hwnd, Message, wParam, lParam));
+    LRESULT RunSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->RunSplitterProc(hwnd, Message, wParam, lParam));
     };
 
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
@@ -118,16 +118,16 @@ protected:
 
     BOOL SelectItem(const std::filesystem::path& path);
 
-    void onDelete(bool immediate = false);
-    void onCopy();
-    void onPaste();
-    void onCut();
+    void OnDelete(bool immediate = false);
+    void OnCopy();
+    void OnPaste();
+    void OnCut();
 
     void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
-    bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
+    bool DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
 
-    void tb_cmd(WPARAM message);
-    void tb_not(LPNMTOOLBAR lpnmtb);
+    void HandleToolBarCommand(WPARAM message);
+    void HandleToolBarDropDown(LPNMTOOLBAR lpnmtb);
 
     HTREEITEM FindTreeItemByPath(const std::wstring& path);
     void FetchChildren(HTREEITEM parentItem);
