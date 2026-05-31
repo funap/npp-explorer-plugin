@@ -79,10 +79,10 @@ void TaskCheckFolderChildren::OnCompleted() {
     _dialog->OnFolderChildrenChecked(_hItem, _path, _hasChildren);
 }
 
-TaskExtractIcons::TaskExtractIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation)
+TaskFetchIcons::TaskFetchIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation)
     : _fileList(fileList), _hListWnd(hListWnd), _workDir(workDir), _vWorkItems(std::move(workItems)), _cancelToken(cancelToken), _generation(generation) {}
 
-void TaskExtractIcons::Execute() {
+void TaskFetchIcons::Execute() {
     for (const auto& item : _vWorkItems) {
         if (_cancelToken && _cancelToken->load()) {
             break;
@@ -92,7 +92,7 @@ void TaskExtractIcons::Execute() {
         int iconSelected = 0;
         int overlay = 0;
 
-        ExtractIcons(_workDir.c_str(), item.name.c_str(), item.type, &icon, &iconSelected, &overlay);
+        FetchIcons(_workDir.c_str(), item.name.c_str(), item.type, &icon, &iconSelected, &overlay);
 
         if (_cancelToken && _cancelToken->load()) {
             break;
@@ -105,20 +105,20 @@ void TaskExtractIcons::Execute() {
     }
 }
 
-void TaskExtractIcons::OnCompleted() {
+void TaskFetchIcons::OnCompleted() {
     // Incrementally posted results to FileList, nothing to do on complete.
 }
 
 #include "TreeView.h"
 
-TaskTreeViewExtractIcons::TaskTreeViewExtractIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType)
+TaskTreeViewFetchIcons::TaskTreeViewFetchIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType)
     : _treeCtrl(treeCtrl), _hItem(hItem), _path(path), _devType(devType) {}
 
-void TaskTreeViewExtractIcons::Execute() {
-    ExtractIcons(_path.c_str(), nullptr, _devType, &_icon, &_iconSelected, &_overlay);
+void TaskTreeViewFetchIcons::Execute() {
+    FetchIcons(_path.c_str(), nullptr, _devType, &_icon, &_iconSelected, &_overlay);
 }
 
-void TaskTreeViewExtractIcons::OnCompleted() {
+void TaskTreeViewFetchIcons::OnCompleted() {
     if (_treeCtrl && _hItem) {
         _treeCtrl->SetItemIcons(_hItem, _icon, _iconSelected, _overlay);
     }

@@ -86,9 +86,9 @@ private:
     std::vector<FileSystemEntry> _entries;
 };
 
-class TaskExtractIcons : public IAsyncTask {
+class TaskFetchIcons : public IAsyncTask {
 public:
-    TaskExtractIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation);
+    TaskFetchIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation);
 
     void Execute() override;
     void OnCompleted() override;
@@ -105,9 +105,9 @@ private:
 
 class TreeView;
 
-class TaskTreeViewExtractIcons : public IAsyncTask {
+class TaskTreeViewFetchIcons : public IAsyncTask {
 public:
-    TaskTreeViewExtractIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType);
+    TaskTreeViewFetchIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType);
 
     void Execute() override;
     void OnCompleted() override;

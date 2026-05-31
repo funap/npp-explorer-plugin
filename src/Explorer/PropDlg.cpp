@@ -423,7 +423,7 @@ void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
             INT iIconNormal     = 0;
             INT iIconSelected   = 0;
             INT iIconOverlayed  = 0;
-            ExtractIcons(child->Name().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            FetchIcons(child->Name().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
             HTREEITEM pCurrentItem = _hTreeCtrl.InsertItem(child->Name(), _iUImgPos, _iUImgPos, 0, 0, hParentItem, TVI_LAST, haveChildren, child.get());
             ExpandTreeView(pCurrentItem);
         }

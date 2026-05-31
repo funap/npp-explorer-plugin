@@ -27,7 +27,7 @@
 
 #include "ExplorerDialog.h"
 #include "ExplorerTasks.h"
-#include "Explorer.h"    // ExtractIcons, ICON_FOLDER, DEVT_DRIVE, DEVT_DIRECTORY
+#include "Explorer.h"    // FetchIcons, ICON_FOLDER, DEVT_DRIVE, DEVT_DIRECTORY
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -98,7 +98,7 @@ void TreeModelSynchronizer::Synchronize(
     auto enqueueIcon = [&](HTREEITEM hItem) {
         std::wstring currentPath = dialog.GetPath(hItem);
         if (devType == DEVT_DRIVE || settings->IsUseSystemIcons()) {
-            workerThread.Enqueue(std::make_unique<TaskTreeViewExtractIcons>(&treeCtrl, hItem, currentPath, devType));
+            workerThread.Enqueue(std::make_unique<TaskTreeViewFetchIcons>(&treeCtrl, hItem, currentPath, devType));
         }
     };
 

@@ -553,10 +553,11 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
         _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
         _vFileList[iItem].SetOverlay(0);
         if (_pSettings->IsUseSystemIcons()) {
-            SHFILEINFO sfi{};
+            INT iIcon = -1;
             std::wstring pathStr = _vFileList[iItem].fullPath;
-            if (::SHGetFileInfo(pathStr.c_str(), _vFileList[iItem].Attributes(), &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON)) {
-                _vFileList[iItem].SetIcon(sfi.iIcon & 0x00ffffff);
+            GetIcons(pathStr, _vFileList[iItem].Attributes(), &iIcon);
+            if (iIcon != -1) {
+                _vFileList[iItem].SetIcon(iIcon);
             }
         }
     }
@@ -727,7 +728,7 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
         workItems.push_back(item);
     }
 
-    _viewModel->EnqueueAsyncTask(std::make_unique<TaskExtractIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
+    _viewModel->EnqueueAsyncTask(std::make_unique<TaskFetchIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
 }
 
 void FileList::filterFiles(LPCTSTR currentFilter)

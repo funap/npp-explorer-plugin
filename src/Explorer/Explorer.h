@@ -108,7 +108,8 @@ bool IsValidFile(const WIN32_FIND_DATA & Find);
 
 /* Get Image Lists */
 HIMAGELIST GetSmallImageList(BOOL bSystem);
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
+void GetIcons(const std::wstring& path, DWORD attributes, LPINT piIconNormal, LPINT piIconSelected = nullptr, LPINT piIconOverlayed = nullptr);
+void FetchIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
 /* Resolve Links */
 

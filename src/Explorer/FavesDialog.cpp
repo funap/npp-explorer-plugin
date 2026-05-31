@@ -1177,11 +1177,11 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
                 switch (child->Type()) {
                 case FAVES_FOLDER:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    FetchIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     break;
                 case FAVES_FILE:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    FetchIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     break;
                 case FAVES_SESSION:
                     haveChildren    = (0 != ::SendMessage(_hParent, NPPM_GETNBSESSIONFILES, 0, (LPARAM)child->Link().c_str()));
@@ -1250,7 +1250,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
         INT iIconSelected = 0;
         INT iIconOverlayed = 0;
         if (::PathFileExists(newItem->Link().c_str())) {
-            ExtractIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            FetchIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
         }
         else {
             newItem->Data(FAVES_PARAM_USERIMAGE);

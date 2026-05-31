@@ -1401,7 +1401,7 @@ void ExplorerDialog::UpdateRoots()
                 int iIconNormal = 0;
                 int iIconSelected = 0;
                 int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                FetchIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
 
                 auto* pOld = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hCurrentItem));
                 if (pOld != nullptr) {
@@ -1419,7 +1419,7 @@ void ExplorerDialog::UpdateRoots()
                 int iIconNormal = 0;
                 int iIconSelected = 0;
                 int iIconOverlayed = 0;
-                ExtractIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                FetchIcons(drivePath.c_str(), nullptr, DEVT_DRIVE, &iIconNormal, &iIconSelected, &iIconOverlayed);
 
                 auto* pOld = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hCurrentItem));
                 if (pOld != nullptr) {
@@ -1479,14 +1479,7 @@ HTREEITEM ExplorerDialog::InsertChildFolder(std::shared_ptr<ExplorerEntry> entry
 
     /* get icons */
     if (_pSettings->IsUseSystemIcons()) {
-        SHFILEINFO sfi{};
-        SHGetFileInfo(pathStr.c_str(), entry->FSEntry().Attributes(), &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON);
-        iIconNormal = sfi.iIcon & 0x00ffffff;
-        iIconOverlayed = sfi.iIcon >> 24;
-
-        SHFILEINFO sfiOpen{};
-        SHGetFileInfo(pathStr.c_str(), entry->FSEntry().Attributes(), &sfiOpen, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON);
-        iIconSelected = sfiOpen.iIcon & 0x00ffffff;
+        GetIcons(pathStr, entry->FSEntry().Attributes(), &iIconNormal, &iIconSelected, &iIconOverlayed);
     }
 
     auto* pSharedEntry = new std::shared_ptr<ExplorerEntry>(entry);

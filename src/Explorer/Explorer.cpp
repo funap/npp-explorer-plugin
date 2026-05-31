@@ -515,7 +515,29 @@ HIMAGELIST GetSmallImageList(BOOL bSystem)
     return ghImgList;
 }
 
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+void GetIcons(const std::wstring& path, DWORD attributes, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+{
+    SHFILEINFO sfi{};
+    if (::SHGetFileInfo(path.c_str(), attributes, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON)) {
+        if (piIconNormal != nullptr) {
+            *piIconNormal = sfi.iIcon & 0x00ffffff;
+        }
+        if (piIconOverlayed != nullptr) {
+            *piIconOverlayed = sfi.iIcon >> 24;
+        }
+    }
+
+    if (piIconSelected != nullptr) {
+        SHFILEINFO sfiOpen{};
+        if (::SHGetFileInfo(path.c_str(), attributes, &sfiOpen, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON)) {
+            *piIconSelected = sfiOpen.iIcon & 0x00ffffff;
+        } else if (piIconNormal != nullptr) {
+            *piIconSelected = *piIconNormal;
+        }
+    }
+}
+
+void FetchIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
 {
     SHFILEINFO  sfi{};
     SIZE_T      length = wcslen(currentPath) - 1;
