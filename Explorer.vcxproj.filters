@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <None Include="cpp.hint" />
@@ -106,6 +106,24 @@
       <Filter>src\Explorer</Filter>
     </ClCompile>
     <ClCompile Include="src\Explorer\Settings.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\WorkerThread.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerModel.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerTasks.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ExplorerViewModel.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\TreeModelSynchronizer.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\FileSystemService.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -241,6 +259,9 @@
     <ClInclude Include="src\Explorer\ExplorerContext.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
+    <ClInclude Include="src\Explorer\WorkerThread.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
     <ClInclude Include="src\Explorer\UTF16Stream.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
@@ -251,6 +272,21 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\Settings.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerModel.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerTasks.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ExplorerViewModel.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\TreeModelSynchronizer.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\FileSystemService.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

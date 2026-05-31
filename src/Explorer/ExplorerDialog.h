@@ -21,8 +21,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <string>
 #include <vector>
-#include <shlwapi.h>
+#include <set>
 #include <filesystem>
+#include <optional>
 
 #include "ComboOrgi.h"
 #include "Explorer.h"
@@ -30,20 +31,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileList.h"
 #include "TreeView.h"
 #include "ToolBar.h"
+#include "WorkerThread.h"
+#include "ExplorerModel.h"
+#include "ExplorerTasks.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
-enum EventID {
-    EID_INIT = 0,
-    EID_UPDATE_USER,
-    EID_UPDATE_DEVICE,
-    EID_UPDATE_ACTIVATE,
-    EID_UPDATE_ACTIVATEPATH,
-    EID_UPDATE_GOTOCURRENTFILE,
-    EID_EXPAND_ITEM,
-    EID_THREAD_END,
-    EID_MAX_THREAD,
-    EID_MAX,
-};
+// Forward declaration only: avoids circular include with TreeModelSynchronizer.h
+class TreeModelSynchronizer;
 
 struct GetVolumeInfo {
     LPCTSTR     pszDrivePathName;
@@ -52,7 +46,9 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext
+#include "ExplorerViewModel.h"
+
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback, public IExplorerModelObserver, public IExplorerViewModelObserver
 {
 public:
     ExplorerDialog();
@@ -62,20 +58,19 @@ public:
     void redraw();
     void destroy() override {};
     void doDialog(bool willBeShown = true);
-    BOOL gotoPath();
-    void gotoUserFolder();
-    void gotoCurrentFolder();
-    void gotoCurrentFile();
-    void gotoFileLocation(const std::wstring& filePath);
-    void clearFilter();
-    void setFocusOnFolder();
-    void setFocusOnFile();
+    BOOL GotoPath();
+    void GotoUserFolder();
+    void GotoCurrentFolder();
+    void GotoCurrentFile();
+    void GotoFileLocation(const std::wstring& filePath);
+    void ClearFilter();
+    void SetFocusOnFolder();
+    void SetFocusOnFile();
     void NotifyNewFile();
-    void initFinish() {
+    void InitFinish() {
         _bStartupFinish = TRUE;
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
-    void NotifyEvent(DWORD event);
     void SetFont(HFONT font);
     bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
     void NavigateBack() override;
@@ -83,24 +78,40 @@ public:
     void NavigateTo(const std::wstring& path) override;
     void Open(const std::wstring& path) override;
     void Refresh() override;
-    void ShowContextMenu(POINT screenLocation, const std::vector<std::wstring>& paths, bool hasStandardMenu = true) override;
-protected:
+    void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true) override;
+    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
+    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) override;
+    void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
+    void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
+    void RefreshActiveNode();
 
+    // The following helpers are also used by TreeModelSynchronizer:
+    BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
+    HTREEITEM InsertChildFolder(std::shared_ptr<ExplorerEntry> entry, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL isDirectory = TRUE, BOOL isHidden = FALSE, BOOL haveChildren = TRUE);
+    std::wstring GetPath(HTREEITEM currentItem) const;
+protected:
     /* Subclassing tree */
-    LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runTreeProc(hwnd, Message, wParam, lParam));
+    LRESULT RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WndDefaultTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->RunTreeProc(hwnd, Message, wParam, lParam));
     };
 
     /* Subclassing splitter */
-    LRESULT runSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK wndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
-        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->runSplitterProc(hwnd, Message, wParam, lParam));
+    LRESULT RunSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WndDefaultSplitterProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return (((ExplorerDialog *)(::GetWindowLongPtr(hwnd, GWLP_USERDATA)))->RunSplitterProc(hwnd, Message, wParam, lParam));
     };
 
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
     void InitialDialog();
+    void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
+    void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
+
+    // IExplorerViewModelObserver overrides
+    void OnCurrentDirectoryChanged(const std::wstring& path) override;
+    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override {};
+    void OnNavigationStateChanged() override;
 
     void UpdateRoots();
     void UpdateAllExpandedItems();
@@ -108,24 +119,25 @@ protected:
 
     BOOL SelectItem(const std::filesystem::path& path);
 
-    void onDelete(bool immediate = false);
-    void onCopy();
-    void onPaste();
-    void onCut();
+    void OnDelete(bool immediate = false);
+    void OnCopy();
+    void OnPaste();
+    void OnCut();
 
     void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
-    bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
+    bool DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);
 
-    void tb_cmd(WPARAM message);
-    void tb_not(LPNMTOOLBAR lpnmtb);
+    void HandleToolBarCommand(WPARAM message);
+    void HandleToolBarDropDown(LPNMTOOLBAR lpnmtb);
 
-    BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
-    void UpdateChildren(const std::wstring& path, HTREEITEM parentItem, BOOL doRecursive = TRUE);
-    HTREEITEM InsertChildFolder(const std::wstring& childFolderName, HTREEITEM parentItem, HTREEITEM insertAfter = TVI_LAST, BOOL bChildrenTest = TRUE);
+    HTREEITEM FindTreeItemByPath(const std::wstring& path);
     void FetchChildren(HTREEITEM parentItem);
-    std::wstring GetPath(HTREEITEM currentItem) const;
     void UpdateLayout();
+    void ResumePendingSelection();
 private:
+    std::shared_ptr<ExplorerModel> _model;
+    std::shared_ptr<ExplorerViewModel> _viewModel;
+    std::vector<std::wstring> _pendingSelectPathSegments;
     /* Handles */
     BOOL        _bStartupFinish;
     HANDLE      _hExploreVolumeThread;
@@ -146,6 +158,7 @@ private:
     HWND        _hFilter;
 
     /* classes */
+    TreeView    _hTreeCtrl;
     FileList    _FileList;
     ComboOrgi   _ComboFilter;
     ToolBar     _ToolBar;
@@ -167,5 +180,10 @@ private:
     BOOL        _isDnDStarted;
 
     INT         _iDockedPos;
-    TreeView    _hTreeCtrl;
+
+    WorkerThread _workerThread;
+    std::set<HTREEITEM> _checkedItems;
+    std::wstring _pendingNavigateDir;
+
+    void CheckVisibleFolderChildren();
 };

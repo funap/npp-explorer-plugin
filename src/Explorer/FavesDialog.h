@@ -73,7 +73,7 @@ public:
     void SaveSession();
     void NotifyNewFile();
 
-    void initFinish() {
+    void InitFinish() {
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
     void SetFont(HFONT font);
@@ -81,7 +81,7 @@ protected:
 
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
-    void tb_cmd(UINT message);
+    void HandleToolBarCommand(UINT message);
 
     void InitialDialog();
 
@@ -112,9 +112,9 @@ protected:
     BOOL OpenTreeViewItem(HTREEITEM hItem);
 
     /* Subclassing tree */
-    LRESULT runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK wndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
-        return reinterpret_cast<FavesDialog*>(dwRefData)->runTreeProc(hwnd, message, wParam, lParam);
+    LRESULT RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
+    static LRESULT CALLBACK WndDefaultTreeProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData) {
+        return reinterpret_cast<FavesDialog*>(dwRefData)->RunTreeProc(hwnd, message, wParam, lParam);
     };
 
 private:

@@ -14,15 +14,17 @@ FileSystemEntry::FileSystemEntry(const std::wstring& name, unsigned int attribut
     , _fileSize(fileSize)
     , _lastWriteTime(lastWriteTime)
     , _isParent(isParent)
-    , _iIcon(-1)
-    , _iOverlay(0)
-    , _state(0)
 {
 }
 
 const std::wstring& FileSystemEntry::Name() const
 {
     return _name;
+}
+
+void FileSystemEntry::SetName(const std::wstring& name)
+{
+    _name = name;
 }
 
 unsigned int FileSystemEntry::Attributes() const
@@ -53,36 +55,6 @@ bool FileSystemEntry::IsHidden() const
 bool FileSystemEntry::IsParent() const
 {
     return _isParent;
-}
-
-int FileSystemEntry::Icon() const
-{
-    return _iIcon;
-}
-
-void FileSystemEntry::SetIcon(int icon) const
-{
-    _iIcon = icon;
-}
-
-int FileSystemEntry::Overlay() const
-{
-    return _iOverlay;
-}
-
-void FileSystemEntry::SetOverlay(int overlay) const
-{
-    _iOverlay = overlay;
-}
-
-unsigned int FileSystemEntry::State() const
-{
-    return _state;
-}
-
-void FileSystemEntry::SetState(unsigned int state) const
-{
-    _state = state;
 }
 
 
@@ -311,4 +283,39 @@ std::wstring FileSystemService::ToDoubleNullTerminatedString(const std::vector<s
     }
     result.push_back(L'\0');
     return result;
+}
+
+std::wstring FileSystemService::CombinePath(const std::wstring& parent, const std::wstring& child)
+{
+    if (parent.empty()) return child;
+    if (child.empty()) return parent;
+
+    std::wstring result = parent;
+    
+    if (result.size() == 2 && result[1] == L':') {
+        result += L"\\";
+    }
+    else if (result.back() != L'\\' && child.front() != L'\\') {
+        result += L"\\";
+    }
+    else if (result.back() == L'\\' && child.front() == L'\\') {
+        result.pop_back();
+    }
+    
+    result += child;
+    return result;
+}
+
+bool FileSystemService::IsUncServerPath(const std::wstring& path)
+{
+    if (path.compare(0, 2, L"\\\\") != 0) {
+        return false;
+    }
+    size_t count = 0;
+    for (size_t i = 2; i < path.size(); ++i) {
+        if (path[i] == L'\\') {
+            count++;
+        }
+    }
+    return count == 0 || (count == 1 && path.back() == L'\\');
 }

@@ -55,23 +55,23 @@ INT                 g_docCount = 0;
 WCHAR               g_currentFile[MAX_PATH]{};
 FuncItem            funcItem[] = {
 //      {  _itemName,                         _pFunc,                _cmdID, _init2Check,   _pShKey}
-/*  0 */{ L"&Explorer...",                    toggleExplorerDialog,       0,       false,   nullptr},
-/*  1 */{ L"&Favorites...",                   toggleFavesDialog,          0,       false,   nullptr},
-/*  2 */{ L"&Quick Open...",                  openQuickOpenDlg,           0,       false,   nullptr},
+/*  0 */{ L"&Explorer...",                    ToggleExplorerDialog,       0,       false,   nullptr},
+/*  1 */{ L"&Favorites...",                   ToggleFavesDialog,          0,       false,   nullptr},
+/*  2 */{ L"&Quick Open...",                  OpenQuickOpenDlg,           0,       false,   nullptr},
 /*  3 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/*  4 */{ L"Go to &Path...",                  gotoPath,                   0,       false,   nullptr},
-/*  5 */{ L"Go to &User Folder",              gotoUserFolder,             0,       false,   nullptr},
-/*  6 */{ L"Go to &Current Folder",           gotoCurrentFolder,          0,       false,   nullptr},
-/*  7 */{ L"Go to &Root Folder",              gotoRootFolder,             0,       false,   nullptr},
-/*  8 */{ L"&Go to Current File",             gotoCurrentFile,            0,       false,   nullptr},
-/*  9 */{ L"&Show Explorer (Focus on folder)",showExplorerDialogOnFolder, 0,       false,   nullptr},
-/* 10 */{ L"Show E&xplorer (Focus on file)",  showExplorerDialogOnFile,   0,       false,   nullptr},
-/* 11 */{ L"Show Fa&vorites",                 showFavesDialog,            0,       false,   nullptr},
-/* 12 */{ L"C&lear Filter",                   clearFilter,                0,       false,   nullptr},
+/*  4 */{ L"Go to &Path...",                  GotoPath,                   0,       false,   nullptr},
+/*  5 */{ L"Go to &User Folder",              GotoUserFolder,             0,       false,   nullptr},
+/*  6 */{ L"Go to &Current Folder",           GotoCurrentFolder,          0,       false,   nullptr},
+/*  7 */{ L"Go to &Root Folder",              GotoRootFolder,             0,       false,   nullptr},
+/*  8 */{ L"&Go to Current File",             GotoCurrentFile,            0,       false,   nullptr},
+/*  9 */{ L"&Show Explorer (Focus on folder)",ShowExplorerDialogOnFolder, 0,       false,   nullptr},
+/* 10 */{ L"Show E&xplorer (Focus on file)",  ShowExplorerDialogOnFile,   0,       false,   nullptr},
+/* 11 */{ L"Show Fa&vorites",                 ShowFavesDialog,            0,       false,   nullptr},
+/* 12 */{ L"C&lear Filter",                   ClearFilter,                0,       false,   nullptr},
 /* 13 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/* 14 */{ L"Explorer &Options...",            openOptionDlg,              0,       false,   nullptr},
+/* 14 */{ L"Explorer &Options...",            OpenOptionDlg,              0,       false,   nullptr},
 /* 15 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/* 16 */{ L"&Help...",                        openHelpDlg,                0,       false,   nullptr},
+/* 16 */{ L"&Help...",                        OpenHelpDlg,                0,       false,   nullptr},
 };
 
 /* see in notepad sources */
@@ -260,8 +260,8 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
     }
     case NPPN_READY:
         UpdateThemeColor();
-        explorerDlg.initFinish();
-        favesDlg.initFinish();
+        explorerDlg.InitFinish();
+        favesDlg.InitFinish();
         break;
     case NPPN_WORDSTYLESUPDATED:
         UpdateThemeColor();
@@ -310,7 +310,7 @@ void UpdateThemeColor()
 
 
 
-void toggleExplorerDialog()
+void ToggleExplorerDialog()
 {
     if (explorerDlg.isVisible()) {
         explorerDlg.doDialog(false);
@@ -320,7 +320,7 @@ void toggleExplorerDialog()
     }
 }
 
-void toggleFavesDialog()
+void ToggleFavesDialog()
 {
     if (favesDlg.isVisible()) {
         favesDlg.doDialog(false);
@@ -330,63 +330,63 @@ void toggleFavesDialog()
     }
 }
 
-void gotoPath()
+void GotoPath()
 {
-    if (explorerDlg.gotoPath()) {
+    if (explorerDlg.GotoPath()) {
         explorerDlg.doDialog();
-        explorerDlg.setFocusOnFile();
+        explorerDlg.SetFocusOnFile();
     }
 }
 
-void gotoUserFolder()
+void GotoUserFolder()
 {
     explorerDlg.doDialog();
-    explorerDlg.gotoUserFolder();
+    explorerDlg.GotoUserFolder();
 }
 
-void gotoRootFolder()
+void GotoRootFolder()
 {
     explorerDlg.doDialog();
     if (!settings.GetRootFolder().empty()) {
-        explorerDlg.gotoFileLocation(settings.GetRootFolder());
+        explorerDlg.GotoFileLocation(settings.GetRootFolder());
     }
 }
 
-void gotoCurrentFolder()
+void GotoCurrentFolder()
 {
     explorerDlg.doDialog();
-    explorerDlg.gotoCurrentFolder();
+    explorerDlg.GotoCurrentFolder();
 }
 
-void gotoCurrentFile()
+void GotoCurrentFile()
 {
     explorerDlg.doDialog();
-    explorerDlg.gotoCurrentFile();
+    explorerDlg.GotoCurrentFile();
 }
 
-void showExplorerDialogOnFolder()
+void ShowExplorerDialogOnFolder()
 {
     explorerDlg.doDialog();
-    explorerDlg.setFocusOnFolder();
+    explorerDlg.SetFocusOnFolder();
 }
 
-void showExplorerDialogOnFile()
+void ShowExplorerDialogOnFile()
 {
     explorerDlg.doDialog();
-    explorerDlg.setFocusOnFile();
+    explorerDlg.SetFocusOnFile();
 }
 
-void showFavesDialog()
+void ShowFavesDialog()
 {
     favesDlg.doDialog();
 }
 
-void clearFilter()
+void ClearFilter()
 {
-    explorerDlg.clearFilter();
+    explorerDlg.ClearFilter();
 }
 
-void openOptionDlg()
+void OpenOptionDlg()
 {
     if (optionDlg.doDialog(&settings) == IDOK) {
         settings.Save();
@@ -400,12 +400,12 @@ void openOptionDlg()
     }
 }
 
-void openHelpDlg()
+void OpenHelpDlg()
 {
     helpDlg.doDialog();
 }
 
-void openQuickOpenDlg()
+void OpenQuickOpenDlg()
 {
     if (!settings.GetRootFolder().empty()) {
         quickOpenDlg.setRootPath(settings.GetRootFolder());
@@ -416,7 +416,7 @@ void openQuickOpenDlg()
     quickOpenDlg.show();
 }
 
-void openTerminal()
+void OpenTerminal()
 {
     std::filesystem::path path(settings.GetCurrentDir());
     ::ShellExecute(g_nppData._nppHandle, L"open", settings.GetCphProgram().szAppName.c_str(), nullptr, path.c_str(), SW_SHOW);
@@ -515,7 +515,29 @@ HIMAGELIST GetSmallImageList(BOOL bSystem)
     return ghImgList;
 }
 
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+void GetIcons(const std::wstring& path, DWORD attributes, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
+{
+    SHFILEINFO sfi{};
+    if (::SHGetFileInfo(path.c_str(), attributes, &sfi, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON)) {
+        if (piIconNormal != nullptr) {
+            *piIconNormal = sfi.iIcon & 0x00ffffff;
+        }
+        if (piIconOverlayed != nullptr) {
+            *piIconOverlayed = sfi.iIcon >> 24;
+        }
+    }
+
+    if (piIconSelected != nullptr) {
+        SHFILEINFO sfiOpen{};
+        if (::SHGetFileInfo(path.c_str(), attributes, &sfiOpen, sizeof(SHFILEINFO), SHGFI_USEFILEATTRIBUTES | SHGFI_SYSICONINDEX | SHGFI_SMALLICON | SHGFI_OPENICON)) {
+            *piIconSelected = sfiOpen.iIcon & 0x00ffffff;
+        } else if (piIconNormal != nullptr) {
+            *piIconSelected = *piIconNormal;
+        }
+    }
+}
+
+void FetchIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIconNormal, LPINT piIconSelected, LPINT piIconOverlayed)
 {
     SHFILEINFO  sfi{};
     SIZE_T      length = wcslen(currentPath) - 1;

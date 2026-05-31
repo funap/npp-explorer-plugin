@@ -378,7 +378,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                     .y = lpnm->rc.bottom,
                 };
                 ClientToScreen(nmhdr->hwndFrom, &pt);
-                tb_cmd(_ToolBar.doPopop(pt));
+                HandleToolBarCommand(_ToolBar.doPopop(pt));
                 return TRUE;
             }
             break;
@@ -423,7 +423,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
         }
 
         if ((HWND)lParam == _ToolBar.getHSelf()) {
-            tb_cmd(LOWORD(wParam));
+            HandleToolBarCommand(LOWORD(wParam));
         }
         break;
     case WM_PAINT:
@@ -445,7 +445,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     return FALSE;
 }
 
-LRESULT FavesDialog::runTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+LRESULT FavesDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message) {
     case WM_GETDLGCODE:
@@ -509,11 +509,11 @@ BOOL FavesDialog::OpenTreeViewItem(HTREEITEM hItem)
     return FALSE;
 }
 
-void FavesDialog::tb_cmd(UINT message)
+void FavesDialog::HandleToolBarCommand(UINT message)
 {
     switch (message) {
     case IDM_EX_EXPLORER:
-        toggleExplorerDialog();
+        ToggleExplorerDialog();
         break;
     case IDM_EX_LINK_NEW_FILE: {
         std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
@@ -554,7 +554,7 @@ void FavesDialog::tb_cmd(UINT message)
 void FavesDialog::InitialDialog()
 {
     /* subclass tree */
-    ::SetWindowSubclass(_hTreeCtrl, wndDefaultTreeProc, 'tree', reinterpret_cast<DWORD_PTR>(this));
+    ::SetWindowSubclass(_hTreeCtrl, WndDefaultTreeProc, 'tree', reinterpret_cast<DWORD_PTR>(this));
 
     /* Load Image List */
     _hImageListSys = GetSmallImageList(TRUE);
@@ -1109,7 +1109,7 @@ void FavesDialog::OpenContext(HTREEITEM hItem, POINT pt)
             case FM_GOTO_FILE_LOCATION: {
                 extern ExplorerDialog explorerDlg;
 
-                explorerDlg.gotoFileLocation(pElem->Link());
+                explorerDlg.GotoFileLocation(pElem->Link());
                 explorerDlg.doDialog();
                 break;
             }
@@ -1177,11 +1177,11 @@ void FavesDialog::UpdateLink(HTREEITEM hParentItem)
                 switch (child->Type()) {
                 case FAVES_FOLDER:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    FetchIcons(child->Link().c_str(), nullptr, DEVT_DIRECTORY, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     break;
                 case FAVES_FILE:
                     /* get icons and update item */
-                    ExtractIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+                    FetchIcons(child->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
                     break;
                 case FAVES_SESSION:
                     haveChildren    = (0 != ::SendMessage(_hParent, NPPM_GETNBSESSIONFILES, 0, (LPARAM)child->Link().c_str()));
@@ -1250,7 +1250,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
         INT iIconSelected = 0;
         INT iIconOverlayed = 0;
         if (::PathFileExists(newItem->Link().c_str())) {
-            ExtractIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
+            FetchIcons(newItem->Link().c_str(), nullptr, DEVT_FILE, &iIconNormal, &iIconSelected, &iIconOverlayed);
         }
         else {
             newItem->Data(FAVES_PARAM_USERIMAGE);

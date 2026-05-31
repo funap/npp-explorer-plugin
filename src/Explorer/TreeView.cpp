@@ -78,6 +78,16 @@ void TreeView::DeleteChildren(HTREEITEM parentItem)
     }
 }
 
+BOOL TreeView::SetItemText(HTREEITEM hItem, const std::wstring &itemName)
+{
+    TVITEM item{
+        .mask           = TVIF_TEXT,
+        .hItem          = hItem,
+        .pszText        = const_cast<LPWSTR>(itemName.c_str()),
+    };
+    return TreeView_SetItem(_wnd, &item);
+}
+
 BOOL TreeView::UpdateItem(HTREEITEM hItem, 
                             const std::wstring &itemName, 
                             INT nImage, 
@@ -88,26 +98,70 @@ BOOL TreeView::UpdateItem(HTREEITEM hItem,
                             void* lParam,
                             BOOL delChildren)
 {
+    // Retrieve the current item state to compare and only update changed fields!
+    TVITEM curItem{
+        .mask      = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_STATE | TVIF_PARAM,
+        .hItem     = hItem,
+        .stateMask = TVIS_OVERLAYMASK | LVIS_CUT,
+    };
+    wchar_t curName[MAX_PATH]{};
+    curItem.pszText = curName;
+    curItem.cchTextMax = MAX_PATH;
+    TreeView_GetItem(_wnd, &curItem);
+
+    UINT mask = 0;
+    
+    if (itemName != curName) {
+        mask |= TVIF_TEXT;
+    }
+    if (nImage != curItem.iImage) {
+        mask |= TVIF_IMAGE;
+    }
+    if (nSelectedImage != curItem.iSelectedImage) {
+        mask |= TVIF_SELECTEDIMAGE;
+    }
+    if (haveChildren != curItem.cChildren) {
+        mask |= TVIF_CHILDREN;
+    }
+    if (lParam != nullptr && reinterpret_cast<LPARAM>(lParam) != curItem.lParam) {
+        mask |= TVIF_PARAM;
+    }
+    
+    UINT state = 0;
+    UINT stateMask = 0;
+    
+    INT curOverlay = (curItem.state & TVIS_OVERLAYMASK) >> 8;
+    if (nOverlayedImage != curOverlay) {
+        state |= INDEXTOOVERLAYMASK(nOverlayedImage);
+        stateMask |= TVIS_OVERLAYMASK;
+        mask |= TVIF_STATE;
+    }
+    
+    BOOL curHidden = (curItem.state & LVIS_CUT) != 0;
+    if (bHidden != curHidden) {
+        state |= (bHidden ? LVIS_CUT : 0);
+        stateMask |= LVIS_CUT;
+        mask |= TVIF_STATE;
+    }
+
+    if (mask == 0) {
+        return TRUE; // No changes needed!
+    }
+
     auto szItemName = std::make_unique<WCHAR[]>(MAX_PATH);
     itemName.copy(szItemName.get(), MAX_PATH);
 
     TVITEM item{
-        .mask           = TVIF_PARAM | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_TEXT | TVIF_CHILDREN | TVIF_STATE,
+        .mask           = mask,
         .hItem          = hItem,
-        .state          = static_cast<UINT>(INDEXTOOVERLAYMASK(nOverlayedImage)),
-        .stateMask      = TVIS_OVERLAYMASK,
+        .state          = state,
+        .stateMask      = stateMask,
         .pszText        = szItemName.get(),
         .iImage         = nImage,
         .iSelectedImage = nSelectedImage,
         .cChildren      = haveChildren,
         .lParam         = reinterpret_cast<LPARAM>(lParam),
     };
-
-    /* mark as cut if the icon is hidden */
-    if (bHidden == TRUE) {
-        item.state      |= LVIS_CUT;
-        item.stateMask  |= LVIS_CUT;
-    }
 
     /* delete children items when available but not needed */
     if ((haveChildren == FALSE) && delChildren && TreeView_GetChild(_wnd, hItem)) {
@@ -242,9 +296,15 @@ std::vector<std::wstring> TreeView::GetItemPathFromRoot(HTREEITEM currentItem) c
     std::vector<std::wstring> result;
 
     if (currentItem != TVI_ROOT) {
-        while (currentItem != nullptr) {
+        int loopCount = 0;
+        while (currentItem != nullptr && loopCount < 256) {
             result.emplace_back(GetItemText(currentItem));
-            currentItem = TreeView_GetNextItem(_wnd, currentItem, TVGN_PARENT);
+            HTREEITEM parent = TreeView_GetNextItem(_wnd, currentItem, TVGN_PARENT);
+            if (parent == currentItem) {
+                break;
+            }
+            currentItem = parent;
+            loopCount++;
         }
     }
 

@@ -273,7 +273,12 @@
     <ClCompile Include="src\Explorer\ToolBar.cpp" />
     <ClCompile Include="src\Explorer\TreeView.cpp" />
     <ClCompile Include="src\Explorer\URLCtrl.cpp" />
+    <ClCompile Include="src\Explorer\WorkerThread.cpp" />
     <ClCompile Include="src\Explorer\UTF16Stream.cpp" />
+    <ClCompile Include="src\Explorer\ExplorerModel.cpp" />
+    <ClCompile Include="src\Explorer\ExplorerTasks.cpp" />
+    <ClCompile Include="src\Explorer\ExplorerViewModel.cpp" />
+    <ClCompile Include="src\Explorer\TreeModelSynchronizer.cpp" />
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -316,6 +321,11 @@
     <ClInclude Include="src\Explorer\UTF16Stream.h" />
     <ClInclude Include="src\Explorer\version.h" />
     <ClInclude Include="src\Explorer\Graphics.h" />
+    <ClInclude Include="src\Explorer\WorkerThread.h" />
+    <ClInclude Include="src\Explorer\ExplorerModel.h" />
+    <ClInclude Include="src\Explorer\ExplorerTasks.h" />
+    <ClInclude Include="src\Explorer\ExplorerViewModel.h" />
+    <ClInclude Include="src\Explorer\TreeModelSynchronizer.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\Docking.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\DockingDlgInterface.h" />
     <ClInclude Include="src\NppPlugin\DockingFeature\dockingResource.h" />

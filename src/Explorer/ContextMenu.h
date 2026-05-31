@@ -31,18 +31,20 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 
+class ExplorerEntry;
+
 class ContextMenu
 {
 public:
     ContextMenu();
     ~ContextMenu();
 
-    void SetObjects(const std::wstring &strObject);
-    void SetObjects(const std::vector<std::wstring> &strArray);
+    void SetObjects(std::shared_ptr<ExplorerEntry> entry);
+    void SetObjects(const std::vector<std::shared_ptr<ExplorerEntry>> &entries);
     UINT ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent, POINT pt, bool normal = true);
 
 private:
-    static LRESULT CALLBACK defaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    static LRESULT CALLBACK DefaultHookWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
     LRESULT CALLBACK HookWndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
     HRESULT SHBindToParentEx (LPCITEMIDLIST pidl, REFIID riid, VOID **ppv, LPCITEMIDLIST *ppidlLast);
@@ -58,24 +60,24 @@ private:
 
     /* notepad functions */
     void Rename();
-    void quickOpen();
-    void newFile();
-    void newFolder();
-    void findInFiles();
-    void openFile();
-    void openFileInOtherView();
-    void openFileInNewInstance();
-    void openPrompt();
-    void setRootFolder();
-    void gotoRootFolder();
-    void clearRootFolder();
-    void addToFaves();
-    void addRelativePathsCB();
-    void addFullPathsCB();
-    void addFileNamesCB();
+    void QuickOpen();
+    void NewFile();
+    void NewFolder();
+    void FindInFiles();
+    void OpenFile();
+    void OpenFileInOtherView();
+    void OpenFileInNewInstance();
+    void OpenPrompt();
+    void SetRootFolder();
+    void GotoRootFolder();
+    void ClearRootFolder();
+    void AddToFaves();
+    void AddRelativePathsCB();
+    void AddFullPathsCB();
+    void AddFileNamesCB();
     bool Str2CB(LPCTSTR str2cpy);
-    void openScriptPath(HMODULE hInst);
-    void startNppExec(HMODULE hInst, UINT cmdID);
+    void OpenScriptPath(HMODULE hInst);
+    void StartNppExec(HMODULE hInst, UINT cmdID);
 
     HINSTANCE       _hInst;
     HWND            _hWndNpp;
@@ -92,4 +94,5 @@ private:
     std::wstring                _strFirstElement;
     std::vector<std::wstring>   _strArray;
     std::vector<std::wstring>   _strNppScripts;
+    std::vector<std::shared_ptr<ExplorerEntry>> _entries;
 };

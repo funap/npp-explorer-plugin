@@ -80,23 +80,23 @@ enum ScDir {
 
 
 
-void toggleExplorerDialog();
-void toggleFavesDialog();
-void openQuickOpenDlg();
+void ToggleExplorerDialog();
+void ToggleFavesDialog();
+void OpenQuickOpenDlg();
 
-void gotoPath();
-void gotoUserFolder();
-void gotoCurrentFolder();
-void gotoRootFolder();
-void gotoCurrentFile();
-void showExplorerDialogOnFolder();
-void showExplorerDialogOnFile();
-void showFavesDialog();
-void clearFilter();
+void GotoPath();
+void GotoUserFolder();
+void GotoCurrentFolder();
+void GotoRootFolder();
+void GotoCurrentFile();
+void ShowExplorerDialogOnFolder();
+void ShowExplorerDialogOnFile();
+void ShowFavesDialog();
+void ClearFilter();
 
-void openOptionDlg();
-void openHelpDlg();
-void openTerminal();
+void OpenOptionDlg();
+void OpenHelpDlg();
+void OpenTerminal();
 
 LRESULT CALLBACK SubWndProcNotepad(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -108,7 +108,8 @@ bool IsValidFile(const WIN32_FIND_DATA & Find);
 
 /* Get Image Lists */
 HIMAGELIST GetSmallImageList(BOOL bSystem);
-void ExtractIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
+void GetIcons(const std::wstring& path, DWORD attributes, LPINT piIconNormal, LPINT piIconSelected = nullptr, LPINT piIconOverlayed = nullptr);
+void FetchIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT iIconNormal, LPINT iIconSelected, LPINT iIconOverlayed);
 
 /* Resolve Links */
 
