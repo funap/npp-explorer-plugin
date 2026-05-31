@@ -23,6 +23,19 @@ const FileSystemEntry& ExplorerEntry::FSEntry() const {
     return _fsEntry;
 }
 
+void ExplorerEntry::Rename(const std::wstring& newPath, const std::wstring& newName) {
+    _path = newPath;
+    _fsEntry.SetName(newName);
+
+    std::wstring basePath = _path;
+    if (!basePath.empty() && basePath.back() != L'\\') {
+        basePath += L'\\';
+    }
+    for (auto& child : _children) {
+        child->Rename(basePath + child->FSEntry().Name(), child->FSEntry().Name());
+    }
+}
+
 void ExplorerEntry::SetChildren(std::vector<std::shared_ptr<ExplorerEntry>> children) {
     _children = std::move(children);
     for (auto& child : _children) {

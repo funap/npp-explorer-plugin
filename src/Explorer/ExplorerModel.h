@@ -13,6 +13,7 @@ public:
 
     std::wstring Path() const;
     const FileSystemEntry& FSEntry() const;
+    void Rename(const std::wstring& newPath, const std::wstring& newName);
 
     void SetChildren(std::vector<std::shared_ptr<ExplorerEntry>> children);
     std::vector<std::shared_ptr<ExplorerEntry>> Children() const;

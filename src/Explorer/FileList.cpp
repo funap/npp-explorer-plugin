@@ -1073,7 +1073,10 @@ void FileList::onDelete(bool immediate)
     }
 
     if (!filesToDelete.empty()) {
-        FileSystemService::DeleteFiles(_hParent, filesToDelete, immediate);
+        if (FileSystemService::DeleteFiles(_hParent, filesToDelete, immediate)) {
+            ::KillTimer(_hParent, EXT_UPDATEACTIVATEPATH);
+            ::SetTimer(_hParent, EXT_UPDATEACTIVATEPATH, 200, nullptr);
+        }
     }
 }
 

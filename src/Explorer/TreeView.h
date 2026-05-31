@@ -36,6 +36,7 @@ public:
 
     HTREEITEM InsertItem(const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, HTREEITEM hParent, HTREEITEM hInsertAfter = TVI_LAST, BOOL haveChildren = FALSE, void* lParam = NULL);
     BOOL UpdateItem(HTREEITEM hItem, const std::wstring &itemName, INT nImage, INT nSelectedImage, INT nOverlayedImage, BOOL bHidden, BOOL haveChildren = FALSE, void* lParam = NULL, BOOL delChildren = TRUE);
+    BOOL SetItemText(HTREEITEM hItem, const std::wstring &itemName);
     void DeleteChildren(HTREEITEM parentItem);
     BOOL GetItemText(HTREEITEM hItem, LPTSTR szBuf, INT bufSize) const;
     std::wstring GetItemText(HTREEITEM hItem) const;

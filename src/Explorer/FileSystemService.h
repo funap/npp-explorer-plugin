@@ -10,6 +10,7 @@ public:
     FileSystemEntry(const std::wstring& name, unsigned int attributes, size_t fileSize, time_t lastWriteTime, bool isParent = false);
 
     const std::wstring& Name() const;
+    void SetName(const std::wstring& name);
     unsigned int Attributes() const;
     size_t FileSize() const;
     time_t LastWriteTime() const;

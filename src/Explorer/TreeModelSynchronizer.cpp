@@ -104,23 +104,12 @@ void TreeModelSynchronizer::Synchronize(
 
     // Helper: update an existing tree item's data and schedule icon refresh
     auto updateExistingItem = [&](HTREEITEM hItem, const std::shared_ptr<ExplorerEntry>& childEntry) {
-        BOOL bHidden     = childEntry->FSEntry().IsHidden();
-        BOOL haveChildren = childEntry->FSEntry().IsDirectory();
-        std::wstring name = treeCtrl.GetItemText(hItem);
-
-        // Retrieve the current icons from the View to preserve them during update
-        INT iIconNormal   = ICON_FOLDER;
-        INT iIconSelected = ICON_FOLDER;
-        INT iIconOverlay  = 0;
-        treeCtrl.GetItemIcons(hItem, &iIconNormal, &iIconSelected, &iIconOverlay);
-
         auto* pOld = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(treeCtrl.GetParam(hItem));
         if (pOld != nullptr) {
+            if (*pOld != nullptr && (*pOld)->HasLoadedChildren()) {
+                childEntry->SetChildren((*pOld)->Children());
+            }
             *pOld = childEntry;
-            treeCtrl.UpdateItem(hItem, name, iIconNormal, iIconSelected, iIconOverlay, bHidden, haveChildren, nullptr);
-        } else {
-            auto* pNew = new std::shared_ptr<ExplorerEntry>(childEntry);
-            treeCtrl.UpdateItem(hItem, name, iIconNormal, iIconSelected, iIconOverlay, bHidden, haveChildren, pNew);
         }
 
         enqueueIcon(hItem);

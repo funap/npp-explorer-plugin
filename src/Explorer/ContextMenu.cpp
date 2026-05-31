@@ -717,7 +717,11 @@ void ContextMenu::Rename()
     dlg.init(_hInst, _hWndNpp);
     if (dlg.doDialog(szNewName, szComment) == TRUE) {
         wcscat(newFirstElement, szNewName);
-        ::MoveFile(_strFirstElement.c_str(), newFirstElement);
+        if (::MoveFile(_strFirstElement.c_str(), newFirstElement)) {
+            extern ExplorerDialog explorerDlg;
+            explorerDlg.OnEntryRenamed(_strFirstElement, newFirstElement, szNewName);
+            explorerDlg.Refresh();
+        }
     }
 }
 

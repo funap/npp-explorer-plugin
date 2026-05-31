@@ -442,7 +442,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         }
         if (wParam == EXT_UPDATEACTIVATE) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
-            UpdateAllExpandedItems(); UpdatePath();
+            UpdateAllExpandedItems();
+            UpdatePath();
             return FALSE;
         }
         if (wParam == EXT_UPDATEACTIVATEPATH) {
@@ -1287,7 +1288,8 @@ void ExplorerDialog::clearFilter()
  */
 void ExplorerDialog::onDelete(bool immediate)
 {
-    auto path = GetPath(_hTreeCtrl.GetSelection());
+    HTREEITEM hItem = _hTreeCtrl.GetSelection();
+    auto path = GetPath(hItem);
     if (path.empty()) {
         return;
     }
@@ -1295,7 +1297,29 @@ void ExplorerDialog::onDelete(bool immediate)
         path.pop_back();
     }
 
-    FileSystemService::DeleteFiles(_hParent, { path }, immediate);
+    if (FileSystemService::DeleteFiles(_hParent, { path }, immediate)) {
+        HTREEITEM hParentItem = _hTreeCtrl.GetParent(hItem);
+        if (hParentItem != nullptr) {
+            _hTreeCtrl.SelectItem(hParentItem);
+
+            // Recursively remove from _checkedItems so we prevent leaking handles
+            auto RemoveFromCheckedItemsRecursive = [&](auto& self, HTREEITEM item) -> void {
+                if (item == nullptr) return;
+                _checkedItems.erase(item);
+                HTREEITEM child = _hTreeCtrl.GetChild(item);
+                while (child != nullptr) {
+                    self(self, child);
+                    child = _hTreeCtrl.GetNextItem(child, TVGN_NEXT);
+                }
+            };
+            RemoveFromCheckedItemsRecursive(RemoveFromCheckedItemsRecursive, hItem);
+
+            _hTreeCtrl.DeleteItem(hItem);
+            FetchChildren(hParentItem);
+        } else {
+            Refresh();
+        }
+    }
 }
 
 void ExplorerDialog::onCut()
@@ -1827,7 +1851,9 @@ void ExplorerDialog::Open(const std::wstring &path)
 
 void ExplorerDialog::Refresh()
 {
-    UpdateRoots(); UpdateAllExpandedItems(); UpdatePath();
+    UpdateRoots();
+    UpdateAllExpandedItems();
+    UpdatePath();
     _viewModel->Refresh();
 }
 
@@ -1903,6 +1929,11 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
         HTREEITEM hItem = FindTreeItemByPath(entry->Path());
 
         if (hItem != nullptr) {
+            auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
+            if (pShared != nullptr) {
+                *pShared = entry;
+            }
+
             // Delegate the full insert/update/delete diff logic to the
             // dedicated synchronizer. ExplorerDialog retains responsibility
             // for the UI state that follows the structural sync.
@@ -1943,6 +1974,32 @@ void ExplorerDialog::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring
 {
     if (GetPath(hItem) == path) {
         _hTreeCtrl.SetItemHasChildren(hItem, hasChildren);
+    }
+}
+
+void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName) {
+    if (!isCreated()) return;
+
+    HTREEITEM hItem = FindTreeItemByPath(oldPath);
+    if (hItem != nullptr) {
+        auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
+        if (pShared != nullptr && *pShared != nullptr) {
+            (*pShared)->Rename(newPath, newName);
+
+            // Elegantly set only the item text! Win32 TreeView preserves all other states!
+            _hTreeCtrl.SetItemText(hItem, newName);
+
+            HTREEITEM hParentItem = _hTreeCtrl.GetParent(hItem);
+            if (hParentItem != nullptr) {
+                FetchChildren(hParentItem);
+            }
+        }
+    }
+
+    std::wstring currentDir = _pSettings->GetCurrentDir();
+    if (currentDir.compare(0, oldPath.length(), oldPath) == 0) {
+        std::wstring relative = currentDir.substr(oldPath.length());
+        _pSettings->SetCurrentDir(newPath + relative);
     }
 }
 

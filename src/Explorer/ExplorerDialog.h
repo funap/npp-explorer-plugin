@@ -82,6 +82,7 @@ public:
     void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
     void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) override;
     void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
+    void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
 
     // The following helpers are also used by TreeModelSynchronizer:
     BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);

@@ -22,6 +22,11 @@ const std::wstring& FileSystemEntry::Name() const
     return _name;
 }
 
+void FileSystemEntry::SetName(const std::wstring& name)
+{
+    _name = name;
+}
+
 unsigned int FileSystemEntry::Attributes() const
 {
     return _attributes;
