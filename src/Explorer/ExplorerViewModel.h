@@ -60,6 +60,7 @@ public:
     void NavigateForward();
     bool CanNavigateBack() const;
     bool CanNavigateForward() const;
+    void OnParentDirectoryRenamed(const std::wstring& oldPath, const std::wstring& newPath);
 
     // History getters for toolbar dropdown menus
     INT GetBackHistory(LPTSTR* pszPathes) const;

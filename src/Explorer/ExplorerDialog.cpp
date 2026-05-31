@@ -160,12 +160,6 @@ void ExplorerDialog::redraw()
     _FileList.redraw();
     ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
 
-    // Restore the current directory settings to our saved path
-    _pSettings->SetCurrentDir(savedDir);
-
-    /* and only when dialog is visible, select item again */
-    SelectItem(savedDir);
-
     Refresh();
 };
 
@@ -276,13 +270,12 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 HTREEITEM item = _hTreeCtrl.GetSelection();
                 if (item != nullptr) {
                     std::filesystem::path path = GetPath(item);
-                    if (std::filesystem::is_regular_file(path)) {
-                        path = path.parent_path();
-                        path += "\\";
+                    auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
+                    if (pShared != nullptr && *pShared != nullptr && (*pShared)->FSEntry().IsDirectory()) {
+                        _pendingNavigateDir = path;
                     }
-                    /* save current path */
-                    _pSettings->SetCurrentDir(path.wstring());
-                    DebugPrintf(L"pwd:{}", _pSettings->GetCurrentDir().c_str());
+                    else {
+                    }
                 }
                 if (_isSelNotifyEnable == TRUE) {
                     ::KillTimer(_hSelf, EXT_SELCHANGE);
@@ -469,8 +462,11 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         }
         if (wParam == EXT_SELCHANGE) {
             ::KillTimer(_hSelf, EXT_SELCHANGE);
-            _viewModel->NavigateTo(_pSettings->GetCurrentDir(), true);
-            updateDockingDlg();
+            if (!_pendingNavigateDir.empty()) {
+                _viewModel->NavigateTo(_pendingNavigateDir, true);
+                _pendingNavigateDir.clear();
+                updateDockingDlg();
+            }
             return FALSE;
         }
         return TRUE;
@@ -2034,11 +2030,7 @@ void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstr
         }
     }
 
-    std::wstring currentDir = _pSettings->GetCurrentDir();
-    if (currentDir.compare(0, oldPath.length(), oldPath) == 0) {
-        std::wstring relative = currentDir.substr(oldPath.length());
-        _pSettings->SetCurrentDir(newPath + relative);
-    }
+    _viewModel->OnParentDirectoryRenamed(oldPath, newPath);
 }
 
 void ExplorerDialog::RefreshActiveNode()
@@ -2089,6 +2081,15 @@ void ExplorerDialog::CheckVisibleFolderChildren()
 
 void ExplorerDialog::OnCurrentDirectoryChanged(const std::wstring& path)
 {
+    HTREEITEM hSel = _hTreeCtrl.GetSelection();
+    if (hSel != nullptr) {
+        const std::wstring selected_path = GetPath(hSel);
+        // Already selected
+        if (selected_path == path) {
+            return; 
+        }
+    }
+
     SelectItem(path);
 }
 

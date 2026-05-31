@@ -183,6 +183,7 @@ private:
 
     WorkerThread _workerThread;
     std::set<HTREEITEM> _checkedItems;
+    std::wstring _pendingNavigateDir;
 
     void CheckVisibleFolderChildren();
 };

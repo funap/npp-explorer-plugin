@@ -81,6 +81,10 @@ void ExplorerViewModel::NavigateTo(const std::wstring& path, bool recordHistory)
         targetPath = FileSystemService::CombinePath(_currentDir, path);
     }
 
+    if (_currentDir == targetPath) {
+        return;
+    }
+
     if (recordHistory) {
         if (!_history.empty() && _historyItr != _history.end() - 1) {
             // Overwrite forward history if we navigated to a new path from the middle of the history stack
@@ -174,6 +178,25 @@ void ExplorerViewModel::NavigateToHistoryOffset(int offset)
     if (!_history.empty()) {
         _historyItr += offset;
         NavigateTo(_historyItr->path, false);
+    }
+}
+
+void ExplorerViewModel::OnParentDirectoryRenamed(const std::wstring& oldPath, const std::wstring& newPath)
+{
+    // Update current directory if it or its parent was renamed
+    if (_currentDir.compare(0, oldPath.length(), oldPath) == 0) {
+        std::wstring relative = _currentDir.substr(oldPath.length());
+        _currentDir = newPath + relative;
+        _settings->SetCurrentDir(_currentDir);
+        NotifyCurrentDirectoryChanged();
+    }
+
+    // Update history entries that are affected by this rename
+    for (auto& state : _history) {
+        if (state.path.compare(0, oldPath.length(), oldPath) == 0) {
+            std::wstring relative = state.path.substr(oldPath.length());
+            state.path = newPath + relative;
+        }
     }
 }
 
