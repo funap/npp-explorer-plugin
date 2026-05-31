@@ -1066,15 +1066,6 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
         }
     }
 
-    if (longPath.wstring().compare(0, 2, L"\\\\") == 0 && pathSegments.size() >= 2) {
-        auto it = pathSegments.begin();
-        std::wstring root = *it++;
-        root.append(L"\\");
-        root.append(*it);
-        pathSegments.erase(pathSegments.begin() + 1);
-        pathSegments.front() = root;
-    }
-
     if (pathSegments.empty()) {
         return FALSE;
     }
@@ -1100,14 +1091,21 @@ BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
             }
 
             // compare path names
-            if (_tcsnicmp(longPath.c_str(), itemName.c_str(), itemName.size()) == 0) {
+            if (itemName.compare(0, 2, L"\\\\") == 0) {
+                std::wstring rootName = std::filesystem::path(longPath).root_name().wstring();
+                if (_wcsicmp(rootName.c_str(), itemName.c_str()) == 0) {
+                    // already mounted
+                    break;
+                }
+            }
+            else if (_tcsnicmp(longPath.c_str(), itemName.c_str(), itemName.size()) == 0) {
                 // already mounted
                 break;
             }
             hItem = _hTreeCtrl.GetNextItem(hItem, TVGN_NEXT);
             if (hItem == nullptr) {
                 // longPath is not mounted, add root item
-                std::wstring rootStr = std::filesystem::path(longPath).root_path().wstring();
+                std::wstring rootStr = std::filesystem::path(longPath).root_name().wstring();
                 auto rootEntry = std::make_shared<ExplorerEntry>(rootStr, FileSystemEntry(rootStr, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
                 InsertChildFolder(rootEntry, TVI_ROOT, TVI_LAST, TRUE, FALSE, TRUE);
             }
@@ -1147,7 +1145,44 @@ void ExplorerDialog::ResumePendingSelection()
 
             // If we still have segments to go down, we must check if children are loaded
             if (segmentIdx < _pendingSelectPathSegments.size()) {
-                if (_hTreeCtrl.GetChild(hItem) == nullptr) {
+                HTREEITEM hChild = _hTreeCtrl.GetChild(hItem);
+
+                // If it is a UNC server node, check if the child segment is present.
+                // If not, dynamically insert it!
+                if (FileSystemService::IsUncServerPath(GetPath(hItem))) {
+                    const std::wstring& childSegment = _pendingSelectPathSegments[segmentIdx];
+                    HTREEITEM hFoundChild = nullptr;
+                    HTREEITEM hChildIter = hChild;
+                    while (hChildIter != nullptr) {
+                        if (_hTreeCtrl.GetItemText(hChildIter) == childSegment) {
+                            hFoundChild = hChildIter;
+                            break;
+                        }
+                        hChildIter = _hTreeCtrl.GetNextItem(hChildIter, TVGN_NEXT);
+                    }
+
+                    if (hFoundChild == nullptr) {
+                        // Dynamically insert child segment (the share name)
+                        std::wstring sharePath = FileSystemService::CombinePath(GetPath(hItem), childSegment);
+                        auto shareEntry = std::make_shared<ExplorerEntry>(sharePath, FileSystemEntry(childSegment, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
+                        HTREEITEM hShareItem = InsertChildFolder(shareEntry, hItem, TVI_LAST, TRUE, FALSE, TRUE);
+
+                        // Add to parent ExplorerEntry's children
+                        auto* pParentShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
+                        if (pParentShared != nullptr && *pParentShared != nullptr) {
+                            auto parentEntry = *pParentShared;
+                            auto children = parentEntry->Children();
+                            children.push_back(shareEntry);
+                            parentEntry->SetChildren(children);
+                        }
+
+                        hChild = hShareItem;
+                    } else {
+                        hChild = hFoundChild;
+                    }
+                }
+
+                if (hChild == nullptr) {
                     // Not loaded yet! Request async fetch and stop.
                     // OnEntryUpdated will trigger ResumePendingSelection when it completes.
                     _hTreeCtrl.SelectItem(hItem);
@@ -1155,7 +1190,7 @@ void ExplorerDialog::ResumePendingSelection()
                     return;
                 }
                 // Go to child
-                hItem = _hTreeCtrl.GetChild(hItem);
+                hItem = hChild;
             }
         } else {
             /* search for next item in list */
@@ -1968,7 +2003,11 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
 void ExplorerDialog::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren)
 {
     if (GetPath(hItem) == path) {
-        _hTreeCtrl.SetItemHasChildren(hItem, hasChildren);
+        if (FileSystemService::IsUncServerPath(path)) {
+            _hTreeCtrl.SetItemHasChildren(hItem, TRUE);
+        } else {
+            _hTreeCtrl.SetItemHasChildren(hItem, hasChildren);
+        }
     }
 }
 

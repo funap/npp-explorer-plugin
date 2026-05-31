@@ -305,3 +305,17 @@ std::wstring FileSystemService::CombinePath(const std::wstring& parent, const st
     result += child;
     return result;
 }
+
+bool FileSystemService::IsUncServerPath(const std::wstring& path)
+{
+    if (path.compare(0, 2, L"\\\\") != 0) {
+        return false;
+    }
+    size_t count = 0;
+    for (size_t i = 2; i < path.size(); ++i) {
+        if (path[i] == L'\\') {
+            count++;
+        }
+    }
+    return count == 0 || (count == 1 && path.back() == L'\\');
+}

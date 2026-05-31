@@ -28,6 +28,7 @@
 #include "ExplorerDialog.h"
 #include "ExplorerTasks.h"
 #include "Explorer.h"    // FetchIcons, ICON_FOLDER, DEVT_DRIVE, DEVT_DIRECTORY
+#include "FileSystemService.h"
 
 // ---------------------------------------------------------------------------
 // Internal helpers
@@ -62,6 +63,11 @@ void TreeModelSynchronizer::Synchronize(
     Settings* settings,
     WorkerThread& workerThread)
 {
+    if (FileSystemService::IsUncServerPath(dialog.GetPath(hParentItem))) {
+        treeCtrl.SetItemHasChildren(hParentItem, TRUE);
+        return;
+    }
+
     HTREEITEM hCurrentChild = treeCtrl.GetNextItem(hParentItem, TVGN_CHILD);
 
     auto children = entry->Children();
@@ -173,6 +179,10 @@ void TreeModelSynchronizer::Synchronize(
     }
 
     // Update the parent's "has children" indicator
-    treeCtrl.SetItemHasChildren(hParentItem, treeCtrl.GetChild(hParentItem) != nullptr);
+    if (FileSystemService::IsUncServerPath(dialog.GetPath(hParentItem))) {
+        treeCtrl.SetItemHasChildren(hParentItem, TRUE);
+    } else {
+        treeCtrl.SetItemHasChildren(hParentItem, treeCtrl.GetChild(hParentItem) != nullptr);
+    }
 }
 

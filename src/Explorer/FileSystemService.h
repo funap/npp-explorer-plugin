@@ -45,6 +45,7 @@ public:
 
     static bool ConvertNetPathName(const std::wstring& pathName, std::wstring& remotePath);
     static bool ResolveShortCut(const std::wstring& shortcutPath, std::wstring& resolvedPath);
+    static bool IsUncServerPath(const std::wstring& path);
 
 private:
     static std::wstring ToDoubleNullTerminatedString(const std::vector<std::wstring>& paths);
