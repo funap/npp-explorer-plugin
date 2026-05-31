@@ -696,9 +696,23 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
     /* update list content */
     UpdateList();
 
-    /* select first entry */
+    /* select first entry or the pending file */
     if (_pendingRedraw == TRUE) {
-        SetFocusItem(0);
+        bool selected = false;
+        if (!_pendingSelectFile.empty()) {
+            for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
+                if (_pendingSelectFile == _vFileList[i].Name()) {
+                    SetFocusItem(i);
+                    selected = true;
+                    break;
+                }
+            }
+            _pendingSelectFile.clear();
+        }
+        if (!selected) {
+            SetFocusItem(0);
+        }
+        _pendingRedraw = FALSE;
     }
 
     // Restore previous selection
@@ -757,6 +771,11 @@ void FileList::SelectCurFile()
 
 void FileList::SelectFile(const std::wstring &fileName)
 {
+    if (_pendingRedraw == TRUE) {
+        _pendingSelectFile = fileName;
+        return;
+    }
+
     for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
         if (fileName == _vFileList[i].Name()) {
             SetFocusItem(i);

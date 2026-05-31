@@ -1273,6 +1273,7 @@ void ExplorerDialog::GotoCurrentFile()
         std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
         if (std::filesystem::exists(currentPath)) {
             _viewModel->NavigateTo(currentPath.wstring());
+            SetFocusOnFile();
         }
     }
     else {
@@ -1287,12 +1288,19 @@ void ExplorerDialog::GotoCurrentFile()
 
 void ExplorerDialog::GotoFileLocation(const std::wstring& filePath)
 {
-    _viewModel->NavigateTo(filePath);
+    if (_pSettings->IsUseFullTree()) {
+        _viewModel->NavigateTo(filePath);
+        SetFocusOnFile();
+    }
+    else {
+        std::filesystem::path path(filePath);
+        std::wstring dirPath = path.parent_path().wstring();
+        std::wstring fileName = path.filename().wstring();
 
-    std::wstring fileName = filePath.substr(filePath.find_last_of(L'\\') + 1);
-    _FileList.SelectFile(fileName);
-
-    SetFocusOnFile();
+        _viewModel->NavigateTo(dirPath);
+        _FileList.SelectFile(fileName);
+        SetFocusOnFile();
+    }
 }
 
 void ExplorerDialog::SetFocusOnFolder()

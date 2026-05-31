@@ -223,4 +223,5 @@ private:    /* for thread */
     ExplorerContext*                _context;
     std::wstring                    _pendingLoadDir;
     BOOL                            _pendingRedraw;
+    std::wstring                    _pendingSelectFile;
 };
