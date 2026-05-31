@@ -381,6 +381,8 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
     // see if returned idCommand belongs to shell menu entries but not for renaming (19)
     if ((idCommand >= CTX_MIN) && (idCommand < CTX_MAX) && (idCommand != CTX_RENAME)) {
         InvokeCommand(pContextMenu, idCommand - CTX_MIN); // execute related command
+        extern ExplorerDialog explorerDlg;
+        explorerDlg.RefreshActiveNode();
     }
     else {
         HandleCustomCommand(idCommand);
@@ -762,8 +764,13 @@ void ContextMenu::NewFile()
                 }
                 newFilePath /= szFileName;
 
-                ::CloseHandle(::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr));
-                Editor::Instance().DoOpen(newFilePath);
+                HANDLE hFile = ::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+                if (hFile != INVALID_HANDLE_VALUE) {
+                    ::CloseHandle(hFile);
+                    Editor::Instance().DoOpen(newFilePath);
+                    extern ExplorerDialog explorerDlg;
+                    explorerDlg.RefreshActiveNode();
+                }
                 bLeave = TRUE;
             }
         }
@@ -795,6 +802,10 @@ void ContextMenu::NewFolder()
 
                 if (::CreateDirectory(newFolderPath.c_str(), nullptr) == FALSE) {
                     ::MessageBox(_hWndNpp, L"Folder couldn't be created.", L"Error", MB_OK);
+                }
+                else {
+                    extern ExplorerDialog explorerDlg;
+                    explorerDlg.RefreshActiveNode();
                 }
                 bLeave = TRUE;
             }

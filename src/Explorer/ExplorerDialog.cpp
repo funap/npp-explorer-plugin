@@ -801,6 +801,7 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
 
                     if (FileSystemService::CreateNewFile(newFilePath.wstring())) {
                         ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
+                        RefreshActiveNode();
                     }
                     break;
                 }
@@ -831,6 +832,9 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
 
                     if (FileSystemService::CreateNewDirectory(newFolderPath.wstring()) == false) {
                         ::MessageBox(_hParent, L"Folder couldn't be created.", L"Error", MB_OK);
+                    }
+                    else {
+                        RefreshActiveNode();
                     }
                     break;
                 }
@@ -2035,6 +2039,21 @@ void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstr
         std::wstring relative = currentDir.substr(oldPath.length());
         _pSettings->SetCurrentDir(newPath + relative);
     }
+}
+
+void ExplorerDialog::RefreshActiveNode()
+{
+    if (!isCreated()) return;
+
+    HTREEITEM hItem = _hTreeCtrl.GetSelection();
+    if (hItem != nullptr) {
+        FetchChildren(hItem);
+        HTREEITEM hParent = _hTreeCtrl.GetParent(hItem);
+        if (hParent != nullptr) {
+            FetchChildren(hParent);
+        }
+    }
+    Refresh();
 }
 
 void ExplorerDialog::CheckVisibleFolderChildren()
