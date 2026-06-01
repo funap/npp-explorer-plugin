@@ -84,6 +84,7 @@ public:
     void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
     void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
     void RefreshActiveNode();
+    void RebuildRoots();
 
     // The following helpers are also used by TreeModelSynchronizer:
     BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
@@ -138,6 +139,7 @@ private:
     std::shared_ptr<ExplorerModel> _model;
     std::shared_ptr<ExplorerViewModel> _viewModel;
     std::vector<std::wstring> _pendingSelectPathSegments;
+    HTREEITEM _pendingSelectRootItem;
     /* Handles */
     BOOL        _bStartupFinish;
     HANDLE      _hExploreVolumeThread;
@@ -185,5 +187,7 @@ private:
     std::set<HTREEITEM> _checkedItems;
     std::wstring _pendingNavigateDir;
 
+    std::vector<std::wstring> _expandedPaths;
+    void CollectExpandedPaths(HTREEITEM hItem);
     void CheckVisibleFolderChildren();
 };

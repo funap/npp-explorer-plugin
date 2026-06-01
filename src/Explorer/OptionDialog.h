@@ -25,6 +25,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 
 
+#include <vector>
+
 class OptionDlg : public StaticDialog
 {
 
@@ -42,10 +44,12 @@ protected :
     void LongUpdate();
     void SetParams();
     BOOL GetParams();
+    void ShowTab(int activeTab);
 
 private:
     /* Handles */
     LOGFONT _logfont;
 
     Settings* _pProp;
+    std::vector<std::wstring> _tempWorkspaceFolders;
 };

@@ -68,12 +68,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDM_EX_UPDATE					(IDM_TOOLBAR + 10)
 
 	#define	IDM_EX_EXPLORER					(IDM_TOOLBAR + 11)
-	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 12)
-	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 13)
-	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 14)
-	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 15)
-	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 16)
-
+	#define	IDM_EX_TOGGLE_WORKSPACE			(IDM_TOOLBAR + 12)
+	#define	IDM_EX_LINK_NEW_FILE			(IDM_TOOLBAR + 13)
+	#define	IDM_EX_LINK_NEW_FOLDER			(IDM_TOOLBAR + 14)
+	#define	IDM_EX_LINK_NEW 				(IDM_TOOLBAR + 15)
+	#define IDM_EX_LINK_DELETE				(IDM_TOOLBAR + 16)
+	#define	IDM_EX_LINK_EDIT				(IDM_TOOLBAR + 17)
 
 
 /* Dialog IDs */
@@ -135,6 +135,13 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_STATIC_HISTORY				(IDD_OPTION_DLG + 27)
     #define IDC_CHECK_USEFULLTREE           (IDD_OPTION_DLG + 28)
     #define IDC_CHECK_HIDE_FOLDERS          (IDD_OPTION_DLG + 29)
+    #define IDC_TAB_OPTION                  (IDD_OPTION_DLG + 30)
+    #define IDC_STATIC_WORKSPACE_DIRS       (IDD_OPTION_DLG + 31)
+    #define IDC_LIST_WORKSPACE_DIRS         (IDD_OPTION_DLG + 32)
+    #define IDC_BTN_ADD_WORKSPACE           (IDD_OPTION_DLG + 33)
+    #define IDC_BTN_DEL_WORKSPACE           (IDD_OPTION_DLG + 34)
+    #define IDC_BTN_UP_WORKSPACE            (IDD_OPTION_DLG + 35)
+    #define IDC_BTN_DOWN_WORKSPACE          (IDD_OPTION_DLG + 36)
  
 #define    IDD_HELP_DLG	     30700
     #define IDC_EMAIL_LINK                  (IDD_HELP_DLG + 1)

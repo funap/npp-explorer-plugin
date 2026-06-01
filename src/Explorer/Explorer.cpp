@@ -62,13 +62,13 @@ FuncItem            funcItem[] = {
 /*  4 */{ L"Go to &Path...",                  GotoPath,                   0,       false,   nullptr},
 /*  5 */{ L"Go to &User Folder",              GotoUserFolder,             0,       false,   nullptr},
 /*  6 */{ L"Go to &Current Folder",           GotoCurrentFolder,          0,       false,   nullptr},
-/*  7 */{ L"Go to &Root Folder",              GotoRootFolder,             0,       false,   nullptr},
+/*  7 */{ L"-",                               nullptr,                    0,       false,   nullptr},
 /*  8 */{ L"&Go to Current File",             GotoCurrentFile,            0,       false,   nullptr},
 /*  9 */{ L"&Show Explorer (Focus on folder)",ShowExplorerDialogOnFolder, 0,       false,   nullptr},
 /* 10 */{ L"Show E&xplorer (Focus on file)",  ShowExplorerDialogOnFile,   0,       false,   nullptr},
 /* 11 */{ L"Show Fa&vorites",                 ShowFavesDialog,            0,       false,   nullptr},
 /* 12 */{ L"C&lear Filter",                   ClearFilter,                0,       false,   nullptr},
-/* 13 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 13 */{ L"Toggle Workspace Mode",           ToggleWorkspaceMode,        0,       false,   nullptr},
 /* 14 */{ L"Explorer &Options...",            OpenOptionDlg,              0,       false,   nullptr},
 /* 15 */{ L"-",                               nullptr,                    0,       false,   nullptr},
 /* 16 */{ L"&Help...",                        OpenHelpDlg,                0,       false,   nullptr},
@@ -344,14 +344,6 @@ void GotoUserFolder()
     explorerDlg.GotoUserFolder();
 }
 
-void GotoRootFolder()
-{
-    explorerDlg.doDialog();
-    if (!settings.GetRootFolder().empty()) {
-        explorerDlg.GotoFileLocation(settings.GetRootFolder());
-    }
-}
-
 void GotoCurrentFolder()
 {
     explorerDlg.doDialog();
@@ -386,6 +378,17 @@ void ClearFilter()
     explorerDlg.ClearFilter();
 }
 
+void ToggleWorkspaceMode()
+{
+    bool currentMode = settings.IsShowWorkspaceMode();
+    settings.SetShowWorkspaceMode(!currentMode);
+    settings.Save();
+
+    if (explorerDlg.isCreated()) {
+        explorerDlg.RebuildRoots();
+    }
+}
+
 void OpenOptionDlg()
 {
     if (optionDlg.doDialog(&settings) == IDOK) {
@@ -407,11 +410,18 @@ void OpenHelpDlg()
 
 void OpenQuickOpenDlg()
 {
-    if (!settings.GetRootFolder().empty()) {
-        quickOpenDlg.setRootPath(settings.GetRootFolder());
+    const auto& workspaceFolders = settings.GetWorkspaceFolders();
+    if (!workspaceFolders.empty() && settings.IsShowWorkspaceMode()) {
+        quickOpenDlg.setWorkspacePaths(workspaceFolders);
     }
     else {
-        quickOpenDlg.setRootPath(settings.GetCurrentDir());
+        std::vector<std::wstring> paths;
+        if (!settings.GetRootFolder().empty()) {
+            paths.push_back(settings.GetRootFolder());
+        } else {
+            paths.push_back(settings.GetCurrentDir());
+        }
+        quickOpenDlg.setWorkspacePaths(paths);
     }
     quickOpenDlg.show();
 }

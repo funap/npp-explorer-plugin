@@ -58,9 +58,8 @@ namespace {
         CTX_OPEN_DIFF_VIEW,
         CTX_OPEN_NEW_INST,
         CTX_OPEN_CMD,
-        CTX_SET_AS_ROOT_FOLDER,
-        CTX_GO_TO_ROOT_FOLDER,
-        CTX_CLEAR_ROOT_FOLDER,
+        CTX_ADD_TO_WORKSPACE,
+        CTX_REMOVE_FROM_WORKSPACE,
         CTX_ADD_TO_FAVES,
         CTX_RELATIVE_PATH,
         CTX_FULL_PATH,
@@ -298,10 +297,33 @@ UINT ContextMenu::ShowContextMenu(HINSTANCE hInst, HWND hWndNpp, HWND hWndParent
         ::DestroyMenu(hMenuNppExec);
     }
     ::AppendMenu(hMainMenu, MF_STRING, CTX_OPEN_CMD, L"Open Command Window Here");
-    ::AppendMenu(hMainMenu, MF_STRING, CTX_SET_AS_ROOT_FOLDER, L"Set as Root Folder");
-    if (!settings.GetRootFolder().empty()) {
-        ::AppendMenu(hMainMenu, MF_STRING, CTX_GO_TO_ROOT_FOLDER, L"Go to Root Folder");
-        ::AppendMenu(hMainMenu, MF_STRING, CTX_CLEAR_ROOT_FOLDER, L"Clear Root Folder");
+    // Check if the selected directory (or parent dir if it's a file) is already in workspace folders
+    auto path = _strArray[0];
+    if (!_entries[0]->FSEntry().IsDirectory()) {
+        SIZE_T pos = path.rfind(L"\\");
+        if (std::wstring::npos != pos) {
+            path.erase(pos);
+        }
+    }
+
+    bool inWorkspace = false;
+    const auto& folders = settings.GetWorkspaceFolders();
+    for (const auto& f : folders) {
+        std::wstring cleanF = f;
+        if (!cleanF.empty() && cleanF.back() == L'\\') cleanF.pop_back();
+        std::wstring cleanPath = path;
+        if (!cleanPath.empty() && cleanPath.back() == L'\\') cleanPath.pop_back();
+
+        if (_wcsicmp(cleanF.c_str(), cleanPath.c_str()) == 0) {
+            inWorkspace = true;
+            break;
+        }
+    }
+
+    if (inWorkspace) {
+        ::AppendMenu(hMainMenu, MF_STRING, CTX_REMOVE_FROM_WORKSPACE, L"Remove from Workspace");
+    } else if (!settings.IsShowWorkspaceMode()) {
+        ::AppendMenu(hMainMenu, MF_STRING, CTX_ADD_TO_WORKSPACE, L"Add to Workspace");
     }
 
     ::AppendMenu(hMainMenu, MF_STRING, CTX_QUICK_OPEN, L"Quick Open...");
@@ -445,14 +467,11 @@ void ContextMenu::HandleCustomCommand(UINT idCommand)
     case CTX_OPEN_CMD:
         OpenPrompt();
         break;
-    case CTX_SET_AS_ROOT_FOLDER:
-        SetRootFolder();
+    case CTX_ADD_TO_WORKSPACE:
+        AddToWorkspace();
         break;
-    case CTX_GO_TO_ROOT_FOLDER:
-        GotoRootFolder();
-        break;
-    case CTX_CLEAR_ROOT_FOLDER:
-        ClearRootFolder();
+    case CTX_REMOVE_FROM_WORKSPACE:
+        RemoveFromWorkspace();
         break;
     case CTX_ADD_TO_FAVES:
         AddToFaves();
@@ -873,7 +892,7 @@ void ContextMenu::OpenPrompt()
     }
 }
 
-void ContextMenu::SetRootFolder()
+void ContextMenu::AddToWorkspace()
 {
     auto path = _strArray[0];
 
@@ -885,18 +904,68 @@ void ContextMenu::SetRootFolder()
         }
     }
 
-    settings.SetRootFolder(path);
+    auto folders = settings.GetWorkspaceFolders();
+    bool exists = false;
+    for (const auto& f : folders) {
+        std::wstring cleanF = f;
+        if (!cleanF.empty() && cleanF.back() == L'\\') cleanF.pop_back();
+        std::wstring cleanPath = path;
+        if (!cleanPath.empty() && cleanPath.back() == L'\\') cleanPath.pop_back();
+
+        if (_wcsicmp(cleanF.c_str(), cleanPath.c_str()) == 0) {
+            exists = true;
+            break;
+        }
+    }
+
+    if (!exists) {
+        folders.push_back(path);
+        settings.SetWorkspaceFolders(folders);
+        settings.Save();
+
+        // extern ExplorerDialog explorerDlg;
+        // if (explorerDlg.isCreated()) {
+        //     explorerDlg.RebuildRoots();
+        // }
+    }
 }
 
-void ContextMenu::GotoRootFolder()
+void ContextMenu::RemoveFromWorkspace()
 {
-    extern ExplorerDialog explorerDlg;
-    explorerDlg.GotoFileLocation(settings.GetRootFolder());
-}
+    auto path = _strArray[0];
 
-void ContextMenu::ClearRootFolder()
-{
-    settings.SetRootFolder(L"");
+    // remove file name
+    if (!_entries[0]->FSEntry().IsDirectory()) {
+        SIZE_T pos = path.rfind(L"\\");
+        if (std::wstring::npos != pos) {
+            path.erase(pos);
+        }
+    }
+
+    auto folders = settings.GetWorkspaceFolders();
+    auto newFolders = folders;
+    newFolders.clear();
+
+    for (const auto& f : folders) {
+        std::wstring cleanF = f;
+        if (!cleanF.empty() && cleanF.back() == L'\\') cleanF.pop_back();
+        std::wstring cleanPath = path;
+        if (!cleanPath.empty() && cleanPath.back() == L'\\') cleanPath.pop_back();
+
+        if (_wcsicmp(cleanF.c_str(), cleanPath.c_str()) != 0) {
+            newFolders.push_back(f);
+        }
+    }
+
+    if (newFolders.size() != folders.size()) {
+        settings.SetWorkspaceFolders(newFolders);
+        settings.Save();
+
+        extern ExplorerDialog explorerDlg;
+        if (explorerDlg.isCreated()) {
+            explorerDlg.RebuildRoots();
+        }
+    }
 }
 
 

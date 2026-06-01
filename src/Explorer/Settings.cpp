@@ -30,6 +30,7 @@ namespace {
 
 constexpr WCHAR SECTION_EXPLORER[]      = L"Explorer";
 constexpr WCHAR SECTION_FILTER_HISTORY[] = L"FilterHistory";
+constexpr WCHAR SECTION_WORKSPACE_FOLDERS[] = L"WorkspaceFolders";
 
 /* section Explorer keys */
 constexpr WCHAR LastPath[]          = L"LastPath";
@@ -48,6 +49,7 @@ constexpr WCHAR ShowLongInfo[]      = L"ShowLongInfo";
 constexpr WCHAR AddExtToName[]      = L"AddExtToName";
 constexpr WCHAR AutoUpdate[]        = L"AutoUpdate";
 constexpr WCHAR AutoNavigate[]      = L"AutoNavigate";
+constexpr WCHAR ShowWorkspaceMode[]  = L"ShowWorkspaceMode";
 constexpr WCHAR UseFullTree[]       = L"UseFullTree";
 constexpr WCHAR SizeFormat[]        = L"SizeFormat";
 constexpr WCHAR DateFormat[]        = L"DateFormat";
@@ -127,6 +129,14 @@ void Settings::Load(const std::filesystem::path& configDir)
 
     _currentDir = ReadString(LastPath, L"C:\\", _iniFilePath);
     _rootFolder = ReadString(RootFolder, L"", _iniFilePath);
+    _workspaceFolders.clear();
+    for (int i = 0; i < 100; i++) {
+        std::wstring key = std::to_wstring(i);
+        WCHAR pszTemp[MAX_PATH];
+        if (::GetPrivateProfileString(SECTION_WORKSPACE_FOLDERS, key.c_str(), L"", pszTemp, MAX_PATH, _iniFilePath.c_str()) != 0) {
+            _workspaceFolders.emplace_back(pszTemp);
+        }
+    }
     _iSplitterPos = ReadInt(SplitterPos, 120, _iniFilePath);
     _iSplitterPosHorizontal = ReadInt(SplitterPosHor, 200, _iniFilePath);
     _bAscending = ReadBool(SortAsc, true, _iniFilePath);
@@ -141,6 +151,7 @@ void Settings::Load(const std::filesystem::path& configDir)
     _bAddExtToName = ReadBool(AddExtToName, false, _iniFilePath);
     _bAutoUpdate = ReadBool(AutoUpdate, true, _iniFilePath);
     _bAutoNavigate = ReadBool(AutoNavigate, false, _iniFilePath);
+    _bShowWorkspaceMode = ReadBool(ShowWorkspaceMode, true, _iniFilePath);
     _bUseFullTree = ReadBool(UseFullTree, false, _iniFilePath);
     _bHideFoldersInFileList = ReadBool(HideFolders, false, _iniFilePath);
     _fmtSize = ReadEnum(SizeFormat, SizeFmt::SFMT_KBYTE, _iniFilePath);
@@ -189,6 +200,11 @@ void Settings::Save()
 {
     WriteString(LastPath, _currentDir, _iniFilePath);
     WriteString(RootFolder, _rootFolder, _iniFilePath);
+
+    ::WritePrivateProfileString(SECTION_WORKSPACE_FOLDERS, nullptr, nullptr, _iniFilePath.c_str());
+    for (size_t i = 0; i < _workspaceFolders.size(); ++i) {
+        ::WritePrivateProfileString(SECTION_WORKSPACE_FOLDERS, std::to_wstring(i).c_str(), _workspaceFolders[i].c_str(), _iniFilePath.c_str());
+    }
     WriteInt(SplitterPos, _iSplitterPos, _iniFilePath);
     WriteInt(SplitterPosHor, _iSplitterPosHorizontal, _iniFilePath);
     WriteBool(SortAsc, _bAscending, _iniFilePath);
@@ -203,6 +219,7 @@ void Settings::Save()
     WriteBool(AddExtToName, _bAddExtToName, _iniFilePath);
     WriteBool(AutoUpdate, _bAutoUpdate, _iniFilePath);
     WriteBool(AutoNavigate, _bAutoNavigate, _iniFilePath);
+    WriteBool(ShowWorkspaceMode, _bShowWorkspaceMode, _iniFilePath);
     WriteBool(UseFullTree, _bUseFullTree, _iniFilePath);
     WriteBool(HideFolders, _bHideFoldersInFileList, _iniFilePath);    
     WriteEnum(SizeFormat, _fmtSize, _iniFilePath);
@@ -233,4 +250,34 @@ void Settings::InitializeFonts()
     LOGFONT logfontUnder = _logFont;
     logfontUnder.lfUnderline = TRUE;
     _underlineFont.reset(::CreateFontIndirect(&logfontUnder));
+}
+
+bool Settings::IsPathInWorkspace(const std::wstring& path) const
+{
+    if (!_bShowWorkspaceMode) {
+        return true;
+    }
+    if (_workspaceFolders.empty()) {
+        return true;
+    }
+    std::wstring cleanPath = path;
+    if (!cleanPath.empty() && cleanPath.back() == L'\\') {
+        cleanPath.pop_back();
+    }
+    for (const auto& w : _workspaceFolders) {
+        std::wstring cleanW = w;
+        if (!cleanW.empty() && cleanW.back() == L'\\') {
+            cleanW.pop_back();
+        }
+        
+        if (_wcsicmp(cleanPath.c_str(), cleanW.c_str()) == 0) {
+            return true;
+        }
+        
+        std::wstring prefix = cleanW + L'\\';
+        if (cleanPath.size() > prefix.size() && _wcsnicmp(cleanPath.c_str(), prefix.c_str(), prefix.size()) == 0) {
+            return true;
+        }
+    }
+    return false;
 }

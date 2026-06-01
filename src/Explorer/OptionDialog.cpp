@@ -104,6 +104,23 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
     {
         goToCenter();
 
+        // Initialize Tab Control
+        HWND hTab = ::GetDlgItem(_hSelf, IDC_TAB_OPTION);
+        TCITEM tie{};
+        tie.mask = TCIF_TEXT;
+        
+        std::wstring tabGeneral = L"General";
+        tie.pszText = tabGeneral.data();
+        ::SendMessage(hTab, TCM_INSERTITEM, 0, (LPARAM)&tie);
+
+        std::wstring tabWorkspace = L"Workspace Folders";
+        tie.pszText = tabWorkspace.data();
+        ::SendMessage(hTab, TCM_INSERTITEM, 1, (LPARAM)&tie);
+
+        std::wstring tabTools = L"Tools";
+        tie.pszText = tabTools.data();
+        ::SendMessage(hTab, TCM_INSERTITEM, 2, (LPARAM)&tie);
+
         for (const auto& byteUnit : BYTE_UNIT_STRINGS) {
             ::SendDlgItemMessage(_hSelf, IDC_COMBO_SIZE_FORMAT, CB_ADDSTRING, 0, (LPARAM)byteUnit);
         }
@@ -114,7 +131,18 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
 
         SetParams();
         LongUpdate();
+        ShowTab(0);
 
+        break;
+    }
+    case WM_NOTIFY:
+    {
+        LPNMHDR pnmhdr = (LPNMHDR)lParam;
+        if (pnmhdr->idFrom == IDC_TAB_OPTION && pnmhdr->code == TCN_SELCHANGE) {
+            int activeTab = (int)::SendMessage(pnmhdr->hwndFrom, TCM_GETCURSEL, 0, 0);
+            ShowTab(activeTab);
+            return TRUE;
+        }
         break;
     }
     case WM_COMMAND :
@@ -122,6 +150,80 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
             case IDC_CHECK_LONG:
                 LongUpdate();
                 return TRUE;
+            case IDC_BTN_ADD_WORKSPACE: {
+                LPMALLOC pShellMalloc = 0;
+                if (::SHGetMalloc(&pShellMalloc) == NO_ERROR) {
+                    BROWSEINFO info {
+                        .hwndOwner      = _hSelf,
+                        .pidlRoot       = nullptr,
+                        .pszDisplayName = (LPTSTR)new WCHAR[MAX_PATH],
+                        .lpszTitle      = L"Select a root folder or enter a network path:",
+                        .ulFlags        = BIF_RETURNONLYFSDIRS | BIF_NEWDIALOGSTYLE | BIF_EDITBOX,
+                        .lpfn           = BrowseCallbackProc,
+                        .lParam         = (LPARAM)L"",
+                    };
+                    PIDLIST_ABSOLUTE pidl = ::SHBrowseForFolder(&info);
+                    if (pidl) {
+                        WCHAR szPath[MAX_PATH];
+                        if (::SHGetPathFromIDList(pidl, szPath)) {
+                            bool exists = false;
+                            for (const auto& path : _tempWorkspaceFolders) {
+                                if (_wcsicmp(path.c_str(), szPath) == 0) {
+                                    exists = true;
+                                    break;
+                                }
+                            }
+                            if (!exists) {
+                                _tempWorkspaceFolders.push_back(szPath);
+                                ::SendDlgItemMessage(_hSelf, IDC_LIST_WORKSPACE_DIRS, LB_ADDSTRING, 0, (LPARAM)szPath);
+                            }
+                        }
+                        pShellMalloc->Free(pidl);
+                    }
+                    pShellMalloc->Release();
+                    delete [] info.pszDisplayName;
+                }
+                break;
+            }
+            case IDC_BTN_DEL_WORKSPACE: {
+                HWND hList = ::GetDlgItem(_hSelf, IDC_LIST_WORKSPACE_DIRS);
+                int sel = (int)::SendMessage(hList, LB_GETCURSEL, 0, 0);
+                if (sel != LB_ERR) {
+                    ::SendMessage(hList, LB_DELETESTRING, (WPARAM)sel, 0);
+                    if (sel < (int)_tempWorkspaceFolders.size()) {
+                        _tempWorkspaceFolders.erase(_tempWorkspaceFolders.begin() + sel);
+                    }
+                }
+                break;
+            }
+            case IDC_BTN_UP_WORKSPACE: {
+                HWND hList = ::GetDlgItem(_hSelf, IDC_LIST_WORKSPACE_DIRS);
+                int sel = (int)::SendMessage(hList, LB_GETCURSEL, 0, 0);
+                if (sel != LB_ERR && sel > 0) {
+                    std::swap(_tempWorkspaceFolders[sel], _tempWorkspaceFolders[sel - 1]);
+                    
+                    WCHAR szText[MAX_PATH];
+                    ::SendMessage(hList, LB_GETTEXT, sel, (LPARAM)szText);
+                    ::SendMessage(hList, LB_DELETESTRING, sel, 0);
+                    ::SendMessage(hList, LB_INSERTSTRING, sel - 1, (LPARAM)szText);
+                    ::SendMessage(hList, LB_SETCURSEL, sel - 1, 0);
+                }
+                break;
+            }
+            case IDC_BTN_DOWN_WORKSPACE: {
+                HWND hList = ::GetDlgItem(_hSelf, IDC_LIST_WORKSPACE_DIRS);
+                int sel = (int)::SendMessage(hList, LB_GETCURSEL, 0, 0);
+                if (sel != LB_ERR && sel < (int)_tempWorkspaceFolders.size() - 1) {
+                    std::swap(_tempWorkspaceFolders[sel], _tempWorkspaceFolders[sel + 1]);
+                    
+                    WCHAR szText[MAX_PATH];
+                    ::SendMessage(hList, LB_GETTEXT, sel, (LPARAM)szText);
+                    ::SendMessage(hList, LB_DELETESTRING, sel, 0);
+                    ::SendMessage(hList, LB_INSERTSTRING, sel + 1, (LPARAM)szText);
+                    ::SendMessage(hList, LB_SETCURSEL, sel + 1, 0);
+                }
+                break;
+            }
             case IDC_BTN_OPENDLG: {
                 // This code was copied and slightly modifed from:
                 // http://www.bcbdev.com/faqs/faq62.htm
@@ -255,6 +357,13 @@ void OptionDlg::SetParams()
     ::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,  std::to_wstring(_pProp->GetMaxHistorySize()).c_str());
     ::SetDlgItemText(_hSelf, IDC_EDIT_CPH,          _pProp->GetCphProgram().szAppName.c_str());
 
+    _tempWorkspaceFolders = _pProp->GetWorkspaceFolders();
+    HWND hList = ::GetDlgItem(_hSelf, IDC_LIST_WORKSPACE_DIRS);
+    ::SendMessage(hList, LB_RESETCONTENT, 0, 0);
+    for (const auto& path : _tempWorkspaceFolders) {
+        ::SendMessage(hList, LB_ADDSTRING, 0, (LPARAM)path.c_str());
+    }
+
     _logfont = _pProp->GetLogFont();
     ::SetDlgItemText(_hSelf, IDC_BTN_CHOOSEFONT,    _logfont.lfFaceName);
 }
@@ -294,5 +403,40 @@ BOOL OptionDlg::GetParams()
 
     _pProp->SetLogFont(_logfont);
 
+    _pProp->SetWorkspaceFolders(_tempWorkspaceFolders);
+
     return bRet;
+}
+
+void OptionDlg::ShowTab(int activeTab)
+{
+    std::vector<int> tabGeneralCtrls = {
+        IDC_STATIC_FILELIST, IDC_CHECK_BRACES, IDC_CHECK_SEPEXT, IDC_CHECK_HIDE_FOLDERS,
+        IDC_STATIC_LONG, IDC_CHECK_LONG, IDC_STATIC_SIZE, IDC_STATIC_DATE,
+        IDC_COMBO_SIZE_FORMAT, IDC_COMBO_DATE_FORMAT,
+        IDC_STATIC_GENOPT, IDC_CHECK_AUTO, IDC_CHECK_HIDDEN, IDC_CHECK_USEICON,
+        IDC_CHECK_AUTONAV, IDC_CHECK_USEFULLTREE, IDC_STATIC_HISTORY, IDC_EDIT_TIMEOUT,
+        IDC_EDIT_HISTORYSIZE, IDC_STATIC_TMO, IDC_BTN_CHOOSEFONT
+    };
+    
+    std::vector<int> tabWorkspaceCtrls = {
+        IDC_STATIC_WORKSPACE_DIRS, IDC_LIST_WORKSPACE_DIRS, IDC_BTN_ADD_WORKSPACE, IDC_BTN_DEL_WORKSPACE,
+        IDC_BTN_UP_WORKSPACE, IDC_BTN_DOWN_WORKSPACE
+    };
+    
+    std::vector<int> tabToolsCtrls = {
+        IDC_STATIC_NPPEXEC, IDC_EDIT_EXECNAME, IDC_EDIT_SCRIPTPATH, IDC_STATIC_EXECNAME,
+        IDC_STATIC_SCRIPTPATH, IDC_BTN_OPENDLG, IDC_BTN_EXAMPLE_FILE,
+        IDC_STATIC_COMMANDPROMPT, IDC_EDIT_CPH, IDC_STATIC_CPHNAME
+    };
+    
+    for (int id : tabGeneralCtrls) {
+        ::ShowWindow(::GetDlgItem(_hSelf, id), (activeTab == 0) ? SW_SHOW : SW_HIDE);
+    }
+    for (int id : tabWorkspaceCtrls) {
+        ::ShowWindow(::GetDlgItem(_hSelf, id), (activeTab == 1) ? SW_SHOW : SW_HIDE);
+    }
+    for (int id : tabToolsCtrls) {
+        ::ShowWindow(::GetDlgItem(_hSelf, id), (activeTab == 2) ? SW_SHOW : SW_HIDE);
+    }
 }

@@ -7,21 +7,35 @@ TaskInit::TaskInit(std::shared_ptr<ExplorerModel> model, Settings* settings)
     : _model(model), _settings(settings) {}
 
 void TaskInit::Execute() {
-    auto drives = FileSystemService::GetLogicalDrives();
     std::vector<std::shared_ptr<ExplorerEntry>> children;
 
-    for (const auto& drivePath : drives) {
-        auto volumeName = FileSystemService::GetVolumeName(drivePath);
-        std::wstring name = volumeName ? std::format(L"{}: [{}]", drivePath[0], *volumeName) : std::format(L"{}:", drivePath[0]);
+    const auto& workspaceFolders = _settings->GetWorkspaceFolders();
+    if (!_settings->IsShowWorkspaceMode()) {
+        auto drives = FileSystemService::GetLogicalDrives();
+        for (const auto& drivePath : drives) {
+            auto volumeName = FileSystemService::GetVolumeName(drivePath);
+            std::wstring name = volumeName ? std::format(L"{}: [{}]", drivePath[0], *volumeName) : std::format(L"{}:", drivePath[0]);
 
-        FileSystemEntry fsEntry(name, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
+            FileSystemEntry fsEntry(name, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
+            children.push_back(std::make_shared<ExplorerEntry>(drivePath, fsEntry));
+        }
+    } else {
+        for (const auto& folderPath : workspaceFolders) {
+            if (folderPath.empty()) continue;
+            
+            std::wstring name = folderPath;
+            if (name.size() > 3 && name.back() == L'\\') {
+                name.pop_back();
+            }
+            size_t slash = name.find_last_of(L'\\');
+            std::wstring displayName = (slash != std::wstring::npos) ? name.substr(slash + 1) : name;
+            if (displayName.empty()) {
+                displayName = folderPath;
+            }
 
-        int iIconNormal = 0, iIconSelected = 0, iIconOverlayed = 0;
-        // ExtractIcons needs to be handled differently or skipped here if it uses UI thread,
-        // but typically ExtractIcons just reads from system so it might be safe.
-        // We'll leave it to the View to resolve icons later if needed, but for now we keep it simple.
-
-        children.push_back(std::make_shared<ExplorerEntry>(drivePath, fsEntry));
+            FileSystemEntry fsEntry(displayName, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
+            children.push_back(std::make_shared<ExplorerEntry>(folderPath, fsEntry));
+        }
     }
 
     _root = std::make_shared<ExplorerEntry>(L"This PC", FileSystemEntry(L"This PC", FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
@@ -61,7 +75,16 @@ TaskLoadFileList::TaskLoadFileList(const std::wstring& currentDir, Settings* set
     : _currentDir(currentDir), _settings(settings), _viewModel(viewModel) {}
 
 void TaskLoadFileList::Execute() {
-    _entries = FileSystemService::GetDirectoryEntries(_currentDir, _settings->IsShowHidden(), true);
+    if (_settings->IsShowWorkspaceMode() && _settings->GetWorkspaceFolders().empty()) {
+        _entries.clear();
+        return;
+    }
+
+    std::filesystem::path current(_currentDir);
+    std::wstring parentPath = current.has_parent_path() ? current.parent_path().wstring() : L"";
+    bool includeParent = _settings->IsPathInWorkspace(parentPath);
+
+    _entries = FileSystemService::GetDirectoryEntries(_currentDir, _settings->IsShowHidden(), includeParent);
 }
 
 void TaskLoadFileList::OnCompleted() {

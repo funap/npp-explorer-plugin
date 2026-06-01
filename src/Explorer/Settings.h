@@ -61,6 +61,10 @@ public:
     const std::wstring& GetRootFolder() const { return _rootFolder; }
     void SetRootFolder(const std::wstring& folder) { _rootFolder = folder; }
 
+    const std::vector<std::wstring>& GetWorkspaceFolders() const { return _workspaceFolders; }
+    void SetWorkspaceFolders(const std::vector<std::wstring>& folders) { _workspaceFolders = folders; }
+    bool IsPathInWorkspace(const std::wstring& path) const;
+
     HFONT GetDefaultFont() const { return _defaultFont.get(); }
     HFONT GetUnderlineFont() const { return _underlineFont.get(); }
     const LOGFONT& GetLogFont() const { return _logFont; }
@@ -108,6 +112,9 @@ public:
     bool IsAutoNavigate() const { return _bAutoNavigate; }
     void SetAutoNavigate(bool autoNav) { _bAutoNavigate = autoNav; }
 
+    bool IsShowWorkspaceMode() const { return _bShowWorkspaceMode; }
+    void SetShowWorkspaceMode(bool show) { _bShowWorkspaceMode = show; }
+
     bool IsHideFoldersInFileList() const { return _bHideFoldersInFileList; }
     void SetHideFoldersInFileList(bool hide) { _bHideFoldersInFileList = hide; }
 
@@ -148,6 +155,7 @@ private:
 
     std::wstring                _currentDir;
     std::wstring                _rootFolder;
+    std::vector<std::wstring>   _workspaceFolders       {};
     LOGFONT                     _logFont                {};
     UniqueFont                  _defaultFont;
     UniqueFont                  _underlineFont;
@@ -165,6 +173,7 @@ private:
     bool                        _bAddExtToName          = false;
     bool                        _bAutoUpdate            = true;
     bool                        _bAutoNavigate          = false;
+    bool                        _bShowWorkspaceMode     = true;
     bool                        _bHideFoldersInFileList = false;
     SizeFmt                     _fmtSize                = SizeFmt::SFMT_KBYTE;
     DateFmt                     _fmtDate                = DateFmt::DFMT_ENG;
