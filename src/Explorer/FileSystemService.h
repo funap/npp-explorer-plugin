@@ -31,6 +31,7 @@ class FileSystemService {
 public:
     static std::vector<std::wstring> GetLogicalDrives();
     static std::optional<std::wstring> GetVolumeName(const std::wstring& drivePath);
+    static std::wstring GetRemotePath(const std::wstring& drivePath);
 
     static bool HaveChildren(const std::wstring& folderPath, bool useFullTree, bool showHidden);
     static std::vector<FileSystemEntry> GetDirectoryEntries(const std::wstring& path, bool showHidden, bool includeParent = false);

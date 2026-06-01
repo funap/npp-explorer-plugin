@@ -56,6 +56,31 @@ void DirectoryReader::ReadDir(const std::filesystem::path& rootPath, ReadDirCall
     }, this);
 }
 
+void DirectoryReader::ReadDirs(const std::vector<std::filesystem::path>& rootPaths, ReadDirCallback readDirCallback, ReadDirFinCallback readDirFinCallback)
+{
+    if (_workerThread.joinable()) {
+        Cancel();
+    }
+
+    _readDirCallback = std::move(readDirCallback);
+    _readDirFinCallback = std::move(readDirFinCallback);
+    if (!rootPaths.empty()) {
+        _rootPath = rootPaths[0];
+    } else {
+        _rootPath = std::filesystem::path();
+    }
+    _needsStop = false;
+    _reading = true;
+    _workerThread = std::thread([this, rootPaths](DirectoryReader* self) {
+        for (const auto& path : rootPaths) {
+            if (_needsStop) break;
+            self->ReadDirRecursive(path);
+        }
+        _reading = false;
+        _readDirFinCallback();
+    }, this);
+}
+
 bool DirectoryReader::ReadDirRecursive(const std::filesystem::path& path)
 {
     namespace fs = std::filesystem;

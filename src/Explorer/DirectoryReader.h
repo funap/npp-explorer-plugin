@@ -35,6 +35,7 @@ public:
     using ReadDirCallback = std::function<void(const std::filesystem::path& path)>;
     using ReadDirFinCallback = std::function<void()>;
     void ReadDir(const std::filesystem::path& rootPath, ReadDirCallback readDirCallback, ReadDirFinCallback readDirFinCallback);
+    void ReadDirs(const std::vector<std::filesystem::path>& rootPaths, ReadDirCallback readDirCallback, ReadDirFinCallback readDirFinCallback);
     void Cancel();
     const std::filesystem::path& GetRootPath() const;
     bool IsReading() const;

@@ -84,6 +84,18 @@ std::optional<std::wstring> FileSystemService::GetVolumeName(const std::wstring&
     return std::nullopt;
 }
 
+std::wstring FileSystemService::GetRemotePath(const std::wstring& drivePath)
+{
+    if (drivePath.empty()) return {};
+    WCHAR szDrive[3] = { drivePath[0], L':', L'\0' };
+    WCHAR szRemote[MAX_PATH] = L"";
+    DWORD dwSize = MAX_PATH;
+    if (::WNetGetConnectionW(szDrive, szRemote, &dwSize) == NO_ERROR) {
+        return szRemote;
+    }
+    return {};
+}
+
 bool FileSystemService::HaveChildren(const std::wstring& folderPath, bool useFullTree, bool showHidden)
 {
     std::wstring searchPath = folderPath;

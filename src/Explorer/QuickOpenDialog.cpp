@@ -84,16 +84,39 @@ namespace {
         DWORD attributes = GetFileAttributesW(path.c_str());
         return (attributes != INVALID_FILE_ATTRIBUTES) && ((attributes & FILE_ATTRIBUTE_DIRECTORY) == 0U);
     }
+
+    std::wstring GetWorkspaceFolderName(const std::wstring& rootPath) {
+        if (rootPath.empty()) return L"";
+        std::wstring pathStr = rootPath;
+        while (!pathStr.empty() && (pathStr.back() == L'\\' || pathStr.back() == L'/')) {
+            pathStr.pop_back();
+        }
+        size_t lastSlash = pathStr.find_last_of(L"\\/");
+        if (lastSlash != std::wstring::npos) {
+            return pathStr.substr(lastSlash + 1);
+        }
+        return pathStr;
+    }
 }
 
 class QuickOpenEntry {
 public:
     QuickOpenEntry() = delete;
-    explicit QuickOpenEntry(const std::wstring& path)
-        : _relativePath(path.substr(s_rootPath.size()))
+    explicit QuickOpenEntry(const std::wstring& path, const std::wstring& rootPath)
+        : _fullPath(path)
+        , _rootPath(rootPath)
         , _score(0)
         , _matchType(MATCH_TYPE::INIT)
     {
+        std::wstring cleanRoot = rootPath;
+        if (!cleanRoot.empty() && cleanRoot.back() != L'\\') {
+            cleanRoot.push_back(L'\\');
+        }
+        if (_fullPath.starts_with(cleanRoot)) {
+            _relativePath = _fullPath.substr(cleanRoot.size());
+        } else {
+            _relativePath = _fullPath;
+        }
     }
 
     ~QuickOpenEntry()
@@ -117,19 +140,30 @@ public:
 
     void Rename(const std::wstring& oldName, const std::wstring& newName)
     {
-        std::wstring path = FullPath();
-        std::string::size_type pos = path.find(oldName);
+        std::string::size_type pos = _fullPath.find(oldName);
         if (pos == 0) {
-            path.replace(pos, oldName.length(), newName);
-            _relativePath = path.substr(s_rootPath.size());
+            _fullPath.replace(pos, oldName.length(), newName);
+            
+            std::wstring cleanRoot = _rootPath;
+            if (!cleanRoot.empty() && cleanRoot.back() != L'\\') {
+                cleanRoot.push_back(L'\\');
+            }
+            if (_fullPath.starts_with(cleanRoot)) {
+                _relativePath = _fullPath.substr(cleanRoot.size());
+            } else {
+                _relativePath = _fullPath;
+            }
         }
     }
 
     std::wstring FullPath() const
     {
-        std::wstring fullPath = s_rootPath;
-        fullPath.append(_relativePath);
-        return fullPath;
+        return _fullPath;
+    }
+
+    const std::wstring& RootPath() const
+    {
+        return _rootPath;
     }
 
     enum class MATCH_TYPE {
@@ -174,6 +208,8 @@ public:
 private:
     static std::wstring s_rootPath;
     std::wstring        _relativePath;
+    std::wstring        _fullPath;
+    std::wstring        _rootPath;
     int                 _score;
     std::vector<size_t> _matches;
     MATCH_TYPE          _matchType;
@@ -193,7 +229,7 @@ public:
         StopSearchThread();
     }
 
-    void RootPath(const std::wstring& rootPath)
+    void RootPaths(const std::vector<std::wstring>& rootPaths)
     {
         StopSearchThread();
         ClearEntries();
@@ -202,14 +238,18 @@ public:
             _condition.query.reset();
             _condition.revision++;
         }
-        QuickOpenEntry::SetRootPath(rootPath);
+        if (!rootPaths.empty()) {
+            QuickOpenEntry::SetRootPath(rootPaths[0]);
+        } else {
+            QuickOpenEntry::SetRootPath({});
+        }
     }
 
-    void AddEntry(const std::wstring& path)
+    void AddEntry(const std::wstring& path, const std::wstring& rootPath)
     {
         {
             std::lock_guard<std::mutex> lock(_entriesMtx);
-            _entries.emplace_back(std::make_shared<QuickOpenEntry>(path));
+            _entries.emplace_back(std::make_shared<QuickOpenEntry>(path, rootPath));
         }
 
         {
@@ -522,7 +562,17 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop)
 
     _filesystemWatcher.Created([this](const std::wstring& path) {
         if (IsFile(path)) {
-            _model->AddEntry(path);
+            std::wstring rootPath;
+            for (const auto& r : _rootPaths) {
+                std::wstring cleanR = r;
+                if (!cleanR.empty() && cleanR.back() != L'\\') cleanR.push_back(L'\\');
+                if (path.starts_with(cleanR)) {
+                    rootPath = r;
+                    break;
+                }
+            }
+            if (rootPath.empty() && !_rootPaths.empty()) rootPath = _rootPaths[0];
+            _model->AddEntry(path, rootPath);
         }
         else {
             _needsRefresh = true;
@@ -540,22 +590,48 @@ void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop)
 
 void QuickOpenDlg::setRootPath(const std::filesystem::path& rootPath)
 {
-    if (_needsRefresh || (_directoryReader.GetRootPath() != rootPath)) {
+    setWorkspacePaths({ rootPath.wstring() });
+}
+
+void QuickOpenDlg::setWorkspacePaths(const std::vector<std::wstring>& paths)
+{
+    if (_needsRefresh || _rootPaths != paths) {
         _needsRefresh = false;
+        _rootPaths = paths;
         _directoryReader.Cancel();
 
-        _model->RootPath(rootPath);
+        _model->RootPaths(paths);
         updateResultList();
 
-        _filesystemWatcher.Reset(rootPath);
-        _directoryReader.ReadDir(rootPath,
-            [this](const std::filesystem::path& path) {
-                _model->AddEntry(path);
-            },
-            [this]() {
-                PostMessage(_hSelf, WM_UPDATE_RESULT_LIST, 0, 0);
+        if (!paths.empty()) {
+            _filesystemWatcher.Reset(paths[0]);
+            
+            std::vector<std::filesystem::path> fsPaths;
+            for (const auto& p : paths) {
+                fsPaths.push_back(p);
             }
-        );
+            
+            _directoryReader.ReadDirs(fsPaths,
+                [this](const std::filesystem::path& path) {
+                    std::wstring rootPath;
+                    for (const auto& r : _rootPaths) {
+                        std::wstring cleanR = r;
+                        if (!cleanR.empty() && cleanR.back() != L'\\') cleanR.push_back(L'\\');
+                        if (path.wstring().starts_with(cleanR)) {
+                            rootPath = r;
+                            break;
+                        }
+                    }
+                    if (rootPath.empty() && !_rootPaths.empty()) rootPath = _rootPaths[0];
+                    _model->AddEntry(path.wstring(), rootPath);
+                },
+                [this]() {
+                    PostMessage(_hSelf, WM_UPDATE_RESULT_LIST, 0, 0);
+                }
+            );
+        } else {
+            _filesystemWatcher.Stop();
+        }
     }
 }
 
@@ -699,6 +775,18 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 
     drawPosition.top += calcRect.bottom;
     drawPosition.left = drawItem->rcItem.left + _layout.itemMarginLeft;
+
+    if (_rootPaths.size() >= 2) {
+        std::wstring folderName = GetWorkspaceFolderName(_results[itemID]->RootPath());
+        if (!folderName.empty()) {
+            std::wstring prefix = L"(" + folderName + L") ";
+            ::SetTextColor(hdc, textColor2);
+            ::SetBkColor(hdc, backgroundColor);
+            ::DrawText(hdc, prefix.c_str(), static_cast<INT>(prefix.length()), &drawPosition, DT_SINGLELINE);
+            ::DrawText(hdc, prefix.c_str(), static_cast<INT>(prefix.length()), &calcRect, DT_SINGLELINE | DT_CALCRECT);
+            drawPosition.left += calcRect.right;
+        }
+    }
 
     if (type == QuickOpenEntry::MATCH_TYPE::PATH) {
         for (size_t i = 0; i < path.length(); ++i) {

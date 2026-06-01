@@ -68,9 +68,8 @@ private:
     void OpenFileInOtherView();
     void OpenFileInNewInstance();
     void OpenPrompt();
-    void SetRootFolder();
-    void GotoRootFolder();
-    void ClearRootFolder();
+    void AddToWorkspace();
+    void RemoveFromWorkspace();
     void AddToFaves();
     void AddRelativePathsCB();
     void AddFullPathsCB();

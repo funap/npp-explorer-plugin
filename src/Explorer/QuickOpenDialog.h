@@ -45,6 +45,7 @@ public:
     void init(HINSTANCE hInst, HWND parent, Settings* prop);
     void show();
     void setRootPath(const std::filesystem::path& rootPath);
+    void setWorkspacePaths(const std::vector<std::wstring>& paths);
     void close();
     void SetFont(HFONT font);
 private:
@@ -78,5 +79,6 @@ private:
     RECT                _progressBarRect;
     bool                _shouldAutoClose;
     bool                _needsRefresh;
+    std::vector<std::wstring> _rootPaths;
 
 };

@@ -81,6 +81,12 @@ void ExplorerViewModel::NavigateTo(const std::wstring& path, bool recordHistory)
         targetPath = FileSystemService::CombinePath(_currentDir, path);
     }
 
+    if (_settings->IsShowWorkspaceMode() && !_settings->GetWorkspaceFolders().empty()) {
+        if (!_settings->IsPathInWorkspace(targetPath)) {
+            targetPath = _settings->GetWorkspaceFolders()[0];
+        }
+    }
+
     if (_currentDir == targetPath) {
         return;
     }
