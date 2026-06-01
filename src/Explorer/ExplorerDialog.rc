@@ -310,6 +310,8 @@ IDB_EX_LINKEDIT         BITMAP                  "res\\linkEdit.bmp"
 
 IDB_EX_LINKDELETE       BITMAP                  "res\\linkDelete.bmp"
 
+IDB_EX_WORKSPACE        BITMAP                  "res\\workspace.bmp"
+
 IDB_TB_FAVES            BITMAP                  "res\\Heart.bmp"
 
 IDB_TB_EXPLORER         BITMAP                  "res\\explore.bmp"

@@ -381,5 +381,8 @@
     <Image Include="src\Explorer\res\web.ico">
       <Filter>Resource</Filter>
     </Image>
+    <Image Include="src\Explorer\res\workspace.bmp">
+      <Filter>Resource</Filter>
+    </Image>
   </ItemGroup>
 </Project>

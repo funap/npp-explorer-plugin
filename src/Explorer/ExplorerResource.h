@@ -54,6 +54,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #define IDB_TB_EXPLORER						1063
 #define IDB_TB_FAVES						1064
 #define IDB_EX_FOLDERUSER					1065
+#define IDB_EX_WORKSPACE                    1066
 
 #define		IDM_TOOLBAR		2000
 	#define	IDM_EX_FAVORITES				(IDM_TOOLBAR + 1)

@@ -339,6 +339,7 @@
     <ClInclude Include="src\NppPlugin\Sci_Position.h" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="src\Explorer\res\workspace.bmp" />
     <Image Include="src\Explorer\res\explore.bmp" />
     <Image Include="src\Explorer\res\explore.ico" />
     <Image Include="src\Explorer\res\file.ico" />
