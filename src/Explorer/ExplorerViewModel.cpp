@@ -250,7 +250,16 @@ void ExplorerViewModel::OnEntriesLoaded(const std::wstring& currentDir, std::vec
 
 void ExplorerViewModel::Refresh()
 {
-    NavigateTo(_currentDir, false);
+    // Trigger async loading of directories directly, bypassing targetPath == currentDir check in NavigateTo
+    if (_cancelToken) {
+        _cancelToken->store(true);
+    }
+    _cancelToken = std::make_shared<std::atomic<bool>>(false);
+    _currentGeneration++;
+
+    ClearPendingTasks(TaskCategory::FileList);
+
+    EnqueueAsyncTask(std::make_unique<TaskLoadFileList>(_currentDir, _settings, this));
 }
 
 void ExplorerViewModel::SetFilter(const std::wstring& filter)
