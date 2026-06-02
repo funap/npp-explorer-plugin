@@ -511,15 +511,17 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 return TRUE;
             case CDDS_ITEMPREPAINT: {
                 auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
-                if (index >= static_cast<INT>(_uMaxFolders)) {
-                    std::wstring strFilePath = _vFileList[index].fullPath;
-                    if (IsFileOpen(strFilePath) == TRUE) {
-                        ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
-                        ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
+                if (index >= 0 && index < static_cast<INT>(_vFileList.size())) {
+                    if (index >= static_cast<INT>(_uMaxFolders)) {
+                        std::wstring strFilePath = _vFileList[index].fullPath;
+                        if (IsFileOpen(strFilePath) == TRUE) {
+                            ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
+                            ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
+                        }
                     }
-                }
-                if (_vFileList[index].IsParent()) {
-                    ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYPOSTPAINT);
+                    if (_vFileList[index].IsParent()) {
+                        ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYPOSTPAINT);
+                    }
                 }
                 return TRUE;
             }
@@ -939,7 +941,7 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
     std::vector<std::shared_ptr<ExplorerEntry>> entries;
 
     /* create data */
-    for (UINT uList = 0; uList < _uMaxElements; uList++) {
+    for (UINT uList = 0; uList < _uMaxElements && uList < _vFileList.size(); uList++) {
         if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
             if (uList == 0) {
                 if (_vFileList[0].IsParent()) {
@@ -966,7 +968,7 @@ void FileList::onLMouseBtnDbl()
 {
     UINT selRow = ListView_GetSelectionMark(_hSelf);
 
-    if (selRow != -1) {
+    if (selRow != -1 && selRow < _vFileList.size()) {
         if (selRow < _uMaxFolders) {
             _viewModel->NavigateTo(_vFileList[selRow].Name());
         }
@@ -1083,7 +1085,7 @@ void FileList::onDelete(bool immediate)
 {
     std::vector<std::wstring> filesToDelete;
 
-    for (SIZE_T i = 0; i < _uMaxElements; i++) {
+    for (SIZE_T i = 0; i < _uMaxElements && i < _vFileList.size(); i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
             if ((i == 0) && (_vFileList[i].IsParent())) {
                 continue;

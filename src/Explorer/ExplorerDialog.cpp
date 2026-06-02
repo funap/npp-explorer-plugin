@@ -417,7 +417,8 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     }
     case EXM_CHANGECOMBO: {
         WCHAR searchWords[MAX_PATH] = {};
-        if (_ComboFilter.getSelText(searchWords)) {
+        if (_ComboFilter.getSelText(searchWords) || (_ComboFilter.getText(searchWords, MAX_PATH), wcslen(searchWords) > 0)) {
+        //if (_ComboFilter.getSelText(searchWords)) {
             _FileList.filterFiles(searchWords);
         }
         else {
@@ -970,6 +971,11 @@ void ExplorerDialog::InitialDialog()
 
     /* initial combo */
     _ComboFilter.init(_hFilter, _hSelf);
+    _ComboFilter.setComboList(_pSettings->GetFilterHistory());
+    if (_ComboFilter.getComboList().empty()) {
+        _ComboFilter.addText(L"*.*");
+    }
+    _ComboFilter.addText(_pSettings->GetFileFilter().getFilterString());
 
     /* load cursor */
     _hCurWait = ::LoadCursor(nullptr, IDC_WAIT);
