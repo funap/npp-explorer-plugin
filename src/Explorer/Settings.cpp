@@ -28,8 +28,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 /* ini file sections */
 namespace {
 
-constexpr WCHAR SECTION_EXPLORER[]      = L"Explorer";
-constexpr WCHAR SECTION_FILTER_HISTORY[] = L"FilterHistory";
+constexpr WCHAR SECTION_EXPLORER[]          = L"Explorer";
+constexpr WCHAR SECTION_FILTER_HISTORY[]    = L"FilterHistory";
 constexpr WCHAR SECTION_WORKSPACE_FOLDERS[] = L"WorkspaceFolders";
 
 /* section Explorer keys */
@@ -49,7 +49,7 @@ constexpr WCHAR ShowLongInfo[]      = L"ShowLongInfo";
 constexpr WCHAR AddExtToName[]      = L"AddExtToName";
 constexpr WCHAR AutoUpdate[]        = L"AutoUpdate";
 constexpr WCHAR AutoNavigate[]      = L"AutoNavigate";
-constexpr WCHAR ShowWorkspaceMode[]  = L"ShowWorkspaceMode";
+constexpr WCHAR ShowWorkspaceMode[] = L"ShowWorkspaceMode";
 constexpr WCHAR UseFullTree[]       = L"UseFullTree";
 constexpr WCHAR SizeFormat[]        = L"SizeFormat";
 constexpr WCHAR DateFormat[]        = L"DateFormat";
@@ -151,7 +151,7 @@ void Settings::Load(const std::filesystem::path& configDir)
     _bAddExtToName = ReadBool(AddExtToName, false, _iniFilePath);
     _bAutoUpdate = ReadBool(AutoUpdate, true, _iniFilePath);
     _bAutoNavigate = ReadBool(AutoNavigate, false, _iniFilePath);
-    _bShowWorkspaceMode = ReadBool(ShowWorkspaceMode, true, _iniFilePath);
+    _bShowWorkspaceMode = ReadBool(ShowWorkspaceMode, false, _iniFilePath);
     _bUseFullTree = ReadBool(UseFullTree, false, _iniFilePath);
     _bHideFoldersInFileList = ReadBool(HideFolders, false, _iniFilePath);
     _fmtSize = ReadEnum(SizeFormat, SizeFmt::SFMT_KBYTE, _iniFilePath);
