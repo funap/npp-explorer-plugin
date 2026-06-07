@@ -34,7 +34,6 @@ constexpr WCHAR SECTION_WORKSPACE_FOLDERS[] = L"WorkspaceFolders";
 
 /* section Explorer keys */
 constexpr WCHAR LastPath[]          = L"LastPath";
-constexpr WCHAR RootFolder[]        = L"RootFolder";
 constexpr WCHAR SplitterPos[]       = L"SplitterPos";
 constexpr WCHAR SplitterPosHor[]    = L"SplitterPosHor";
 constexpr WCHAR SortAsc[]           = L"SortAsc";
@@ -128,7 +127,6 @@ void Settings::Load(const std::filesystem::path& configDir)
     }
 
     _currentDir = ReadString(LastPath, L"C:\\", _iniFilePath);
-    _rootFolder = ReadString(RootFolder, L"", _iniFilePath);
     _workspaceFolders.clear();
     for (int i = 0; i < 100; i++) {
         std::wstring key = std::to_wstring(i);
@@ -199,7 +197,6 @@ void Settings::Load(const std::filesystem::path& configDir)
 void Settings::Save()
 {
     WriteString(LastPath, _currentDir, _iniFilePath);
-    WriteString(RootFolder, _rootFolder, _iniFilePath);
 
     ::WritePrivateProfileString(SECTION_WORKSPACE_FOLDERS, nullptr, nullptr, _iniFilePath.c_str());
     for (size_t i = 0; i < _workspaceFolders.size(); ++i) {

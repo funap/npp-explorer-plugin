@@ -58,9 +58,6 @@ public:
     const std::wstring& GetCurrentDir() const { return _currentDir; }
     void SetCurrentDir(const std::wstring& dir) { _currentDir = dir; }
 
-    const std::wstring& GetRootFolder() const { return _rootFolder; }
-    void SetRootFolder(const std::wstring& folder) { _rootFolder = folder; }
-
     const std::vector<std::wstring>& GetWorkspaceFolders() const { return _workspaceFolders; }
     void SetWorkspaceFolders(const std::vector<std::wstring>& folders) { _workspaceFolders = folders; }
     bool IsPathInWorkspace(const std::wstring& path) const;
@@ -154,7 +151,6 @@ private:
     std::filesystem::path       _iniFilePath;
 
     std::wstring                _currentDir;
-    std::wstring                _rootFolder;
     std::vector<std::wstring>   _workspaceFolders       {};
     LOGFONT                     _logFont                {};
     UniqueFont                  _defaultFont;

@@ -416,11 +416,7 @@ void OpenQuickOpenDlg()
     }
     else {
         std::vector<std::wstring> paths;
-        if (!settings.GetRootFolder().empty()) {
-            paths.push_back(settings.GetRootFolder());
-        } else {
-            paths.push_back(settings.GetCurrentDir());
-        }
+        paths.push_back(settings.GetCurrentDir());
         quickOpenDlg.setWorkspacePaths(paths);
     }
     quickOpenDlg.show();
