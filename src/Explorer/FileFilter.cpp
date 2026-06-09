@@ -25,24 +25,44 @@
 #include "FileFilter.h"
 
 namespace {
-std::vector<std::wstring> split(const std::wstring_view &string, WCHAR delim)
+
+static std::wstring trim(const std::wstring& s)
+{
+    const auto first = s.find_first_not_of(L" \t");
+    if (first == std::wstring::npos) {
+        return L"";
+    }
+
+    const auto last = s.find_last_not_of(L" \t");
+    return s.substr(first, last - first + 1);
+}
+
+std::vector<std::wstring> split(const std::wstring_view& string, WCHAR delim)
 {
     std::vector<std::wstring> result;
     std::wstring item;
+
     for (WCHAR ch : string) {
         if (ch == delim) {
+            item = trim(item);
+
             if (!item.empty()) {
                 result.push_back(item);
             }
+
             item.clear();
         }
         else {
             item += ch;
         }
     }
+
+    item = trim(item);
+
     if (!item.empty()) {
         result.push_back(item);
     }
+
     return result;
 }
 
