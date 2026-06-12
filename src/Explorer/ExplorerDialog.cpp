@@ -2031,6 +2031,7 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
     if (entry == _model->Root()) {
         UpdateRoots();
         _viewModel->NavigateTo(_pSettings->GetCurrentDir(), true);
+        OnCurrentDirectoryChanged(_pSettings->GetCurrentDir());
         NotifyNewFile();
     } else {
         HTREEITEM hItem = FindTreeItemByPath(entry->Path());
