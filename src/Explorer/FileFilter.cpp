@@ -127,6 +127,9 @@ void FileFilter::setFilter(std::wstring_view newFilter)
     const std::wstring_view DENY_BEGIN = L"[^";
     const std::wstring_view DENY_END   = L"]";
 
+    _allowList.clear();
+    _denyList.clear();
+
     SIZE_T denyBeginPos = _filterString.find_first_of(DENY_BEGIN);
     if (std::wstring::npos == denyBeginPos) {
         _allowList = split(_filterString, SEPARATOR);

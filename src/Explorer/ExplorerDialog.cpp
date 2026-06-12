@@ -211,9 +211,20 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         break;
     }
     case WM_COMMAND:  {
-        if (((HWND)lParam == _hFilter) && (HIWORD(wParam) == CBN_SELCHANGE)) {
-            ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
-            return TRUE;
+        if ((HWND)lParam == _hFilter) {
+            if (HIWORD(wParam) == CBN_SELCHANGE) {
+                ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
+                return TRUE;
+            }
+            else if (HIWORD(wParam) == CBN_KILLFOCUS) {
+                WCHAR searchWords[MAX_PATH] = {};
+                _ComboFilter.getText(searchWords, MAX_PATH);
+                if (wcslen(searchWords) > 0) {
+                    _ComboFilter.addText(searchWords);
+                }
+                ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
+                return TRUE;
+            }
         }
         if (HIWORD(wParam) == 0) {
             HandleToolBarCommand(LOWORD(wParam));
