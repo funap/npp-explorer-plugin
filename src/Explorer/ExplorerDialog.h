@@ -38,6 +38,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 // Forward declaration only: avoids circular include with TreeModelSynchronizer.h
 class TreeModelSynchronizer;
+class IPluginContext;
 
 struct GetVolumeInfo {
     LPCTSTR     pszDrivePathName;
@@ -54,7 +55,7 @@ public:
     ExplorerDialog();
     ~ExplorerDialog();
 
-    void init(HINSTANCE hInst, HWND hParent, Settings *prop);
+    void init(HINSTANCE hInst, HWND hParent, Settings *prop, IPluginContext* pluginContext);
     void redraw();
     void destroy() override {};
     void doDialog(bool willBeShown = true);
@@ -173,6 +174,7 @@ private:
     HCURSOR     _hSplitterCursorUpDown;
     HCURSOR     _hSplitterCursorLeftRight;
     Settings*   _pSettings;
+    IPluginContext* _pluginContext;
 
     /* thread variable */
     HCURSOR     _hCurWait;

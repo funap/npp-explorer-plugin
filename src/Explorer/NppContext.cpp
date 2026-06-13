@@ -21,33 +21,27 @@
   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
   THE SOFTWARE.
 */
-#include "Editor.h"
+#include "NppContext.h"
 
 #include "../NppPlugin/Scintilla.h"
 #include "../NppPlugin/menuCmdID.h"
 
-Editor& Editor::Instance()
-{
-    static Editor instance;
-    return instance;
-}
-
-void Editor::SetNppData(NppData nppData)
+void NppContext::SetNppData(NppData nppData)
 {
     _nppData = nppData;
 }
 
-HWND Editor::GetWindow() const
+HWND NppContext::GetWindow() const
 {
     return _nppData._nppHandle;
 }
 
-bool Editor::DoOpen(const std::filesystem::path& path)
+bool NppContext::DoOpen(const std::filesystem::path& path)
 {
     return static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_DOOPEN, 0, (LPARAM)path.c_str()));
 }
 
-std::wstring Editor::GetSelectedText()
+std::wstring NppContext::GetSelectedText()
 {
     std::wstring selectedTextW;
 
@@ -66,27 +60,27 @@ std::wstring Editor::GetSelectedText()
     return selectedTextW;
 }
 
-COLORREF Editor::GetEditorDefaultForegroundColor()
+COLORREF NppContext::GetEditorDefaultForegroundColor()
 {
     return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTFOREGROUNDCOLOR, 0, 0));
 }
 
-COLORREF Editor::GetEditorDefaultBackgroundColor()
+COLORREF NppContext::GetEditorDefaultBackgroundColor()
 {
     return static_cast<COLORREF>(::SendMessage(_nppData._nppHandle, NPPM_GETEDITORDEFAULTBACKGROUNDCOLOR, 0, 0));
 }
 
-COLORREF Editor::GetEditorCurrentLineBackgroundColor()
+COLORREF NppContext::GetEditorCurrentLineBackgroundColor()
 {
     return static_cast<COLORREF>(::SendMessage(_nppData._scintillaMainHandle, SCI_GETCARETLINEBACK, 0, 0));
 }
 
-bool Editor::IsDarkMode()
+bool NppContext::IsDarkMode()
 {
     return static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_ISDARKMODEENABLED, 0, 0));
 }
 
-EditorColors Editor::GetColors()
+EditorColors NppContext::GetColors()
 {
     if (IsDarkMode()) {
         EditorColors colors;
@@ -127,12 +121,12 @@ EditorColors Editor::GetColors()
     };
 }
 
-void Editor::SetFocusToCurrentEdit()
+void NppContext::SetFocusToCurrentEdit()
 {
     ::SetFocus(GetCurrentScintilla());
 }
 
-std::vector<std::wstring> Editor::GetSessionFiles(const std::filesystem::path& sessionFilePath)
+std::vector<std::wstring> NppContext::GetSessionFiles(const std::filesystem::path& sessionFilePath)
 {
     std::vector<std::wstring> sessionFiles;
 
@@ -159,7 +153,7 @@ std::vector<std::wstring> Editor::GetSessionFiles(const std::filesystem::path& s
     return sessionFiles;
 }
 
-std::filesystem::path Editor::GetCurrentDirectory()
+std::filesystem::path NppContext::GetCurrentDirectory()
 {
     WCHAR directoryPath[MAX_PATH];
     if (::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTDIRECTORY, std::size(directoryPath), (LPARAM)&directoryPath[0])) {
@@ -168,22 +162,22 @@ std::filesystem::path Editor::GetCurrentDirectory()
     return {};
 }
 
-int Editor::GetVersion()
+int NppContext::GetVersion()
 {
     return static_cast<int>(::SendMessage(_nppData._nppHandle, NPPM_GETNPPVERSION, 0, 0));
 }
 
-bool Editor::IsSupportFluentUI()
+bool NppContext::IsSupportFluentUI()
 {
     return (HIWORD(GetVersion()) >= 8);
 }
 
-void Editor::SetMenuItemCheck(int cmdID, bool visible)
+void NppContext::SetMenuItemCheck(int cmdID, bool visible)
 {
     ::SendMessage(_nppData._nppHandle, NPPM_SETMENUITEMCHECK, cmdID, (LPARAM)visible);
 }
 
-void Editor::AddToolbarIcon(int cmdID, void* iconInfo, bool useDarkMode)
+void NppContext::AddToolbarIcon(int cmdID, void* iconInfo, bool useDarkMode)
 {
     if (useDarkMode) {
         ::SendMessage(_nppData._nppHandle, NPPM_ADDTOOLBARICON_FORDARKMODE, (WPARAM)cmdID, (LPARAM)iconInfo);
@@ -193,43 +187,43 @@ void Editor::AddToolbarIcon(int cmdID, void* iconInfo, bool useDarkMode)
     }
 }
 
-std::filesystem::path Editor::GetConfigDir()
+std::filesystem::path NppContext::GetConfigDir()
 {
     WCHAR configPath[MAX_PATH];
     ::SendMessage(_nppData._nppHandle, NPPM_GETPLUGINSCONFIGDIR, MAX_PATH, (LPARAM)configPath);
     return {configPath};
 }
 
-HWND Editor::GetCurrentScintilla()
+HWND NppContext::GetCurrentScintilla()
 {
     UINT currentEdit;
     ::SendMessage(_nppData._nppHandle, NPPM_GETCURRENTSCINTILLA, 0, (LPARAM)&currentEdit);
     return (0 == currentEdit) ? _nppData._scintillaMainHandle : _nppData._scintillaSecondHandle;
 }
 
-HWND Editor::GetMainScintilla()
+HWND NppContext::GetMainScintilla()
 {
     return _nppData._scintillaMainHandle;
 }
 
-HWND Editor::GetSecondScintilla()
+HWND NppContext::GetSecondScintilla()
 {
     return _nppData._scintillaSecondHandle;
 }
 
-std::filesystem::path Editor::GetFullCurrentPath()
+std::filesystem::path NppContext::GetFullCurrentPath()
 {
     WCHAR newPath[MAX_PATH];
     ::SendMessage(_nppData._nppHandle, NPPM_GETFULLCURRENTPATH, 0, (LPARAM)newPath);
     return {newPath};
 }
 
-int Editor::GetNbOpenFiles()
+int NppContext::GetNbOpenFiles()
 {
     return (INT)::SendMessage(_nppData._nppHandle, NPPM_GETNBOPENFILES, 0, ALL_OPEN_FILES);
 }
 
-bool Editor::GetOpenFileNames(std::vector<std::wstring>& fileNames)
+bool NppContext::GetOpenFileNames(std::vector<std::wstring>& fileNames)
 {
     int docCnt = GetNbOpenFiles();
     if (docCnt <= 0) return false;
@@ -255,17 +249,17 @@ bool Editor::GetOpenFileNames(std::vector<std::wstring>& fileNames)
     return success;
 }
 
-void Editor::LaunchFindFileDialog(const std::filesystem::path& directory)
+void NppContext::LaunchFindFileDialog(const std::filesystem::path& directory)
 {
     ::SendMessage(_nppData._nppHandle, NPPM_LAUNCHFINDINFILESDLG, (WPARAM)directory.c_str(), NULL);
 }
 
-void Editor::RunMenuCommand(int cmdID)
+void NppContext::RunMenuCommand(int cmdID)
 {
     ::SendMessage(_nppData._nppHandle, WM_COMMAND, cmdID, 0);
 }
 
-intptr_t Editor::SendMsgToPlugin(const std::wstring& destinationPluginName, void* communicationInfo)
+intptr_t NppContext::SendMsgToPlugin(const std::wstring& destinationPluginName, void* communicationInfo)
 {
     return ::SendMessage(_nppData._nppHandle, NPPM_MSGTOPLUGIN, (WPARAM)destinationPluginName.c_str(), (LPARAM)communicationInfo);
 }

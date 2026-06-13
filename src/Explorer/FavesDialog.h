@@ -29,6 +29,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
+class IPluginContext;
+
 enum MenuID {
     FM_NEWLINK = 1,
     FM_NEWGROUP,
@@ -53,7 +55,7 @@ public:
     FavesDialog();
     ~FavesDialog();
 
-    void init(HINSTANCE hInst, HWND hParent, Settings *prop);
+    void init(HINSTANCE hInst, HWND hParent, Settings *prop, IPluginContext* pluginContext);
 
     virtual void redraw() {
         ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
@@ -134,6 +136,7 @@ private:
     BOOL            _addToSession;
     FavesItemPtr    _peOpenLink;
     Settings*       _pSettings;
+    IPluginContext* _pluginContext;
 
     /* database */
     FavesModel      _model;

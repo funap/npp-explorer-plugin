@@ -23,8 +23,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <ranges>
 #include <format>
 
-#include "Editor.h"
-
 /* ini file sections */
 namespace {
 

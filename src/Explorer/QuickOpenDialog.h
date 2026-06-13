@@ -35,6 +35,7 @@
 
 class QuickOpenModel;
 class QuickOpenEntry;
+class IPluginContext;
 
 class QuickOpenDlg : public StaticDialog
 {
@@ -42,7 +43,7 @@ public:
     QuickOpenDlg();
     ~QuickOpenDlg();
 
-    void init(HINSTANCE hInst, HWND parent, Settings* prop);
+    void init(HINSTANCE hInst, HWND parent, Settings* prop, IPluginContext* pluginContext);
     void show();
     void setRootPath(const std::filesystem::path& rootPath);
     void setWorkspacePaths(const std::vector<std::wstring>& paths);
@@ -76,6 +77,7 @@ private:
     HWND                _hWndResult;
     HWND                _hWndEdit;
     Settings*           _pSettings;
+    IPluginContext*     _pluginContext;
     RECT                _progressBarRect;
     bool                _shouldAutoClose;
     bool                _needsRefresh;

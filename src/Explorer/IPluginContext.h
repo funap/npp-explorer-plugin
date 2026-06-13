@@ -22,9 +22,9 @@ struct EditorColors {
     COLORREF disabledEdge       = 0;
 };
 
-class IEditor {
+class IPluginContext {
 public:
-    virtual ~IEditor() = default;
+    virtual ~IPluginContext() = default;
 
     virtual HWND GetWindow() const = 0;
     virtual bool DoOpen(const std::filesystem::path& path) = 0;

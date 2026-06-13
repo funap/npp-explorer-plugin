@@ -38,7 +38,7 @@
 
 #include "ExplorerResource.h"
 #include "FuzzyMatcher.h"
-#include "Editor.h"
+#include "IPluginContext.h"
 #include "ThemeRenderer.h"
 
 namespace {
@@ -552,9 +552,10 @@ QuickOpenDlg::~QuickOpenDlg()
 {
 }
 
-void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop)
+void QuickOpenDlg::init(HINSTANCE hInst, HWND parent, Settings* prop, IPluginContext* pluginContext)
 {
     _pSettings = prop;
+    _pluginContext = pluginContext;
 
     Window::init(hInst, parent);
     create(IDD_QUICK_OPEN_DLG, FALSE);
@@ -637,7 +638,7 @@ void QuickOpenDlg::setWorkspacePaths(const std::vector<std::wstring>& paths)
 
 void QuickOpenDlg::show()
 {
-    std::wstring selectedText = Editor::Instance().GetSelectedText();
+    std::wstring selectedText = _pluginContext->GetSelectedText();
     if (!selectedText.empty()) {
         ::Edit_SetText(_hWndEdit, selectedText.c_str());
     }
@@ -974,7 +975,7 @@ void QuickOpenDlg::openSelectedItem() const
     const int index = ListView_GetSelectionMark(_hWndResult);
     if (0 <= index) {
         if (static_cast<SIZE_T>(index) < _results.size()) {
-            Editor::Instance().DoOpen(_results[index]->FullPath());
+            _pluginContext->DoOpen(_results[index]->FullPath());
         }
     }
 }

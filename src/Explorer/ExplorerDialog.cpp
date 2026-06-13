@@ -34,7 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerResource.h"
 #include "ContextMenu.h"
 #include "NewDlg.h"
-#include "Editor.h"
+#include "IPluginContext.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
 #include "FileSystemService.h"
@@ -139,11 +139,12 @@ ExplorerDialog::~ExplorerDialog()
 }
 
 
-void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, Settings *prop)
+void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, Settings *prop, IPluginContext* pluginContext)
 {
     DockingDlgInterface::init(hInst, hParent);
 
     _pSettings = prop;
+    _pluginContext = pluginContext;
     _viewModel->SetSettings(prop);
     _FileList.initProp(prop);
 }
@@ -260,7 +261,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 if (item != nullptr) {
                     auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
                     if (pShared != nullptr && *pShared != nullptr && !(*pShared)->FSEntry().IsDirectory()) {
-                        Editor::Instance().DoOpen((*pShared)->Path());
+                        _pluginContext->DoOpen((*pShared)->Path());
                     }
                 }
                 break;
@@ -538,7 +539,7 @@ LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                     _hTreeCtrl.Expand(hItem, TVE_TOGGLE);
                 }
                 else {
-                    Editor::Instance().DoOpen((*pShared)->Path());
+                    _pluginContext->DoOpen((*pShared)->Path());
                 }
             }
             return TRUE;
@@ -587,7 +588,7 @@ LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             return TRUE;
         }
         if (VK_ESCAPE == wParam) {
-            Editor::Instance().SetFocusToCurrentEdit();
+            _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
         }
         break;
@@ -862,7 +863,7 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
         break;
     }
     case IDM_EX_SEARCH_FIND:
-        Editor::Instance().LaunchFindFileDialog(_pSettings->GetCurrentDir());
+        _pluginContext->LaunchFindFileDialog(_pSettings->GetCurrentDir());
         break;
     case IDM_EX_GO_TO_USER:
         GotoUserFolder();
@@ -1015,7 +1016,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            Editor::Instance().SetFocusToCurrentEdit();
+            _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1034,7 +1035,7 @@ void ExplorerDialog::InitialDialog()
             }
             return TRUE;
         case VK_ESCAPE:
-            Editor::Instance().SetFocusToCurrentEdit();
+            _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
         default:
             break;
@@ -1359,7 +1360,7 @@ void ExplorerDialog::GotoUserFolder()
 
 void ExplorerDialog::GotoCurrentFolder()
 {
-    std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+    std::wstring currentDir = _pluginContext->GetCurrentDirectory().wstring();
     if (!currentDir.empty()) {
         _viewModel->NavigateTo(currentDir);
     }
@@ -1369,14 +1370,14 @@ void ExplorerDialog::GotoCurrentFolder()
 void ExplorerDialog::GotoCurrentFile()
 {
     if (_pSettings->IsUseFullTree()) {
-        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        std::filesystem::path currentPath = _pluginContext->GetFullCurrentPath();
         if (std::filesystem::exists(currentPath)) {
             _viewModel->NavigateTo(currentPath.wstring());
             SetFocusOnFile();
         }
     }
     else {
-        std::wstring currentDir = Editor::Instance().GetCurrentDirectory().wstring();
+        std::wstring currentDir = _pluginContext->GetCurrentDirectory().wstring();
         if (!currentDir.empty()) {
             _viewModel->NavigateTo(currentDir);
             _FileList.SelectCurFile();
@@ -2020,7 +2021,7 @@ bool ExplorerDialog::DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 
 void ExplorerDialog::ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu)
 {
-    ContextMenu cm;
+    ContextMenu cm(_pluginContext);
     cm.SetObjects(entries);
     cm.ShowContextMenu(_hInst, _hParent, _hSelf, screenLocation, hasStandardMenu);
 }

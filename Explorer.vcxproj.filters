@@ -102,9 +102,6 @@
     <ClCompile Include="src\Explorer\UTF16Stream.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
-    <ClCompile Include="src\Explorer\Editor.cpp">
-      <Filter>src\Explorer</Filter>
-    </ClCompile>
     <ClCompile Include="src\Explorer\Settings.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
@@ -124,6 +121,9 @@
       <Filter>src\Explorer</Filter>
     </ClCompile>
     <ClCompile Include="src\Explorer\FileSystemService.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\NppContext.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
   </ItemGroup>
@@ -265,10 +265,7 @@
     <ClInclude Include="src\Explorer\UTF16Stream.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Explorer\Editor.h">
-      <Filter>src\Explorer</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Explorer\IEditor.h">
+    <ClInclude Include="src\Explorer\IPluginContext.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\Settings.h">
@@ -287,6 +284,9 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\FileSystemService.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\NppContext.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>

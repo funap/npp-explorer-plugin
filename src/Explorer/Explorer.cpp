@@ -30,7 +30,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <format>
 #include <wrl/client.h>
 
-#include "Editor.h"
+#include "NppContext.h"
 #include "ExplorerDialog.h"
 #include "FavesDialog.h"
 #include "QuickOpenDialog.h"
@@ -48,7 +48,7 @@ constexpr WCHAR  PLUGIN_NAME[]      = L"&Explorer";
 
 
 /* global values */
-NppData             g_nppData{};
+NppContext          g_nppContext;
 HINSTANCE           g_hInst = nullptr;
 HWND                g_HSource = nullptr;
 INT                 g_docCount = 0;
@@ -146,7 +146,7 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
 
         /* Remove subclaasing */
         if (wndProcNotepad != nullptr) {
-            SetWindowLongPtr(g_nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
+            SetWindowLongPtr(g_nppContext.GetWindow(), GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
         }
 
 
@@ -180,33 +180,30 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
 
 extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
 {
-    Editor::Instance().SetNppData(notpadPlusData);
-
-    /* stores notepad data */
-    g_nppData   = notpadPlusData;
+    g_nppContext.SetNppData(notpadPlusData);
 
     /* load data */
-    settings.Load(Editor::Instance().GetConfigDir());
+    settings.Load(g_nppContext.GetConfigDir());
     settings.InitializeFonts();
 
     UpdateThemeColor();
 
     /* initial dialogs */
-    explorerDlg .init(g_hInst, g_nppData._nppHandle, &settings);
-    favesDlg    .init(g_hInst, g_nppData._nppHandle, &settings);
-    quickOpenDlg.init(g_hInst, g_nppData._nppHandle, &settings);
-    optionDlg   .init(g_hInst, g_nppData._nppHandle);
-    helpDlg     .init(g_hInst, g_nppData._nppHandle);
+    explorerDlg .init(g_hInst, g_nppContext.GetWindow(), &settings, &g_nppContext);
+    favesDlg    .init(g_hInst, g_nppContext.GetWindow(), &settings, &g_nppContext);
+    quickOpenDlg.init(g_hInst, g_nppContext.GetWindow(), &settings, &g_nppContext);
+    optionDlg   .init(g_hInst, g_nppContext.GetWindow());
+    helpDlg     .init(g_hInst, g_nppContext.GetWindow());
 
     explorerDlg.VisibleChanged([](bool visible) {
-        Editor::Instance().SetMenuItemCheck(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, visible);
+        g_nppContext.SetMenuItemCheck(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, visible);
     });
     favesDlg.VisibleChanged([](bool visible) {
-        Editor::Instance().SetMenuItemCheck(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, visible);
+        g_nppContext.SetMenuItemCheck(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, visible);
     });
 
     /* Subclassing for Notepad */
-    wndProcNotepad = (WNDPROC)::SetWindowLongPtr(g_nppData._nppHandle, GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
+    wndProcNotepad = (WNDPROC)::SetWindowLongPtr(g_nppContext.GetWindow(), GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
 }
 
 extern "C" __declspec(dllexport) LPCTSTR getName()
@@ -248,13 +245,13 @@ extern "C" __declspec(dllexport) void beNotified(SCNotification *notifyCode)
         g_favesIcons.hToolbarIconDarkMode      = (HICON)    ::LoadImage(g_hInst, MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE),     IMAGE_ICON,     smallIconSize.cx, smallIconSize.cy, LR_LOADMAP3DCOLORS);
 
         /* change menu language */
-        if (Editor::Instance().IsSupportFluentUI()) {
-            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, true);
-            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, true);
+        if (g_nppContext.IsSupportFluentUI()) {
+            g_nppContext.AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, true);
+            g_nppContext.AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, true);
         }
         else {
-            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, false);
-            Editor::Instance().AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, false);
+            g_nppContext.AddToolbarIcon(funcItem[DOCKABLE_EXPLORER_INDEX]._cmdID, &g_explorerIcons, false);
+            g_nppContext.AddToolbarIcon(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, &g_favesIcons, false);
         }
         break;
     }
@@ -292,13 +289,13 @@ void UpdateThemeColor()
         return brightness < 0.5F;
     };
 
-    auto editorColors = Editor::Instance().GetColors();
+    auto editorColors = g_nppContext.GetColors();
 
     ThemeColors colors{
         .body               = editorColors.darkerText,
         .body_bg            = editorColors.pureBackground,
-        .secondary          = Editor::Instance().GetEditorDefaultForegroundColor(),
-        .secondary_bg       = Editor::Instance().GetEditorDefaultBackgroundColor(),
+        .secondary          = g_nppContext.GetEditorDefaultForegroundColor(),
+        .secondary_bg       = g_nppContext.GetEditorDefaultBackgroundColor(),
         .border             = editorColors.edge,
         .primary            = editorColors.text,
         .primary_bg         = editorColors.hotBackground,
@@ -425,7 +422,7 @@ void OpenQuickOpenDlg()
 void OpenTerminal()
 {
     std::filesystem::path path(settings.GetCurrentDir());
-    ::ShellExecute(g_nppData._nppHandle, L"open", settings.GetCphProgram().szAppName.c_str(), nullptr, path.c_str(), SW_SHOW);
+    ::ShellExecute(g_nppContext.GetWindow(), L"open", settings.GetCphProgram().szAppName.c_str(), nullptr, path.c_str(), SW_SHOW);
 }
 
 // Subclass of Notepad
@@ -672,12 +669,12 @@ void FetchIcons(LPCTSTR currentPath, LPCTSTR fileName, DevType type, LPINT piIco
 // Current docs
 void UpdateDocs()
 {
-    g_HSource = Editor::Instance().GetCurrentScintilla();
+    g_HSource = g_nppContext.GetCurrentScintilla();
 
     /* update open files */
     int     newDocCount = 0;
-    std::filesystem::path newPath = Editor::Instance().GetFullCurrentPath();
-    newDocCount = Editor::Instance().GetNbOpenFiles();
+    std::filesystem::path newPath = g_nppContext.GetFullCurrentPath();
+    newDocCount = g_nppContext.GetNbOpenFiles();
 
     if ((wcscmp(newPath.c_str(), g_currentFile) != 0) || (newDocCount != g_docCount)) {
         /* update current path in explorer and favorites */
@@ -687,7 +684,7 @@ void UpdateDocs()
         favesDlg.NotifyNewFile();
 
         std::vector<std::wstring> fileNames;
-        if (Editor::Instance().GetOpenFileNames(fileNames)) {
+        if (g_nppContext.GetOpenFileNames(fileNames)) {
             if (explorerDlg.isVisible() || favesDlg.isVisible()) {
                 /* update documents list */
                 g_openedFilePaths.clear();
@@ -748,7 +745,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const s
     if (_tcscmp(pszPtr, L"//Explorer:") != 0) {
         WCHAR   szTemp[MAX_PATH];
         _stprintf(szTemp, L"Format of first line needs to be:\n//Explorer: NPPEXEC_DLL_NAME PARAM_X[0] PARAM_X[1]");
-        ::MessageBox(g_nppData._nppHandle, szTemp, L"Error", MB_OK | MB_ICONERROR);
+        ::MessageBox(g_nppContext.GetWindow(), szTemp, L"Error", MB_OK | MB_ICONERROR);
         return FALSE;
     }
 
@@ -777,7 +774,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const s
         } else {
             WCHAR szTemp[MAX_PATH];
             _stprintf(szTemp, L"Argument \"%ls\" unknown.", pszPtr);
-            ::MessageBox(g_nppData._nppHandle, szTemp, L"Error", MB_OK | MB_ICONERROR);
+            ::MessageBox(g_nppContext.GetWindow(), szTemp, L"Error", MB_OK | MB_ICONERROR);
 
             return FALSE;
         }
@@ -797,7 +794,7 @@ BOOL ConvertCall(LPTSTR pszExplArg, LPTSTR pszName, LPTSTR *p_pszNppArg, const s
         iCount = _ttoi(pszPtr);
         if (iCount > vFileList.size()) {
             auto message = std::format(L"Element \"{}\" of argument \"{}\" not selected.", iCount, pszPtr);
-            ::MessageBox(g_nppData._nppHandle, message.c_str(), L"Error", MB_OK | MB_ICONERROR);
+            ::MessageBox(g_nppContext.GetWindow(), message.c_str(), L"Error", MB_OK | MB_ICONERROR);
             return FALSE;
         }
 

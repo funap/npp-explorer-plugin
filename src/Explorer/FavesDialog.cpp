@@ -33,7 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerDialog.h"
 #include "ExplorerResource.h"
 #include "NewDlg.h"
-#include "Editor.h"
+#include "IPluginContext.h"
 #include "PropDlg.h"
 #include "resource.h"
 #include "FileSystemService.h"
@@ -104,9 +104,10 @@ FavesDialog::~FavesDialog()
 }
 
 
-void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop)
+void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop, IPluginContext* pluginContext)
 {
     _pSettings = prop;
+    _pluginContext = pluginContext;
     DockingDlgInterface::init(hInst, hParent);
 
     ReadSettings();
@@ -148,11 +149,11 @@ void FavesDialog::NotifyNewFile()
 {
     if (isCreated() && isVisible()) {
         /* update "new file link" icon */
-        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        std::filesystem::path currentPath = _pluginContext->GetFullCurrentPath();
         _ToolBar.enable(IDM_EX_LINK_NEW_FILE, PathFileExists(currentPath.c_str()));
 
         /* update "new folder link" icon */
-        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        std::filesystem::path currentDir = _pluginContext->GetCurrentDirectory();
         _ToolBar.enable(IDM_EX_LINK_NEW_FOLDER, (!currentDir.empty()));
     }
 }
@@ -342,7 +343,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
                         INT count = _hTreeCtrl.GetChildrenCount(item);
                         if (count > 0) {
                             // Check non-existent files
-                            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
+                            auto sessionFiles = _pluginContext->GetSessionFiles(pElem->Link());
                             int nonExistentFileCount = 0;
                             for (auto &&file : sessionFiles) {
                                 if (!::PathFileExists(file.c_str())) {
@@ -418,7 +419,7 @@ INT_PTR CALLBACK FavesDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lP
     case WM_COMMAND:
         // ESC key has been pressed
         if (LOWORD(wParam) == IDCANCEL) {
-            Editor::Instance().SetFocusToCurrentEdit();
+            _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
         }
 
@@ -458,7 +459,7 @@ LRESULT FavesDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         break;
     case WM_KEYDOWN:
         if (VK_ESCAPE == wParam) {
-            Editor::Instance().SetFocusToCurrentEdit();
+            _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
         }
         if (wParam == VK_RETURN) {
@@ -516,14 +517,14 @@ void FavesDialog::HandleToolBarCommand(UINT message)
         ToggleExplorerDialog();
         break;
     case IDM_EX_LINK_NEW_FILE: {
-        std::filesystem::path currentPath = Editor::Instance().GetFullCurrentPath();
+        std::filesystem::path currentPath = _pluginContext->GetFullCurrentPath();
         if (PathFileExists(currentPath.c_str())) {
             AddToFavorties(FALSE, const_cast<LPTSTR>(currentPath.c_str()));
         }
         break;
     }
     case IDM_EX_LINK_NEW_FOLDER: {
-        std::filesystem::path currentDir = Editor::Instance().GetCurrentDirectory();
+        std::filesystem::path currentDir = _pluginContext->GetCurrentDirectory();
         if (!currentDir.empty()) {
             AddToFavorties(TRUE, const_cast<LPTSTR>(currentDir.c_str()));
         }
@@ -1243,7 +1244,7 @@ void FavesDialog::DrawSessionChildren(HTREEITEM hItem)
     session->ClearChildren();
 
     BOOL hasMissingFile = FALSE;
-    auto sessionFiles = Editor::Instance().GetSessionFiles(session->Link());
+    auto sessionFiles = _pluginContext->GetSessionFiles(session->Link());
     for (const auto &path : sessionFiles) {
         auto newItem = std::make_unique<FavesItem>(session, FAVES_FILE, path.substr(path.find_last_of(L'\\') + 1), path);
         INT iIconNormal = 0;
@@ -1331,9 +1332,9 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
             /* open possible link */
             std::wstring resolvedPath;
             if (FileSystemService::ResolveShortCut(pElem->Link(), resolvedPath)) {
-                Editor::Instance().DoOpen(resolvedPath);
+                _pluginContext->DoOpen(resolvedPath);
             } else {
-                Editor::Instance().DoOpen(pElem->Link());
+                _pluginContext->DoOpen(pElem->Link());
             }
             break;
         }
@@ -1342,7 +1343,7 @@ void FavesDialog::OpenLink(FavesItemPtr pElem)
             break;
         case FAVES_SESSION: {
             // Check non-existent files
-            auto sessionFiles = Editor::Instance().GetSessionFiles(pElem->Link());
+            auto sessionFiles = _pluginContext->GetSessionFiles(pElem->Link());
             int nonExistentFileCount = 0;
             for (auto&& file : sessionFiles) {
                 if (!::PathFileExists(file.c_str())) {

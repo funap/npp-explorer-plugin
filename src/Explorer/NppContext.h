@@ -1,15 +1,15 @@
 #pragma once
 
-#include "IEditor.h"
+#include "IPluginContext.h"
 #include "../NppPlugin/PluginInterface.h"
 
-class Editor : public IEditor {
+class NppContext : public IPluginContext {
 public:
-    static Editor& Instance();
+    NppContext() = default;
 
     void SetNppData(NppData nppData);
 
-    // IEditor implementation
+    // IPluginContext implementation
     HWND GetWindow() const override;
     bool DoOpen(const std::filesystem::path& path) override;
     std::wstring GetSelectedText() override;
@@ -39,6 +39,5 @@ public:
     intptr_t SendMsgToPlugin(const std::wstring& destinationPluginName, void* communicationInfo) override;
 
 private:
-    Editor() = default;
     NppData _nppData{};
 };

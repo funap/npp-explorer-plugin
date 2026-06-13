@@ -32,11 +32,12 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "Explorer.h"
 
 class ExplorerEntry;
+class IPluginContext;
 
 class ContextMenu
 {
 public:
-    ContextMenu();
+    ContextMenu(IPluginContext* pluginContext);
     ~ContextMenu();
 
     void SetObjects(std::shared_ptr<ExplorerEntry> entry);
@@ -78,6 +79,7 @@ private:
     void OpenScriptPath(HMODULE hInst);
     void StartNppExec(HMODULE hInst, UINT cmdID);
 
+    IPluginContext* _pluginContext;
     HINSTANCE       _hInst;
     HWND            _hWndNpp;
     HWND            _hWndParent;

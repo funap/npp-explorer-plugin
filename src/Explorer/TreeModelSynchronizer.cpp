@@ -162,7 +162,7 @@ void TreeModelSynchronizer::Synchronize(
                 hCurrentChild = treeCtrl.GetNextItem(hCurrentChild, TVGN_NEXT);
 
             } else {
-                // No more existing children – simply append
+                // No more existing children - simply append
                 hCurrentChild = InsertChildFolderNode(dialog, treeCtrl, childEntry, hParentItem, TVI_LAST,
                     childEntry->FSEntry().IsDirectory(), childEntry->FSEntry().IsHidden(), childEntry->FSEntry().IsDirectory());
                 enqueueIcon(hCurrentChild);
@@ -185,4 +185,3 @@ void TreeModelSynchronizer::Synchronize(
         treeCtrl.SetItemHasChildren(hParentItem, treeCtrl.GetChild(hParentItem) != nullptr);
     }
 }
-
