@@ -32,7 +32,7 @@
     </PropertyGroup>
     <Exec Command="if not exist $(OutDir)$(TargetName) mkdir $(OutDir)$(TargetName)" />
     <Exec Command="copy $(OutDir)$(TargetName)$(TargetExt) $(OutDir)$(TargetName)" />
-    <Exec Command="for /f %%i in ('powershell -NoProfile -Command &quot;(Get-Item $(OutDir)$(TargetName)$(TargetExt)).VersionInfo.ProductVersion&quot;') do del $(OutDir)$(TargetName)-v%%i-$(Platform).zip" />
-    <Exec Command="for /f %%i in ('powershell -NoProfile -Command &quot;(Get-Item $(OutDir)$(TargetName)$(TargetExt)).VersionInfo.ProductVersion&quot;') do cd  $(OutDir)$(TargetName) %26%26 $(ZIPCMD) -r ..\$(TargetName)-v%%i-$(Platform).zip *" />
+    <Exec Command="del $(OutDir)$(TargetName)-$(GitTagName)-$(PlatformShortName).zip" />
+    <Exec Command="cd $(OutDir)$(TargetName) &amp;&amp; $(ZIPCMD) -r ..\$(TargetName)-$(GitTagName)-$(PlatformShortName).zip *" />
   </Target>
 </Project>
