@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <filesystem>
 #include <optional>
 
-#include "ComboOrgi.h"
+#include "ComboBox.h"
 #include "Explorer.h"
 #include "ExplorerContext.h"
 #include "FileList.h"
@@ -86,6 +86,8 @@ public:
     void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
     void RefreshActiveNode();
     void RebuildRoots();
+    void RefreshTreeFilter();
+    void RefreshTreeFilter(HTREEITEM hItem);
 
     // The following helpers are also used by TreeModelSynchronizer:
     BOOL FindFolderAfter(LPCTSTR itemName, HTREEITEM pAfterItem);
@@ -163,7 +165,7 @@ private:
     /* classes */
     TreeView    _hTreeCtrl;
     FileList    _FileList;
-    ComboOrgi   _ComboFilter;
+    ComboBox    _ComboFilter;
     ToolBar     _ToolBar;
     ReBar       _Rebar;
 

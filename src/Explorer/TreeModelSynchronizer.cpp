@@ -80,7 +80,9 @@ void TreeModelSynchronizer::Synchronize(
         if (child->FSEntry().IsDirectory()) {
             folders.push_back(child);
         } else if (settings->IsUseFullTree()) {
-            files.push_back(child);
+            if (settings->GetFileFilter().match(child->FSEntry().Name())) {
+                files.push_back(child);
+            }
         }
     }
 

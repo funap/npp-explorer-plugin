@@ -218,10 +218,9 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 return TRUE;
             }
             else if (HIWORD(wParam) == CBN_KILLFOCUS) {
-                WCHAR searchWords[MAX_PATH] = {};
-                _ComboFilter.getText(searchWords, MAX_PATH);
-                if (wcslen(searchWords) > 0) {
-                    _ComboFilter.addText(searchWords);
+                std::wstring searchWords = _ComboFilter.GetText();
+                if (!searchWords.empty()) {
+                    _ComboFilter.AddText(searchWords);
                 }
                 ::SendMessage(_hSelf, EXM_CHANGECOMBO, 0, 0);
                 return TRUE;
@@ -386,12 +385,10 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
         break;
     case WM_DESTROY: {
-        WCHAR szLastFilter[MAX_PATH];
-
-        _pSettings->SetFilterHistory(_ComboFilter.getComboList());
-        _ComboFilter.getText(szLastFilter, MAX_PATH);
-        if (wcslen(szLastFilter) != 0) {
-            _pSettings->GetFileFilter().setFilter(szLastFilter);
+        _pSettings->SetFilterHistory(_ComboFilter.GetComboList());
+        std::wstring lastFilter = _ComboFilter.GetText();
+        if (!lastFilter.empty()) {
+            _pSettings->GetFileFilter().setFilter(lastFilter);
         }
 
         // Stop the worker thread first and wait for it to fully exit before
@@ -428,13 +425,18 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         break;
     }
     case EXM_CHANGECOMBO: {
-        WCHAR searchWords[MAX_PATH] = {};
-        if (_ComboFilter.getSelText(searchWords) || (_ComboFilter.getText(searchWords, MAX_PATH), wcslen(searchWords) > 0)) {
-        //if (_ComboFilter.getSelText(searchWords)) {
-            _FileList.filterFiles(searchWords);
+        std::wstring searchWords = _ComboFilter.GetSelectedText();
+        if (searchWords.empty()) {
+            searchWords = _ComboFilter.GetText();
+        }
+        if (!searchWords.empty()) {
+            _FileList.filterFiles(searchWords.c_str());
         }
         else {
             _FileList.filterFiles(L"*");
+        }
+        if (_pSettings->IsUseFullTree()) {
+            RefreshTreeFilter();
         }
         return TRUE;
     }
@@ -552,6 +554,9 @@ LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
                 else {
                     ::SetFocus(_hListCtrl);
                 }
+            }
+            else {
+                ::SetFocus(_hFilter);
             }
             return TRUE;
         default:
@@ -982,12 +987,12 @@ void ExplorerDialog::InitialDialog()
     _Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);
 
     /* initial combo */
-    _ComboFilter.init(_hFilter, _hSelf);
-    _ComboFilter.setComboList(_pSettings->GetFilterHistory());
-    if (_ComboFilter.getComboList().empty()) {
-        _ComboFilter.addText(L"*.*");
+    _ComboFilter.Init(_hFilter, _hSelf);
+    _ComboFilter.SetComboList(_pSettings->GetFilterHistory());
+    if (_ComboFilter.GetComboList().empty()) {
+        _ComboFilter.AddText(L"*.*");
     }
-    _ComboFilter.addText(_pSettings->GetFileFilter().getFilterString());
+    _ComboFilter.AddText(_pSettings->GetFileFilter().getFilterString());
 
     /* load cursor */
     _hCurWait = ::LoadCursor(nullptr, IDC_WAIT);
@@ -1024,11 +1029,16 @@ void ExplorerDialog::InitialDialog()
         return FALSE;
     });
 
-    _ComboFilter.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
+    _ComboFilter.SetDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
         switch (nChar) {
         case VK_TAB:
             if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-                ::SetFocus(_hListCtrl);
+                if (_pSettings->IsUseFullTree()) {
+                    ::SetFocus(_hTreeCtrl);
+                }
+                else {
+                    ::SetFocus(_hListCtrl);
+                }
             }
             else {
                 ::SetFocus(_hTreeCtrl);
@@ -1422,10 +1432,13 @@ void ExplorerDialog::ClearFilter()
 {
     _pSettings->GetFilterHistory().clear();
     _pSettings->GetFileFilter().setFilter(L"*.*");
-    _ComboFilter.clearComboList();
-    _ComboFilter.addText(L"*.*");
-    _ComboFilter.setText(L"*.*");
+    _ComboFilter.ClearComboList();
+    _ComboFilter.AddText(L"*.*");
+    _ComboFilter.SetText(L"*.*");
     _FileList.filterFiles(L"*.*");
+    if (_pSettings->IsUseFullTree()) {
+        RefreshTreeFilter();
+    }
 }
 
 /**************************************************************************
@@ -1703,11 +1716,15 @@ void ExplorerDialog::UpdateLayout()
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
-            rc.bottom -= toolBarHeight;
+            rc.bottom -= (toolBarHeight + filterHeight);
             ::SetWindowPos(_hTreeCtrl,      nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl,  nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl,      nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
-            ::SetWindowPos(_hFilter,        nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
+
+            getClientRect(rc);
+            rc.top = rc.bottom - filterHeight + 1;
+            rc.bottom = filterHeight;
+            ::SetWindowPos(_hFilter,        nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
         }
         else {
             /* set position of tree control */
@@ -1757,11 +1774,15 @@ void ExplorerDialog::UpdateLayout()
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
             rc.top += toolBarHeight;
-            rc.bottom -= toolBarHeight;
+            rc.bottom -= (toolBarHeight + filterHeight);
             ::SetWindowPos(_hTreeCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
-            ::SetWindowPos(_hFilter, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
+
+            getClientRect(rc);
+            rc.top = rc.bottom - filterHeight + 1;
+            rc.bottom = filterHeight;
+            ::SetWindowPos(_hFilter, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
         }
         else {
             /* set position of tree control */
@@ -2129,6 +2150,36 @@ void ExplorerDialog::RefreshActiveNode()
     }
     Refresh();
 }
+
+void ExplorerDialog::RefreshTreeFilter()
+{
+    if (!isCreated()) return;
+
+    HTREEITEM hRoot = _hTreeCtrl.GetRoot();
+    while (hRoot != nullptr) {
+        RefreshTreeFilter(hRoot);
+        hRoot = _hTreeCtrl.GetNextItem(hRoot, TVGN_NEXT);
+    }
+}
+
+void ExplorerDialog::RefreshTreeFilter(HTREEITEM hItem)
+{
+    if (hItem == nullptr) {
+        return;
+    }
+
+    auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
+    if (pShared != nullptr && *pShared != nullptr && (*pShared)->HasLoadedChildren()) {
+        TreeModelSynchronizer::Synchronize(*this, _hTreeCtrl, hItem, *pShared, _pSettings, _workerThread);
+    }
+
+    HTREEITEM hChild = _hTreeCtrl.GetChild(hItem);
+    while (hChild != nullptr) {
+        RefreshTreeFilter(hChild);
+        hChild = _hTreeCtrl.GetNextItem(hChild, TVGN_NEXT);
+    }
+}
+
 
 void ExplorerDialog::CheckVisibleFolderChildren()
 {
