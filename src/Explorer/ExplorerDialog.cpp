@@ -106,11 +106,9 @@ ExplorerDialog::ExplorerDialog()
     , _viewModel(std::make_shared<ExplorerViewModel>(_model, nullptr, &_workerThread))
     , _pendingSelectRootItem(nullptr)
     , _bStartupFinish(FALSE)
-    , _hExploreVolumeThread(nullptr)
     , _hItemExpand(nullptr)
     , _hDefaultTreeProc(nullptr)
     , _hDefaultSplitterProc(nullptr)
-    , _bOldRectInitialized(FALSE)
     , _isSelNotifyEnable(TRUE)
     , _hListCtrl(nullptr)
     , _hHeader(nullptr)
@@ -123,7 +121,6 @@ ExplorerDialog::ExplorerDialog()
     , _hSplitterCursorUpDown(nullptr)
     , _hSplitterCursorLeftRight(nullptr)
     , _pSettings(nullptr)
-    , _hCurWait(nullptr)
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
     , _iDockedPos(CONT_LEFT)
@@ -404,10 +401,6 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
                 IAsyncTask* rawTask = reinterpret_cast<IAsyncTask*>(msg.wParam);
                 delete rawTask;
             }
-        }
-
-        if (::WaitForSingleObject(_hExploreVolumeThread, 50) != WAIT_OBJECT_0) {
-            ::Sleep(1);
         }
 
         _ToolBar.destroy();
@@ -993,9 +986,6 @@ void ExplorerDialog::InitialDialog()
         _ComboFilter.AddText(L"*.*");
     }
     _ComboFilter.AddText(_pSettings->GetFileFilter().getFilterString());
-
-    /* load cursor */
-    _hCurWait = ::LoadCursor(nullptr, IDC_WAIT);
 
     /* initialize droping */
     ::RegisterDragDrop(_hTreeCtrl, this);

@@ -145,7 +145,6 @@ private:
     HTREEITEM _pendingSelectRootItem;
     /* Handles */
     BOOL        _bStartupFinish;
-    HANDLE      _hExploreVolumeThread;
     HTREEITEM   _hItemExpand;
 
     /* control process */
@@ -153,7 +152,6 @@ private:
     WNDPROC     _hDefaultSplitterProc;
 
     /* some status values */
-    BOOL        _bOldRectInitialized;
     BOOL        _isSelNotifyEnable;
 
     /* handles of controls */
@@ -177,9 +175,6 @@ private:
     HCURSOR     _hSplitterCursorLeftRight;
     Settings*   _pSettings;
     IPluginContext* _pluginContext;
-
-    /* thread variable */
-    HCURSOR     _hCurWait;
 
     /* drag and drop values */
     BOOL        _isScrolling;

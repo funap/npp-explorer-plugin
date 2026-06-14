@@ -27,9 +27,6 @@
     <ClCompile Include="src\NppPlugin\DockingFeature\StaticDialog.cpp">
       <Filter>src\NppPlugin</Filter>
     </ClCompile>
-    <ClCompile Include="src\Explorer\HistoryComboBox.cpp">
-      <Filter>src\Explorer</Filter>
-    </ClCompile>
     <ClCompile Include="src\Explorer\ContextMenu.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
@@ -126,6 +123,9 @@
     <ClCompile Include="src\Explorer\NppContext.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\ComboBox.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="src\Explorer\version.rc">
@@ -136,9 +136,6 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Explorer\HistoryComboBox.h">
-      <Filter>src\Explorer</Filter>
-    </ClInclude>
     <ClInclude Include="src\Explorer\ContextMenu.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
@@ -287,6 +284,9 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\NppContext.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ComboBox.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
   </ItemGroup>
