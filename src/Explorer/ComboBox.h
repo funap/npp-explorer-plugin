@@ -41,6 +41,8 @@ public:
     ComboBox& operator=(ComboBox&&)       = delete;
 
     void Init(HWND hCombo, HWND hParent);
+    void DrawItem(DRAWITEMSTRUCT* lpDrawItemStruct);
+    void MeasureItem(MEASUREITEMSTRUCT* lpMeasureItemStruct);
 
     void AddText(const std::wstring& text);
     void SetText(const std::wstring& text);
@@ -56,15 +58,22 @@ public:
 
 private:
     void SelectComboText(const std::wstring& text);
-    LRESULT RunProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT RunEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT RunListProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    RECT GetDeleteButtonRect(const RECT& itemRect) const;
+    BOOL IsPointInDeleteButton(const POINT& pt, const RECT& itemRect) const;
 
-    static LRESULT CALLBACK SubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    static LRESULT CALLBACK EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+    static LRESULT CALLBACK ListSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
     HWND _comboWindow{nullptr};
-    HWND _editWindow{nullptr};
     HWND _parentWindow{nullptr};
+    HWND _editWindow{nullptr};
+    HWND _listWindow{nullptr};
     std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
+    int _hotDeleteIndex{-1};
 
-    static constexpr UINT_PTR SUBCLASS_ID = 1;
+    static constexpr UINT_PTR EDIT_SUBCLASS_ID = 1;
+    static constexpr UINT_PTR LIST_SUBCLASS_ID = 2;
     static constexpr size_t MAX_HISTORY_ITEMS = 20;
 };

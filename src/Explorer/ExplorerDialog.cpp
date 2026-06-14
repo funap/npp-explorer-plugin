@@ -200,6 +200,22 @@ void ExplorerDialog::doDialog(bool willBeShown)
 INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message) {
+    case WM_DRAWITEM: {
+        DRAWITEMSTRUCT* lpDrawItemStruct = reinterpret_cast<DRAWITEMSTRUCT*>(lParam);
+        if (lpDrawItemStruct && lpDrawItemStruct->CtlID == IDC_COMBO_FILTER) {
+            _ComboFilter.DrawItem(lpDrawItemStruct);
+            return TRUE;
+        }
+        break;
+    }
+    case WM_MEASUREITEM: {
+        MEASUREITEMSTRUCT* lpMeasureItemStruct = reinterpret_cast<MEASUREITEMSTRUCT*>(lParam);
+        if (lpMeasureItemStruct && lpMeasureItemStruct->CtlID == IDC_COMBO_FILTER) {
+            _ComboFilter.MeasureItem(lpMeasureItemStruct);
+            return TRUE;
+        }
+        break;
+    }
     case WM_INITDIALOG: {
         InitialDialog();
         _model->AddObserver(this);
@@ -1682,6 +1698,16 @@ void ExplorerDialog::UpdateLayout()
     RECT rc = { 0 };
     RECT rcBuff = { 0 };
 
+    INT filterHeight = 0;
+    if (_hFilter) {
+        RECT filterRect;
+        ::GetWindowRect(_hFilter, &filterRect);
+        filterHeight = filterRect.bottom - filterRect.top;
+    }
+    if (filterHeight <= 0) {
+        filterHeight = GetSystemMetrics(SM_CYSMSIZE);
+    }
+
     getClientRect(rc);
 
     if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
@@ -1699,7 +1725,6 @@ void ExplorerDialog::UpdateLayout()
         _Rebar.reSizeTo(rc);
 
         auto toolBarHeight = _ToolBar.getHeight();
-        auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
@@ -1710,7 +1735,7 @@ void ExplorerDialog::UpdateLayout()
             ::SetWindowPos(_hListCtrl,      nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
 
             getClientRect(rc);
-            rc.top = rc.bottom - filterHeight + 1;
+            rc.top = rc.bottom - filterHeight;
             rc.bottom = filterHeight;
             ::SetWindowPos(_hFilter,        nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
         }
@@ -1737,7 +1762,7 @@ void ExplorerDialog::UpdateLayout()
             getClientRect(rc);
 
             /* set position of combo */
-            rc.top = rc.bottom - filterHeight + 1;
+            rc.top = rc.bottom - filterHeight;
             rc.bottom = filterHeight;
             ::SetWindowPos(_hFilter, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
         }
@@ -1757,7 +1782,6 @@ void ExplorerDialog::UpdateLayout()
         _Rebar.reSizeTo(rc);
 
         auto toolBarHeight = _ToolBar.getHeight();
-        auto filterHeight = GetSystemMetrics(SM_CYSMSIZE);
 
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
@@ -1768,7 +1792,7 @@ void ExplorerDialog::UpdateLayout()
             ::SetWindowPos(_hListCtrl, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
 
             getClientRect(rc);
-            rc.top = rc.bottom - filterHeight + 1;
+            rc.top = rc.bottom - filterHeight;
             rc.bottom = filterHeight;
             ::SetWindowPos(_hFilter, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
         }
@@ -1785,7 +1809,7 @@ void ExplorerDialog::UpdateLayout()
             rcBuff = rc;
 
             /* set position of combo */
-            rc.top = rcBuff.bottom - filterHeight + 6;
+            rc.top = rcBuff.bottom - filterHeight;
             rc.bottom = filterHeight;
             rc.left = rcBuff.left;
             rc.right = splitterPos - rcBuff.left;
