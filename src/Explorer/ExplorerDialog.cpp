@@ -1058,6 +1058,8 @@ void ExplorerDialog::InitialDialog()
         }
         return FALSE;
     });
+
+    ::PostMessage(_hFilter, CB_SETEDITSEL, 0, MAKELPARAM(-1, -1));
 }
 
 void ExplorerDialog::EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task)
