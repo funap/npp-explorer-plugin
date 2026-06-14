@@ -351,6 +351,7 @@ void GotoCurrentFile()
 {
     explorerDlg.doDialog();
     explorerDlg.GotoCurrentFile();
+    explorerDlg.SetFocusOnFile();
 }
 
 void ShowExplorerDialogOnFolder()

@@ -1373,7 +1373,6 @@ void ExplorerDialog::GotoCurrentFile()
         std::filesystem::path currentPath = _pluginContext->GetFullCurrentPath();
         if (std::filesystem::exists(currentPath)) {
             _viewModel->NavigateTo(currentPath.wstring());
-            SetFocusOnFile();
         }
     }
     else {
@@ -1381,7 +1380,6 @@ void ExplorerDialog::GotoCurrentFile()
         if (!currentDir.empty()) {
             _viewModel->NavigateTo(currentDir);
             _FileList.SelectCurFile();
-            SetFocusOnFile();
         }
     }
 }
