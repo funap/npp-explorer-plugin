@@ -26,7 +26,7 @@ void ToolBarIcons::init(ToolBarButtonUnit *buttonUnitArray, int arraySize)
     _nbCmd = arraySize;
 }
 
-void ToolBarIcons::create(HINSTANCE hInst, int iconSize)
+void ToolBarIcons::create(HINSTANCE hInst, int iconSize, bool isDarkMode)
 {
     _iconListVector.push_back(IconList());
     _iconListVector.push_back(IconList());
@@ -38,7 +38,7 @@ void ToolBarIcons::create(HINSTANCE hInst, int iconSize)
     _iconListVector[HLIST_DISABLE].create(hInst, iconSize);
     //_iconListVector[HLIST_UGLY].create(hInst, 16);
 
-    reInit(iconSize);
+    reInit(iconSize, isDarkMode);
 }
 
 void ToolBarIcons::destroy()

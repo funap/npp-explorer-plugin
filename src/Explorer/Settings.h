@@ -134,6 +134,9 @@ public:
     bool IsUseSystemIcons() const { return _bUseSystemIcons; }
     void SetUseSystemIcons(bool use) { _bUseSystemIcons = use; }
 
+    bool IsUseFluentIcons() const { return _bUseFluentIcons; }
+    void SetUseFluentIcons(bool use) { _bUseFluentIcons = use; }
+
     NppExecProp& GetNppExecProp() { return _nppExecProp; }
     const NppExecProp& GetNppExecProp() const { return _nppExecProp; }
 
@@ -177,6 +180,7 @@ private:
     FileFilter                  _fileFilter             {};
     UINT                        _uTimeout               = 1000;
     bool                        _bUseSystemIcons        = true;
+    bool                        _bUseFluentIcons        = false;
     NppExecProp                 _nppExecProp            {};
     CphProgram                  _cphProgram             {};
     size_t                      _maxHistorySize         = 50;

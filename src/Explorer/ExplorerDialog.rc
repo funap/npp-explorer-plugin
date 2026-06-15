@@ -115,10 +115,9 @@ BEGIN
     CONTROL         "Use Windows &Icons",IDC_CHECK_USEICON,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,62,124,8
     CONTROL         "Auto-navigate to file",IDC_CHECK_AUTONAV,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,74,124,8
     CONTROL         "Use &Full tree",IDC_CHECK_USEFULLTREE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,86,124,8
+    CONTROL         "Use Fluent Icons",IDC_CHECK_USEFLUENTICONS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,98,124,8
     LTEXT           "Maximum History Size:",IDC_STATIC_HISTORY,148,117,90,8
-    EDITTEXT        IDC_EDIT_TIMEOUT,242,101,29,12,ES_AUTOHSCROLL | ES_NUMBER
     EDITTEXT        IDC_EDIT_HISTORYSIZE,242,116,29,12,ES_AUTOHSCROLL | ES_NUMBER
-    LTEXT           "Timeout Missed Drives (ms):",IDC_STATIC_TMO,148,102,90,8
     PUSHBUTTON      "font",IDC_BTN_CHOOSEFONT,148,135,123,14
 
     // Tab 2: Workspace Folders
@@ -277,6 +276,91 @@ IDI_TB_FLUENT_EXPLORER_DARKMODE ICON                    "res\\fluent_explorer_da
 IDI_TB_FLUENT_FAVES     ICON                    "res\\fluent_faves.ico"
 
 IDI_TB_FLUENT_FAVES_DARKMODE ICON                    "res\\fluent_faves_dark.ico"
+
+IDI_FL_FAVORITES                ICON                    "res\\fluent\\fl_favorites.ico"
+IDI_FL_FAVORITES_GRAY           ICON                    "res\\fluent\\fl_favorites_gray.ico"
+IDI_FL_FAVORITES_DARK           ICON                    "res\\fluent\\fl_favorites_dark.ico"
+IDI_FL_FAVORITES_DARK_GRAY      ICON                    "res\\fluent\\fl_favorites_dark_gray.ico"
+
+IDI_FL_PREV                     ICON                    "res\\fluent\\fl_prev.ico"
+IDI_FL_PREV_GRAY                ICON                    "res\\fluent\\fl_prev_gray.ico"
+IDI_FL_PREV_DARK                ICON                    "res\\fluent\\fl_prev_dark.ico"
+IDI_FL_PREV_DARK_GRAY           ICON                    "res\\fluent\\fl_prev_dark_gray.ico"
+
+IDI_FL_NEXT                     ICON                    "res\\fluent\\fl_next.ico"
+IDI_FL_NEXT_GRAY                ICON                    "res\\fluent\\fl_next_gray.ico"
+IDI_FL_NEXT_DARK                ICON                    "res\\fluent\\fl_next_dark.ico"
+IDI_FL_NEXT_DARK_GRAY           ICON                    "res\\fluent\\fl_next_dark_gray.ico"
+IDI_FL_WORKSPACE                ICON                    "res\\fluent\\fl_workspace.ico"
+IDI_FL_WORKSPACE_GRAY           ICON                    "res\\fluent\\fl_workspace_gray.ico"
+IDI_FL_WORKSPACE_DARK           ICON                    "res\\fluent\\fl_workspace_dark.ico"
+IDI_FL_WORKSPACE_DARK_GRAY      ICON                    "res\\fluent\\fl_workspace_dark_gray.ico"
+
+IDI_FL_FILENEW                  ICON                    "res\\fluent\\fl_filenew.ico"
+IDI_FL_FILENEW_GRAY             ICON                    "res\\fluent\\fl_filenew_gray.ico"
+IDI_FL_FILENEW_DARK             ICON                    "res\\fluent\\fl_filenew_dark.ico"
+IDI_FL_FILENEW_DARK_GRAY        ICON                    "res\\fluent\\fl_filenew_dark_gray.ico"
+
+IDI_FL_FOLDERNEW                ICON                    "res\\fluent\\fl_foldernew.ico"
+IDI_FL_FOLDERNEW_GRAY           ICON                    "res\\fluent\\fl_foldernew_gray.ico"
+IDI_FL_FOLDERNEW_DARK           ICON                    "res\\fluent\\fl_foldernew_dark.ico"
+IDI_FL_FOLDERNEW_DARK_GRAY      ICON                    "res\\fluent\\fl_foldernew_dark_gray.ico"
+
+IDI_FL_FIND                     ICON                    "res\\fluent\\fl_find.ico"
+IDI_FL_FIND_GRAY                ICON                    "res\\fluent\\fl_find_gray.ico"
+IDI_FL_FIND_DARK                ICON                    "res\\fluent\\fl_find_dark.ico"
+IDI_FL_FIND_DARK_GRAY           ICON                    "res\\fluent\\fl_find_dark_gray.ico"
+
+IDI_FL_TERMINAL                 ICON                    "res\\fluent\\fl_terminal.ico"
+IDI_FL_TERMINAL_GRAY            ICON                    "res\\fluent\\fl_terminal_gray.ico"
+IDI_FL_TERMINAL_DARK            ICON                    "res\\fluent\\fl_terminal_dark.ico"
+IDI_FL_TERMINAL_DARK_GRAY       ICON                    "res\\fluent\\fl_terminal_dark_gray.ico"
+
+IDI_FL_FOLDERGO                 ICON                    "res\\fluent\\fl_foldergo.ico"
+IDI_FL_FOLDERGO_GRAY            ICON                    "res\\fluent\\fl_foldergo_gray.ico"
+IDI_FL_FOLDERGO_DARK            ICON                    "res\\fluent\\fl_foldergo_dark.ico"
+IDI_FL_FOLDERGO_DARK_GRAY       ICON                    "res\\fluent\\fl_foldergo_dark_gray.ico"
+
+IDI_FL_FOLDERUSER               ICON                    "res\\fluent\\fl_folderuser.ico"
+IDI_FL_FOLDERUSER_GRAY          ICON                    "res\\fluent\\fl_folderuser_gray.ico"
+IDI_FL_FOLDERUSER_DARK          ICON                    "res\\fluent\\fl_folderuser_dark.ico"
+IDI_FL_FOLDERUSER_DARK_GRAY     ICON                    "res\\fluent\\fl_folderuser_dark_gray.ico"
+
+IDI_FL_UPDATE                   ICON                    "res\\fluent\\fl_update.ico"
+IDI_FL_UPDATE_GRAY              ICON                    "res\\fluent\\fl_update_gray.ico"
+IDI_FL_UPDATE_DARK              ICON                    "res\\fluent\\fl_update_dark.ico"
+IDI_FL_UPDATE_DARK_GRAY         ICON                    "res\\fluent\\fl_update_dark_gray.ico"
+
+IDI_FL_EXPLORER                 ICON                    "res\\fluent\\fl_explorer.ico"
+IDI_FL_EXPLORER_GRAY            ICON                    "res\\fluent\\fl_explorer_gray.ico"
+IDI_FL_EXPLORER_DARK            ICON                    "res\\fluent\\fl_explorer_dark.ico"
+IDI_FL_EXPLORER_DARK_GRAY       ICON                    "res\\fluent\\fl_explorer_dark_gray.ico"
+
+IDI_FL_LINKNEWFILE              ICON                    "res\\fluent\\fl_linknewfile.ico"
+IDI_FL_LINKNEWFILE_GRAY         ICON                    "res\\fluent\\fl_linknewfile_gray.ico"
+IDI_FL_LINKNEWFILE_DARK         ICON                    "res\\fluent\\fl_linknewfile_dark.ico"
+IDI_FL_LINKNEWFILE_DARK_GRAY    ICON                    "res\\fluent\\fl_linknewfile_dark_gray.ico"
+
+IDI_FL_LINKNEWFOLDER            ICON                    "res\\fluent\\fl_linknewfolder.ico"
+IDI_FL_LINKNEWFOLDER_GRAY       ICON                    "res\\fluent\\fl_linknewfolder_gray.ico"
+IDI_FL_LINKNEWFOLDER_DARK       ICON                    "res\\fluent\\fl_linknewfolder_dark.ico"
+IDI_FL_LINKNEWFOLDER_DARK_GRAY  ICON                    "res\\fluent\\fl_linknewfolder_dark_gray.ico"
+
+IDI_FL_LINKNEW                  ICON                    "res\\fluent\\fl_linknew.ico"
+IDI_FL_LINKNEW_GRAY             ICON                    "res\\fluent\\fl_linknew_gray.ico"
+IDI_FL_LINKNEW_DARK             ICON                    "res\\fluent\\fl_linknew_dark.ico"
+IDI_FL_LINKNEW_DARK_GRAY        ICON                    "res\\fluent\\fl_linknew_dark_gray.ico"
+
+IDI_FL_LINKDELETE               ICON                    "res\\fluent\\fl_linkdelete.ico"
+IDI_FL_LINKDELETE_GRAY          ICON                    "res\\fluent\\fl_linkdelete_gray.ico"
+IDI_FL_LINKDELETE_DARK          ICON                    "res\\fluent\\fl_linkdelete_dark.ico"
+IDI_FL_LINKDELETE_DARK_GRAY     ICON                    "res\\fluent\\fl_linkdelete_dark_gray.ico"
+
+IDI_FL_LINKEDIT                 ICON                    "res\\fluent\\fl_linkedit.ico"
+IDI_FL_LINKEDIT_GRAY            ICON                    "res\\fluent\\fl_linkedit_gray.ico"
+IDI_FL_LINKEDIT_DARK            ICON                    "res\\fluent\\fl_linkedit_dark.ico"
+IDI_FL_LINKEDIT_DARK_GRAY       ICON                    "res\\fluent\\fl_linkedit_dark_gray.ico"
+
 
 
 /////////////////////////////////////////////////////////////////////////////

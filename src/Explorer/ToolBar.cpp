@@ -21,14 +21,15 @@
 const int WS_TOOLBARSTYLE = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS |TBSTYLE_FLAT | CCS_TOP | BTNS_AUTOSIZE | CCS_NOPARENTALIGN | CCS_NORESIZE | CCS_NODIVIDER;
 
 bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type, 
-                    ToolBarButtonUnit *buttonUnitArray, int arraySize)
+                    ToolBarButtonUnit *buttonUnitArray, int arraySize, bool isDarkMode)
 {
     Window::init(hInst, hPere);
     _state = type;
+    _isDarkMode = isDarkMode;
     int iconSize = GetSystemMetrics(SM_CYSMICON);
 
     _toolBarIcons.init(buttonUnitArray, arraySize);
-    _toolBarIcons.create(_hInst, iconSize);
+    _toolBarIcons.create(_hInst, iconSize, _isDarkMode);
 
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -62,7 +63,7 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
         _pTBB[i].iString = 0;
     }
 
-    reset(true);    //load icons etc
+    reset(true, _isDarkMode);    //load icons etc
 
     return true;
 }
@@ -100,8 +101,9 @@ int ToolBar::getHeight() const
 }
 
 
-void ToolBar::reset(bool create) 
+void ToolBar::reset(bool create, bool isDarkMode) 
 {
+    _isDarkMode = isDarkMode;
     if (create && _hSelf) {
         //Store current button state information
         TBBUTTON tempBtn;
@@ -147,6 +149,8 @@ void ToolBar::reset(bool create)
 
     if (_state != TB_STANDARD) {
         //If non standard icons, use custom imagelists
+        int iconSize = (_state == TB_LARGE) ? 32 : GetSystemMetrics(SM_CYSMICON);
+        _toolBarIcons.reInit(iconSize, _isDarkMode);
         setDefaultImageList();
         setHotImageList();
         setDisableImageList();
@@ -178,6 +182,14 @@ void ToolBar::reset(bool create)
 
         _pRebar->reNew(REBAR_BAR_TOOLBAR, &_rbBand);
     }
+}
+
+void ToolBar::updateIcons(toolBarStatusType type, bool isDarkMode)
+{
+    _state = type;
+    _isDarkMode = isDarkMode;
+    reset(true, _isDarkMode);
+    Window::redraw();
 }
 
 UINT ToolBar::doPopop(POINT chevPoint)

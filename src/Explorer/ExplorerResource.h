@@ -116,12 +116,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 	#define IDC_CHECK_HIDDEN                (IDD_OPTION_DLG + 7)
 	#define IDC_STATIC_LONG                 (IDD_OPTION_DLG + 8)
 	#define IDC_CHECK_USEICON               (IDD_OPTION_DLG + 9)
-	#define IDC_EDIT_TIMEOUT                (IDD_OPTION_DLG + 10)
 	#define IDC_STATIC_SIZE                 (IDD_OPTION_DLG + 11)
 	#define IDC_STATIC_DATE                 (IDD_OPTION_DLG + 12)
 	#define IDC_STATIC_FILELIST             (IDD_OPTION_DLG + 13)
 	#define IDC_STATIC_GENOPT               (IDD_OPTION_DLG + 14)
-	#define IDC_STATIC_TMO                  (IDD_OPTION_DLG + 15)
+    #define IDC_CHECK_USEFLUENTICONS        (IDD_OPTION_DLG + 15)
 	#define IDC_STATIC_NPPEXEC              (IDD_OPTION_DLG + 16)
 	#define IDC_EDIT_EXECNAME				(IDD_OPTION_DLG + 17)
 	#define IDC_STATIC_EXECNAME				(IDD_OPTION_DLG + 18)
@@ -143,7 +142,93 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     #define IDC_BTN_DEL_WORKSPACE           (IDD_OPTION_DLG + 34)
     #define IDC_BTN_UP_WORKSPACE            (IDD_OPTION_DLG + 35)
     #define IDC_BTN_DOWN_WORKSPACE          (IDD_OPTION_DLG + 36)
- 
+
+/* Fluent Toolbar Icons (17 icons * 4 variants = 68 IDs) */
+#define IDI_FL_FAVORITES                1200
+#define IDI_FL_FAVORITES_GRAY           1201
+#define IDI_FL_FAVORITES_DARK           1202
+#define IDI_FL_FAVORITES_DARK_GRAY      1203
+
+#define IDI_FL_PREV                     1204
+#define IDI_FL_PREV_GRAY                1205
+#define IDI_FL_PREV_DARK                1206
+#define IDI_FL_PREV_DARK_GRAY           1207
+
+#define IDI_FL_NEXT                     1208
+#define IDI_FL_NEXT_GRAY                1209
+#define IDI_FL_NEXT_DARK                1210
+#define IDI_FL_NEXT_DARK_GRAY           1211
+
+#define IDI_FL_WORKSPACE                1212
+#define IDI_FL_WORKSPACE_GRAY           1213
+#define IDI_FL_WORKSPACE_DARK           1214
+#define IDI_FL_WORKSPACE_DARK_GRAY      1215
+
+#define IDI_FL_FILENEW                  1216
+#define IDI_FL_FILENEW_GRAY             1217
+#define IDI_FL_FILENEW_DARK             1218
+#define IDI_FL_FILENEW_DARK_GRAY        1219
+
+#define IDI_FL_FOLDERNEW                1220
+#define IDI_FL_FOLDERNEW_GRAY           1221
+#define IDI_FL_FOLDERNEW_DARK           1222
+#define IDI_FL_FOLDERNEW_DARK_GRAY      1223
+
+#define IDI_FL_FIND                     1224
+#define IDI_FL_FIND_GRAY                1225
+#define IDI_FL_FIND_DARK                1226
+#define IDI_FL_FIND_DARK_GRAY           1227
+
+#define IDI_FL_TERMINAL                 1228
+#define IDI_FL_TERMINAL_GRAY            1229
+#define IDI_FL_TERMINAL_DARK            1230
+#define IDI_FL_TERMINAL_DARK_GRAY       1231
+
+#define IDI_FL_FOLDERGO                 1232
+#define IDI_FL_FOLDERGO_GRAY            1233
+#define IDI_FL_FOLDERGO_DARK            1234
+#define IDI_FL_FOLDERGO_DARK_GRAY       1235
+
+#define IDI_FL_FOLDERUSER               1236
+#define IDI_FL_FOLDERUSER_GRAY          1237
+#define IDI_FL_FOLDERUSER_DARK          1238
+#define IDI_FL_FOLDERUSER_DARK_GRAY     1239
+
+#define IDI_FL_UPDATE                   1240
+#define IDI_FL_UPDATE_GRAY              1241
+#define IDI_FL_UPDATE_DARK              1242
+#define IDI_FL_UPDATE_DARK_GRAY         1243
+
+#define IDI_FL_EXPLORER                 1244
+#define IDI_FL_EXPLORER_GRAY            1245
+#define IDI_FL_EXPLORER_DARK            1246
+#define IDI_FL_EXPLORER_DARK_GRAY       1247
+
+#define IDI_FL_LINKNEWFILE              1248
+#define IDI_FL_LINKNEWFILE_GRAY         1249
+#define IDI_FL_LINKNEWFILE_DARK         1250
+#define IDI_FL_LINKNEWFILE_DARK_GRAY    1251
+
+#define IDI_FL_LINKNEWFOLDER            1252
+#define IDI_FL_LINKNEWFOLDER_GRAY       1253
+#define IDI_FL_LINKNEWFOLDER_DARK       1254
+#define IDI_FL_LINKNEWFOLDER_DARK_GRAY  1255
+
+#define IDI_FL_LINKNEW                  1256
+#define IDI_FL_LINKNEW_GRAY             1257
+#define IDI_FL_LINKNEW_DARK             1258
+#define IDI_FL_LINKNEW_DARK_GRAY        1259
+
+#define IDI_FL_LINKDELETE               1260
+#define IDI_FL_LINKDELETE_GRAY          1261
+#define IDI_FL_LINKDELETE_DARK          1262
+#define IDI_FL_LINKDELETE_DARK_GRAY     1263
+
+#define IDI_FL_LINKEDIT                 1264
+#define IDI_FL_LINKEDIT_GRAY            1265
+#define IDI_FL_LINKEDIT_DARK            1266
+#define IDI_FL_LINKEDIT_DARK_GRAY       1267
+
 #define    IDD_HELP_DLG	     30700
     #define IDC_EMAIL_LINK                  (IDD_HELP_DLG + 1)
 	#define IDC_NPP_PLUGINS_URL				(IDD_HELP_DLG + 2)

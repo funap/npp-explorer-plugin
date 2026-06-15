@@ -303,6 +303,12 @@ void UpdateThemeColor()
     };
     auto isDarkMode = IsDarkColor(colors.body_bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
+    if (explorerDlg.isCreated()) {
+        explorerDlg.UpdateTheme(isDarkMode);
+    }
+    if (favesDlg.isCreated()) {
+        favesDlg.UpdateTheme(isDarkMode);
+    }
 }
 
 
@@ -398,6 +404,14 @@ void OpenOptionDlg()
 
         explorerDlg.redraw();
         favesDlg.redraw();
+
+        bool isDarkMode = g_nppContext.IsDarkMode();
+        if (explorerDlg.isCreated()) {
+            explorerDlg.UpdateTheme(isDarkMode);
+        }
+        if (favesDlg.isCreated()) {
+            favesDlg.UpdateTheme(isDarkMode);
+        }
     }
 }
 

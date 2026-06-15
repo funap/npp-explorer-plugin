@@ -43,15 +43,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace {
 ToolBarButtonUnit toolBarIcons[] = {
-    {IDM_EX_EXPLORER,           IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_TB_EXPLORER,        0},
+    {IDM_EX_EXPLORER,           IDI_FL_EXPLORER, IDI_FL_EXPLORER, IDI_FL_EXPLORER_GRAY, IDB_TB_EXPLORER,        0},
     {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_NEW_FILE,      IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKNEWFILE,     0},
-    {IDM_EX_LINK_NEW_FOLDER,    IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKNEWFOLDER,   0},
+    {IDM_EX_LINK_NEW_FILE,      IDI_FL_LINKNEWFILE, IDI_FL_LINKNEWFILE, IDI_FL_LINKNEWFILE_GRAY, IDB_EX_LINKNEWFILE,     0},
+    {IDM_EX_LINK_NEW_FOLDER,    IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER_GRAY, IDB_EX_LINKNEWFOLDER,   0},
     {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_NEW,           IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKNEW,         0},
-    {IDM_EX_LINK_DELETE,        IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKDELETE,      0},
+    {IDM_EX_LINK_NEW,           IDI_FL_LINKNEW, IDI_FL_LINKNEW, IDI_FL_LINKNEW_GRAY, IDB_EX_LINKNEW,         0},
+    {IDM_EX_LINK_DELETE,        IDI_FL_LINKDELETE, IDI_FL_LINKDELETE, IDI_FL_LINKDELETE_GRAY, IDB_EX_LINKDELETE,      0},
     {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_EDIT,          IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDB_EX_LINKEDIT,        0}
+    {IDM_EX_LINK_EDIT,          IDI_FL_LINKEDIT, IDI_FL_LINKEDIT, IDI_FL_LINKEDIT_GRAY, IDB_EX_LINKEDIT,        0}
 };
 
 WCHAR FAVES_DATA[] = L"Favorites.dat";
@@ -111,6 +111,13 @@ void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop, IPluginCon
     DockingDlgInterface::init(hInst, hParent);
 
     ReadSettings();
+}
+ 
+void FavesDialog::UpdateTheme(bool isDarkMode)
+{
+    toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
+    _ToolBar.updateIcons(toolbarType, isDarkMode);
+    ::SendMessage(_hSelf, WM_SIZE, 0, 0);
 }
 
 
@@ -568,7 +575,9 @@ void FavesDialog::InitialDialog()
     ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* create toolbar */
-    _ToolBar.init(_hInst, _hSelf, TB_STANDARD, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
+    bool isDarkMode = _pluginContext->IsDarkMode();
+    toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
+    _ToolBar.init(_hInst, _hSelf, toolbarType, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit), isDarkMode);
     _Rebar.init(_hInst, _hSelf);
     _ToolBar.addToRebar(&_Rebar);
     _Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);

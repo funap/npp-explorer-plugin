@@ -53,6 +53,7 @@ constexpr WCHAR DateFormat[]        = L"DateFormat";
 constexpr WCHAR LastFilter[]        = L"LastFilter";
 constexpr WCHAR TimeOut[]           = L"TimeOut";
 constexpr WCHAR UseSystemIcons[]    = L"UseSystemIcons";
+constexpr WCHAR UseFluentIcons[]    = L"UseFluentIcons";
 constexpr WCHAR NppExecAppName[]    = L"NppExecAppName";
 constexpr WCHAR NppExecScriptPath[] = L"NppExecScriptPath";
 constexpr WCHAR CphProgramName[]    = L"CphProgramName";
@@ -154,6 +155,7 @@ void Settings::Load(const std::filesystem::path& configDir)
     _fmtDate = ReadEnum(DateFormat, DateFmt::DFMT_ENG, _iniFilePath);
     _uTimeout = static_cast<UINT>(ReadInt(TimeOut, 1000, _iniFilePath));
     _bUseSystemIcons = ReadBool(UseSystemIcons, true, _iniFilePath);
+    _bUseFluentIcons = ReadBool(UseFluentIcons, false, _iniFilePath);
     _maxHistorySize = static_cast<size_t>(ReadInt(MaxHistorySize, 50, _iniFilePath));
     
     _nppExecProp.szAppName = ReadString(NppExecAppName, L"NppExec.dll", _iniFilePath);
@@ -221,6 +223,7 @@ void Settings::Save()
     WriteEnum(DateFormat, _fmtDate, _iniFilePath);
     WriteInt(TimeOut, static_cast<int>(_uTimeout), _iniFilePath);
     WriteBool(UseSystemIcons, _bUseSystemIcons, _iniFilePath);
+    WriteBool(UseFluentIcons, _bUseFluentIcons, _iniFilePath);
     WriteString(NppExecAppName, _nppExecProp.szAppName, _iniFilePath);
     WriteString(NppExecScriptPath, _nppExecProp.szScriptPath, _iniFilePath);
     WriteString(CphProgramName, _cphProgram.szAppName, _iniFilePath);

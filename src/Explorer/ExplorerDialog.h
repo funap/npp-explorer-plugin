@@ -58,6 +58,7 @@ public:
     void init(HINSTANCE hInst, HWND hParent, Settings *prop, IPluginContext* pluginContext);
     void redraw();
     void destroy() override {};
+    void UpdateTheme(bool isDarkMode);
     void doDialog(bool willBeShown = true);
     BOOL GotoPath();
     void GotoUserFolder();

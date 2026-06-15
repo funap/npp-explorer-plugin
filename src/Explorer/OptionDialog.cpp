@@ -127,7 +127,6 @@ INT_PTR CALLBACK OptionDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lPar
         for (const auto& dateFormat : DATE_FORMAT_STRINGS) {
             ::SendDlgItemMessage(_hSelf, IDC_COMBO_DATE_FORMAT, CB_ADDSTRING, 0, (LPARAM)dateFormat);
         }
-        ::SendDlgItemMessage(_hSelf, IDC_EDIT_TIMEOUT, EM_LIMITTEXT, 5, 0);
 
         SetParams();
         LongUpdate();
@@ -346,6 +345,7 @@ void OptionDlg::SetParams()
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTO,        BM_SETCHECK, _pProp->IsAutoUpdate()    ? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN,      BM_SETCHECK, _pProp->IsShowHidden()    ? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON,     BM_SETCHECK, _pProp->IsUseSystemIcons()? BST_CHECKED : BST_UNCHECKED, 0);
+    ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFLUENTICONS, BM_SETCHECK, _pProp->IsUseFluentIcons()? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV,     BM_SETCHECK, _pProp->IsAutoNavigate()  ? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_SETCHECK, _pProp->IsUseFullTree()    ? BST_CHECKED : BST_UNCHECKED, 0);
     ::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_SETCHECK, _pProp->IsHideFoldersInFileList() ? BST_CHECKED : BST_UNCHECKED, 0);
@@ -353,7 +353,6 @@ void OptionDlg::SetParams()
 
     ::SetDlgItemText(_hSelf, IDC_EDIT_EXECNAME,     _pProp->GetNppExecProp().szAppName.c_str());
     ::SetDlgItemText(_hSelf, IDC_EDIT_SCRIPTPATH,   _pProp->GetNppExecProp().szScriptPath.c_str());
-    ::SetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT,      std::to_wstring(_pProp->GetTimeout()).c_str());
     ::SetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE,  std::to_wstring(_pProp->GetMaxHistorySize()).c_str());
     ::SetDlgItemText(_hSelf, IDC_EDIT_CPH,          _pProp->GetCphProgram().szAppName.c_str());
 
@@ -382,11 +381,11 @@ BOOL OptionDlg::GetParams()
     _pProp->SetShowHidden((::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDDEN, BM_GETCHECK, 0, 0) == BST_CHECKED));
     _pProp->SetAutoNavigate((::SendDlgItemMessage(_hSelf, IDC_CHECK_AUTONAV, BM_GETCHECK, 0, 0) == BST_CHECKED));
     _pProp->SetUseSystemIcons((::SendDlgItemMessage(_hSelf, IDC_CHECK_USEICON, BM_GETCHECK, 0, 0) == BST_CHECKED));
+    _pProp->SetUseFluentIcons((::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFLUENTICONS, BM_GETCHECK, 0, 0) == BST_CHECKED));
     _pProp->SetUseFullTree((::SendDlgItemMessage(_hSelf, IDC_CHECK_USEFULLTREE, BM_GETCHECK, 0, 0) == BST_CHECKED));
     _pProp->SetHideFoldersInFileList((::SendDlgItemMessage(_hSelf, IDC_CHECK_HIDE_FOLDERS, BM_GETCHECK, 0, 0) == BST_CHECKED));
 
     WCHAR TEMP[MAX_PATH];
-    ::GetDlgItemText(_hSelf, IDC_EDIT_TIMEOUT, TEMP, 6);
     _pProp->SetTimeout((UINT)_wtoi(TEMP));
 
     ::GetDlgItemText(_hSelf, IDC_EDIT_HISTORYSIZE, TEMP, 6);
@@ -415,8 +414,9 @@ void OptionDlg::ShowTab(int activeTab)
         IDC_STATIC_LONG, IDC_CHECK_LONG, IDC_STATIC_SIZE, IDC_STATIC_DATE,
         IDC_COMBO_SIZE_FORMAT, IDC_COMBO_DATE_FORMAT,
         IDC_STATIC_GENOPT, IDC_CHECK_AUTO, IDC_CHECK_HIDDEN, IDC_CHECK_USEICON,
-        IDC_CHECK_AUTONAV, IDC_CHECK_USEFULLTREE, IDC_STATIC_HISTORY, IDC_EDIT_TIMEOUT,
-        IDC_EDIT_HISTORYSIZE, IDC_STATIC_TMO, IDC_BTN_CHOOSEFONT
+        IDC_CHECK_USEFLUENTICONS,
+        IDC_CHECK_AUTONAV, IDC_CHECK_USEFULLTREE, IDC_STATIC_HISTORY,
+        IDC_EDIT_HISTORYSIZE, IDC_BTN_CHOOSEFONT
     };
     
     std::vector<int> tabWorkspaceCtrls = {

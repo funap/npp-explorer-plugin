@@ -63,12 +63,15 @@ public :
     HIMAGELIST getHandle() const {return _hImglst;};
 
     void addIcon(int iconID) const {
-        HICON hIcon = ::LoadIcon(_hInst, MAKEINTRESOURCE(iconID));
+        HICON hIcon = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(iconID), IMAGE_ICON, _iconSize, _iconSize, 0);
+        if (!hIcon) {
+            hIcon = ::LoadIcon(_hInst, MAKEINTRESOURCE(iconID));
+        }
         if (!hIcon) {
             throw int(26);
         }
         ImageList_AddIcon(_hImglst, hIcon);
-        ::DeleteObject(hIcon);
+        ::DestroyIcon(hIcon);
     };
 
     bool changeIcon(int index, const WCHAR *iconLocation) const{
@@ -134,7 +137,7 @@ public :
     ToolBarIcons() : _nbCmd(0) {};
 
     void init(ToolBarButtonUnit *buttonUnitArray, int arraySize);
-    void create(HINSTANCE hInst, int iconSize);
+    void create(HINSTANCE hInst, int iconSize, bool isDarkMode);
     void destroy();
 
     HIMAGELIST getDefaultLst() const {
@@ -150,20 +153,34 @@ public :
     };
 
     unsigned int getNbCommand() const {return _nbCmd;};
-    void resizeIcon(int size) {
-        reInit(size);
+    void resizeIcon(int size, bool isDarkMode) {
+        reInit(size, isDarkMode);
     };
 
-    void reInit(int size) {
+    void reInit(int size, bool isDarkMode) {
+        ImageList_RemoveAll(getDefaultLst());
+        ImageList_RemoveAll(getHotLst());
+        ImageList_RemoveAll(getDisableLst());
+
         ImageList_SetIconSize(getDefaultLst(), size, size);
         ImageList_SetIconSize(getHotLst(), size, size);
         ImageList_SetIconSize(getDisableLst(), size, size);
 
         for (int i = 0 ; i < int(_tbiis.size()) ; i++) {
             if (_tbiis[i]._defaultIcon != -1) {
-                _iconListVector[HLIST_DEFAULT].addIcon(_tbiis[i]._defaultIcon);
-                _iconListVector[HLIST_HOT].addIcon(_tbiis[i]._hotIcon);
-                _iconListVector[HLIST_DISABLE].addIcon(_tbiis[i]._grayIcon);
+                int defaultIcon = _tbiis[i]._defaultIcon;
+                int hotIcon = _tbiis[i]._hotIcon;
+                int grayIcon = _tbiis[i]._grayIcon;
+                
+                if (isDarkMode) {
+                    defaultIcon += 2;
+                    hotIcon += 2;
+                    grayIcon += 2;
+                }
+
+                _iconListVector[HLIST_DEFAULT].addIcon(defaultIcon);
+                _iconListVector[HLIST_HOT].addIcon(hotIcon);
+                _iconListVector[HLIST_DISABLE].addIcon(grayIcon);
             }
         }
 
