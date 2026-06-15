@@ -32,6 +32,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 constexpr INT DOCKABLE_EXPLORER_INDEX   = 0;
 constexpr INT DOCKABLE_FAVORTIES_INDEX  = 1;
+constexpr INT MENU_WORKSPACE_MODE_INDEX = 13;
 
 
 constexpr CHAR SHORTCUT_ALL     = 0x01;

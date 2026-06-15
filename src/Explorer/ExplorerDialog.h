@@ -25,6 +25,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <filesystem>
 #include <optional>
 
+#include "AddressBar.h"
 #include "ComboBox.h"
 #include "Explorer.h"
 #include "ExplorerContext.h"
@@ -74,12 +75,14 @@ public:
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
     void SetFont(HFONT font);
+    Settings* GetSettings() const { return _pSettings; }
     bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
     void NavigateBack() override;
     void NavigateForward() override;
     void NavigateTo(const std::wstring& path) override;
     void Open(const std::wstring& path) override;
     void Refresh() override;
+    void FocusAddressBar() override;
     void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true) override;
     void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
     void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) override;
@@ -167,6 +170,7 @@ private:
     ComboBox    _ComboFilter;
     ToolBar     _ToolBar;
     ReBar       _Rebar;
+    AddressBar  _addressBar;
 
     /* splitter values */
     POINT       _ptOldPos;

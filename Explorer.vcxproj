@@ -241,6 +241,7 @@
     <None Include="src\Explorer\res\updown.cur" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Explorer\AddressBar.cpp" />
     <ClCompile Include="src\Explorer\ComboBox.cpp" />
     <ClCompile Include="src\Explorer\ContextMenu.cpp" />
     <ClCompile Include="src\Explorer\DirectoryReader.cpp" />
@@ -286,6 +287,7 @@
     <ResourceCompile Include="src\Explorer\version.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Explorer\AddressBar.h" />
     <ClInclude Include="src\Explorer\ComboBox.h" />
     <ClInclude Include="src\Explorer\ContextMenu.h" />
     <ClInclude Include="src\Explorer\DirectoryReader.h" />

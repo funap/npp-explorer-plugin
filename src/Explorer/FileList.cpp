@@ -186,6 +186,12 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         case VK_F5:
             _viewModel->Refresh();
             return TRUE;
+        case 'L':
+            if ((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000) {
+                _context->FocusAddressBar();
+                return TRUE;
+            }
+            break;
         default:
 
             break;

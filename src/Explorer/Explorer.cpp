@@ -201,6 +201,7 @@ extern "C" __declspec(dllexport) void setInfo(NppData notpadPlusData)
     favesDlg.VisibleChanged([](bool visible) {
         g_nppContext.SetMenuItemCheck(funcItem[DOCKABLE_FAVORTIES_INDEX]._cmdID, visible);
     });
+    g_nppContext.SetMenuItemCheck(funcItem[MENU_WORKSPACE_MODE_INDEX]._cmdID, settings.IsShowWorkspaceMode());
 
     /* Subclassing for Notepad */
     wndProcNotepad = (WNDPROC)::SetWindowLongPtr(g_nppContext.GetWindow(), GWLP_WNDPROC, (LONG_PTR)SubWndProcNotepad);
@@ -385,8 +386,11 @@ void ClearFilter()
 void ToggleWorkspaceMode()
 {
     bool currentMode = settings.IsShowWorkspaceMode();
-    settings.SetShowWorkspaceMode(!currentMode);
+    bool newMode = !currentMode;
+    settings.SetShowWorkspaceMode(newMode);
     settings.Save();
+
+    g_nppContext.SetMenuItemCheck(funcItem[MENU_WORKSPACE_MODE_INDEX]._cmdID, newMode);
 
     if (explorerDlg.isCreated()) {
         explorerDlg.RebuildRoots();

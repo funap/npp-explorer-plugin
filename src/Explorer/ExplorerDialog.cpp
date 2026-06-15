@@ -57,7 +57,7 @@ ToolBarButtonUnit toolBarIcons[] = {
     {IDM_EX_PREV,           IDI_FL_PREV, IDI_FL_PREV, IDI_FL_PREV_GRAY, IDB_EX_PREV,        TBSTYLE_DROPDOWN},
     {IDM_EX_NEXT,           IDI_FL_NEXT, IDI_FL_NEXT, IDI_FL_NEXT_GRAY, IDB_EX_NEXT,        TBSTYLE_DROPDOWN},
     {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-    {IDM_EX_TOGGLE_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE_GRAY, IDB_EX_WORKSPACE,  0},
+    {IDM_EX_TOGGLE_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE_GRAY, IDB_EX_WORKSPACE,  TBSTYLE_CHECK},
     {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
     {IDM_EX_FILE_NEW,       IDI_FL_FILENEW, IDI_FL_FILENEW, IDI_FL_FILENEW_GRAY, IDB_EX_FILENEW,     0},
     {IDM_EX_FOLDER_NEW,     IDI_FL_FOLDERNEW, IDI_FL_FOLDERNEW, IDI_FL_FOLDERNEW_GRAY, IDB_EX_FOLDERNEW,   0},
@@ -150,6 +150,7 @@ void ExplorerDialog::UpdateTheme(bool isDarkMode)
 {
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
     _ToolBar.updateIcons(toolbarType, isDarkMode);
+    _addressBar.UpdateTheme(isDarkMode);
     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
 }
 
@@ -608,6 +609,10 @@ LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
             Refresh();
             return TRUE;
         }
+        if (wParam == 'L' && (0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000) {
+            FocusAddressBar();
+            return TRUE;
+        }
         if (VK_ESCAPE == wParam) {
             _pluginContext->SetFocusToCurrentEdit();
             return TRUE;
@@ -1000,6 +1005,7 @@ void ExplorerDialog::InitialDialog()
 
     _Rebar.init(_hInst, _hSelf);
     _ToolBar.addToRebar(&_Rebar);
+    _ToolBar.setCheck(IDM_EX_TOGGLE_WORKSPACE, _pSettings->IsShowWorkspaceMode());
     _ToolBar.enable(IDM_EX_PREV, FALSE);
     _ToolBar.enable(IDM_EX_NEXT, FALSE);
     _Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);
@@ -1068,6 +1074,11 @@ void ExplorerDialog::InitialDialog()
         return FALSE;
     });
 
+    _addressBar.Init(_hInst, _hSelf, this);
+    _addressBar.SetFont(_pSettings->GetDefaultFont());
+    _addressBar.UpdateTheme(_pluginContext->IsDarkMode());
+    _addressBar.SetPath(_pSettings->GetCurrentDir());
+
     ::PostMessage(_hFilter, CB_SETEDITSEL, 0, MAKELPARAM(-1, -1));
 }
 
@@ -1096,6 +1107,7 @@ void ExplorerDialog::SetFont(HFONT font)
 {
     ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)font, TRUE);
     ::SendMessage(_hListCtrl, WM_SETFONT, (WPARAM)font, TRUE);
+    _addressBar.SetFont(font);
 }
 
 BOOL ExplorerDialog::SelectItem(const std::filesystem::path& path)
@@ -1570,6 +1582,7 @@ void ExplorerDialog::UpdateRoots()
 
 void ExplorerDialog::RebuildRoots()
 {
+    _ToolBar.setCheck(IDM_EX_TOGGLE_WORKSPACE, _pSettings->IsShowWorkspaceMode());
     _expandedPaths.clear();
     CollectExpandedPaths(TVI_ROOT);
     _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
@@ -1721,6 +1734,8 @@ void ExplorerDialog::UpdateLayout()
 
     getClientRect(rc);
 
+    INT addressBarHeight = _addressBar.GetHeight();
+
     if ((_iDockedPos == CONT_LEFT) || (_iDockedPos == CONT_RIGHT)) {
         INT splitterPos = _pSettings->GetSplitterPos();
 
@@ -1739,8 +1754,10 @@ void ExplorerDialog::UpdateLayout()
 
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
-            rc.top += toolBarHeight;
-            rc.bottom -= (toolBarHeight + filterHeight);
+            _addressBar.Resize(rc.left, rc.top + toolBarHeight, rc.right - rc.left, addressBarHeight);
+
+            rc.top += toolBarHeight + addressBarHeight + 2;
+            rc.bottom -= (toolBarHeight + addressBarHeight + 2 + filterHeight);
             ::SetWindowPos(_hTreeCtrl,      nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl,  nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl,      nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
@@ -1753,20 +1770,22 @@ void ExplorerDialog::UpdateLayout()
         else {
             /* set position of tree control */
             getClientRect(rc);
-            rc.top += toolBarHeight;
+            _addressBar.Resize(rc.left, rc.top + toolBarHeight, rc.right - rc.left, addressBarHeight);
+
+            rc.top += toolBarHeight + addressBarHeight + 2;
             rc.bottom = splitterPos;
             ::SetWindowPos(_hTreeCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
             /* set splitter */
             getClientRect(rc);
-            rc.top = (splitterPos + toolBarHeight);
+            rc.top = (splitterPos + toolBarHeight + addressBarHeight + 2);
             rc.bottom = 6;
             ::SetWindowPos(_hSplitterCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
             /* set position of list control */
             getClientRect(rc);
-            rc.top = (splitterPos + toolBarHeight + 6);
-            rc.bottom -= (splitterPos + toolBarHeight + 6 + filterHeight);
+            rc.top = (splitterPos + toolBarHeight + addressBarHeight + 2 + 6);
+            rc.bottom -= (splitterPos + toolBarHeight + addressBarHeight + 2 + 6 + filterHeight);
             ::SetWindowPos(_hListCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
             /* set position of filter controls */
@@ -1796,8 +1815,10 @@ void ExplorerDialog::UpdateLayout()
 
         if (_pSettings->IsUseFullTree()) {
             getClientRect(rc);
-            rc.top += toolBarHeight;
-            rc.bottom -= (toolBarHeight + filterHeight);
+            _addressBar.Resize(rc.left, rc.top + toolBarHeight, rc.right - rc.left, addressBarHeight);
+
+            rc.top += toolBarHeight + addressBarHeight + 2;
+            rc.bottom -= (toolBarHeight + addressBarHeight + 2 + filterHeight);
             ::SetWindowPos(_hTreeCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
             ::SetWindowPos(_hSplitterCtrl, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
             ::SetWindowPos(_hListCtrl, nullptr, 0, 0, 0, 0, SWP_HIDEWINDOW);
@@ -1810,8 +1831,10 @@ void ExplorerDialog::UpdateLayout()
         else {
             /* set position of tree control */
             getClientRect(rc);
-            rc.top += toolBarHeight;
-            rc.bottom -= toolBarHeight + filterHeight;
+            _addressBar.Resize(rc.left, rc.top + toolBarHeight, rc.right - rc.left, addressBarHeight);
+
+            rc.top += toolBarHeight + addressBarHeight + 2;
+            rc.bottom -= toolBarHeight + addressBarHeight + 2 + filterHeight;
             rc.right = splitterPos;
             ::SetWindowPos(_hTreeCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
@@ -1828,13 +1851,16 @@ void ExplorerDialog::UpdateLayout()
 
             /* set splitter */
             getClientRect(rc);
+            rc.top += toolBarHeight + addressBarHeight + 2;
+            rc.bottom -= toolBarHeight + addressBarHeight + 2;
             rc.left = splitterPos;
             rc.right = 6;
             ::SetWindowPos(_hSplitterCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
 
             /* set position of list control */
             getClientRect(rc);
-            rc.top += toolBarHeight;
+            rc.top += toolBarHeight + addressBarHeight + 2;
+            rc.bottom -= toolBarHeight + addressBarHeight + 2;
             rc.left = splitterPos + 6;
             rc.right -= rc.left;
             ::SetWindowPos(_hListCtrl, nullptr, rc.left, rc.top, rc.right, rc.bottom, SWP_NOZORDER | SWP_SHOWWINDOW);
@@ -2007,6 +2033,11 @@ void ExplorerDialog::Refresh()
     UpdateAllExpandedItems();
     UpdatePath();
     _viewModel->Refresh();
+}
+
+void ExplorerDialog::FocusAddressBar()
+{
+    _addressBar.ShowEdit(true);
 }
 
 bool ExplorerDialog::DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect)
@@ -2237,6 +2268,8 @@ void ExplorerDialog::CheckVisibleFolderChildren()
 
 void ExplorerDialog::OnCurrentDirectoryChanged(const std::wstring& path)
 {
+    _addressBar.SetPath(path);
+
     HTREEITEM hSel = _hTreeCtrl.GetSelection();
     if (hSel != nullptr) {
         const std::wstring selected_path = GetPath(hSel);

@@ -123,6 +123,9 @@
     <ClCompile Include="src\Explorer\NppContext.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\AddressBar.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
     <ClCompile Include="src\Explorer\ComboBox.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
@@ -284,6 +287,9 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\NppContext.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\AddressBar.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\ComboBox.h">
