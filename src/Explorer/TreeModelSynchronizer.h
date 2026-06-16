@@ -1,4 +1,4 @@
-﻿// The MIT License (MIT)
+// The MIT License (MIT)
 //
 // Copyright (c) 2024 funap
 //
@@ -29,7 +29,7 @@
 
 #include "ExplorerModel.h"
 #include "TreeView.h"
-#include "WorkerThread.h"
+#include "ExplorerViewModel.h"
 #include "Settings.h"
 
 // Forward declaration to avoid circular dependency
@@ -61,13 +61,13 @@ public:
     /// @param entry        The ExplorerEntry whose children represent the
     ///                     desired state of the tree node.
     /// @param settings     Plugin settings (hidden-files, full-tree mode, etc.).
-    /// @param workerThread Worker thread used to dispatch icon-extraction tasks.
+    /// @param viewModel    ExplorerViewModel used to dispatch icon-extraction tasks.
     static void Synchronize(
         ExplorerDialog& dialog,
         TreeView& treeCtrl,
         HTREEITEM hParentItem,
         const std::shared_ptr<ExplorerEntry>& entry,
         Settings* settings,
-        WorkerThread& workerThread);
+        ExplorerViewModel& viewModel);
 };
 

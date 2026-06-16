@@ -31,7 +31,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileList.h"
 #include "TreeView.h"
 #include "ToolBar.h"
-#include "WorkerThread.h"
 #include "ExplorerModel.h"
 #include "ExplorerTasks.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
@@ -47,9 +46,10 @@ struct GetVolumeInfo {
     LPBOOL      pIsValidDrive;
 };
 
+#include "IDispatcher.h"
 #include "ExplorerViewModel.h"
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public IAsyncTaskCallback, public IExplorerModelObserver, public IExplorerViewModelObserver
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public IDispatcher, public IExplorerModelObserver, public IExplorerViewModelObserver
 {
 public:
     ExplorerDialog();
@@ -76,6 +76,7 @@ public:
     void SetFont(HFONT font);
     Settings* GetSettings() const { return _pSettings; }
     bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
+    void Post(std::function<void()> action) override;
     void NavigateBack();
     void NavigateForward();
     void NavigateTo(const std::wstring& path);
@@ -111,7 +112,6 @@ protected:
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
     void InitialDialog();
-    void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
     void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
 
     // IExplorerViewModelObserver overrides
@@ -188,7 +188,6 @@ private:
 
     INT         _iDockedPos;
 
-    WorkerThread _workerThread;
     std::set<HTREEITEM> _checkedItems;
     std::wstring _pendingNavigateDir;
 

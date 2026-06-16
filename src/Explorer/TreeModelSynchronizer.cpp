@@ -61,7 +61,7 @@ void TreeModelSynchronizer::Synchronize(
     HTREEITEM hParentItem,
     const std::shared_ptr<ExplorerEntry>& entry,
     Settings* settings,
-    WorkerThread& workerThread)
+    ExplorerViewModel& viewModel)
 {
     if (FileSystemService::IsUncServerPath(dialog.GetPath(hParentItem))) {
         treeCtrl.SetItemHasChildren(hParentItem, TRUE);
@@ -106,7 +106,7 @@ void TreeModelSynchronizer::Synchronize(
     auto enqueueIcon = [&](HTREEITEM hItem) {
         std::wstring currentPath = dialog.GetPath(hItem);
         if (devType == DEVT_DRIVE || settings->IsUseSystemIcons()) {
-            workerThread.Enqueue(std::make_unique<TaskTreeViewFetchIcons>(&treeCtrl, hItem, currentPath, devType));
+            viewModel.EnqueueAsyncTask(std::make_unique<TaskTreeViewFetchIcons>(&treeCtrl, hItem, currentPath, devType));
         }
     };
 

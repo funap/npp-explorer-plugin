@@ -32,6 +32,7 @@
 
 #include "WorkerThread.h"
 #include "ExplorerModel.h"
+#include "IDispatcher.h"
 #include "Settings.h"
 #include "FileSystemService.h"
 
@@ -45,15 +46,16 @@ struct NavigationState {
 
 class ExplorerViewModel : public IAsyncTaskCallback {
 public:
-    ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, WorkerThread* workerThread);
+    ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, IDispatcher* dispatcher);
     virtual ~ExplorerViewModel();
-
-    void SetNotificationWindow(HWND hWnd);
     void SetSettings(Settings* settings) { _settings = settings; }
     Settings* GetSettings() const { return _settings; }
 
     void OpenFile(const std::wstring& filePath);
     void NavigateOrExecute(const std::wstring& input);
+    void InitModel();
+    void UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path);
+    void StopWorkerThread();
 
     void AddObserver(IExplorerViewModelObserver* observer);
     void RemoveObserver(IExplorerViewModelObserver* observer);
@@ -94,9 +96,6 @@ public:
     // IAsyncTaskCallback implementation
     void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
 
-    // Processes completed task on the UI thread (via EXM_ASYNCTASK_COMPLETED)
-    void ProcessTaskCompleted(IAsyncTask* rawTask);
-
 private:
     void NotifyCurrentDirectoryChanged();
     void NotifyEntriesLoaded();
@@ -104,7 +103,7 @@ private:
 
     std::shared_ptr<ExplorerModel> _model;
     Settings* _settings;
-    WorkerThread* _workerThread;
+    WorkerThread _workerThread;
 
     std::wstring _currentDir;
     std::wstring _filter{ L"*.*" };
@@ -117,7 +116,7 @@ private:
     std::vector<IExplorerViewModelObserver*> _observers;
     mutable std::mutex _mutex;
 
-    HWND _hNotifyWnd{ nullptr }; // HWND of the dialog to post thread completed tasks to
+    IDispatcher* _dispatcher{ nullptr };
 
     uint64_t _currentGeneration{ 0 };
     std::shared_ptr<std::atomic<bool>> _cancelToken;

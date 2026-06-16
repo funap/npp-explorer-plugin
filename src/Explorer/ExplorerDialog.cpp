@@ -103,7 +103,7 @@ LPCTSTR GetNameStrFromCmd(UINT resourceId)
 ExplorerDialog::ExplorerDialog()
     : DockingDlgInterface(IDD_EXPLORER_DLG)
     , _model(std::make_shared<ExplorerModel>())
-    , _viewModel(std::make_shared<ExplorerViewModel>(_model, nullptr, &_workerThread))
+    , _viewModel(std::make_shared<ExplorerViewModel>(_model, nullptr, this))
     , _pendingSelectRootItem(nullptr)
     , _bStartupFinish(FALSE)
     , _hItemExpand(nullptr)
@@ -131,7 +131,7 @@ ExplorerDialog::ExplorerDialog()
 ExplorerDialog::~ExplorerDialog()
 {
     _viewModel->RemoveObserver(this);
-    _workerThread.Stop();
+    _viewModel->StopWorkerThread();
     if (_model) _model->RemoveObserver(this);
 }
 
@@ -165,6 +165,9 @@ void ExplorerDialog::redraw()
     // during tree deletion will otherwise overwrite the saved current directory.
     std::wstring savedDir = _pSettings->GetCurrentDir();
 
+    _expandedPaths.clear();
+    CollectExpandedPaths(TVI_ROOT);
+
     // Clear all existing tree items recursively to ensure no stale cached files exist
     _hTreeCtrl.DeleteChildren(TVI_ROOT);
     // Re-populate drive roots so SelectItem has roots to traverse
@@ -174,7 +177,8 @@ void ExplorerDialog::redraw()
     _FileList.redraw();
     ::RedrawWindow(_ToolBar.getHSelf(), nullptr, nullptr, TRUE);
 
-    Refresh();
+    SelectItem(savedDir);
+    _viewModel->Refresh();
 };
 
 void ExplorerDialog::doDialog(bool willBeShown)
@@ -229,7 +233,7 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         _model->AddObserver(this);
 
         // EID_INIT -> TaskInit
-        _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
+        _viewModel->InitModel();
         break;
     }
     case WM_COMMAND:  {
@@ -415,15 +419,15 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
         // Stop the worker thread first and wait for it to fully exit before
         // any destructors run. This prevents the thread from calling PostMessage
         // on a window that no longer exists.
-        _workerThread.Stop();
+        _viewModel->StopWorkerThread();
 
-        // Flush any EXM_ASYNCTASK_COMPLETED messages that were posted before
-        // Stop() was called so the raw task pointers do not leak.
+        // Flush any EXM_DISPATCH_ACTION messages that were posted before
+        // Stop() was called so the action function pointers do not leak.
         {
             MSG msg{};
-            while (::PeekMessage(&msg, _hSelf, EXM_ASYNCTASK_COMPLETED, EXM_ASYNCTASK_COMPLETED, PM_REMOVE)) {
-                IAsyncTask* rawTask = reinterpret_cast<IAsyncTask*>(msg.wParam);
-                delete rawTask;
+            while (::PeekMessage(&msg, _hSelf, EXM_DISPATCH_ACTION, EXM_DISPATCH_ACTION, PM_REMOVE)) {
+                auto* pAction = reinterpret_cast<std::function<void()>*>(msg.wParam);
+                delete pAction;
             }
         }
 
@@ -463,20 +467,23 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
     case EXM_USER_ICONBAR:
         HandleToolBarCommand(wParam);
         return TRUE;
-    case EXM_ASYNCTASK_COMPLETED: {
-        _viewModel->ProcessTaskCompleted(reinterpret_cast<IAsyncTask*>(wParam));
+    case EXM_DISPATCH_ACTION: {
+        auto* pAction = reinterpret_cast<std::function<void()>*>(wParam);
+        if (pAction) {
+            (*pAction)();
+            delete pAction;
+        }
         return TRUE;
     }
     case WM_TIMER:
         if (wParam == EXT_UPDATEDEVICE) {
             ::KillTimer(_hSelf, EXT_UPDATEDEVICE);
-            _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
+            _viewModel->InitModel();
             return FALSE;
         }
         if (wParam == EXT_UPDATEACTIVATE) {
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATE);
-            UpdateAllExpandedItems();
-            UpdatePath();
+            Refresh();
             return FALSE;
         }
         if (wParam == EXT_UPDATEACTIVATEPATH) {
@@ -969,9 +976,6 @@ void ExplorerDialog::HandleToolBarDropDown(LPNMTOOLBAR lpnmtb)
 
 void ExplorerDialog::InitialDialog()
 {
-    _viewModel->SetNotificationWindow(_hSelf);
-    _workerThread.Start(_viewModel.get());
-
     /* get handle of dialogs */
     _hTreeCtrl.Attach(::GetDlgItem(_hSelf, IDC_TREE_FOLDER));
     _hListCtrl      = ::GetDlgItem(_hSelf, IDC_LIST_FILE);
@@ -1089,24 +1093,14 @@ void ExplorerDialog::InitialDialog()
 
 void ExplorerDialog::EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task)
 {
-    _workerThread.Enqueue(std::move(task));
+    _viewModel->EnqueueAsyncTask(std::move(task));
 }
 
 void ExplorerDialog::ClearPendingTasks(std::optional<TaskCategory> category)
 {
-    _workerThread.ClearPendingTasks(category);
+    _viewModel->ClearPendingTasks(category);
 }
 
-void ExplorerDialog::OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task)
-{
-    // Release ownership and transfer the raw pointer via the Windows message.
-    // If PostMessage fails (e.g. the window is already destroyed), delete immediately
-    // to avoid a memory leak.
-    IAsyncTask* rawTask = task.release();
-    if (!::PostMessage(_hSelf, EXM_ASYNCTASK_COMPLETED, reinterpret_cast<WPARAM>(rawTask), 0)) {
-        delete rawTask;
-    }
-}
 
 void ExplorerDialog::SetFont(HFONT font)
 {
@@ -1590,7 +1584,7 @@ void ExplorerDialog::RebuildRoots()
     _ToolBar.setCheck(IDM_EX_TOGGLE_WORKSPACE, _pSettings->IsShowWorkspaceMode());
     _expandedPaths.clear();
     CollectExpandedPaths(TVI_ROOT);
-    _workerThread.Enqueue(std::make_unique<TaskInit>(_model, _pSettings));
+    _viewModel->InitModel();
 }
 
 void ExplorerDialog::CollectExpandedPaths(HTREEITEM hItem)
@@ -1672,7 +1666,7 @@ void ExplorerDialog::FetchChildren(HTREEITEM parentItem)
     auto tempEntry = std::make_shared<ExplorerEntry>(parentFolderPath, FileSystemEntry(parentFolderPath, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
     // Pass path as an explicit value-copy so the worker thread never dereferences
     // tempEntry->Path() across thread boundaries.
-    _workerThread.Enqueue(std::make_unique<TaskUpdateDirectory>(_model, tempEntry, parentFolderPath, _pSettings));
+    _viewModel->UpdateDirectory(tempEntry, parentFolderPath);
 }
 
 
@@ -2009,9 +2003,18 @@ void ExplorerDialog::NavigateTo(const std::wstring &path)
 
 void ExplorerDialog::Refresh()
 {
-    UpdateRoots();
-    UpdateAllExpandedItems();
-    UpdatePath();
+    if (!isCreated()) return;
+
+    // Refresh the active tree node and its parent
+    HTREEITEM hItem = _hTreeCtrl.GetSelection();
+    if (hItem != nullptr) {
+        FetchChildren(hItem);
+        HTREEITEM hParent = _hTreeCtrl.GetParent(hItem);
+        if (hParent != nullptr) {
+            FetchChildren(hParent);
+        }
+    }
+
     _viewModel->Refresh();
 }
 
@@ -2101,7 +2104,7 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
             // Delegate the full insert/update/delete diff logic to the
             // dedicated synchronizer. ExplorerDialog retains responsibility
             // for the UI state that follows the structural sync.
-            TreeModelSynchronizer::Synchronize(*this, _hTreeCtrl, hItem, entry, _pSettings, _workerThread);
+            TreeModelSynchronizer::Synchronize(*this, _hTreeCtrl, hItem, entry, _pSettings, *_viewModel);
 
             // Schedule has-children checks for all visible direct children
             HTREEITEM child = _hTreeCtrl.GetChild(hItem);
@@ -2172,16 +2175,6 @@ void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstr
 
 void ExplorerDialog::RefreshActiveNode()
 {
-    if (!isCreated()) return;
-
-    HTREEITEM hItem = _hTreeCtrl.GetSelection();
-    if (hItem != nullptr) {
-        FetchChildren(hItem);
-        HTREEITEM hParent = _hTreeCtrl.GetParent(hItem);
-        if (hParent != nullptr) {
-            FetchChildren(hParent);
-        }
-    }
     Refresh();
 }
 
@@ -2204,7 +2197,7 @@ void ExplorerDialog::RefreshTreeFilter(HTREEITEM hItem)
 
     auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
     if (pShared != nullptr && *pShared != nullptr && (*pShared)->HasLoadedChildren()) {
-        TreeModelSynchronizer::Synchronize(*this, _hTreeCtrl, hItem, *pShared, _pSettings, _workerThread);
+        TreeModelSynchronizer::Synchronize(*this, _hTreeCtrl, hItem, *pShared, _pSettings, *_viewModel);
     }
 
     HTREEITEM hChild = _hTreeCtrl.GetChild(hItem);
@@ -2282,4 +2275,12 @@ void ExplorerDialog::OnCommandExecutionFailed(const std::wstring& command)
 void ExplorerDialog::OnToggleWorkspaceModeRequested()
 {
     ToggleWorkspaceMode();
+}
+
+void ExplorerDialog::Post(std::function<void()> action)
+{
+    auto* pAction = new std::function<void()>(std::move(action));
+    if (!::PostMessage(_hSelf, EXM_DISPATCH_ACTION, reinterpret_cast<WPARAM>(pAction), 0)) {
+        delete pAction;
+    }
 }

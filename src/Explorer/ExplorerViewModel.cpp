@@ -26,10 +26,11 @@
 #include <algorithm>
 #include <shellapi.h>
 
-ExplorerViewModel::ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, WorkerThread* workerThread)
-    : _model(model), _settings(settings), _workerThread(workerThread)
+ExplorerViewModel::ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, IDispatcher* dispatcher)
+    : _model(model), _settings(settings), _dispatcher(dispatcher)
 {
     _historyItr = _history.end();
+    _workerThread.Start(this);
 }
 
 ExplorerViewModel::~ExplorerViewModel()
@@ -37,13 +38,10 @@ ExplorerViewModel::~ExplorerViewModel()
     if (_cancelToken) {
         _cancelToken->store(true);
     }
+    _workerThread.Stop();
 }
 
-void ExplorerViewModel::SetNotificationWindow(HWND hWnd)
-{
-    std::lock_guard<std::mutex> lock(_mutex);
-    _hNotifyWnd = hWnd;
-}
+
 
 void ExplorerViewModel::AddObserver(IExplorerViewModelObserver* observer)
 {
@@ -277,34 +275,22 @@ std::wstring ExplorerViewModel::GetFilter() const
 
 void ExplorerViewModel::EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task)
 {
-    _workerThread->Enqueue(std::move(task));
+    _workerThread.Enqueue(std::move(task));
 }
 
 void ExplorerViewModel::ClearPendingTasks(std::optional<TaskCategory> category)
 {
-    _workerThread->ClearPendingTasks(category);
+    _workerThread.ClearPendingTasks(category);
 }
 
 void ExplorerViewModel::OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task)
 {
-    HWND targetWnd = nullptr;
-    {
-        std::lock_guard<std::mutex> lock(_mutex);
-        targetWnd = _hNotifyWnd;
+    if (_dispatcher) {
+        std::shared_ptr<IAsyncTask> sharedTask = std::move(task);
+        _dispatcher->Post([sharedTask]() {
+            sharedTask->OnCompleted();
+        });
     }
-
-    if (targetWnd) {
-        IAsyncTask* rawTask = task.release();
-        if (!::PostMessage(targetWnd, EXM_ASYNCTASK_COMPLETED, reinterpret_cast<WPARAM>(rawTask), 0)) {
-            delete rawTask;
-        }
-    }
-}
-
-void ExplorerViewModel::ProcessTaskCompleted(IAsyncTask* rawTask)
-{
-    std::unique_ptr<IAsyncTask> task(rawTask);
-    task->OnCompleted();
 }
 
 void ExplorerViewModel::NotifyCurrentDirectoryChanged()
@@ -471,4 +457,19 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
             }
         }
     }
+}
+
+void ExplorerViewModel::InitModel()
+{
+    EnqueueAsyncTask(std::make_unique<TaskInit>(_model, _settings));
+}
+
+void ExplorerViewModel::UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path)
+{
+    EnqueueAsyncTask(std::make_unique<TaskUpdateDirectory>(_model, entry, path, _settings));
+}
+
+void ExplorerViewModel::StopWorkerThread()
+{
+    _workerThread.Stop();
 }

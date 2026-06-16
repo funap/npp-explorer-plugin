@@ -256,10 +256,10 @@
     <ClInclude Include="src\Explorer\DirectoryReader.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Explorer\ExplorerContext.h">
+    <ClInclude Include="src\Explorer\WorkerThread.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
-    <ClInclude Include="src\Explorer\WorkerThread.h">
+    <ClInclude Include="src\Explorer\IDispatcher.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\UTF16Stream.h">
