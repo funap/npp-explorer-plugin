@@ -28,7 +28,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "AddressBar.h"
 #include "ComboBox.h"
 #include "Explorer.h"
-#include "ExplorerContext.h"
 #include "FileList.h"
 #include "TreeView.h"
 #include "ToolBar.h"
@@ -50,7 +49,7 @@ struct GetVolumeInfo {
 
 #include "ExplorerViewModel.h"
 
-class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public ExplorerContext, public IAsyncTaskCallback, public IExplorerModelObserver, public IExplorerViewModelObserver
+class ExplorerDialog : public DockingDlgInterface, public CIDropTarget, public IAsyncTaskCallback, public IExplorerModelObserver, public IExplorerViewModelObserver
 {
 public:
     ExplorerDialog();
@@ -77,15 +76,14 @@ public:
     void SetFont(HFONT font);
     Settings* GetSettings() const { return _pSettings; }
     bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect) override;
-    void NavigateBack() override;
-    void NavigateForward() override;
-    void NavigateTo(const std::wstring& path) override;
-    void Open(const std::wstring& path) override;
-    void Refresh() override;
-    void FocusAddressBar() override;
-    void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true) override;
-    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task) override;
-    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt) override;
+    void NavigateBack();
+    void NavigateForward();
+    void NavigateTo(const std::wstring& path);
+    void Refresh();
+    void FocusAddressBar();
+    void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true);
+    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task);
+    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
     void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
     void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
     void RefreshActiveNode();
@@ -120,6 +118,9 @@ protected:
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
     void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override {};
     void OnNavigationStateChanged() override;
+    void OnOpenFileRequested(const std::wstring& filePath) override;
+    void OnCommandExecutionFailed(const std::wstring& command) override;
+    void OnToggleWorkspaceModeRequested() override;
 
     void UpdateRoots();
     void UpdateAllExpandedItems();

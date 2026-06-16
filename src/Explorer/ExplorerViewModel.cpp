@@ -24,6 +24,7 @@
 #include "ExplorerTasks.h"
 #include "ExplorerResource.h"
 #include <algorithm>
+#include <shellapi.h>
 
 ExplorerViewModel::ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, WorkerThread* workerThread)
     : _model(model), _settings(settings), _workerThread(workerThread)
@@ -339,5 +340,135 @@ void ExplorerViewModel::NotifyNavigationStateChanged()
     }
     for (auto* observer : observersCopy) {
         observer->OnNavigationStateChanged();
+    }
+}
+
+void ExplorerViewModel::OpenFile(const std::wstring& filePath)
+{
+    if (filePath.empty()) return;
+
+    std::wstring resolvedPath;
+    if (FileSystemService::ResolveShortCut(filePath, resolvedPath)) {
+        std::error_code ec;
+        if (std::filesystem::is_directory(resolvedPath, ec)) {
+            NavigateTo(resolvedPath);
+            return;
+        }
+    } else {
+        resolvedPath = filePath;
+    }
+
+    std::error_code ec;
+    if (std::filesystem::is_directory(resolvedPath, ec)) {
+        NavigateTo(resolvedPath);
+    } else {
+        std::vector<IExplorerViewModelObserver*> observersCopy;
+        {
+            std::lock_guard<std::mutex> lock(_mutex);
+            observersCopy = _observers;
+        }
+        for (auto* observer : observersCopy) {
+            observer->OnOpenFileRequested(resolvedPath);
+        }
+    }
+}
+
+void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
+{
+    std::wstring trimmed = input;
+    size_t first = trimmed.find_first_not_of(L" \t\r\n\"'");
+    if (first != std::wstring::npos) {
+        size_t last = trimmed.find_last_not_of(L" \t\r\n\"'");
+        trimmed = trimmed.substr(first, (last - first + 1));
+    }
+    else {
+        trimmed.clear();
+    }
+
+    if (trimmed.empty()) {
+        return;
+    }
+
+    bool isPathValid = false;
+    std::wstring checkPath;
+    std::wstring resolvedPathStr;
+    try {
+        std::wstring currentPath = _settings->GetCurrentDir();
+        std::filesystem::path inputPath(trimmed);
+        std::filesystem::path resolvedPath = inputPath;
+        if (!inputPath.is_absolute()) {
+            resolvedPath = std::filesystem::path(currentPath) / inputPath;
+        }
+
+        std::error_code ec;
+        std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(resolvedPath, ec);
+        if (!ec) {
+            resolvedPath = canonicalPath;
+        }
+
+        if (std::filesystem::exists(resolvedPath, ec)) {
+            isPathValid = true;
+            checkPath = resolvedPath.wstring();
+            if (!std::filesystem::is_directory(resolvedPath, ec)) {
+                checkPath = resolvedPath.parent_path().wstring();
+            }
+            resolvedPathStr = resolvedPath.wstring();
+        }
+    }
+    catch (const std::exception&) {
+        isPathValid = false;
+    }
+
+    if (isPathValid) {
+        if (_settings->IsShowWorkspaceMode() && !_settings->IsPathInWorkspace(checkPath)) {
+            std::vector<IExplorerViewModelObserver*> observersCopy;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                observersCopy = _observers;
+            }
+            for (auto* observer : observersCopy) {
+                observer->OnToggleWorkspaceModeRequested();
+            }
+        }
+
+        std::error_code ec;
+        if (std::filesystem::is_directory(resolvedPathStr, ec)) {
+            NavigateTo(resolvedPathStr);
+        }
+        else {
+            std::vector<IExplorerViewModelObserver*> observersCopy;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                observersCopy = _observers;
+            }
+            for (auto* observer : observersCopy) {
+                observer->OnOpenFileRequested(resolvedPathStr);
+            }
+        }
+    }
+    else {
+        std::wstring exe;
+        std::wstring args;
+        size_t space = trimmed.find(L' ');
+        if (space != std::wstring::npos) {
+            exe = trimmed.substr(0, space);
+            args = trimmed.substr(space + 1);
+        }
+        else {
+            exe = trimmed;
+        }
+
+        std::wstring currentPath = _settings->GetCurrentDir();
+        HINSTANCE hInst = ::ShellExecute(nullptr, L"open", exe.c_str(), args.empty() ? nullptr : args.c_str(), currentPath.c_str(), SW_SHOWNORMAL);
+        if ((INT_PTR)hInst <= 32) {
+            std::vector<IExplorerViewModelObserver*> observersCopy;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                observersCopy = _observers;
+            }
+            for (auto* observer : observersCopy) {
+                observer->OnCommandExecutionFailed(trimmed);
+            }
+        }
     }
 }

@@ -22,12 +22,10 @@
 
 #include "AddressBar.h"
 
-#include "ExplorerDialog.h"
+#include "ExplorerViewModel.h"
+#include "Settings.h"
 #include "ThemeRenderer.h"
 #include "Explorer.h"
-#include <shlwapi.h>
-
-#pragma comment(lib, "Shlwapi.lib")
 
 AddressBar::~AddressBar()
 {
@@ -40,10 +38,10 @@ AddressBar::~AddressBar()
     }
 }
 
-void AddressBar::Init(HINSTANCE hInst, HWND parent, ExplorerDialog* dialog)
+void AddressBar::Init(HINSTANCE hInst, HWND parent, ExplorerViewModel* viewModel)
 {
     _hParent = parent;
-    _dialog = dialog;
+    _viewModel = viewModel;
 
     // Register Breadcrumbs class
     WNDCLASS wc = { 0 };
@@ -144,79 +142,6 @@ int AddressBar::GetHeight() const
     return 24;
 }
 
-void AddressBar::HandleNavigateOrExecute(const std::wstring& input)
-{
-    std::wstring trimmed = input;
-    size_t first = trimmed.find_first_not_of(L" \t\r\n\"'");
-    if (first != std::wstring::npos) {
-        size_t last = trimmed.find_last_not_of(L" \t\r\n\"'");
-        trimmed = trimmed.substr(first, (last - first + 1));
-    }
-    else {
-        trimmed.clear();
-    }
-
-    if (trimmed.empty()) {
-        return;
-    }
-
-    bool isPathValid = false;
-    try {
-        std::filesystem::path inputPath(trimmed);
-        std::filesystem::path resolvedPath = inputPath;
-        if (!inputPath.is_absolute()) {
-            resolvedPath = std::filesystem::path(_currentPath) / inputPath;
-        }
-
-        std::error_code ec;
-        std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(resolvedPath, ec);
-        if (!ec) {
-            resolvedPath = canonicalPath;
-        }
-
-        if (std::filesystem::exists(resolvedPath)) {
-            isPathValid = true;
-            std::wstring checkPath = resolvedPath.wstring();
-            if (!std::filesystem::is_directory(resolvedPath)) {
-                checkPath = resolvedPath.parent_path().wstring();
-            }
-
-            if (_dialog->GetSettings()->IsShowWorkspaceMode() && !_dialog->GetSettings()->IsPathInWorkspace(checkPath)) {
-                ToggleWorkspaceMode();
-            }
-
-            if (std::filesystem::is_directory(resolvedPath)) {
-                _dialog->NavigateTo(resolvedPath.wstring());
-            }
-            else {
-                ::SendMessage(_dialog->getHParent(), NPPM_DOOPEN, 0, (LPARAM)resolvedPath.c_str());
-                _dialog->GotoFileLocation(resolvedPath.wstring());
-            }
-        }
-    }
-    catch (const std::exception&) {
-        isPathValid = false;
-    }
-
-    if (!isPathValid) {
-        std::wstring exe;
-        std::wstring args;
-        size_t space = trimmed.find(L' ');
-        if (space != std::wstring::npos) {
-            exe = trimmed.substr(0, space);
-            args = trimmed.substr(space + 1);
-        }
-        else {
-            exe = trimmed;
-        }
-
-        HINSTANCE hInst = ::ShellExecute(nullptr, L"open", exe.c_str(), args.empty() ? nullptr : args.c_str(), _currentPath.c_str(), SW_SHOWNORMAL);
-        if ((INT_PTR)hInst <= 32) {
-            ::MessageBox(_hParent, (L"The path or command '" + trimmed + L"' is not valid.").c_str(), L"Explorer", MB_OK | MB_ICONWARNING);
-        }
-    }
-}
-
 void AddressBar::TrackMouse(HWND hwnd)
 {
     TRACKMOUSEEVENT tme = { 0 };
@@ -239,7 +164,7 @@ void AddressBar::RenderBreadcrumbs(HDC hdc, const RECT& clientRect)
     COLORREF hoverTextColor = colors.primary;
     COLORREF borderColor = _isDarkMode ? colors.border : ::GetSysColor(COLOR_3DSHADOW);
 
-    bool isWorkspaceMode = _dialog->GetSettings()->IsShowWorkspaceMode();
+    bool isWorkspaceMode = _viewModel->GetSettings()->IsShowWorkspaceMode();
     COLORREF disabledTextColor = RGB((GetRValue(textColor) + GetRValue(bgColor)) / 2,
                                      (GetGValue(textColor) + GetGValue(bgColor)) / 2,
                                      (GetBValue(textColor) + GetBValue(bgColor)) / 2);
@@ -315,7 +240,7 @@ void AddressBar::RenderBreadcrumbs(HDC hdc, const RECT& clientRect)
 
         RECT r = { x, 1, x + sz.cx, clientHeight - 1 };
 
-        bool isEllipsisAllowed = !isWorkspaceMode || _dialog->GetSettings()->IsPathInWorkspace(slices[startIndex - 1].path);
+        bool isEllipsisAllowed = !isWorkspaceMode || _viewModel->GetSettings()->IsPathInWorkspace(slices[startIndex - 1].path);
 
         if (_hoverSliceIndex == 0 && _hoverIsEllipsis && isEllipsisAllowed) {
             HBRUSH hoverBrush = ::CreateSolidBrush(hoverBgColor);
@@ -347,7 +272,7 @@ void AddressBar::RenderBreadcrumbs(HDC hdc, const RECT& clientRect)
     for (int i = startIndex; i < (int)slices.size(); ++i) {
         RECT r = { x, 1, x + sliceSizes[i].cx, clientHeight - 1 };
 
-        bool isAllowed = !isWorkspaceMode || _dialog->GetSettings()->IsPathInWorkspace(slices[i].path);
+        bool isAllowed = !isWorkspaceMode || _viewModel->GetSettings()->IsPathInWorkspace(slices[i].path);
         bool isHovered = false;
         int sliceMapIndex = (int)_renderedSlices.size();
         if (_hoverSliceIndex == sliceMapIndex && !_hoverIsEllipsis && isAllowed) {
@@ -425,14 +350,14 @@ LRESULT CALLBACK AddressBar::BreadcrumbsWndProc(HWND hwnd, UINT msg, WPARAM wPar
         self->_hoverSliceIndex = -1;
         self->_hoverIsEllipsis = false;
 
-        bool isWorkspaceMode = self->_dialog->GetSettings()->IsShowWorkspaceMode();
+        bool isWorkspaceMode = self->_viewModel->GetSettings()->IsShowWorkspaceMode();
 
         for (size_t i = 0; i < self->_renderedSlices.size(); ++i) {
             RECT r = self->_renderedSlices[i].rect;
             RECT padded = { r.left - 2, r.top, r.right + 2, r.bottom };
             POINT pt = { x, y };
             if (::PtInRect(&padded, pt)) {
-                bool isAllowed = !isWorkspaceMode || self->_dialog->GetSettings()->IsPathInWorkspace(self->_renderedSlices[i].path);
+                bool isAllowed = !isWorkspaceMode || self->_viewModel->GetSettings()->IsPathInWorkspace(self->_renderedSlices[i].path);
                 if (isAllowed) {
                     self->_hoverSliceIndex = (int)i;
                     if (i == 0 && self->_renderedSlices[i].name == L"...") {
@@ -464,15 +389,15 @@ LRESULT CALLBACK AddressBar::BreadcrumbsWndProc(HWND hwnd, UINT msg, WPARAM wPar
         POINT pt = { x, y };
 
         bool sliceClicked = false;
-        bool isWorkspaceMode = self->_dialog->GetSettings()->IsShowWorkspaceMode();
+        bool isWorkspaceMode = self->_viewModel->GetSettings()->IsShowWorkspaceMode();
 
         for (size_t i = 0; i < self->_renderedSlices.size(); ++i) {
             RECT r = self->_renderedSlices[i].rect;
             RECT padded = { r.left - 2, r.top, r.right + 2, r.bottom };
             if (::PtInRect(&padded, pt)) {
-                bool isAllowed = !isWorkspaceMode || self->_dialog->GetSettings()->IsPathInWorkspace(self->_renderedSlices[i].path);
+                bool isAllowed = !isWorkspaceMode || self->_viewModel->GetSettings()->IsPathInWorkspace(self->_renderedSlices[i].path);
                 if (isAllowed) {
-                    self->_dialog->NavigateTo(self->_renderedSlices[i].path);
+                    self->_viewModel->NavigateTo(self->_renderedSlices[i].path);
                     sliceClicked = true;
                 } else {
                     // Block navigation, but count as sliceClicked so we don't open the edit control
@@ -513,7 +438,7 @@ LRESULT CALLBACK AddressBar::EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wPara
         if (wParam == VK_RETURN) {
             WCHAR path[MAX_PATH];
             ::GetWindowText(hWnd, path, MAX_PATH);
-            self->HandleNavigateOrExecute(path);
+            self->_viewModel->NavigateOrExecute(path);
             self->ShowEdit(false);
             return 0;
         }

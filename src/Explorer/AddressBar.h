@@ -28,7 +28,7 @@
 #include <windows.h>
 #include <commctrl.h>
 
-class ExplorerDialog;
+class ExplorerViewModel;
 
 class AddressBar
 {
@@ -42,14 +42,13 @@ public:
     AddressBar() = default;
     ~AddressBar();
 
-    void Init(HINSTANCE hInst, HWND parent, ExplorerDialog* dialog);
+    void Init(HINSTANCE hInst, HWND parent, ExplorerViewModel* viewModel);
     void SetPath(const std::wstring& path);
     void UpdateTheme(bool isDarkMode);
     void SetFont(HFONT font);
     void ShowEdit(bool show);
     void Resize(int x, int y, int width, int height);
     int GetHeight() const;
-    void HandleNavigateOrExecute(const std::wstring& input);
 
     HWND GetEditHandle() const { return _hEdit; }
     HWND GetBreadcrumbsHandle() const { return _hBreadcrumbs; }
@@ -58,7 +57,7 @@ private:
     HWND _hParent = nullptr;
     HWND _hEdit = nullptr;
     HWND _hBreadcrumbs = nullptr;
-    ExplorerDialog* _dialog = nullptr;
+    ExplorerViewModel* _viewModel = nullptr;
     std::wstring _currentPath;
     HFONT _hFont = nullptr;
     bool _isDarkMode = false;

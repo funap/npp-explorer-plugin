@@ -20,7 +20,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #pragma once
 
 #include "Explorer.h"
-#include "ExplorerContext.h"
 #include "ExplorerResource.h"
 #include "ToolBar.h"
 #include "../NppPlugin/DockingFeature/Window.h"
@@ -100,7 +99,7 @@ class FileList : public Window, public CIDropTarget, public IExplorerViewModelOb
 {
 public:
     FileList() = delete;
-    FileList(ExplorerViewModel* viewModel, ExplorerContext* context);
+    FileList(ExplorerViewModel* viewModel);
     ~FileList();
 
     void init(HINSTANCE hInst, HWND hParent, HWND hParentList);
@@ -110,6 +109,12 @@ public:
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
     void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override;
     void OnNavigationStateChanged() override {};
+    void OnOpenFileRequested(const std::wstring& filePath) override {}
+    void OnCommandExecutionFailed(const std::wstring& command) override {}
+    void OnToggleWorkspaceModeRequested() override {}
+
+    void SetFocusAddressBarCallback(std::function<void()> callback) { _focusAddressBarCallback = callback; }
+    void SetShowContextMenuCallback(std::function<void(POINT, const std::vector<std::shared_ptr<ExplorerEntry>>&, bool)> callback) { _showContextMenuCallback = callback; }
 
     BOOL notify(WPARAM wParam, LPARAM lParam);
 
@@ -220,7 +225,8 @@ private:    /* for thread */
 
     std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
     ExplorerViewModel*              _viewModel;
-    ExplorerContext*                _context;
+    std::function<void()>           _focusAddressBarCallback;
+    std::function<void(POINT, const std::vector<std::shared_ptr<ExplorerEntry>>&, bool)> _showContextMenuCallback;
     std::wstring                    _pendingLoadDir;
     BOOL                            _pendingRedraw;
     std::wstring                    _pendingSelectFile;

@@ -50,6 +50,10 @@ public:
 
     void SetNotificationWindow(HWND hWnd);
     void SetSettings(Settings* settings) { _settings = settings; }
+    Settings* GetSettings() const { return _settings; }
+
+    void OpenFile(const std::wstring& filePath);
+    void NavigateOrExecute(const std::wstring& input);
 
     void AddObserver(IExplorerViewModelObserver* observer);
     void RemoveObserver(IExplorerViewModelObserver* observer);
@@ -125,4 +129,7 @@ public:
     virtual void OnCurrentDirectoryChanged(const std::wstring& path) = 0;
     virtual void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) = 0;
     virtual void OnNavigationStateChanged() = 0;
+    virtual void OnOpenFileRequested(const std::wstring& filePath) = 0;
+    virtual void OnCommandExecutionFailed(const std::wstring& command) = 0;
+    virtual void OnToggleWorkspaceModeRequested() = 0;
 };

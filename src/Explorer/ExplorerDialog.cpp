@@ -114,7 +114,7 @@ ExplorerDialog::ExplorerDialog()
     , _hHeader(nullptr)
     , _hSplitterCtrl(nullptr)
     , _hFilter(nullptr)
-    , _FileList(_viewModel.get(), this)
+    , _FileList(_viewModel.get())
     , _ptOldPos()
     , _ptOldPosHorizontal()
     , _isLeftButtonDown(FALSE)
@@ -1074,7 +1074,12 @@ void ExplorerDialog::InitialDialog()
         return FALSE;
     });
 
-    _addressBar.Init(_hInst, _hSelf, this);
+    _FileList.SetFocusAddressBarCallback([this]() { FocusAddressBar(); });
+    _FileList.SetShowContextMenuCallback([this](POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu) {
+        ShowContextMenu(screenLocation, entries, hasStandardMenu);
+    });
+
+    _addressBar.Init(_hInst, _hSelf, _viewModel.get());
     _addressBar.SetFont(_pSettings->GetDefaultFont());
     _addressBar.UpdateTheme(_pluginContext->IsDarkMode());
     _addressBar.SetPath(_pSettings->GetCurrentDir());
@@ -2002,31 +2007,6 @@ void ExplorerDialog::NavigateTo(const std::wstring &path)
     _viewModel->NavigateTo(path);
 }
 
-void ExplorerDialog::Open(const std::wstring &path)
-{
-    if (!path.empty()) {
-        HTREEITEM hItem = _hTreeCtrl.GetSelection();
-
-        /* get current folder path */
-        auto filePath = GetPath(hItem);
-        filePath = FileSystemService::CombinePath(filePath, path);
-
-        /* open possible link */
-        std::wstring resolvedPath;
-        if (FileSystemService::ResolveShortCut(filePath, resolvedPath)) {
-            if (std::filesystem::is_directory(resolvedPath)) {
-                _viewModel->NavigateTo(resolvedPath);
-            }
-            else {
-                ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)resolvedPath.c_str());
-            }
-        }
-        else {
-            ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)filePath.c_str());
-        }
-    }
-}
-
 void ExplorerDialog::Refresh()
 {
     UpdateRoots();
@@ -2286,4 +2266,20 @@ void ExplorerDialog::OnNavigationStateChanged()
 {
     _ToolBar.enable(IDM_EX_PREV, _viewModel->CanNavigateBack());
     _ToolBar.enable(IDM_EX_NEXT, _viewModel->CanNavigateForward());
+}
+
+void ExplorerDialog::OnOpenFileRequested(const std::wstring& filePath)
+{
+    _pluginContext->DoOpen(filePath);
+    GotoFileLocation(filePath);
+}
+
+void ExplorerDialog::OnCommandExecutionFailed(const std::wstring& command)
+{
+    ::MessageBox(getHSelf(), (L"The path or command '" + command + L"' is not valid.").c_str(), L"Explorer", MB_OK | MB_ICONWARNING);
+}
+
+void ExplorerDialog::OnToggleWorkspaceModeRequested()
+{
+    ToggleWorkspaceMode();
 }

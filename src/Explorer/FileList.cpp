@@ -56,7 +56,7 @@ namespace SubItem {
 }
 }
 
-FileList::FileList(ExplorerViewModel *viewModel, ExplorerContext *context)
+FileList::FileList(ExplorerViewModel *viewModel)
     : _hHeader(nullptr)
     , _hImlListSys(nullptr)
     , _pSettings(nullptr)
@@ -71,7 +71,8 @@ FileList::FileList(ExplorerViewModel *viewModel, ExplorerContext *context)
     , _isDnDStarted(FALSE)
     , _onCharHandler(nullptr)
     , _viewModel(viewModel)
-    , _context(context)
+    , _focusAddressBarCallback(nullptr)
+    , _showContextMenuCallback(nullptr)
 {
     _viewModel->AddObserver(this);
 }
@@ -188,7 +189,9 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             return TRUE;
         case 'L':
             if ((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000) {
-                _context->FocusAddressBar();
+                if (_focusAddressBarCallback) {
+                    _focusAddressBarCallback();
+                }
                 return TRUE;
             }
             break;
@@ -471,9 +474,9 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 UINT i = ListView_GetSelectionMark(_hSelf);
                 if (i != -1) {
                     if (i < _uMaxFolders) {
-                        _viewModel->NavigateTo(_vFileList[i].Name());
+                        _viewModel->NavigateTo(_vFileList[i].fullPath);
                     } else {
-                        _context->Open(_vFileList[i].Name());
+                        _viewModel->OpenFile(_vFileList[i].fullPath);
                     }
                 }
                 break;
@@ -967,7 +970,9 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
     }
 
     const auto hasStandardMenu = (!isParent || (entries.size() != 1));
-    _context->ShowContextMenu(screenLocation.value(), entries, hasStandardMenu);
+    if (_showContextMenuCallback) {
+        _showContextMenuCallback(screenLocation.value(), entries, hasStandardMenu);
+    }
 }
 
 void FileList::onLMouseBtnDbl()
@@ -976,10 +981,10 @@ void FileList::onLMouseBtnDbl()
 
     if (selRow != -1 && selRow < _vFileList.size()) {
         if (selRow < _uMaxFolders) {
-            _viewModel->NavigateTo(_vFileList[selRow].Name());
+            _viewModel->NavigateTo(_vFileList[selRow].fullPath);
         }
         else {
-            _context->Open(_vFileList[selRow].Name());
+            _viewModel->OpenFile(_vFileList[selRow].fullPath);
         }
     }
 }
