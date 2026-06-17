@@ -35,6 +35,7 @@
 #include "IDispatcher.h"
 #include "Settings.h"
 #include "FileSystemService.h"
+#include "Explorer.h"
 
 // Forward declaration
 class IExplorerViewModelObserver;
@@ -43,6 +44,10 @@ struct NavigationState {
     std::wstring path;
     std::vector<std::wstring> selectedItems;
 };
+
+class FileList;
+class TreeView;
+struct IconWorkItem;
 
 class ExplorerViewModel : public IAsyncTaskCallback {
 public:
@@ -53,6 +58,7 @@ public:
 
     void OpenFile(const std::wstring& filePath);
     void NavigateOrExecute(const std::wstring& input);
+    std::optional<std::wstring> ResolveAndValidateDirectory(const std::wstring& input);
     void InitModel();
     void UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path);
     void StopWorkerThread();
@@ -89,17 +95,25 @@ public:
     void SetFilter(const std::wstring& filter);
     std::wstring GetFilter() const;
 
-    // Task Dispatching (decorating WorkerThread)
-    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task);
-    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
+    // Async Task requests from View
+    void CheckFolderChildren(HTREEITEM hItem, const std::wstring& path);
+    void FetchFileListIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation);
+    void FetchTreeViewIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType);
 
     // IAsyncTaskCallback implementation
     void OnAsyncTaskCompleted(std::unique_ptr<IAsyncTask> task) override;
 
+    // Asynchronous callbacks from task completions
+    void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
+
 private:
+    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task);
+    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
     void NotifyCurrentDirectoryChanged();
     void NotifyEntriesLoaded();
     void NotifyNavigationStateChanged();
+    std::wstring PreprocessInput(const std::wstring& input) const;
+    std::wstring ResolveToAbsolutePath(const std::wstring& expandedInput) const;
 
     std::shared_ptr<ExplorerModel> _model;
     Settings* _settings;
@@ -131,4 +145,5 @@ public:
     virtual void OnOpenFileRequested(const std::wstring& filePath) = 0;
     virtual void OnCommandExecutionFailed(const std::wstring& command) = 0;
     virtual void OnToggleWorkspaceModeRequested() = 0;
+    virtual void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren) {}
 };

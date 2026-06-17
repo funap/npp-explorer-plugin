@@ -32,7 +32,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "TreeView.h"
 #include "ToolBar.h"
 #include "ExplorerModel.h"
-#include "ExplorerTasks.h"
 #include "../NppPlugin/DockingFeature/DockingDlgInterface.h"
 
 // Forward declaration only: avoids circular include with TreeModelSynchronizer.h
@@ -83,9 +82,6 @@ public:
     void Refresh();
     void FocusAddressBar();
     void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true);
-    void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task);
-    void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
-    void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren);
     void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
     void RefreshActiveNode();
     void RebuildRoots();
@@ -121,6 +117,7 @@ protected:
     void OnOpenFileRequested(const std::wstring& filePath) override;
     void OnCommandExecutionFailed(const std::wstring& command) override;
     void OnToggleWorkspaceModeRequested() override;
+    void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren) override;
 
     void UpdateRoots();
     void UpdateAllExpandedItems();

@@ -1091,15 +1091,6 @@ void ExplorerDialog::InitialDialog()
     ::PostMessage(_hFilter, CB_SETEDITSEL, 0, MAKELPARAM(-1, -1));
 }
 
-void ExplorerDialog::EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task)
-{
-    _viewModel->EnqueueAsyncTask(std::move(task));
-}
-
-void ExplorerDialog::ClearPendingTasks(std::optional<TaskCategory> category)
-{
-    _viewModel->ClearPendingTasks(category);
-}
 
 
 void ExplorerDialog::SetFont(HFONT font)
@@ -1365,11 +1356,9 @@ BOOL ExplorerDialog::GotoPath()
     for (;;) {
         if (dlg.doDialog(szFolderName, szComment) == TRUE) {
             /* test if is correct */
-            if (std::filesystem::exists(szFolderName)) {
-                if (szFolderName[wcslen(szFolderName) - 1] != '\\') {
-                    wcscat(szFolderName, L"\\");
-                }
-                _viewModel->NavigateTo(szFolderName);
+            auto resolved = _viewModel->ResolveAndValidateDirectory(szFolderName);
+            if (resolved.has_value()) {
+                _viewModel->NavigateTo(*resolved);
                 bResult = TRUE;
                 break;
             }
@@ -2120,7 +2109,7 @@ void ExplorerDialog::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) {
                         if (_hTreeCtrl.GetItemRect(child, &rect, FALSE)) {
                             if (_checkedItems.find(child) == _checkedItems.end()) {
                                 _checkedItems.insert(child);
-                                EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, child, childPath, _pSettings));
+                                _viewModel->CheckFolderChildren(child, childPath);
                             }
                         }
                     }
@@ -2229,7 +2218,7 @@ void ExplorerDialog::CheckVisibleFolderChildren()
                     if (_checkedItems.find(hItem) == _checkedItems.end()) {
                         _checkedItems.insert(hItem);
                         std::wstring childPath = GetPath(hItem);
-                        EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, hItem, childPath, _pSettings));
+                        _viewModel->CheckFolderChildren(hItem, childPath);
                     }
                 }
             }

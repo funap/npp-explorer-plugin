@@ -26,6 +26,24 @@
 #include <algorithm>
 #include <shellapi.h>
 
+namespace {
+std::wstring ExpandEnvironmentVariables(const std::wstring& input)
+{
+    DWORD size = ::ExpandEnvironmentStringsW(input.c_str(), nullptr, 0);
+    if (size == 0) {
+        return input;
+    }
+    std::wstring result(size, L'\0');
+    if (::ExpandEnvironmentStringsW(input.c_str(), &result[0], size) == 0) {
+        return input;
+    }
+    // ExpandEnvironmentStringsW writes a terminating null character inside the buffer,
+    // so we pop it back to exclude it from the C++ string's active length.
+    result.pop_back();
+    return result;
+}
+} // namespace
+
 ExplorerViewModel::ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, IDispatcher* dispatcher)
     : _model(model), _settings(settings), _dispatcher(dispatcher)
 {
@@ -40,8 +58,6 @@ ExplorerViewModel::~ExplorerViewModel()
     }
     _workerThread.Stop();
 }
-
-
 
 void ExplorerViewModel::AddObserver(IExplorerViewModelObserver* observer)
 {
@@ -359,7 +375,7 @@ void ExplorerViewModel::OpenFile(const std::wstring& filePath)
     }
 }
 
-void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
+std::wstring ExplorerViewModel::PreprocessInput(const std::wstring& input) const
 {
     std::wstring trimmed = input;
     size_t first = trimmed.find_first_not_of(L" \t\r\n\"'");
@@ -372,6 +388,33 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
     }
 
     if (trimmed.empty()) {
+        return L"";
+    }
+
+    return ExpandEnvironmentVariables(trimmed);
+}
+
+std::wstring ExplorerViewModel::ResolveToAbsolutePath(const std::wstring& expandedInput) const
+{
+    std::wstring currentPath = _settings->GetCurrentDir();
+    std::filesystem::path inputPath(expandedInput);
+    std::filesystem::path resolvedPath = inputPath;
+    if (!inputPath.is_absolute()) {
+        resolvedPath = std::filesystem::path(currentPath) / inputPath;
+    }
+
+    std::error_code ec;
+    std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(resolvedPath, ec);
+    if (!ec) {
+        resolvedPath = canonicalPath;
+    }
+    return resolvedPath.wstring();
+}
+
+void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
+{
+    std::wstring expanded = PreprocessInput(input);
+    if (expanded.empty()) {
         return;
     }
 
@@ -379,26 +422,15 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
     std::wstring checkPath;
     std::wstring resolvedPathStr;
     try {
-        std::wstring currentPath = _settings->GetCurrentDir();
-        std::filesystem::path inputPath(trimmed);
-        std::filesystem::path resolvedPath = inputPath;
-        if (!inputPath.is_absolute()) {
-            resolvedPath = std::filesystem::path(currentPath) / inputPath;
-        }
-
+        std::wstring resolvedPath = ResolveToAbsolutePath(expanded);
         std::error_code ec;
-        std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(resolvedPath, ec);
-        if (!ec) {
-            resolvedPath = canonicalPath;
-        }
-
         if (std::filesystem::exists(resolvedPath, ec)) {
             isPathValid = true;
-            checkPath = resolvedPath.wstring();
+            checkPath = resolvedPath;
             if (!std::filesystem::is_directory(resolvedPath, ec)) {
-                checkPath = resolvedPath.parent_path().wstring();
+                checkPath = std::filesystem::path(resolvedPath).parent_path().wstring();
             }
-            resolvedPathStr = resolvedPath.wstring();
+            resolvedPathStr = resolvedPath;
         }
     }
     catch (const std::exception&) {
@@ -435,13 +467,13 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
     else {
         std::wstring exe;
         std::wstring args;
-        size_t space = trimmed.find(L' ');
+        size_t space = expanded.find(L' ');
         if (space != std::wstring::npos) {
-            exe = trimmed.substr(0, space);
-            args = trimmed.substr(space + 1);
+            exe = expanded.substr(0, space);
+            args = expanded.substr(space + 1);
         }
         else {
-            exe = trimmed;
+            exe = expanded;
         }
 
         std::wstring currentPath = _settings->GetCurrentDir();
@@ -453,9 +485,60 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
                 observersCopy = _observers;
             }
             for (auto* observer : observersCopy) {
-                observer->OnCommandExecutionFailed(trimmed);
+                observer->OnCommandExecutionFailed(expanded);
             }
         }
+    }
+}
+
+std::optional<std::wstring> ExplorerViewModel::ResolveAndValidateDirectory(const std::wstring& input)
+{
+    std::wstring expanded = PreprocessInput(input);
+    if (expanded.empty()) {
+        return std::nullopt;
+    }
+
+    try {
+        std::wstring resolvedPath = ResolveToAbsolutePath(expanded);
+        std::error_code ec;
+        if (std::filesystem::exists(resolvedPath, ec) && std::filesystem::is_directory(resolvedPath, ec)) {
+            if (!resolvedPath.empty() && resolvedPath.back() != L'\\') {
+                resolvedPath += L"\\";
+            }
+            return resolvedPath;
+        }
+    }
+    catch (const std::exception&) {
+        // Fall through
+    }
+
+    return std::nullopt;
+}
+
+void ExplorerViewModel::CheckFolderChildren(HTREEITEM hItem, const std::wstring& path)
+{
+    EnqueueAsyncTask(std::make_unique<TaskCheckFolderChildren>(this, hItem, path, _settings));
+}
+
+void ExplorerViewModel::FetchFileListIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation)
+{
+    EnqueueAsyncTask(std::make_unique<TaskFetchIcons>(fileList, hListWnd, workDir, std::move(workItems), cancelToken, generation));
+}
+
+void ExplorerViewModel::FetchTreeViewIcons(TreeView* treeCtrl, HTREEITEM hItem, const std::wstring& path, DevType devType)
+{
+    EnqueueAsyncTask(std::make_unique<TaskTreeViewFetchIcons>(treeCtrl, hItem, path, devType));
+}
+
+void ExplorerViewModel::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren)
+{
+    std::vector<IExplorerViewModelObserver*> observersCopy;
+    {
+        std::lock_guard<std::mutex> lock(_mutex);
+        observersCopy = _observers;
+    }
+    for (auto* observer : observersCopy) {
+        observer->OnFolderChildrenChecked(hItem, path, hasChildren);
     }
 }
 

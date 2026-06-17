@@ -12,18 +12,18 @@
 #include <commctrl.h>
 #include <atomic>
 
-class ExplorerDialog;
+class ExplorerViewModel;
 
 class TaskCheckFolderChildren : public IAsyncTask {
 public:
-    TaskCheckFolderChildren(ExplorerDialog* dialog, HTREEITEM hItem, const std::wstring& path, Settings* settings);
+    TaskCheckFolderChildren(ExplorerViewModel* viewModel, HTREEITEM hItem, const std::wstring& path, Settings* settings);
 
     void Execute() override;
     void OnCompleted() override;
     TaskCategory GetCategory() const override { return TaskCategory::TreeView; }
 
 private:
-    ExplorerDialog* _dialog;
+    ExplorerViewModel* _viewModel;
     HTREEITEM _hItem;
     std::wstring _path;
     Settings* _settings;

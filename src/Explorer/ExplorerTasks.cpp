@@ -91,15 +91,15 @@ void TaskLoadFileList::OnCompleted() {
     _viewModel->OnEntriesLoaded(_currentDir, std::move(_entries));
 }
 
-TaskCheckFolderChildren::TaskCheckFolderChildren(ExplorerDialog* dialog, HTREEITEM hItem, const std::wstring& path, Settings* settings)
-    : _dialog(dialog), _hItem(hItem), _path(path), _settings(settings) {}
+TaskCheckFolderChildren::TaskCheckFolderChildren(ExplorerViewModel* viewModel, HTREEITEM hItem, const std::wstring& path, Settings* settings)
+    : _viewModel(viewModel), _hItem(hItem), _path(path), _settings(settings) {}
 
 void TaskCheckFolderChildren::Execute() {
     _hasChildren = FileSystemService::HaveChildren(_path, _settings->IsUseFullTree(), _settings->IsShowHidden());
 }
 
 void TaskCheckFolderChildren::OnCompleted() {
-    _dialog->OnFolderChildrenChecked(_hItem, _path, _hasChildren);
+    _viewModel->OnFolderChildrenChecked(_hItem, _path, _hasChildren);
 }
 
 TaskFetchIcons::TaskFetchIcons(FileList* fileList, HWND hListWnd, const std::wstring& workDir, std::vector<IconWorkItem>&& workItems, std::shared_ptr<std::atomic<bool>> cancelToken, uint64_t generation)

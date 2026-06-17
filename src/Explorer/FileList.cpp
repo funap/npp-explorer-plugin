@@ -18,7 +18,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
 #include "FileList.h"
-#include "ExplorerTasks.h"
 #include "resource.h"
 #include "FileFilter.h"
 #include "FileSystemService.h"
@@ -753,7 +752,7 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
         workItems.push_back(item);
     }
 
-    _viewModel->EnqueueAsyncTask(std::make_unique<TaskFetchIcons>(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration));
+    _viewModel->FetchFileListIcons(this, _hSelf, currentDir, std::move(workItems), _cancelToken, _currentGeneration);
 }
 
 void FileList::filterFiles(LPCTSTR currentFilter)

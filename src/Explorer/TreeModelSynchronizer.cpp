@@ -26,7 +26,6 @@
 #include <windows.h>
 
 #include "ExplorerDialog.h"
-#include "ExplorerTasks.h"
 #include "Explorer.h"    // FetchIcons, ICON_FOLDER, DEVT_DRIVE, DEVT_DIRECTORY
 #include "FileSystemService.h"
 
@@ -106,7 +105,7 @@ void TreeModelSynchronizer::Synchronize(
     auto enqueueIcon = [&](HTREEITEM hItem) {
         std::wstring currentPath = dialog.GetPath(hItem);
         if (devType == DEVT_DRIVE || settings->IsUseSystemIcons()) {
-            viewModel.EnqueueAsyncTask(std::make_unique<TaskTreeViewFetchIcons>(&treeCtrl, hItem, currentPath, devType));
+            viewModel.FetchTreeViewIcons(&treeCtrl, hItem, currentPath, devType);
         }
     };
 
