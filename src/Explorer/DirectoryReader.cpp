@@ -72,9 +72,19 @@ void DirectoryReader::ReadDirs(const std::vector<std::filesystem::path>& rootPat
     _needsStop = false;
     _reading = true;
     _workerThread = std::thread([this, rootPaths](DirectoryReader* self) {
+        
         for (const auto& path : rootPaths) {
-            if (_needsStop) break;
-            self->ReadDirRecursive(path);
+            if (_needsStop) {
+                break;
+            }
+            try
+            {
+                self->ReadDirRecursive(path);
+            }
+            catch (... /* fs::filesystem_error& err*/)
+            {
+                // do nothing
+            }
         }
         _reading = false;
         _readDirFinCallback();
