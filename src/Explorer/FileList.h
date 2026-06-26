@@ -109,12 +109,18 @@ public:
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
     void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override;
     void OnNavigationStateChanged() override {};
-    void OnOpenFileRequested(const std::wstring& filePath) override {}
     void OnCommandExecutionFailed(const std::wstring& command) override {}
     void OnToggleWorkspaceModeRequested() override {}
 
+    using KeyPreviewCallback = std::function<bool(HWND, UINT, WPARAM, LPARAM)>;
+    void SetKeyPreviewCallback(KeyPreviewCallback callback) { _keyPreviewCallback = callback; }
+
     void SetFocusAddressBarCallback(std::function<void()> callback) { _focusAddressBarCallback = callback; }
     void SetShowContextMenuCallback(std::function<void(POINT, const std::vector<std::shared_ptr<ExplorerEntry>>&, bool)> callback) { _showContextMenuCallback = callback; }
+
+    std::vector<std::shared_ptr<ExplorerEntry>> GetSelectedEntries() const;
+    void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
+    void onSelectAll();
 
     BOOL notify(WPARAM wParam, LPARAM lParam);
 
@@ -133,8 +139,6 @@ public:
 
     void UpdateSelItems();
     void SetItems(const std::vector<std::wstring>& vStrItems);
-
-    void setDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
 
     virtual bool OnDrop(FORMATETC* pFmtEtc, STGMEDIUM& medium, DWORD *pdwEffect);
 
@@ -163,11 +167,9 @@ protected:
 
     BOOL FindNextItemInList(LPUINT puPos);
 
-    void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
     void onLMouseBtnDbl();
 
     void onSelectItem(WCHAR charkey);
-    void onSelectAll();
     void onDelete(bool immediate = false);
     void onCopy();
     void onPaste();
@@ -223,10 +225,10 @@ private:    /* for thread */
     BOOL                            _isScrolling;
     BOOL                            _isDnDStarted;
 
-    std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
     ExplorerViewModel*              _viewModel;
     std::function<void()>           _focusAddressBarCallback;
     std::function<void(POINT, const std::vector<std::shared_ptr<ExplorerEntry>>&, bool)> _showContextMenuCallback;
+    KeyPreviewCallback              _keyPreviewCallback;
     std::wstring                    _pendingLoadDir;
     BOOL                            _pendingRedraw;
     std::wstring                    _pendingSelectFile;

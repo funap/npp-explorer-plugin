@@ -180,10 +180,6 @@ void ComboBox::ClearComboList()
     ::SendMessage(_comboWindow, CB_RESETCONTENT, 0, 0);
 }
 
-void ComboBox::SetDefaultOnCharHandler(std::function<BOOL(UINT, UINT, UINT)> onCharHandler)
-{
-    _onCharHandler = std::move(onCharHandler);
-}
 
 LRESULT CALLBACK ComboBox::EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
 {
@@ -196,6 +192,10 @@ LRESULT CALLBACK ComboBox::EditSubclassProc(HWND hwnd, UINT uMsg, WPARAM wParam,
 
 LRESULT ComboBox::RunEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
+    if (_keyPreviewCallback && _keyPreviewCallback(hwnd, uMsg, wParam, lParam)) {
+        return TRUE;
+    }
+
     switch (uMsg) {
     case WM_KEYDOWN:
         if (wParam == VK_DELETE) {
@@ -216,12 +216,6 @@ LRESULT ComboBox::RunEditProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         }
         break;
     case WM_CHAR:
-        if (_onCharHandler) {
-            BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
-            if (handled) {
-                return TRUE;
-            }
-        }
         break;
     case WM_KEYUP:
         switch (wParam) {

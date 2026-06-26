@@ -54,7 +54,8 @@ public:
 
     void ClearComboList();
 
-    void SetDefaultOnCharHandler(std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> onCharHandler);
+    using KeyPreviewCallback = std::function<bool(HWND, UINT, WPARAM, LPARAM)>;
+    void SetKeyPreviewCallback(KeyPreviewCallback callback) { _keyPreviewCallback = callback; }
 
 private:
     void SelectComboText(const std::wstring& text);
@@ -70,7 +71,7 @@ private:
     HWND _parentWindow{nullptr};
     HWND _editWindow{nullptr};
     HWND _listWindow{nullptr};
-    std::function<BOOL(UINT /* nChar */, UINT /* nRepCnt */, UINT /* nFlags */)> _onCharHandler;
+    KeyPreviewCallback              _keyPreviewCallback;
     int _hotDeleteIndex{-1};
 
     static constexpr UINT_PTR EDIT_SUBCLASS_ID = 1;

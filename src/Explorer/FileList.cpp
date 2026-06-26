@@ -68,7 +68,6 @@ FileList::FileList(ExplorerViewModel *viewModel)
     , _bOldViewLong(FALSE)
     , _isScrolling(FALSE)
     , _isDnDStarted(FALSE)
-    , _onCharHandler(nullptr)
     , _viewModel(viewModel)
     , _focusAddressBarCallback(nullptr)
     , _showContextMenuCallback(nullptr)
@@ -135,105 +134,19 @@ void FileList::initProp(Settings* prop)
  */
 LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+    if (_keyPreviewCallback && _keyPreviewCallback(hwnd, Message, wParam, lParam)) {
+        return TRUE;
+    }
+
     switch (Message) {
     case WM_GETDLGCODE:
         return DLGC_WANTALLKEYS | ::DefSubclassProc(hwnd, Message, wParam, lParam);
     case WM_CHAR:
     {
         WCHAR charkey = std::towlower((WCHAR)wParam);
-
-        /* do selection of items by user keyword typing or cut/copy/paste */
-        switch (charkey) {
-        case SHORTCUT_CUT:
-            onCut();
-            return TRUE;
-        case SHORTCUT_COPY:
-            onCopy();
-            return TRUE;
-        case SHORTCUT_PASTE:
-            onPaste();
-            return TRUE;
-        case SHORTCUT_ALL:
-            onSelectAll();
-            return TRUE;
-        case SHORTCUT_DELETE:
-            onDelete();
-            return TRUE;
-        case SHORTCUT_REFRESH:
-            _viewModel->Refresh();
-            return TRUE;
-        default:
-            if (_onCharHandler) {
-                BOOL handled = _onCharHandler(static_cast<UINT>(wParam), LOWORD(lParam), HIWORD(lParam));
-                if (handled) {
-                    return TRUE;
-                }
-            }
-            onSelectItem(charkey);
-            break;
-        }
+        onSelectItem(charkey);
         return TRUE;
     }
-    case WM_KEYDOWN:
-    {
-        switch (wParam) {
-        case VK_DELETE:
-            if ((0x8000 & ::GetKeyState(VK_CONTROL)) != 0x8000) {
-                onDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
-                return TRUE;
-            }
-            break;
-        case VK_F5:
-            _viewModel->Refresh();
-            return TRUE;
-        case 'L':
-            if ((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000) {
-                if (_focusAddressBarCallback) {
-                    _focusAddressBarCallback();
-                }
-                return TRUE;
-            }
-            break;
-        default:
-
-            break;
-        }
-        break;
-    }
-    case WM_KEYUP:
-        if (VK_APPS == wParam) {
-            int index = ListView_GetSelectionMark(_hSelf);
-            RECT rect;
-            ListView_GetItemRect(_hSelf, index, &rect, LVIR_ICON);
-            ClientToScreen(_hSelf, &rect);
-            POINT screenLocation = {
-                .x = rect.right,
-                .y = rect.bottom,
-            };
-            ShowContextMenu(screenLocation);
-            return TRUE;
-        }
-        break;
-    case WM_SYSKEYDOWN:
-        if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000) {
-            if (wParam == VK_LEFT) {
-                _viewModel->NavigateBack();
-                return TRUE;
-            }
-            if (wParam == VK_RIGHT) {
-                _viewModel->NavigateForward();
-                return TRUE;
-            }
-        }
-        break;
-    case WM_SYSKEYUP:
-        if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-            if (wParam == VK_F10) {
-                ShowContextMenu();
-                return TRUE;
-            }
-        }
-        break;
     case WM_MOUSEMOVE: {
         LVHITTESTINFO hittest = {};
 
@@ -932,6 +845,20 @@ void FileList::SetOrder()
 /*********************************************************************************
  * User interactions
  */
+std::vector<std::shared_ptr<ExplorerEntry>> FileList::GetSelectedEntries() const
+{
+    std::vector<std::shared_ptr<ExplorerEntry>> entries;
+    for (UINT uList = 0; uList < _uMaxElements && uList < _vFileList.size(); uList++) {
+        if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
+            if (uList == 0 && _vFileList[0].IsParent()) {
+                continue;
+            }
+            entries.push_back(std::make_shared<ExplorerEntry>(_vFileList[uList].fullPath, _vFileList[uList].fsEntry));
+        }
+    }
+    return entries;
+}
+
 void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
 {
     if (!screenLocation.has_value()) {
@@ -946,22 +873,14 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
     }
 
     bool isParent = false;
-    std::vector<std::shared_ptr<ExplorerEntry>> entries;
-
-    /* create data */
-    for (UINT uList = 0; uList < _uMaxElements && uList < _vFileList.size(); uList++) {
-        if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
-            if (uList == 0) {
-                if (_vFileList[0].IsParent()) {
-                    ListView_SetItemState(_hSelf, uList, 0, 0xFF);
-                    isParent = true;
-                    continue;
-                }
-            }
-
-            entries.push_back(std::make_shared<ExplorerEntry>(_vFileList[uList].fullPath, _vFileList[uList].fsEntry));
+    if (_uMaxElements > 0 && _vFileList.size() > 0 && _vFileList[0].IsParent()) {
+        if (ListView_GetItemState(_hSelf, 0, LVIS_SELECTED) == LVIS_SELECTED) {
+            ListView_SetItemState(_hSelf, 0, 0, LVIS_SELECTED);
+            isParent = true;
         }
     }
+
+    auto entries = GetSelectedEntries();
 
     if (entries.empty()) {
         FileSystemEntry currentDirFsEntry(_pSettings->GetCurrentDir(), FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
@@ -1220,10 +1139,7 @@ void FileList::GetDate(time_t lastWriteTime, std::wstring & str)
     str = TEMP;
 }
 
-void FileList::setDefaultOnCharHandler(std::function<BOOL(UINT, UINT, UINT)> onCharHandler)
-{
-    _onCharHandler = std::move(onCharHandler);
-}
+// setDefaultOnCharHandler removed in favor of KeyPreviewCallback
 
 
 

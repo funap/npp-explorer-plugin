@@ -202,22 +202,69 @@ void ExplorerViewModel::NavigateToHistoryOffset(int offset)
     }
 }
 
+namespace {
+    bool UpdatePathPrefix(std::wstring& path, const std::wstring& oldPrefix, const std::wstring& newPrefix)
+    {
+        auto normalize = [](std::wstring p) {
+            if (!p.empty() && p.back() == L'\\') {
+                p.pop_back();
+            }
+            return p;
+        };
+
+        std::wstring normPath = normalize(path);
+        std::wstring normOld = normalize(oldPrefix);
+
+        if (normOld.empty()) {
+            return false;
+        }
+
+        auto equalsIgnoreCase = [](const std::wstring& s1, const std::wstring& s2) {
+            if (s1.size() != s2.size()) return false;
+            return std::equal(s1.begin(), s1.end(), s2.begin(), [](wchar_t c1, wchar_t c2) {
+                return std::towlower(c1) == std::towlower(c2);
+            });
+        };
+
+        auto startsWithIgnoreCase = [](const std::wstring& str, const std::wstring& prefix) {
+            if (str.size() < prefix.size()) return false;
+            return std::equal(prefix.begin(), prefix.end(), str.begin(), [](wchar_t c1, wchar_t c2) {
+                return std::towlower(c1) == std::towlower(c2);
+            });
+        };
+
+        if (equalsIgnoreCase(normPath, normOld)) {
+            path = newPrefix;
+            return true;
+        }
+
+        std::wstring matchPrefix = normOld + L"\\";
+        if (startsWithIgnoreCase(normPath, matchPrefix)) {
+            std::wstring relative = path.substr(matchPrefix.length());
+            std::wstring result = newPrefix;
+            if (!result.empty() && result.back() != L'\\') {
+                result += L'\\';
+            }
+            result += relative;
+            path = result;
+            return true;
+        }
+
+        return false;
+    }
+}
+
 void ExplorerViewModel::OnParentDirectoryRenamed(const std::wstring& oldPath, const std::wstring& newPath)
 {
     // Update current directory if it or its parent was renamed
-    if (_currentDir.compare(0, oldPath.length(), oldPath) == 0) {
-        std::wstring relative = _currentDir.substr(oldPath.length());
-        _currentDir = newPath + relative;
+    if (UpdatePathPrefix(_currentDir, oldPath, newPath)) {
         _settings->SetCurrentDir(_currentDir);
         NotifyCurrentDirectoryChanged();
     }
 
     // Update history entries that are affected by this rename
     for (auto& state : _history) {
-        if (state.path.compare(0, oldPath.length(), oldPath) == 0) {
-            std::wstring relative = state.path.substr(oldPath.length());
-            state.path = newPath + relative;
-        }
+        UpdatePathPrefix(state.path, oldPath, newPath);
     }
 }
 
@@ -364,14 +411,7 @@ void ExplorerViewModel::OpenFile(const std::wstring& filePath)
     if (std::filesystem::is_directory(resolvedPath, ec)) {
         NavigateTo(resolvedPath);
     } else {
-        std::vector<IExplorerViewModelObserver*> observersCopy;
-        {
-            std::lock_guard<std::mutex> lock(_mutex);
-            observersCopy = _observers;
-        }
-        for (auto* observer : observersCopy) {
-            observer->OnOpenFileRequested(resolvedPath);
-        }
+        emit(OpenFileRequestedEvent{resolvedPath});
     }
 }
 
@@ -454,14 +494,7 @@ void ExplorerViewModel::NavigateOrExecute(const std::wstring& input)
             NavigateTo(resolvedPathStr);
         }
         else {
-            std::vector<IExplorerViewModelObserver*> observersCopy;
-            {
-                std::lock_guard<std::mutex> lock(_mutex);
-                observersCopy = _observers;
-            }
-            for (auto* observer : observersCopy) {
-                observer->OnOpenFileRequested(resolvedPathStr);
-            }
+            emit(OpenFileRequestedEvent{resolvedPathStr});
         }
     }
     else {
@@ -556,3 +589,91 @@ void ExplorerViewModel::StopWorkerThread()
 {
     _workerThread.Stop();
 }
+
+bool ExplorerViewModel::CreateFolder(const std::wstring& parentPath, std::wstring& errorMsg)
+{
+    auto optFolderName = emit(PromptForNameEvent{L"", L"New folder"});
+    if (!optFolderName) {
+        return false;
+    }
+
+    std::filesystem::path newFolderPath = parentPath;
+    if (std::filesystem::is_regular_file(newFolderPath)) {
+        newFolderPath = newFolderPath.parent_path();
+    }
+    newFolderPath /= *optFolderName;
+
+    if (!FileSystemService::CreateNewDirectory(newFolderPath.wstring())) {
+        errorMsg = L"Folder couldn't be created.";
+        return false;
+    }
+
+    Refresh();
+    emit(RefreshRequestedEvent{});
+
+    return true;
+}
+
+bool ExplorerViewModel::CreateFile(const std::wstring& parentPath, std::wstring& errorMsg)
+{
+    auto optFileName = emit(PromptForNameEvent{L"", L"New file"});
+    if (!optFileName) {
+        return false;
+    }
+
+    std::filesystem::path newFilePath = parentPath;
+    if (std::filesystem::is_regular_file(newFilePath)) {
+        newFilePath = newFilePath.parent_path();
+    }
+    newFilePath /= *optFileName;
+
+    if (!FileSystemService::CreateNewFile(newFilePath.wstring())) {
+        errorMsg = L"File couldn't be created.";
+        return false;
+    }
+
+    emit(OpenFileRequestedEvent{newFilePath.wstring()});
+    Refresh();
+    emit(RefreshRequestedEvent{});
+
+    return true;
+}
+
+bool ExplorerViewModel::RenameEntry(const std::wstring& oldPath, std::wstring& errorMsg)
+{
+    std::wstring parentPath = oldPath;
+    if (!parentPath.empty() && parentPath.back() == '\\') {
+        parentPath.pop_back();
+    }
+
+    size_t lastSlash = parentPath.rfind('\\');
+    if (lastSlash == std::wstring::npos) {
+        return false;
+    }
+    std::wstring currentName = parentPath.substr(lastSlash + 1);
+
+    auto optNewName = emit(PromptForNameEvent{currentName, L"Rename"});
+    if (!optNewName) {
+        return false;
+    }
+
+    std::filesystem::path oldP(oldPath);
+    std::filesystem::path parent = oldP.parent_path();
+    std::filesystem::path newPath = parent / *optNewName;
+
+    if (!::MoveFile(oldPath.c_str(), newPath.c_str())) {
+        errorMsg = L"Entry couldn't be renamed.";
+        return false;
+    }
+
+    std::error_code ec;
+    if (std::filesystem::is_directory(newPath, ec)) {
+        OnParentDirectoryRenamed(oldPath, newPath.wstring());
+    }
+
+    emit(EntryRenamedEvent{oldPath, newPath.wstring(), *optNewName});
+    Refresh();
+
+    return true;
+}
+

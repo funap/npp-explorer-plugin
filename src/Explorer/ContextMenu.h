@@ -28,16 +28,18 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlobj.h>
 #include <vector>
 #include <string>
+#include <functional>
 
 #include "Explorer.h"
 
 class ExplorerEntry;
 class IPluginContext;
+class ExplorerViewModel;
 
 class ContextMenu
 {
 public:
-    ContextMenu(IPluginContext* pluginContext);
+    ContextMenu(IPluginContext* pluginContext, ExplorerViewModel* viewModel);
     ~ContextMenu();
 
     void SetObjects(std::shared_ptr<ExplorerEntry> entry);
@@ -92,6 +94,7 @@ private:
     IContextMenu2*  _contextMenu2;
     IContextMenu3*  _contextMenu3;
 
+    ExplorerViewModel*          _viewModel;
     std::wstring                _strFirstElement;
     std::vector<std::wstring>   _strArray;
     std::vector<std::wstring>   _strNppScripts;

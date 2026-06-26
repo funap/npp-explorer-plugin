@@ -29,6 +29,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include "Explorer.h"
 #include "ExplorerDialog.h"
+#include "ExplorerViewModel.h"
 #include "FavesDialog.h"
 #include "NewDlg.h"
 #include "IPluginContext.h"
@@ -80,8 +81,9 @@ namespace {
     };
 }
 
-ContextMenu::ContextMenu(IPluginContext* pluginContext)
+ContextMenu::ContextMenu(IPluginContext* pluginContext, ExplorerViewModel* viewModel)
     : _pluginContext(pluginContext)
+    , _viewModel(viewModel)
     , _hInst(nullptr)
     , _hWndNpp(nullptr)
     , _hWndParent(nullptr)
@@ -718,31 +720,14 @@ int ContextMenu::GetPIDLCount (LPCITEMIDLIST pidl)
  */
 void ContextMenu::Rename()
 {
-    NewDlg  dlg;
-    WCHAR   newFirstElement[MAX_PATH];
-    WCHAR   szNewName[MAX_PATH];
-    WCHAR   szComment[] = L"Rename";
-
-    /* copy current element information */
-    wcscpy(newFirstElement, _strFirstElement.c_str());
-
-    /* when it is folder, remove the last backslash */
-    if (newFirstElement[wcslen(newFirstElement) - 1] == '\\') {
-        newFirstElement[wcslen(newFirstElement) - 1] = 0;
+    if (_strFirstElement.empty()) {
+        return;
     }
 
-    /* init field to current selected item */
-    wcscpy(szNewName, &_tcsrchr(newFirstElement, '\\')[1]);
-
-    (_tcsrchr(newFirstElement, '\\')[1]) = 0;
-
-    dlg.init(_hInst, _hWndNpp);
-    if (dlg.doDialog(szNewName, szComment) == TRUE) {
-        wcscat(newFirstElement, szNewName);
-        if (::MoveFile(_strFirstElement.c_str(), newFirstElement)) {
-            extern ExplorerDialog explorerDlg;
-            explorerDlg.OnEntryRenamed(_strFirstElement, newFirstElement, szNewName);
-            explorerDlg.Refresh();
+    std::wstring errorMsg;
+    if (!_viewModel->RenameEntry(_strFirstElement, errorMsg)) {
+        if (!errorMsg.empty()) {
+            ::MessageBox(_hWndNpp, errorMsg.c_str(), L"Error", MB_OK);
         }
     }
 }
@@ -766,72 +751,28 @@ void ContextMenu::QuickOpen()
 
 void ContextMenu::NewFile()
 {
-    NewDlg  dlg;
-    BOOL    bLeave = FALSE;
-    WCHAR   szFileName[MAX_PATH];
-    WCHAR   szComment[] = L"New file";
+    if (_strFirstElement.empty()) {
+        return;
+    }
 
-    szFileName[0] = '\0';
-
-    dlg.init(_hInst, _hWndNpp);
-    while (bLeave == FALSE) {
-        if (dlg.doDialog(szFileName, szComment) == TRUE) {
-            /* test if is correct */
-            if (IsValidFileName(szFileName)) {
-                std::filesystem::path newFilePath = _strFirstElement;
-                if (std::filesystem::is_regular_file(newFilePath)) {
-                    newFilePath = newFilePath.parent_path();
-                }
-                newFilePath /= szFileName;
-
-                HANDLE hFile = ::CreateFile(newFilePath.c_str(), GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
-                if (hFile != INVALID_HANDLE_VALUE) {
-                    ::CloseHandle(hFile);
-                    _pluginContext->DoOpen(newFilePath);
-                    extern ExplorerDialog explorerDlg;
-                    explorerDlg.RefreshActiveNode();
-                }
-                bLeave = TRUE;
-            }
-        }
-        else {
-            bLeave = TRUE;
+    std::wstring errorMsg;
+    if (!_viewModel->CreateFile(_strFirstElement, errorMsg)) {
+        if (!errorMsg.empty()) {
+            ::MessageBox(_hWndNpp, errorMsg.c_str(), L"Error", MB_OK);
         }
     }
 }
 
 void ContextMenu::NewFolder()
 {
-    NewDlg  dlg;
-    BOOL    bLeave = FALSE;
-    WCHAR   szFolderName[MAX_PATH];
-    WCHAR   szComment[MAX_PATH] = L"New folder";
+    if (_strFirstElement.empty()) {
+        return;
+    }
 
-    szFolderName[0] = '\0';
-
-    dlg.init(_hInst, _hWndNpp);
-    while (bLeave == FALSE) {
-        if (dlg.doDialog(szFolderName, szComment) == TRUE) {
-            /* test if is correct */
-            if (IsValidFileName(szFolderName)) {
-                std::filesystem::path newFolderPath = _strFirstElement;
-                if (std::filesystem::is_regular_file(newFolderPath)) {
-                    newFolderPath = newFolderPath.parent_path();
-                }
-                newFolderPath /= szFolderName;
-
-                if (::CreateDirectory(newFolderPath.c_str(), nullptr) == FALSE) {
-                    ::MessageBox(_hWndNpp, L"Folder couldn't be created.", L"Error", MB_OK);
-                }
-                else {
-                    extern ExplorerDialog explorerDlg;
-                    explorerDlg.RefreshActiveNode();
-                }
-                bLeave = TRUE;
-            }
-        }
-        else {
-            bLeave = TRUE;
+    std::wstring errorMsg;
+    if (!_viewModel->CreateFolder(_strFirstElement, errorMsg)) {
+        if (!errorMsg.empty()) {
+            ::MessageBox(_hWndNpp, errorMsg.c_str(), L"Error", MB_OK);
         }
     }
 }

@@ -82,7 +82,15 @@ public:
     void Refresh();
     void FocusAddressBar();
     void ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu = true);
-    void OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName);
+
+    bool TranslateShortcut(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam);
+    void RenameSelection();
+    void ShowSelectedProperties();
+    void GoToParentFolder();
+    void OpenFindInFiles();
+    void OpenQuickOpen();
+    std::vector<std::shared_ptr<ExplorerEntry>> GetSelectedEntries() const;
+    void ShowContextMenuForFocusedControl();
     void RefreshActiveNode();
     void RebuildRoots();
     void RefreshTreeFilter();
@@ -114,10 +122,15 @@ protected:
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
     void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override {};
     void OnNavigationStateChanged() override;
-    void OnOpenFileRequested(const std::wstring& filePath) override;
     void OnCommandExecutionFailed(const std::wstring& command) override;
     void OnToggleWorkspaceModeRequested() override;
     void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren) override;
+
+    // Event handle overrides
+    std::optional<std::wstring> handle(const PromptForNameEvent& ev) override;
+    void handle(const OpenFileRequestedEvent& ev) override;
+    void handle(const RefreshRequestedEvent& ev) override;
+    void handle(const EntryRenamedEvent& ev) override;
 
     void UpdateRoots();
     void UpdateAllExpandedItems();

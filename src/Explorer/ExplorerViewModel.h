@@ -37,6 +37,28 @@
 #include "FileSystemService.h"
 #include "Explorer.h"
 
+struct PromptForNameEvent {
+    using ReturnType = std::optional<std::wstring>;
+    std::wstring defaultName;
+    std::wstring comment;
+};
+
+struct OpenFileRequestedEvent {
+    using ReturnType = void;
+    std::wstring filePath;
+};
+
+struct RefreshRequestedEvent {
+    using ReturnType = void;
+};
+
+struct EntryRenamedEvent {
+    using ReturnType = void;
+    std::wstring oldPath;
+    std::wstring newPath;
+    std::wstring newName;
+};
+
 // Forward declaration
 class IExplorerViewModelObserver;
 
@@ -94,6 +116,37 @@ public:
     void Refresh();
     void SetFilter(const std::wstring& filter);
     std::wstring GetFilter() const;
+    bool CreateFolder(const std::wstring& parentPath, std::wstring& errorMsg);
+    bool CreateFile(const std::wstring& parentPath, std::wstring& errorMsg);
+    bool RenameEntry(const std::wstring& oldPath, std::wstring& errorMsg);
+
+    template<typename EventType>
+    typename EventType::ReturnType emit(const EventType& ev)
+    {
+        if constexpr (std::is_same_v<typename EventType::ReturnType, void>) {
+            std::vector<IExplorerViewModelObserver*> observersCopy;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                observersCopy = _observers;
+            }
+            for (auto* observer : observersCopy) {
+                observer->handle(ev);
+            }
+        } else {
+            std::vector<IExplorerViewModelObserver*> observersCopy;
+            {
+                std::lock_guard<std::mutex> lock(_mutex);
+                observersCopy = _observers;
+            }
+            for (auto* observer : observersCopy) {
+                auto res = observer->handle(ev);
+                if (res.has_value()) {
+                    return res;
+                }
+            }
+            return typename EventType::ReturnType{};
+        }
+    }
 
     // Async Task requests from View
     void CheckFolderChildren(HTREEITEM hItem, const std::wstring& path);
@@ -142,8 +195,13 @@ public:
     virtual void OnCurrentDirectoryChanged(const std::wstring& path) = 0;
     virtual void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) = 0;
     virtual void OnNavigationStateChanged() = 0;
-    virtual void OnOpenFileRequested(const std::wstring& filePath) = 0;
     virtual void OnCommandExecutionFailed(const std::wstring& command) = 0;
     virtual void OnToggleWorkspaceModeRequested() = 0;
     virtual void OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring& path, bool hasChildren) {}
+
+    // Event handler overloads
+    virtual std::optional<std::wstring> handle(const PromptForNameEvent& ev) { return std::nullopt; }
+    virtual void handle(const OpenFileRequestedEvent& ev) {}
+    virtual void handle(const RefreshRequestedEvent& ev) {}
+    virtual void handle(const EntryRenamedEvent& ev) {}
 };

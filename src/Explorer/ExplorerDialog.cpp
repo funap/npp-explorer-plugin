@@ -34,6 +34,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerResource.h"
 #include "ContextMenu.h"
 #include "NewDlg.h"
+#include "QuickOpenDialog.h"
 #include "IPluginContext.h"
 #include "resource.h"
 #include "ThemeRenderer.h"
@@ -529,30 +530,16 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
  */
 LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
 {
+    if (TranslateShortcut(hwnd, Message, wParam, lParam)) {
+        return TRUE;
+    }
+
     switch (Message){
     case WM_GETDLGCODE: {
         return DLGC_WANTALLKEYS | ::CallWindowProc(_hDefaultTreeProc, hwnd, Message, wParam, lParam);
     }
     case WM_CHAR: {
-        /* do selection of items by user keyword typing or cut/copy/paste */
         switch (wParam) {
-        case SHORTCUT_ALL:
-            return TRUE;
-        case SHORTCUT_CUT:
-            OnCut();
-            return TRUE;
-        case SHORTCUT_COPY:
-            OnCopy();
-            return TRUE;
-        case SHORTCUT_PASTE:
-            OnPaste();
-            return TRUE;
-        case SHORTCUT_DELETE:
-            OnDelete();
-            return TRUE;
-        case SHORTCUT_REFRESH:
-            Refresh();
-            return TRUE;
         case VK_RETURN: {
             /* toggle item on return */
             HTREEITEM hItem = _hTreeCtrl.GetSelection();
@@ -589,75 +576,12 @@ LRESULT ExplorerDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPAR
         break;
     }
     case WM_KEYUP:
-        if (VK_APPS == wParam) {
-            HTREEITEM item = _hTreeCtrl.GetSelection();
-            if (item != nullptr) {
-                auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
-                if (pShared != nullptr && *pShared != nullptr) {
-                    RECT rect{};
-                    _hTreeCtrl.GetItemRect(item, &rect, TRUE);
-                    ::ClientToScreen(_hTreeCtrl, &rect);
-                    const POINT pt{
-                        .x = rect.right,
-                        .y = rect.bottom,
-                    };
-                    ShowContextMenu(pt, {*pShared});
-                    return TRUE;
-                }
-            }
-        }
         break;
-    case WM_KEYDOWN: {
-        if ((wParam == VK_DELETE) && !((0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000)) {
-            OnDelete((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000);
-            return TRUE;
-        }
-        if (wParam == VK_F5) {
-            Refresh();
-            return TRUE;
-        }
-        if (wParam == 'L' && (0x8000 & ::GetKeyState(VK_CONTROL)) == 0x8000) {
-            FocusAddressBar();
-            return TRUE;
-        }
-        if (VK_ESCAPE == wParam) {
-            _pluginContext->SetFocusToCurrentEdit();
-            return TRUE;
-        }
+    case WM_KEYDOWN:
         break;
-    }
     case WM_SYSKEYDOWN:
-        if ((0x8000 & ::GetKeyState(VK_MENU)) == 0x8000) {
-            if (wParam == VK_LEFT) {
-                NavigateBack();
-                return TRUE;
-            }
-            if (wParam == VK_RIGHT) {
-                NavigateForward();
-                return TRUE;
-            }
-        }
         break;
     case WM_SYSKEYUP:
-        if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-            if (wParam == VK_F10) {
-                HTREEITEM item = _hTreeCtrl.GetSelection();
-                if (item != nullptr) {
-                    auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
-                    if (pShared != nullptr && *pShared != nullptr) {
-                        RECT rect{};
-                        _hTreeCtrl.GetItemRect(item, &rect, TRUE);
-                        ::ClientToScreen(_hTreeCtrl, &rect);
-                        const POINT pt{
-                            .x = rect.right,
-                            .y = rect.bottom,
-                        };
-                        ShowContextMenu(pt, {*pShared});
-                        return TRUE;
-                    }
-                }
-            }
-        }
         break;
     case EXM_QUERYDROP: {
         TVHITTESTINFO ht = {};
@@ -834,63 +758,19 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
         NavigateForward();
         break;
     case IDM_EX_FILE_NEW: {
-        NewDlg  dlg;
-        WCHAR   szFileName[MAX_PATH]{};
-        WCHAR   szComment[] = L"New file";
-
-        dlg.init(_hInst, _hParent);
-        for (;;) {
-            if (dlg.doDialog(szFileName, szComment) == TRUE) {
-                /* test if is correct */
-                if (IsValidFileName(szFileName)) {
-                    std::filesystem::path newFilePath = GetPath(_hTreeCtrl.GetSelection());
-                    if (std::filesystem::is_regular_file(newFilePath)) {
-                        newFilePath = newFilePath.parent_path();
-                    }
-                    newFilePath /= szFileName;
-
-                    if (FileSystemService::CreateNewFile(newFilePath.wstring())) {
-                        ::SendMessage(_hParent, NPPM_DOOPEN, 0, (LPARAM)newFilePath.c_str());
-                        RefreshActiveNode();
-                    }
-                    break;
-                }
-            }
-            else {
-                break;
+        std::wstring errorMsg;
+        if (!_viewModel->CreateFile(GetPath(_hTreeCtrl.GetSelection()), errorMsg)) {
+            if (!errorMsg.empty()) {
+                ::MessageBox(_hParent, errorMsg.c_str(), L"Error", MB_OK);
             }
         }
         break;
     }
     case IDM_EX_FOLDER_NEW: {
-        NewDlg  dlg;
-        WCHAR   szFolderName[MAX_PATH];
-        WCHAR   szComment[] = L"New folder";
-
-        szFolderName[0] = '\0';
-
-        dlg.init(_hInst, _hParent);
-        for (;;) {
-            if (dlg.doDialog(szFolderName, szComment) == TRUE) {
-                /* test if is correct */
-                if (IsValidFileName(szFolderName)) {
-                    std::filesystem::path newFolderPath = GetPath(_hTreeCtrl.GetSelection());
-                    if (std::filesystem::is_regular_file(newFolderPath)) {
-                        newFolderPath = newFolderPath.parent_path();
-                    }
-                    newFolderPath /= szFolderName;
-
-                    if (FileSystemService::CreateNewDirectory(newFolderPath.wstring()) == false) {
-                        ::MessageBox(_hParent, L"Folder couldn't be created.", L"Error", MB_OK);
-                    }
-                    else {
-                        RefreshActiveNode();
-                    }
-                    break;
-                }
-            }
-            else {
-                break;
+        std::wstring errorMsg;
+        if (!_viewModel->CreateFolder(GetPath(_hTreeCtrl.GetSelection()), errorMsg)) {
+            if (!errorMsg.empty()) {
+                ::MessageBox(_hParent, errorMsg.c_str(), L"Error", MB_OK);
             }
         }
         break;
@@ -1035,49 +915,12 @@ void ExplorerDialog::InitialDialog()
     AddSuportedFormat(_hTreeCtrl, fmtetc);
 
     // key binding
-    _FileList.setDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
-        switch (nChar) {
-        case VK_TAB:
-            if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-                ::SetFocus(_hTreeCtrl);
-            }
-            else {
-                ::SetFocus(_hFilter);
-            }
-            return TRUE;
-        case VK_ESCAPE:
-            _pluginContext->SetFocusToCurrentEdit();
-            return TRUE;
-        default:
-            break;
-        }
-        return FALSE;
+    _FileList.SetKeyPreviewCallback([this](HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return TranslateShortcut(hwnd, Message, wParam, lParam);
     });
-
-    _ComboFilter.SetDefaultOnCharHandler([this](UINT nChar, UINT /* nRepCnt */, UINT /* nFlags */) -> BOOL {
-        switch (nChar) {
-        case VK_TAB:
-            if ((0x8000 & ::GetKeyState(VK_SHIFT)) == 0x8000) {
-                if (_pSettings->IsUseFullTree()) {
-                    ::SetFocus(_hTreeCtrl);
-                }
-                else {
-                    ::SetFocus(_hListCtrl);
-                }
-            }
-            else {
-                ::SetFocus(_hTreeCtrl);
-            }
-            return TRUE;
-        case VK_ESCAPE:
-            _pluginContext->SetFocusToCurrentEdit();
-            return TRUE;
-        default:
-            break;
-        }
-        return FALSE;
+    _ComboFilter.SetKeyPreviewCallback([this](HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam) {
+        return TranslateShortcut(hwnd, Message, wParam, lParam);
     });
-
     _FileList.SetFocusAddressBarCallback([this]() { FocusAddressBar(); });
     _FileList.SetShowContextMenuCallback([this](POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu) {
         ShowContextMenu(screenLocation, entries, hasStandardMenu);
@@ -2068,7 +1911,7 @@ bool ExplorerDialog::DoPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwE
 
 void ExplorerDialog::ShowContextMenu(POINT screenLocation, const std::vector<std::shared_ptr<ExplorerEntry>>& entries, bool hasStandardMenu)
 {
-    ContextMenu cm(_pluginContext);
+    ContextMenu cm(_pluginContext, _viewModel.get());
     cm.SetObjects(entries);
     cm.ShowContextMenu(_hInst, _hParent, _hSelf, screenLocation, hasStandardMenu);
 }
@@ -2140,17 +1983,41 @@ void ExplorerDialog::OnFolderChildrenChecked(HTREEITEM hItem, const std::wstring
     }
 }
 
-void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstring& newPath, const std::wstring& newName) {
+std::optional<std::wstring> ExplorerDialog::handle(const PromptForNameEvent& ev)
+{
+    NewDlg dlg;
+    dlg.init(_hInst, _hSelf);
+    WCHAR szName[MAX_PATH]{};
+    wcsncpy_s(szName, ev.defaultName.c_str(), _TRUNCATE);
+    for (;;) {
+        if (dlg.doDialog(szName, ev.comment.c_str()) == TRUE) {
+            if (IsValidFileName(szName)) {
+                return szName;
+            }
+        } else {
+            break;
+        }
+    }
+    return std::nullopt;
+}
+
+void ExplorerDialog::handle(const RefreshRequestedEvent& ev)
+{
+    RefreshActiveNode();
+}
+
+void ExplorerDialog::handle(const EntryRenamedEvent& ev)
+{
     if (!isCreated()) return;
 
-    HTREEITEM hItem = FindTreeItemByPath(oldPath);
+    HTREEITEM hItem = FindTreeItemByPath(ev.oldPath);
     if (hItem != nullptr) {
         auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(hItem));
         if (pShared != nullptr && *pShared != nullptr) {
-            (*pShared)->Rename(newPath, newName);
+            (*pShared)->Rename(ev.newPath, ev.newName);
 
             // Elegantly set only the item text! Win32 TreeView preserves all other states!
-            _hTreeCtrl.SetItemText(hItem, newName);
+            _hTreeCtrl.SetItemText(hItem, ev.newName);
 
             HTREEITEM hParentItem = _hTreeCtrl.GetParent(hItem);
             if (hParentItem != nullptr) {
@@ -2158,8 +2025,6 @@ void ExplorerDialog::OnEntryRenamed(const std::wstring& oldPath, const std::wstr
             }
         }
     }
-
-    _viewModel->OnParentDirectoryRenamed(oldPath, newPath);
 }
 
 void ExplorerDialog::RefreshActiveNode()
@@ -2250,10 +2115,10 @@ void ExplorerDialog::OnNavigationStateChanged()
     _ToolBar.enable(IDM_EX_NEXT, _viewModel->CanNavigateForward());
 }
 
-void ExplorerDialog::OnOpenFileRequested(const std::wstring& filePath)
+void ExplorerDialog::handle(const OpenFileRequestedEvent& ev)
 {
-    _pluginContext->DoOpen(filePath);
-    GotoFileLocation(filePath);
+    _pluginContext->DoOpen(ev.filePath);
+    GotoFileLocation(ev.filePath);
 }
 
 void ExplorerDialog::OnCommandExecutionFailed(const std::wstring& command)
@@ -2271,5 +2136,271 @@ void ExplorerDialog::Post(std::function<void()> action)
     auto* pAction = new std::function<void()>(std::move(action));
     if (!::PostMessage(_hSelf, EXM_DISPATCH_ACTION, reinterpret_cast<WPARAM>(pAction), 0)) {
         delete pAction;
+    }
+}
+
+bool ExplorerDialog::TranslateShortcut(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    const bool isCtrlPressed = (0x8000 & ::GetKeyState(VK_CONTROL)) != 0;
+    const bool isShiftPressed = (0x8000 & ::GetKeyState(VK_SHIFT)) != 0;
+    const bool isAltPressed = (0x8000 & ::GetKeyState(VK_MENU)) != 0;
+
+    const bool isListOrTree = (hwnd == _FileList.getHSelf() || hwnd == _hTreeCtrl);
+    const bool isFilterEdit = (hwnd == _hFilter || ::GetParent(hwnd) == _hFilter);
+
+    switch (message) {
+    case WM_KEYDOWN: {
+        // Global panel shortcuts
+        if (wParam == 'F' && isCtrlPressed && isShiftPressed && !isAltPressed) {
+            OpenFindInFiles();
+            return true;
+        }
+        if (wParam == 'P' && isCtrlPressed && !isShiftPressed && !isAltPressed) {
+            OpenQuickOpen();
+            return true;
+        }
+        if (wParam == 'L' && isCtrlPressed && !isShiftPressed && !isAltPressed) {
+            FocusAddressBar();
+            return true;
+        }
+        if (wParam == VK_F5 && !isCtrlPressed && !isShiftPressed && !isAltPressed) {
+            Refresh();
+            return true;
+        }
+        if (wParam == VK_ESCAPE && !isCtrlPressed && !isShiftPressed && !isAltPressed) {
+            _pluginContext->SetFocusToCurrentEdit();
+            return true;
+        }
+
+        // Control-specific selection/navigation shortcuts
+        if (isListOrTree) {
+            if (wParam == VK_F2 && !isCtrlPressed && !isShiftPressed && !isAltPressed) {
+                RenameSelection();
+                return true;
+            }
+            if (wParam == VK_BACK && !isCtrlPressed && !isShiftPressed && !isAltPressed) {
+                GoToParentFolder();
+                return true;
+            }
+            if (wParam == VK_DELETE && !isCtrlPressed) {
+                OnDelete(isShiftPressed);
+                return true;
+            }
+        }
+
+        // Custom TAB navigation
+        if (wParam == VK_TAB && !isCtrlPressed && !isAltPressed) {
+            if (hwnd == _hTreeCtrl) {
+                if (!_pSettings->IsUseFullTree()) {
+                    if (isShiftPressed) {
+                        ::SetFocus(_hFilter);
+                    } else {
+                        ::SetFocus(_FileList.getHSelf());
+                    }
+                    return true;
+                }
+            } else if (hwnd == _FileList.getHSelf()) {
+                if (isShiftPressed) {
+                    ::SetFocus(_hTreeCtrl);
+                } else {
+                    ::SetFocus(_hFilter);
+                }
+                return true;
+            } else if (isFilterEdit) {
+                if (isShiftPressed) {
+                    if (_pSettings->IsUseFullTree()) {
+                        ::SetFocus(_hTreeCtrl);
+                    } else {
+                        ::SetFocus(_FileList.getHSelf());
+                    }
+                } else {
+                    ::SetFocus(_hTreeCtrl);
+                }
+                return true;
+            }
+        }
+        break;
+    }
+    case WM_SYSKEYDOWN: {
+        if (wParam == VK_RETURN && isAltPressed && !isCtrlPressed && !isShiftPressed) {
+            ShowSelectedProperties();
+            return true;
+        }
+        if (wParam == VK_UP && isAltPressed && !isCtrlPressed && !isShiftPressed) {
+            GoToParentFolder();
+            return true;
+        }
+        if (wParam == 'D' && isAltPressed && !isCtrlPressed && !isShiftPressed) {
+            FocusAddressBar();
+            return true;
+        }
+        if (wParam == VK_LEFT && isAltPressed && !isCtrlPressed && !isShiftPressed) {
+            NavigateBack();
+            return true;
+        }
+        if (wParam == VK_RIGHT && isAltPressed && !isCtrlPressed && !isShiftPressed) {
+            NavigateForward();
+            return true;
+        }
+        break;
+    }
+    case WM_KEYUP: {
+        if (wParam == VK_APPS && !isCtrlPressed && !isShiftPressed && !isAltPressed) {
+            ShowContextMenuForFocusedControl();
+            return true;
+        }
+        break;
+    }
+    case WM_SYSKEYUP: {
+        if (wParam == VK_F10 && isShiftPressed && !isCtrlPressed && !isAltPressed) {
+            ShowContextMenuForFocusedControl();
+            return true;
+        }
+        break;
+    }
+    case WM_CHAR: {
+        // Navigation / Selection control specific shortcuts
+        if (isListOrTree) {
+            switch (wParam) {
+            case SHORTCUT_ALL: // Ctrl+A
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onSelectAll();
+                    return true;
+                }
+                break;
+            case SHORTCUT_CUT: // Ctrl+X
+                OnCut();
+                return true;
+            case SHORTCUT_COPY: // Ctrl+C
+                OnCopy();
+                return true;
+            case SHORTCUT_PASTE: // Ctrl+V
+                OnPaste();
+                return true;
+            case SHORTCUT_DELETE: // Ctrl+D
+                OnDelete(false);
+                return true;
+            case SHORTCUT_REFRESH: // Ctrl+R
+                Refresh();
+                return true;
+            default:
+                break;
+            }
+        }
+        break;
+    }
+    }
+    return false;
+}
+
+void ExplorerDialog::RenameSelection()
+{
+    auto entries = GetSelectedEntries();
+    if (entries.empty()) {
+        return;
+    }
+
+    auto entry = entries.front();
+    std::wstring path = entry->Path();
+
+    std::wstring errorMsg;
+    if (!_viewModel->RenameEntry(path, errorMsg)) {
+        if (!errorMsg.empty()) {
+            ::MessageBox(_hSelf, errorMsg.c_str(), L"Error", MB_OK);
+        }
+    }
+}
+
+void ExplorerDialog::ShowSelectedProperties()
+{
+    auto entries = GetSelectedEntries();
+    if (entries.empty()) {
+        FileSystemEntry currentDirFsEntry(_pSettings->GetCurrentDir(), FILE_ATTRIBUTE_DIRECTORY, 0, 0, false);
+        entries.push_back(std::make_shared<ExplorerEntry>(_pSettings->GetCurrentDir(), currentDirFsEntry));
+    }
+
+    for (const auto& entry : entries) {
+        SHELLEXECUTEINFO sei = {0};
+        sei.cbSize = sizeof(SHELLEXECUTEINFO);
+        sei.fMask = SEE_MASK_INVOKEIDLIST;
+        sei.hwnd = _hSelf;
+        sei.lpVerb = L"properties";
+        sei.lpFile = entry->Path().c_str();
+        sei.nShow = SW_SHOW;
+        ::ShellExecuteEx(&sei);
+    }
+}
+
+void ExplorerDialog::GoToParentFolder()
+{
+    std::wstring currentDir = _viewModel->GetCurrentDir();
+    std::filesystem::path currentPath(currentDir);
+    if (currentPath.has_parent_path() && currentPath.parent_path() != currentPath) {
+        _viewModel->NavigateTo(currentPath.parent_path().wstring());
+    }
+}
+
+void ExplorerDialog::OpenFindInFiles()
+{
+    _pluginContext->LaunchFindFileDialog(_pSettings->GetCurrentDir());
+}
+
+void ExplorerDialog::OpenQuickOpen()
+{
+    std::wstring path = _viewModel->GetCurrentDir();
+    auto entries = GetSelectedEntries();
+    if (!entries.empty()) {
+        auto entry = entries.front();
+        path = entry->Path();
+        if (!entry->FSEntry().IsDirectory()) {
+            std::filesystem::path fsPath(path);
+            if (fsPath.has_parent_path()) {
+                path = fsPath.parent_path().wstring();
+            }
+        }
+    }
+
+    extern QuickOpenDlg quickOpenDlg;
+    quickOpenDlg.setRootPath(path);
+    quickOpenDlg.show();
+}
+
+std::vector<std::shared_ptr<ExplorerEntry>> ExplorerDialog::GetSelectedEntries() const
+{
+    HWND hwndFocus = ::GetFocus();
+    if (hwndFocus == _hTreeCtrl) {
+        HTREEITEM item = _hTreeCtrl.GetSelection();
+        if (item != nullptr) {
+            auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
+            if (pShared != nullptr && *pShared != nullptr) {
+                return {*pShared};
+            }
+        }
+    } else if (hwndFocus == _FileList.getHSelf()) {
+        return _FileList.GetSelectedEntries();
+    }
+    return {};
+}
+
+void ExplorerDialog::ShowContextMenuForFocusedControl()
+{
+    HWND hwndFocus = ::GetFocus();
+    if (hwndFocus == _hTreeCtrl) {
+        HTREEITEM item = _hTreeCtrl.GetSelection();
+        if (item != nullptr) {
+            auto* pShared = reinterpret_cast<std::shared_ptr<ExplorerEntry>*>(_hTreeCtrl.GetParam(item));
+            if (pShared != nullptr && *pShared != nullptr) {
+                RECT rect{};
+                _hTreeCtrl.GetItemRect(item, &rect, TRUE);
+                ::ClientToScreen(_hTreeCtrl, &rect);
+                const POINT pt{
+                    .x = rect.right,
+                    .y = rect.bottom,
+                };
+                ShowContextMenu(pt, {*pShared});
+            }
+        }
+    } else if (hwndFocus == _FileList.getHSelf()) {
+        _FileList.ShowContextMenu(std::nullopt);
     }
 }
