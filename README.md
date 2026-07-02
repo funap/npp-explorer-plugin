@@ -56,6 +56,26 @@ To resolve this conflict, follow these steps:
 
 Or assign your favorite key to `Quick Open...`.
 
+## Keyboard Shortcuts
+When the Explorer panel has focus, the following shortcuts are supported for quick navigation and file management:
+
+| Shortcut | Action |
+| --- | --- |
+| <kbd>Ctrl + P</kbd> | Open the **Quick Open** dialog. |
+| <kbd>Ctrl + Shift + F</kbd> | Open Notepad++ **Find in Files** dialog for the current directory. |
+| <kbd>Ctrl + L</kbd> or <kbd>Alt + D</kbd> | Focus the Address Bar. |
+| <kbd>ESC</kbd> | Return focus to the active Notepad++ editor window. |
+| <kbd>Tab</kbd> / <kbd>Shift + Tab</kbd> | Cycle focus through the Folder Tree, File List, and Filter Box. |
+| <kbd>F2</kbd> | Rename the selected file or folder. |
+| <kbd>Backspace</kbd> / <kbd>Alt + Up</kbd> | Navigate to the parent directory. |
+| <kbd>Alt + Left</kbd> / <kbd>Alt + Right</kbd> | Navigate Back / Forward in history. |
+| <kbd>Delete</kbd> | Delete the selected item (supports <kbd>Shift + Delete</kbd> for permanent deletion). |
+| <kbd>Alt + Enter</kbd> | Show Windows properties dialog for the selected item. |
+| <kbd>F5</kbd> / <kbd>Ctrl + R</kbd> | Refresh the current view. |
+| <kbd>App Key</kbd> / <kbd>Shift + F10</kbd> | Show the context menu for the focused control. |
+| <kbd>Ctrl + A</kbd> | Select all items (File List only). |
+| <kbd>Ctrl + C</kbd> / <kbd>Ctrl + X</kbd> / <kbd>Ctrl + V</kbd> | Copy / Cut / Paste selected items. |
+
 ## License
 This project is licensed under the terms of the GNU GPL v2.0 license
 
