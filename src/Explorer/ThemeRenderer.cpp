@@ -197,6 +197,7 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
         return TRUE;
     }
     case WM_CTLCOLOREDIT:
+    case WM_CTLCOLORSTATIC:
     {
         HDC hdc = (HDC)wParam;
         ::SetTextColor(hdc, m_colors.secondary);
@@ -204,7 +205,7 @@ LRESULT ThemeRenderer::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
         return (LRESULT)(HBRUSH)m_brushes.secondary_bg;
     }
     case WM_NCDESTROY:
-        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, REBAR_SUBCLASS_ID);
+        ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, WINDOW_SUBCLASS_ID);
         m_windows.erase(hWnd);
         break;
     }
@@ -222,7 +223,6 @@ LRESULT ThemeRenderer::RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lPa
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, REBAR_SUBCLASS_ID);
-        m_windows.erase(hWnd);
         break;
     }
     return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -239,7 +239,6 @@ LRESULT ThemeRenderer::ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, BUTTON_SUBCLASS_ID);
-        m_windows.erase(hWnd);
         break;
     }
     return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
@@ -248,25 +247,30 @@ LRESULT ThemeRenderer::ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lP
 LRESULT ThemeRenderer::EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg) {
+    case WM_SETFOCUS:
+    case WM_KILLFOCUS:
+        ::RedrawWindow(hWnd, nullptr, nullptr, RDW_INVALIDATE | RDW_FRAME | RDW_UPDATENOW);
+        break;
     case WM_NCPAINT: {
-        HDC hdc = GetWindowDC(hWnd);
-        RECT rect;
-        GetWindowRect(hWnd, &rect);
-        OffsetRect(&rect, -rect.left, -rect.top);
+        ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
 
-        HWND hFocusWnd = GetFocus();
+        HDC hdc = ::GetWindowDC(hWnd);
+        RECT rect;
+        ::GetWindowRect(hWnd, &rect);
+        ::OffsetRect(&rect, -rect.left, -rect.top);
+
+        HWND hFocusWnd = ::GetFocus();
         if (hFocusWnd == hWnd) {
-            FrameRect(hdc, &rect, m_brushes.primary_border);
+            ::FrameRect(hdc, &rect, m_brushes.primary_border);
         } else {
-            FrameRect(hdc, &rect, m_brushes.border);
+            ::FrameRect(hdc, &rect, m_brushes.border);
         }
 
-        ReleaseDC(hWnd, hdc);
-        return TRUE;
+        ::ReleaseDC(hWnd, hdc);
+        return 0;
     }
     case WM_NCDESTROY:
         ::RemoveWindowSubclass(hWnd, DefaultSubclassProc, EDIT_SUBCLASS_ID);
-        m_windows.erase(hWnd);
         break;
     }
     return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);
