@@ -143,11 +143,15 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
         settings.Save();
 
         /* destroy image list */
-        ImageList_Destroy(ghImgList);
+        if (ghImgList != nullptr) {
+            ImageList_Destroy(ghImgList);
+            ghImgList = nullptr;
+        }
 
         /* Remove subclaasing */
         if (wndProcNotepad != nullptr) {
             SetWindowLongPtr(g_nppContext.GetWindow(), GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
+            wndProcNotepad = nullptr;
         }
 
 
