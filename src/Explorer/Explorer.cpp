@@ -58,20 +58,21 @@ FuncItem            funcItem[] = {
 /*  0 */{ L"&Explorer...",                    ToggleExplorerDialog,       0,       false,   nullptr},
 /*  1 */{ L"&Favorites...",                   ToggleFavesDialog,          0,       false,   nullptr},
 /*  2 */{ L"&Quick Open...",                  OpenQuickOpenDlg,           0,       false,   nullptr},
-/*  3 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/*  4 */{ L"Go to &Path...",                  GotoPath,                   0,       false,   nullptr},
-/*  5 */{ L"Go to &User Folder",              GotoUserFolder,             0,       false,   nullptr},
-/*  6 */{ L"Go to &Current Folder",           GotoCurrentFolder,          0,       false,   nullptr},
-/*  7 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/*  8 */{ L"&Go to Current File",             GotoCurrentFile,            0,       false,   nullptr},
-/*  9 */{ L"&Show Explorer (Focus on folder)",ShowExplorerDialogOnFolder, 0,       false,   nullptr},
-/* 10 */{ L"Show E&xplorer (Focus on file)",  ShowExplorerDialogOnFile,   0,       false,   nullptr},
-/* 11 */{ L"Show Fa&vorites",                 ShowFavesDialog,            0,       false,   nullptr},
-/* 12 */{ L"C&lear Filter",                   ClearFilter,                0,       false,   nullptr},
-/* 13 */{ L"Toggle Workspace Mode",           ToggleWorkspaceMode,        0,       false,   nullptr},
-/* 14 */{ L"Explorer &Options...",            OpenOptionDlg,              0,       false,   nullptr},
-/* 15 */{ L"-",                               nullptr,                    0,       false,   nullptr},
-/* 16 */{ L"&Help...",                        OpenHelpDlg,                0,       false,   nullptr},
+/*  3 */{ L"Q&uick Open (Current Folder)...", OpenQuickOpenDlgInCurrentFolder, 0,  false,   nullptr},
+/*  4 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/*  5 */{ L"Go to &Path...",                  GotoPath,                   0,       false,   nullptr},
+/*  6 */{ L"Go to &User Folder",              GotoUserFolder,             0,       false,   nullptr},
+/*  7 */{ L"Go to &Current Folder",           GotoCurrentFolder,          0,       false,   nullptr},
+/*  8 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/*  9 */{ L"&Go to Current File",             GotoCurrentFile,            0,       false,   nullptr},
+/* 10 */{ L"&Show Explorer (Focus on folder)",ShowExplorerDialogOnFolder, 0,       false,   nullptr},
+/* 11 */{ L"Show E&xplorer (Focus on file)",  ShowExplorerDialogOnFile,   0,       false,   nullptr},
+/* 12 */{ L"Show Fa&vorites",                 ShowFavesDialog,            0,       false,   nullptr},
+/* 13 */{ L"C&lear Filter",                   ClearFilter,                0,       false,   nullptr},
+/* 14 */{ L"Toggle Workspace Mode",           ToggleWorkspaceMode,        0,       false,   nullptr},
+/* 15 */{ L"Explorer &Options...",            OpenOptionDlg,              0,       false,   nullptr},
+/* 16 */{ L"-",                               nullptr,                    0,       false,   nullptr},
+/* 17 */{ L"&Help...",                        OpenHelpDlg,                0,       false,   nullptr},
 };
 
 /* see in notepad sources */
@@ -435,6 +436,12 @@ void OpenQuickOpenDlg()
         paths.push_back(settings.GetCurrentDir());
         quickOpenDlg.setWorkspacePaths(paths);
     }
+    quickOpenDlg.show();
+}
+
+void OpenQuickOpenDlgInCurrentFolder()
+{
+    quickOpenDlg.setRootPath(settings.GetCurrentDir());
     quickOpenDlg.show();
 }
 

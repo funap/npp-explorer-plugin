@@ -744,9 +744,7 @@ void ContextMenu::QuickOpen()
         }
     }
 
-    extern QuickOpenDlg quickOpenDlg;
-    quickOpenDlg.setRootPath(path);
-    quickOpenDlg.show();
+    OpenQuickOpenDlgInCurrentFolder();
 }
 
 void ContextMenu::NewFile()

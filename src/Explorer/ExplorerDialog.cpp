@@ -2360,9 +2360,7 @@ void ExplorerDialog::OpenQuickOpen()
         }
     }
 
-    extern QuickOpenDlg quickOpenDlg;
-    quickOpenDlg.setRootPath(path);
-    quickOpenDlg.show();
+    OpenQuickOpenDlgInCurrentFolder();
 }
 
 std::vector<std::shared_ptr<ExplorerEntry>> ExplorerDialog::GetSelectedEntries() const
