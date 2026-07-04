@@ -131,7 +131,8 @@ void FavesDialog::doDialog(bool willBeShown)
         data.pszName        = L"Favorites";
         data.dlgID          = DOCKABLE_FAVORTIES_INDEX;
         data.uMask          = DWS_DF_CONT_LEFT | DWS_ICONTAB | DWS_USEOWNDARKMODE;
-        data.hIconTab       = (HICON)::LoadImage(_hInst, MAKEINTRESOURCE(IDI_HEART), IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
+        LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons() ? MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES) : MAKEINTRESOURCE(IDI_HEART);
+        data.hIconTab       = (HICON)::LoadImage(_hInst, iconResourceName, IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName  = getPluginFileName();
 
         ::SendMessage(_hParent, NPPM_DMMREGASDCKDLG, 0, (LPARAM)&data);
