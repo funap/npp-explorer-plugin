@@ -8,6 +8,20 @@
 #include <algorithm>
 #include <format>
 
+namespace {
+class ThreadErrorModeGuard {
+public:
+    ThreadErrorModeGuard() {
+        ::SetThreadErrorMode(SEM_FAILCRITICALERRORS, &_oldMode);
+    }
+    ~ThreadErrorModeGuard() {
+        ::SetThreadErrorMode(_oldMode, nullptr);
+    }
+private:
+    DWORD _oldMode = 0;
+};
+}
+
 FileSystemEntry::FileSystemEntry(const std::wstring& name, unsigned int attributes, size_t fileSize, time_t lastWriteTime, bool isParent)
     : _name(name)
     , _attributes(attributes)
@@ -74,6 +88,7 @@ std::vector<std::wstring> FileSystemService::GetLogicalDrives()
 
 std::optional<std::wstring> FileSystemService::GetVolumeName(const std::wstring& drivePath)
 {
+    ThreadErrorModeGuard guard;
     DWORD volumeNameSize = MAX_PATH;
     std::wstring volumeName(volumeNameSize, L'\0');
 
@@ -86,6 +101,7 @@ std::optional<std::wstring> FileSystemService::GetVolumeName(const std::wstring&
 
 std::wstring FileSystemService::GetRemotePath(const std::wstring& drivePath)
 {
+    ThreadErrorModeGuard guard;
     if (drivePath.empty()) return {};
     WCHAR szDrive[3] = { drivePath[0], L':', L'\0' };
     WCHAR szRemote[MAX_PATH] = L"";
@@ -98,6 +114,7 @@ std::wstring FileSystemService::GetRemotePath(const std::wstring& drivePath)
 
 bool FileSystemService::HaveChildren(const std::wstring& folderPath, bool useFullTree, bool showHidden)
 {
+    ThreadErrorModeGuard guard;
     std::wstring searchPath = folderPath;
     if (searchPath.empty()) return false;
     if (searchPath.back() != L'\\') {
@@ -133,6 +150,7 @@ bool FileSystemService::HaveChildren(const std::wstring& folderPath, bool useFul
 
 std::vector<FileSystemEntry> FileSystemService::GetDirectoryEntries(const std::wstring& path, bool showHidden, bool includeParent)
 {
+    ThreadErrorModeGuard guard;
     std::vector<FileSystemEntry> entries;
     std::wstring findPath = path;
     if (findPath.empty()) return entries;
@@ -233,6 +251,7 @@ bool FileSystemService::MoveFiles(void* hWnd, const std::vector<std::wstring>& f
 
 bool FileSystemService::ConvertNetPathName(const std::wstring& pathName, std::wstring& remotePath)
 {
+    ThreadErrorModeGuard guard;
     DWORD driveList = ::GetLogicalDrives();
     WCHAR volumeName[3] = L" :";
     WCHAR remoteName[MAX_PATH];
@@ -260,6 +279,7 @@ bool FileSystemService::ConvertNetPathName(const std::wstring& pathName, std::ws
 
 bool FileSystemService::ResolveShortCut(const std::wstring& shortcutPath, std::wstring& resolvedPath)
 {
+    ThreadErrorModeGuard guard;
     Microsoft::WRL::ComPtr<IShellLink> shellLink;
     HRESULT hr = CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&shellLink));
     if (FAILED(hr)) return false;
