@@ -191,7 +191,10 @@ void ExplorerDialog::doDialog(bool willBeShown)
         data.pszName = L"Explorer";
         data.dlgID = DOCKABLE_EXPLORER_INDEX;
         data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
-        LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons() ? MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER) : MAKEINTRESOURCE(IDI_EXPLORE);
+        LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons()
+                                       ? _pluginContext->IsDarkMode() ? MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE)
+                                                                      : MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER)
+                                       : MAKEINTRESOURCE(IDI_EXPLORE);
         data.hIconTab = (HICON)::LoadImage(_hInst, iconResourceName, IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName = getPluginFileName();
 

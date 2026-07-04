@@ -118,6 +118,9 @@ void FavesDialog::UpdateTheme(bool isDarkMode)
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
     _ToolBar.updateIcons(toolbarType, isDarkMode);
     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
+
+
+    updateDockingDlg();
 }
 
 
@@ -131,7 +134,10 @@ void FavesDialog::doDialog(bool willBeShown)
         data.pszName        = L"Favorites";
         data.dlgID          = DOCKABLE_FAVORTIES_INDEX;
         data.uMask          = DWS_DF_CONT_LEFT | DWS_ICONTAB | DWS_USEOWNDARKMODE;
-        LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons() ? MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES) : MAKEINTRESOURCE(IDI_HEART);
+        LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons()
+                                        ? _pluginContext->IsDarkMode()  ? MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE)
+                                                                        : MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES)
+                                        : MAKEINTRESOURCE(IDI_HEART);
         data.hIconTab       = (HICON)::LoadImage(_hInst, iconResourceName, IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName  = getPluginFileName();
 
