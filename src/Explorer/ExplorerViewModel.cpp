@@ -96,6 +96,13 @@ void ExplorerViewModel::NavigateTo(const std::wstring& path, bool recordHistory)
         targetPath = FileSystemService::CombinePath(_currentDir, path);
     }
 
+    // Resolve any relative segments like "." or ".."
+    std::error_code ec;
+    std::filesystem::path canonicalPath = std::filesystem::weakly_canonical(targetPath, ec);
+    if (!ec) {
+        targetPath = canonicalPath.wstring();
+    }
+
     if (_settings->IsShowWorkspaceMode() && !_settings->GetWorkspaceFolders().empty()) {
         if (!_settings->IsPathInWorkspace(targetPath)) {
             targetPath = _settings->GetWorkspaceFolders()[0];

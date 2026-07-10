@@ -33,6 +33,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <optional>
 #include <mutex>
 #include <atomic>
+#include <filesystem>
 
 
 struct StaInfo {
@@ -65,7 +66,16 @@ struct FileListItem {
     FileListItem(const FileSystemEntry& entry, const std::wstring& parentDir)
         : fsEntry(entry)
     {
-        fullPath = FileSystemService::CombinePath(parentDir, entry.Name());
+        if (entry.IsParent()) {
+            std::filesystem::path current(parentDir);
+            if (current.has_parent_path() && current.parent_path() != current.root_path()) {
+                fullPath = current.parent_path().wstring();
+            } else {
+                fullPath = current.root_path().wstring();
+            }
+        } else {
+            fullPath = FileSystemService::CombinePath(parentDir, entry.Name());
+        }
     }
 
     const std::wstring& Name() const { return fsEntry.Name(); }
