@@ -27,14 +27,22 @@
 #define NOMINMAX
 #include <windows.h>
 #include <windowsx.h>
+
 #include <commctrl.h>
 #include <dbt.h>
 #include <shellapi.h>
-#include <shlwapi.h>
 #include <shlobj.h>
+#include <shlwapi.h>
 
-#include <vector>
-#include <string>
-#include <cwctype>
-#include <memory>
 #include <algorithm>
+#include <charconv>
+#include <chrono>
+#include <cwctype>
+#include <filesystem>
+#include <format>
+#include <functional>
+#include <locale>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
