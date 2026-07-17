@@ -1124,7 +1124,7 @@ void FileList::GetSize(size_t fileSize, std::wstring & str)
 void FileList::GetDate(time_t lastWriteTime, std::wstring & str)
 {
     struct tm   tm_time;
-    WCHAR       TEMP[18];
+    WCHAR       TEMP[32];
 
     if (localtime_s(&tm_time, &lastWriteTime) != 0) {
         str = L"";
@@ -1133,6 +1133,9 @@ void FileList::GetDate(time_t lastWriteTime, std::wstring & str)
 
     if (_pSettings->GetFmtDate() == DateFmt::DFMT_ENG) {
         swprintf(TEMP, L"%02d/%02d/%02d %02d:%02d", (tm_time.tm_year + 1900) % 100, tm_time.tm_mon + 1, tm_time.tm_mday, tm_time.tm_hour, tm_time.tm_min);
+    }
+    else if (_pSettings->GetFmtDate() == DateFmt::DFMT_MDY) {
+        swprintf(TEMP, L"%02d/%02d/%04d %02d:%02d", tm_time.tm_mon + 1, tm_time.tm_mday, tm_time.tm_year + 1900, tm_time.tm_hour, tm_time.tm_min);
     }
     else {
         swprintf(TEMP, L"%02d.%02d.%04d %02d:%02d", tm_time.tm_mday, tm_time.tm_mon + 1, tm_time.tm_year + 1900, tm_time.tm_hour, tm_time.tm_min);

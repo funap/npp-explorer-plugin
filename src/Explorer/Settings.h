@@ -21,6 +21,7 @@ enum class SizeFmt : int {
 enum class DateFmt : int {
     DFMT_ENG,
     DFMT_GER,
+    DFMT_MDY,
     DFMT_MAX,
 };
 

@@ -65,6 +65,7 @@ constexpr std::array BYTE_UNIT_STRINGS = {
 constexpr std::array DATE_FORMAT_STRINGS = {
     L"Y/M/D HH:MM",
     L"D.M.Y HH:MM",
+    L"M/D/Y HH:MM",
 };
 
 
