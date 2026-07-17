@@ -303,6 +303,10 @@ bool FileSystemService::ResolveShortCut(const std::wstring& shortcutPath, std::w
         resolvedPath.push_back(L'\\');
     }
 
+    if (resolvedPath.empty()) {
+        return false;
+    }
+
     return true;
 }
 
