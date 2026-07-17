@@ -48,50 +48,12 @@ static const WORD DotPattern[] =
     0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF, 0x00FF
 };
 
-#include "FileSystemService.h"
+#include "ExplorerModel.h"
 
 struct IconWorkItem {
     UINT index;
     std::wstring name;
     DevType type;
-};
-
-struct FileListItem {
-    FileSystemEntry fsEntry;
-    std::wstring fullPath;
-    mutable int icon{-1};
-    mutable int overlay{0};
-    mutable unsigned int state{0};
-
-    FileListItem(const FileSystemEntry& entry, const std::wstring& parentDir)
-        : fsEntry(entry)
-    {
-        if (entry.IsParent()) {
-            std::filesystem::path current(parentDir);
-            if (current.has_parent_path() && current.parent_path() != current.root_path()) {
-                fullPath = current.parent_path().wstring();
-            } else {
-                fullPath = current.root_path().wstring();
-            }
-        } else {
-            fullPath = FileSystemService::CombinePath(parentDir, entry.Name());
-        }
-    }
-
-    const std::wstring& Name() const { return fsEntry.Name(); }
-    unsigned int Attributes() const { return fsEntry.Attributes(); }
-    size_t FileSize() const { return fsEntry.FileSize(); }
-    time_t LastWriteTime() const { return fsEntry.LastWriteTime(); }
-    bool IsDirectory() const { return fsEntry.IsDirectory(); }
-    bool IsHidden() const { return fsEntry.IsHidden(); }
-    bool IsParent() const { return fsEntry.IsParent(); }
-
-    int Icon() const { return icon; }
-    void SetIcon(int i) const { icon = i; }
-    int Overlay() const { return overlay; }
-    void SetOverlay(int o) const { overlay = o; }
-    unsigned int State() const { return state; }
-    void SetState(unsigned int s) const { state = s; }
 };
 
 struct IconResult {
@@ -117,7 +79,7 @@ public:
 
     // IExplorerViewModelObserver implementation
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
-    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override;
+    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<std::shared_ptr<ExplorerEntry>>& entries) override;
     void OnNavigationStateChanged() override {};
     void OnCommandExecutionFailed(const std::wstring& command) override {}
     void OnToggleWorkspaceModeRequested() override {}
@@ -223,7 +185,7 @@ private:    /* for thread */
     SIZE_T                          _uMaxFolders;
     SIZE_T                          _uMaxElements;
     SIZE_T                          _uMaxElementsOld;
-    std::vector<FileListItem>       _vFileList;
+    std::vector<std::shared_ptr<ExplorerEntry>> _vFileList;
 
     /* search in list by typing of characters */
     std::wstring                    _searchQuery;

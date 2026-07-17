@@ -71,7 +71,7 @@ class FileList;
 class TreeView;
 struct IconWorkItem;
 
-class ExplorerViewModel : public IAsyncTaskCallback {
+class ExplorerViewModel : public IAsyncTaskCallback, public IExplorerModelObserver {
 public:
     ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, IDispatcher* dispatcher);
     virtual ~ExplorerViewModel();
@@ -82,11 +82,15 @@ public:
     void NavigateOrExecute(const std::wstring& input);
     std::optional<std::wstring> ResolveAndValidateDirectory(const std::wstring& input);
     void InitModel();
-    void UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path);
+    void UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, bool includeParent = false);
+    void UpdateCurrentDirectory();
     void StopWorkerThread();
 
     void AddObserver(IExplorerViewModelObserver* observer);
     void RemoveObserver(IExplorerViewModelObserver* observer);
+
+    // IExplorerModelObserver implementation
+    void OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry) override;
 
     // Navigation history methods
     void NavigateTo(const std::wstring& path, bool recordHistory = true);
@@ -107,10 +111,7 @@ public:
 
     // View data getters
     std::wstring GetCurrentDir() const;
-    const std::vector<FileSystemEntry>& GetCurrentDirEntries() const;
-
-    // Directory loading results
-    void OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries);
+    std::shared_ptr<ExplorerEntry> GetCurrentDirEntry() const { return _currentDirEntry; }
 
     // Commands
     void Refresh();
@@ -163,7 +164,7 @@ private:
     void EnqueueAsyncTask(std::unique_ptr<IAsyncTask> task);
     void ClearPendingTasks(std::optional<TaskCategory> category = std::nullopt);
     void NotifyCurrentDirectoryChanged();
-    void NotifyEntriesLoaded();
+    void NotifyEntriesLoaded(const std::vector<std::shared_ptr<ExplorerEntry>>& entries);
     void NotifyNavigationStateChanged();
     std::wstring PreprocessInput(const std::wstring& input) const;
     std::wstring ResolveToAbsolutePath(const std::wstring& expandedInput) const;
@@ -174,7 +175,7 @@ private:
 
     std::wstring _currentDir;
     std::wstring _filter{ L"*.*" };
-    std::vector<FileSystemEntry> _currentDirEntries;
+    std::shared_ptr<ExplorerEntry> _currentDirEntry;
 
     // Navigation Stack
     std::vector<NavigationState> _history;
@@ -193,7 +194,7 @@ class IExplorerViewModelObserver {
 public:
     virtual ~IExplorerViewModelObserver() = default;
     virtual void OnCurrentDirectoryChanged(const std::wstring& path) = 0;
-    virtual void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) = 0;
+    virtual void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<std::shared_ptr<ExplorerEntry>>& entries) = 0;
     virtual void OnNavigationStateChanged() = 0;
     virtual void OnCommandExecutionFailed(const std::wstring& command) = 0;
     virtual void OnToggleWorkspaceModeRequested() = 0;

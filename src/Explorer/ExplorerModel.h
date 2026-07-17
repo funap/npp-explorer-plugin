@@ -20,12 +20,33 @@ public:
 
     bool HasLoadedChildren() const;
 
+    // View state (mutable - used by UI for caching display info)
+    int Icon() const { return _icon; }
+    void SetIcon(int icon) const { _icon = icon; }
+    int Overlay() const { return _overlay; }
+    void SetOverlay(int overlay) const { _overlay = overlay; }
+    unsigned int ViewState() const { return _viewState; }
+    void SetViewState(unsigned int state) const { _viewState = state; }
+    void ResetViewCache() const { _icon = -1; _overlay = 0; _viewState = 0; }
+
+    // Convenience accessors (delegate to FSEntry)
+    const std::wstring& Name() const { return _fsEntry.Name(); }
+    bool IsDirectory() const { return _fsEntry.IsDirectory(); }
+    bool IsHidden() const { return _fsEntry.IsHidden(); }
+    bool IsParent() const { return _fsEntry.IsParent(); }
+    unsigned int Attributes() const { return _fsEntry.Attributes(); }
+    size_t FileSize() const { return _fsEntry.FileSize(); }
+    time_t LastWriteTime() const { return _fsEntry.LastWriteTime(); }
+
 private:
     std::weak_ptr<ExplorerEntry> _parent;
     std::wstring _path;
     FileSystemEntry _fsEntry;
     std::vector<std::shared_ptr<ExplorerEntry>> _children;
     bool _hasLoadedChildren;
+    mutable int _icon{-1};
+    mutable int _overlay{0};
+    mutable unsigned int _viewState{0};
 };
 
 class IExplorerModelObserver {

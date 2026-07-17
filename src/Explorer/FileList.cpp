@@ -226,9 +226,9 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
             if (result->generation == _currentGeneration &&
                 _wcsicmp(normalizePath(result->workDir).c_str(), normalizePath(_pSettings->GetCurrentDir()).c_str()) == 0) {
                 UINT iPos = result->index;
-                if (iPos < _uMaxElements && iPos < _vFileList.size() && _vFileList[iPos].Name() == result->fileName) {
-                    _vFileList[iPos].SetIcon(result->icon);
-                    _vFileList[iPos].SetOverlay(result->overlay);
+                if (iPos < _uMaxElements && iPos < _vFileList.size() && _vFileList[iPos]->Name() == result->fileName) {
+                    _vFileList[iPos]->SetIcon(result->icon);
+                    _vFileList[iPos]->SetOverlay(result->overlay);
 
                     RECT rcIcon = {0};
                     ListView_GetSubItemRect(_hSelf, iPos, 0, LVIR_ICON, &rcIcon);
@@ -343,7 +343,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                     lvItem.pszText      = str;
                     lvItem.cchTextMax   = (int)wcslen(str);
                 }
-                if (lvItem.mask & LVIF_IMAGE && !_vFileList[lvItem.iItem].IsParent()) {
+                if (lvItem.mask & LVIF_IMAGE && !_vFileList[lvItem.iItem]->IsParent()) {
                     INT iIcon;
                     INT iOverlay;
                     BOOL isHidden;
@@ -351,7 +351,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                     lvItem.iImage = iIcon;
                     lvItem.state = INDEXTOOVERLAYMASK(iOverlay);
                 }
-                if (lvItem.mask & LVIF_STATE && _vFileList[lvItem.iItem].IsHidden()) {
+                if (lvItem.mask & LVIF_STATE && _vFileList[lvItem.iItem]->IsHidden()) {
                     lvItem.state |= LVIS_CUT;
                 }
             }
@@ -360,7 +360,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
         case LVN_COLUMNCLICK: {
             /* store the marked items */
             for (UINT i = 0; i < _uMaxElements; i++) {
-                _vFileList[i].SetState(ListView_GetItemState(_hSelf, i, LVIS_FOCUSED | LVIS_SELECTED));
+                _vFileList[i]->SetViewState(ListView_GetItemState(_hSelf, i, LVIS_FOCUSED | LVIS_SELECTED));
             }
 
             INT iPos  = ((LPNMLISTVIEW)lParam)->iSubItem;
@@ -376,7 +376,7 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
 
             /* mark old items */
             for (UINT i = 0; i < _uMaxElements; i++) {
-                ListView_SetItemState(_hSelf, i, _vFileList[i].State(), LVIS_FOCUSED | LVIS_SELECTED);
+                ListView_SetItemState(_hSelf, i, _vFileList[i]->ViewState(), LVIS_FOCUSED | LVIS_SELECTED);
             }
             break;
         }
@@ -386,9 +386,9 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 UINT i = ListView_GetSelectionMark(_hSelf);
                 if (i != -1) {
                     if (i < _uMaxFolders) {
-                        _viewModel->NavigateTo(_vFileList[i].fullPath);
+                        _viewModel->NavigateTo(_vFileList[i]->Path());
                     } else {
-                        _viewModel->OpenFile(_vFileList[i].fullPath);
+                        _viewModel->OpenFile(_vFileList[i]->Path());
                     }
                 }
                 break;
@@ -434,13 +434,13 @@ BOOL FileList::notify(WPARAM wParam, LPARAM lParam)
                 auto index = static_cast<INT>(lpCD->nmcd.dwItemSpec);
                 if (index >= 0 && index < static_cast<INT>(_vFileList.size())) {
                     if (index >= static_cast<INT>(_uMaxFolders)) {
-                        std::wstring strFilePath = _vFileList[index].fullPath;
+                        std::wstring strFilePath = _vFileList[index]->Path();
                         if (IsFileOpen(strFilePath) == TRUE) {
                             ::SelectObject(lpCD->nmcd.hdc, _pSettings->GetUnderlineFont());
                             ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NEWFONT);
                         }
                     }
-                    if (_vFileList[index].IsParent()) {
+                    if (_vFileList[index]->IsParent()) {
                         ::SetWindowLongPtr(_hParent, DWLP_MSGRESULT, CDRF_NOTIFYPOSTPAINT);
                     }
                 }
@@ -472,21 +472,21 @@ void FileList::ReadIconToList(UINT iItem, LPINT piIcon, LPINT piOverlay, LPBOOL 
 {
     DevType type            = (iItem < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
 
-    if (_vFileList[iItem].Icon() == -1) {
-        _vFileList[iItem].SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
-        _vFileList[iItem].SetOverlay(0);
+    if (_vFileList[iItem]->Icon() == -1) {
+        _vFileList[iItem]->SetIcon(type == DEVT_DIRECTORY ? ICON_FOLDER : ICON_FILE);
+        _vFileList[iItem]->SetOverlay(0);
         if (_pSettings->IsUseSystemIcons()) {
             INT iIcon = -1;
-            std::wstring pathStr = _vFileList[iItem].fullPath;
-            GetIcons(pathStr, _vFileList[iItem].Attributes(), &iIcon);
+            std::wstring pathStr = _vFileList[iItem]->Path();
+            GetIcons(pathStr, _vFileList[iItem]->Attributes(), &iIcon);
             if (iIcon != -1) {
-                _vFileList[iItem].SetIcon(iIcon);
+                _vFileList[iItem]->SetIcon(iIcon);
             }
         }
     }
-    *piIcon     = _vFileList[iItem].Icon();
-    *piOverlay  = _vFileList[iItem].Overlay();
-    *pbHidden   = _vFileList[iItem].IsHidden();
+    *piIcon     = _vFileList[iItem]->Icon();
+    *piOverlay  = _vFileList[iItem]->Overlay();
+    *pbHidden   = _vFileList[iItem]->IsHidden();
 }
 
 void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
@@ -494,15 +494,15 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     /* copy into temp */
     switch (iSubItem) {
     case SubItem::Name: {
-        std::wstring name = _vFileList[iItem].Name();
-        if (!_vFileList[iItem].IsDirectory()) {
+        std::wstring name = _vFileList[iItem]->Name();
+        if (!_vFileList[iItem]->IsDirectory()) {
             size_t extBegPos = name.find_last_of(L'.');
             if (extBegPos != std::wstring::npos && extBegPos > 0 && !_pSettings->IsAddExtToName()) {
                 name = name.substr(0, extBegPos);
             }
         }
 
-        if ((iItem < (INT)_uMaxFolders) && (_pSettings->IsViewBraces()) && !_vFileList[iItem].IsParent()) {
+        if ((iItem < (INT)_uMaxFolders) && (_pSettings->IsViewBraces()) && !_vFileList[iItem]->IsParent()) {
             swprintf(szItem, L"[%ls]", name.c_str());
         }
         else {
@@ -515,7 +515,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
             szItem[0] = '\0';
         }
         else {
-            std::wstring name = _vFileList[iItem].Name();
+            std::wstring name = _vFileList[iItem]->Name();
             size_t extBegPos = name.find_last_of(L'.');
             if (extBegPos != std::wstring::npos && extBegPos > 0) {
                 wcscpy(szItem, name.substr(extBegPos + 1).c_str());
@@ -527,12 +527,12 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
         break;
     }
     case SubItem::Size: {
-        if (_vFileList[iItem].IsDirectory()) {
+        if (_vFileList[iItem]->IsDirectory()) {
             wcscpy(szItem, L"<DIR>");
         }
         else {
             std::wstring strSize;
-            GetSize(_vFileList[iItem].FileSize(), strSize);
+            GetSize(_vFileList[iItem]->FileSize(), strSize);
             wcscpy(szItem, strSize.c_str());
         }
         break;
@@ -540,7 +540,7 @@ void FileList::ReadArrayToList(LPTSTR szItem, INT iItem ,INT iSubItem)
     case SubItem::Date:
     default: {
         std::wstring strDate;
-        GetDate(_vFileList[iItem].LastWriteTime(), strDate);
+        GetDate(_vFileList[iItem]->LastWriteTime(), strDate);
         wcscpy(szItem, strDate.c_str());
         break;
     }
@@ -561,7 +561,7 @@ void FileList::OnCurrentDirectoryChanged(const std::wstring& path)
     _pendingRedraw = TRUE;
 }
 
-void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const std::vector<FileSystemEntry>& entries)
+void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const std::vector<std::shared_ptr<ExplorerEntry>>& entries)
 {
     auto normalizePath = [](std::wstring p) {
         if (!p.empty() && p.back() == '\\') {
@@ -573,16 +573,16 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
         return;
     }
 
-    std::vector<FileSystemEntry> vFoldersTemp;
-    std::vector<FileSystemEntry> vFilesTemp;
+    std::vector<std::shared_ptr<ExplorerEntry>> vFoldersTemp;
+    std::vector<std::shared_ptr<ExplorerEntry>> vFilesTemp;
 
     for (const auto& entry : entries) {
-        if (entry.IsDirectory()) {
+        if (entry->IsDirectory()) {
             if (_pSettings->IsHideFoldersInFileList()) {
                 continue; // Skip directories if hideFoldersInContentView is true
             }
 
-            if (entry.IsParent()) {
+            if (entry->IsParent()) {
                 if (PathIsRoot(currentDir.c_str())) {
                     continue;
                 }
@@ -593,7 +593,7 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
                 vFoldersTemp.push_back(entry);
             }
         }
-        else if (_pSettings->GetFileFilter().match(entry.Name().c_str())) {
+        else if (_pSettings->GetFileFilter().match(entry->Name().c_str())) {
             /* file */
             vFilesTemp.push_back(entry);
         }
@@ -604,10 +604,12 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
 
     /* set temporal list as global */
     for (const auto& folder : vFoldersTemp) {
-        _vFileList.push_back(FileListItem{ folder, currentDir });
+        folder->ResetViewCache();
+        _vFileList.push_back(folder);
     }
     for (const auto &file : vFilesTemp) {
-        _vFileList.push_back(FileListItem{ file, currentDir });
+        file->ResetViewCache();
+        _vFileList.push_back(file);
     }
 
     /* set max elements in list */
@@ -624,10 +626,10 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
         bool selected = false;
         if (!_pendingSelectFile.empty()) {
             for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
-                if (_pendingSelectFile == _vFileList[i].Name()) {
-                    SetFocusItem(i);
-                    selected = true;
-                    break;
+                if (_pendingSelectFile == _vFileList[i]->Name()) {
+                     SetFocusItem(i);
+                     selected = true;
+                     break;
                 }
             }
             _pendingSelectFile.clear();
@@ -646,7 +648,7 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
         }
         for (const auto& name : prevSel) {
             for (SIZE_T i = 0; i < _uMaxElements; i++) {
-                if (_vFileList[i].Name() == name) {
+                if (_vFileList[i]->Name() == name) {
                     ListView_SetItemState(_hSelf, i, LVIS_SELECTED | LVIS_FOCUSED, 0xFF);
                 }
             }
@@ -655,12 +657,12 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
 
     std::vector<IconWorkItem> workItems;
     for (UINT i = 0; i < _uMaxElements; ++i) {
-        if (_vFileList[i].IsParent()) {
+        if (_vFileList[i]->IsParent()) {
             continue;
         }
         IconWorkItem item;
         item.index = i;
-        item.name = _vFileList[i].Name();
+        item.name = _vFileList[i]->Name();
         item.type = (i < _uMaxFolders ? DEVT_DIRECTORY : DEVT_FILE);
         workItems.push_back(item);
     }
@@ -676,7 +678,7 @@ void FileList::filterFiles(LPCTSTR currentFilter)
 void FileList::SelectFolder(LPCTSTR filePath)
 {
     for (UINT uFolder = 0; uFolder < _uMaxFolders; uFolder++) {
-        if (_wcsicmp(_vFileList[uFolder].Name().c_str(), filePath) == 0) {
+        if (_wcsicmp(_vFileList[uFolder]->Name().c_str(), filePath) == 0) {
             SetFocusItem(uFolder);
             return;
         }
@@ -700,7 +702,7 @@ void FileList::SelectFile(const std::wstring &fileName)
     }
 
     for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
-        if (fileName == _vFileList[i].Name()) {
+        if (fileName == _vFileList[i]->Name()) {
             SetFocusItem(i);
             return;
         }
@@ -709,18 +711,18 @@ void FileList::SelectFile(const std::wstring &fileName)
 
 void FileList::UpdateList()
 {
-    std::sort(_vFileList.begin(), _vFileList.end(), [&](const FileListItem& lhs, const FileListItem& rhs) {
-        if (lhs.IsParent() != rhs.IsParent()) {
-            return lhs.IsParent() > rhs.IsParent();
+    std::sort(_vFileList.begin(), _vFileList.end(), [&](const std::shared_ptr<ExplorerEntry>& lhs, const std::shared_ptr<ExplorerEntry>& rhs) {
+        if (lhs->IsParent() != rhs->IsParent()) {
+            return lhs->IsParent() > rhs->IsParent();
         }
-        if (lhs.IsDirectory() != rhs.IsDirectory()) {
-            return lhs.IsDirectory() > rhs.IsDirectory();
+        if (lhs->IsDirectory() != rhs->IsDirectory()) {
+            return lhs->IsDirectory() > rhs->IsDirectory();
         }
 
-        const int resultNameExt = ::StrCmpLogicalW(lhs.Name().c_str(), rhs.Name().c_str());
+        const int resultNameExt = ::StrCmpLogicalW(lhs->Name().c_str(), rhs->Name().c_str());
         INT64 result = 0;
 
-        if (lhs.IsDirectory() && rhs.IsDirectory()) {
+        if (lhs->IsDirectory() && rhs->IsDirectory()) {
             return resultNameExt < 0;
         }
 
@@ -730,19 +732,19 @@ void FileList::UpdateList()
             break;
         case SubItem::Extension: {
             std::wstring lhsExt, rhsExt;
-            size_t lhsExtPos = lhs.Name().find_last_of(L'.');
-            if (lhsExtPos != std::wstring::npos && lhsExtPos > 0) lhsExt = lhs.Name().substr(lhsExtPos + 1);
-            size_t rhsExtPos = rhs.Name().find_last_of(L'.');
-            if (rhsExtPos != std::wstring::npos && rhsExtPos > 0) rhsExt = rhs.Name().substr(rhsExtPos + 1);
+            size_t lhsExtPos = lhs->Name().find_last_of(L'.');
+            if (lhsExtPos != std::wstring::npos && lhsExtPos > 0) lhsExt = lhs->Name().substr(lhsExtPos + 1);
+            size_t rhsExtPos = rhs->Name().find_last_of(L'.');
+            if (rhsExtPos != std::wstring::npos && rhsExtPos > 0) rhsExt = rhs->Name().substr(rhsExtPos + 1);
             result = lhsExt.compare(rhsExt);
             break;
         }
         case SubItem::Size:
-            result = lhs.FileSize() - rhs.FileSize();
+            result = static_cast<INT64>(lhs->FileSize()) - static_cast<INT64>(rhs->FileSize());
             break;
         case SubItem::Date: {
-            time_t lhsDate = lhs.LastWriteTime();
-            time_t rhsDate = rhs.LastWriteTime();
+            time_t lhsDate = lhs->LastWriteTime();
+            time_t rhsDate = rhs->LastWriteTime();
             result = static_cast<INT64>(lhsDate - rhsDate);
             break;
         }
@@ -850,10 +852,10 @@ std::vector<std::shared_ptr<ExplorerEntry>> FileList::GetSelectedEntries() const
     std::vector<std::shared_ptr<ExplorerEntry>> entries;
     for (UINT uList = 0; uList < _uMaxElements && uList < _vFileList.size(); uList++) {
         if (ListView_GetItemState(_hSelf, uList, LVIS_SELECTED) == LVIS_SELECTED) {
-            if (uList == 0 && _vFileList[0].IsParent()) {
+            if (uList == 0 && _vFileList[0]->IsParent()) {
                 continue;
             }
-            entries.push_back(std::make_shared<ExplorerEntry>(_vFileList[uList].fullPath, _vFileList[uList].fsEntry));
+            entries.push_back(_vFileList[uList]);
         }
     }
     return entries;
@@ -873,7 +875,7 @@ void FileList::ShowContextMenu(std::optional<POINT> screenLocation)
     }
 
     bool isParent = false;
-    if (_uMaxElements > 0 && _vFileList.size() > 0 && _vFileList[0].IsParent()) {
+    if (_uMaxElements > 0 && _vFileList.size() > 0 && _vFileList[0]->IsParent()) {
         if (ListView_GetItemState(_hSelf, 0, LVIS_SELECTED) == LVIS_SELECTED) {
             ListView_SetItemState(_hSelf, 0, 0, LVIS_SELECTED);
             isParent = true;
@@ -899,10 +901,10 @@ void FileList::onLMouseBtnDbl()
 
     if (selRow != -1 && selRow < _vFileList.size()) {
         if (selRow < _uMaxFolders) {
-            _viewModel->NavigateTo(_vFileList[selRow].fullPath);
+            _viewModel->NavigateTo(_vFileList[selRow]->Path());
         }
         else {
-            _viewModel->OpenFile(_vFileList[selRow].fullPath);
+            _viewModel->OpenFile(_vFileList[selRow]->Path());
         }
     }
 }
@@ -951,7 +953,7 @@ void FileList::onSelectAll()
 {
     INT firstRow = 0;
     if (_uMaxFolders != 0) {
-        firstRow = (_vFileList[0].IsParent() ? 0 : -1);
+        firstRow = (_vFileList[0]->IsParent() ? 0 : -1);
     }
 
     for (UINT i = 0; i < _uMaxElements; i++) {
@@ -1016,10 +1018,10 @@ void FileList::onDelete(bool immediate)
 
     for (SIZE_T i = 0; i < _uMaxElements && i < _vFileList.size(); i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-            if ((i == 0) && (_vFileList[i].IsParent())) {
+            if ((i == 0) && (_vFileList[i]->IsParent())) {
                 continue;
             }
-            filesToDelete.push_back(_vFileList[i].fullPath);
+            filesToDelete.push_back(_vFileList[i]->Path());
         }
     }
 
@@ -1046,7 +1048,7 @@ BOOL FileList::FindNextItemInList(LPUINT puPos)
             i = 0;
         }
 
-        std::wstring lowerFileName = _vFileList[i].Name();
+        std::wstring lowerFileName = _vFileList[i]->Name();
         std::transform(lowerFileName.begin(), lowerFileName.end(), lowerFileName.begin(), towlower);
         if (0 == lowerFileName.compare(0, _searchQuery.size(), _searchQuery)) {
             /* string found in any following case */
@@ -1151,7 +1153,7 @@ void FileList::UpdateSelItems()
     std::vector<std::wstring> selected;
     for (UINT i = 0; i < _uMaxElements; i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-            selected.push_back(_vFileList[i].Name());
+            selected.push_back(_vFileList[i]->Name());
         }
     }
     _viewModel->UpdateSelection(selected);
@@ -1165,7 +1167,7 @@ void FileList::SetItems(const std::vector<std::wstring>& vStrItems)
     for (UINT i = 0; i < _uMaxElements; i++) {
         bool match = false;
         for (UINT itemPos = 0; itemPos < itemsCopy.size(); itemPos++) {
-            if (_vFileList[i].Name() == itemsCopy[itemPos]) {
+            if (_vFileList[i]->Name() == itemsCopy[itemPos]) {
                 ListView_SetItemState(_hSelf, i, selType, 0xFF);
 
                 /* set first item in view */
@@ -1202,10 +1204,10 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
     /* get buffer size */
     for (SIZE_T i = 0; i < _uMaxElements; i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-            if ((i == 0) && (_vFileList[i].IsParent())) {
+            if ((i == 0) && (_vFileList[i]->IsParent())) {
                 continue;
             }
-            bufsz += (_vFileList[i].fullPath.size() + 1) * sizeof(WCHAR);
+            bufsz += (_vFileList[i]->Path().size() + 1) * sizeof(WCHAR);
         }
     }
 
@@ -1233,11 +1235,11 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
     LPTSTR szPath   = (LPTSTR)&lpDropFileStruct[1];
     for (SIZE_T i = 0; i < _uMaxElements; i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
-            if ((i == 0) && (_vFileList[i].IsParent())) {
+            if ((i == 0) && (_vFileList[i]->IsParent())) {
                 continue;
             }
-            wcscpy(&szPath[offset], _vFileList[i].fullPath.c_str());
-            offset += _vFileList[i].fullPath.size() + 1;
+            wcscpy(&szPath[offset], _vFileList[i]->Path().c_str());
+            offset += _vFileList[i]->Path().size() + 1;
         }
     }
 
@@ -1311,12 +1313,12 @@ bool FileList::OnDrop(FORMATETC* /* pFmtEtc*/, STGMEDIUM& medium, DWORD* pdwEffe
     ::SendMessage(_hSelf, LVM_SUBITEMHITTEST, 0, (LPARAM)&hittest);
 
     if ((UINT)hittest.iItem < _uMaxFolders) {
-        if (_vFileList[hittest.iItem].IsParent()) {
+        if (_vFileList[hittest.iItem]->IsParent()) {
             ::PathRemoveFileSpec(pszFilesTo);
             ::PathRemoveFileSpec(pszFilesTo);
         }
         else {
-            ::PathAppend(pszFilesTo, _vFileList[hittest.iItem].Name().c_str());
+            ::PathAppend(pszFilesTo, _vFileList[hittest.iItem]->Name().c_str());
         }
     }
 

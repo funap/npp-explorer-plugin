@@ -48,10 +48,7 @@ private:
 
 class TaskUpdateDirectory : public IAsyncTask {
 public:
-    // Takes path and entry as separate arguments.
-    // _path is used in Execute() (worker thread) and is an immutable value copy.
-    // _entry is only accessed in OnCompleted() (UI thread) to apply the result.
-    TaskUpdateDirectory(std::shared_ptr<ExplorerModel> model, std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, Settings* settings);
+    TaskUpdateDirectory(std::shared_ptr<ExplorerModel> model, std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, Settings* settings, bool includeParent = false, ExplorerViewModel* viewModel = nullptr);
 
     void Execute() override;
     void OnCompleted() override;
@@ -64,27 +61,13 @@ private:
     std::wstring _path;  // immutable value-copy, safe to read from worker thread
     Settings* _settings;
     std::vector<std::shared_ptr<ExplorerEntry>> _children;
+    bool _includeParent;
+    ExplorerViewModel* _viewModel;
 };
 
 class FileList;
 class ExplorerViewModel;
 struct IconWorkItem;
-
-class TaskLoadFileList : public IAsyncTask {
-public:
-    TaskLoadFileList(const std::wstring& currentDir, Settings* settings, ExplorerViewModel* viewModel);
-
-    void Execute() override;
-    void OnCompleted() override;
-    TaskPriority GetPriority() const override { return TaskPriority::High; }
-    TaskCategory GetCategory() const override { return TaskCategory::FileList; }
-
-private:
-    std::wstring _currentDir;
-    Settings* _settings;
-    ExplorerViewModel* _viewModel;
-    std::vector<FileSystemEntry> _entries;
-};
 
 class TaskFetchIcons : public IAsyncTask {
 public:

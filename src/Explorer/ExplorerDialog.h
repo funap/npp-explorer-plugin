@@ -120,7 +120,7 @@ protected:
 
     // IExplorerViewModelObserver overrides
     void OnCurrentDirectoryChanged(const std::wstring& path) override;
-    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<FileSystemEntry>& entries) override {};
+    void OnDirectoryEntriesLoaded(const std::wstring& path, const std::vector<std::shared_ptr<ExplorerEntry>>& entries) override {};
     void OnNavigationStateChanged() override;
     void OnCommandExecutionFailed(const std::wstring& command) override;
     void OnToggleWorkspaceModeRequested() override;

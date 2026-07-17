@@ -47,12 +47,14 @@ std::wstring ExpandEnvironmentVariables(const std::wstring& input)
 ExplorerViewModel::ExplorerViewModel(std::shared_ptr<ExplorerModel> model, Settings* settings, IDispatcher* dispatcher)
     : _model(model), _settings(settings), _dispatcher(dispatcher)
 {
+    _model->AddObserver(this);
     _historyItr = _history.end();
     _workerThread.Start(this);
 }
 
 ExplorerViewModel::~ExplorerViewModel()
 {
+    _model->RemoveObserver(this);
     if (_cancelToken) {
         _cancelToken->store(true);
     }
@@ -140,7 +142,7 @@ void ExplorerViewModel::NavigateTo(const std::wstring& path, bool recordHistory)
 
     ClearPendingTasks(TaskCategory::FileList);
 
-    EnqueueAsyncTask(std::make_unique<TaskLoadFileList>(targetPath, _settings, this));
+    UpdateCurrentDirectory();
 }
 
 void ExplorerViewModel::NavigateBack()
@@ -295,31 +297,31 @@ std::wstring ExplorerViewModel::GetCurrentDir() const
     return _currentDir;
 }
 
-const std::vector<FileSystemEntry>& ExplorerViewModel::GetCurrentDirEntries() const
+void ExplorerViewModel::UpdateCurrentDirectory()
 {
-    return _currentDirEntries;
+    // Determine if parent entry ".." should be included
+    std::filesystem::path current(_currentDir);
+    std::wstring parentPath = current.has_parent_path() ? current.parent_path().wstring() : L"";
+    bool includeParent = _settings->IsPathInWorkspace(parentPath);
+
+    // Create/reuse the entry for the current directory
+    _currentDirEntry = std::make_shared<ExplorerEntry>(
+        _currentDir,
+        FileSystemEntry(_currentDir, FILE_ATTRIBUTE_DIRECTORY, 0, 0, false));
+
+    EnqueueAsyncTask(std::make_unique<TaskUpdateDirectory>(_model, _currentDirEntry, _currentDir, _settings, includeParent, this));
 }
 
-void ExplorerViewModel::OnEntriesLoaded(const std::wstring& currentDir, std::vector<FileSystemEntry> entries)
+void ExplorerViewModel::OnEntryUpdated(std::shared_ptr<ExplorerEntry> entry)
 {
-    auto normalizePath = [](std::wstring p) {
-        if (!p.empty() && p.back() == '\\') {
-            p.pop_back();
-        }
-        return p;
-    };
-
-    if (_wcsicmp(normalizePath(currentDir).c_str(), normalizePath(_currentDir).c_str()) != 0) {
-        return;
+    if (_currentDirEntry && entry == _currentDirEntry) {
+        auto children = entry->Children();
+        NotifyEntriesLoaded(children);
     }
-
-    _currentDirEntries = std::move(entries);
-    NotifyEntriesLoaded();
 }
 
 void ExplorerViewModel::Refresh()
 {
-    // Trigger async loading of directories directly, bypassing targetPath == currentDir check in NavigateTo
     if (_cancelToken) {
         _cancelToken->store(true);
     }
@@ -328,7 +330,7 @@ void ExplorerViewModel::Refresh()
 
     ClearPendingTasks(TaskCategory::FileList);
 
-    EnqueueAsyncTask(std::make_unique<TaskLoadFileList>(_currentDir, _settings, this));
+    UpdateCurrentDirectory();
 }
 
 void ExplorerViewModel::SetFilter(const std::wstring& filter)
@@ -375,7 +377,7 @@ void ExplorerViewModel::NotifyCurrentDirectoryChanged()
     }
 }
 
-void ExplorerViewModel::NotifyEntriesLoaded()
+void ExplorerViewModel::NotifyEntriesLoaded(const std::vector<std::shared_ptr<ExplorerEntry>>& entries)
 {
     std::vector<IExplorerViewModelObserver*> observersCopy;
     {
@@ -383,7 +385,7 @@ void ExplorerViewModel::NotifyEntriesLoaded()
         observersCopy = _observers;
     }
     for (auto* observer : observersCopy) {
-        observer->OnDirectoryEntriesLoaded(_currentDir, _currentDirEntries);
+        observer->OnDirectoryEntriesLoaded(_currentDir, entries);
     }
 }
 
@@ -587,9 +589,9 @@ void ExplorerViewModel::InitModel()
     EnqueueAsyncTask(std::make_unique<TaskInit>(_model, _settings));
 }
 
-void ExplorerViewModel::UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path)
+void ExplorerViewModel::UpdateDirectory(std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, bool includeParent)
 {
-    EnqueueAsyncTask(std::make_unique<TaskUpdateDirectory>(_model, entry, path, _settings));
+    EnqueueAsyncTask(std::make_unique<TaskUpdateDirectory>(_model, entry, path, _settings, includeParent));
 }
 
 void ExplorerViewModel::StopWorkerThread()

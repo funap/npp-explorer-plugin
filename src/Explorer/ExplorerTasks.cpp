@@ -47,13 +47,13 @@ void TaskInit::OnCompleted() {
     _model->NotifyEntryUpdated(_root);
 }
 
-TaskUpdateDirectory::TaskUpdateDirectory(std::shared_ptr<ExplorerModel> model, std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, Settings* settings)
-    : _model(model), _entry(entry), _path(path), _settings(settings) {}
+TaskUpdateDirectory::TaskUpdateDirectory(std::shared_ptr<ExplorerModel> model, std::shared_ptr<ExplorerEntry> entry, const std::wstring& path, Settings* settings, bool includeParent, ExplorerViewModel* viewModel)
+    : _model(model), _entry(entry), _path(path), _settings(settings), _includeParent(includeParent), _viewModel(viewModel) {}
 
 void TaskUpdateDirectory::Execute() {
     // Use _path (value-copied in constructor, immutable on this thread) -- do NOT call
     // _entry->Path() here, as _entry may be modified concurrently from the UI thread.
-    auto entries = FileSystemService::GetDirectoryEntries(_path, _settings->IsShowHidden());
+    auto entries = FileSystemService::GetDirectoryEntries(_path, _settings->IsShowHidden(), _includeParent);
 
     std::wstring basePath = _path;
     if (!basePath.empty() && basePath.back() != L'\\') {
@@ -61,34 +61,26 @@ void TaskUpdateDirectory::Execute() {
     }
 
     for (const auto& fsEntry : entries) {
-        std::wstring childPath = basePath + fsEntry.Name();
+        std::wstring childPath;
+        if (fsEntry.IsParent()) {
+            std::filesystem::path current(_path);
+            childPath = (current.has_parent_path() && current.parent_path() != current.root_path())
+                ? current.parent_path().wstring()
+                : current.root_path().wstring();
+        } else {
+            childPath = basePath + fsEntry.Name();
+        }
         _children.push_back(std::make_shared<ExplorerEntry>(childPath, fsEntry));
     }
 }
 
 void TaskUpdateDirectory::OnCompleted() {
     _entry->SetChildren(_children);
-    _model->NotifyEntryUpdated(_entry);
-}
-
-TaskLoadFileList::TaskLoadFileList(const std::wstring& currentDir, Settings* settings, ExplorerViewModel* viewModel)
-    : _currentDir(currentDir), _settings(settings), _viewModel(viewModel) {}
-
-void TaskLoadFileList::Execute() {
-    if (_settings->IsShowWorkspaceMode() && _settings->GetWorkspaceFolders().empty()) {
-        _entries.clear();
-        return;
+    if (_viewModel) {
+        _viewModel->OnEntryUpdated(_entry);
+    } else {
+        _model->NotifyEntryUpdated(_entry);
     }
-
-    std::filesystem::path current(_currentDir);
-    std::wstring parentPath = current.has_parent_path() ? current.parent_path().wstring() : L"";
-    bool includeParent = _settings->IsPathInWorkspace(parentPath);
-
-    _entries = FileSystemService::GetDirectoryEntries(_currentDir, _settings->IsShowHidden(), includeParent);
-}
-
-void TaskLoadFileList::OnCompleted() {
-    _viewModel->OnEntriesLoaded(_currentDir, std::move(_entries));
 }
 
 TaskCheckFolderChildren::TaskCheckFolderChildren(ExplorerViewModel* viewModel, HTREEITEM hItem, const std::wstring& path, Settings* settings)
