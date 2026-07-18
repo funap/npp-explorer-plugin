@@ -40,48 +40,51 @@ constexpr std::wstring_view PROPERTY_NAME   = L"Name=";
 constexpr std::wstring_view PROPERTY_LINK   = L"Link=";
 constexpr std::wstring_view PROPERTY_EXPAND = L"Expand=";
 }
+
 // ----------------------------------------------------------------------------
 // FavesModel
 // ----------------------------------------------------------------------------
 
 FavesModel::FavesModel()
-    : m_folders (std::make_unique<FavesItem>(nullptr, FAVES_FOLDER,  L"[Folders]"))
-    , m_files   (std::make_unique<FavesItem>(nullptr, FAVES_FILE,    L"[Files]"))
-    , m_webs    (std::make_unique<FavesItem>(nullptr, FAVES_WEB,     L"[Web]"))
-    , m_sessions(std::make_unique<FavesItem>(nullptr, FAVES_SESSION, L"[Sessions]"))
 {
-}
-
-FavesModel::~FavesModel()
-{
+    m_roots[static_cast<size_t>(FavesType::Folder)] = std::make_unique<FavesItem>(nullptr, FavesType::Folder, L"[Folders]");
+    m_roots[static_cast<size_t>(FavesType::File)] = std::make_unique<FavesItem>(nullptr, FavesType::File, L"[Files]");
+    m_roots[static_cast<size_t>(FavesType::Web)] = std::make_unique<FavesItem>(nullptr, FavesType::Web, L"[Web]");
+    m_roots[static_cast<size_t>(FavesType::Session)] = std::make_unique<FavesItem>(nullptr, FavesType::Session, L"[Sessions]");
 }
 
 void FavesModel::Clear()
 {
-    m_folders->ClearChildren();
-    m_files->ClearChildren();
-    m_webs->ClearChildren();
-    m_sessions->ClearChildren();
+    for (auto& root : m_roots) {
+        if (root) {
+            root->ClearChildren();
+        }
+    }
 }
 
-FavesItemPtr FavesModel::FolderRoot() const
+FavesItem* FavesModel::FolderRoot() const
 {
-    return m_folders.get();
+    return RootByType(FavesType::Folder);
 }
 
-FavesItemPtr FavesModel::FileRoot() const
+FavesItem* FavesModel::FileRoot() const
 {
-    return m_files.get();
+    return RootByType(FavesType::File);
 }
 
-FavesItemPtr FavesModel::WebRoot() const
+FavesItem* FavesModel::WebRoot() const
 {
-    return m_webs.get();
+    return RootByType(FavesType::Web);
 }
 
-FavesItemPtr FavesModel::SessionRoot() const
+FavesItem* FavesModel::SessionRoot() const
 {
-    return m_sessions.get();
+    return RootByType(FavesType::Session);
+}
+
+FavesItem* FavesModel::RootByType(FavesType type) const
+{
+    return m_roots[static_cast<size_t>(type)].get();
 }
 
 void FavesModel::Load(const std::filesystem::path &path) {
@@ -107,8 +110,8 @@ void FavesModel::Load(const std::filesystem::path &path) {
     Clear();
     Utf16Reader file(path);
     std::wstring line;
-    FavesItemPtr root{nullptr};
-    std::stack<FavesItemPtr> parents;
+    FavesItem* root{nullptr};
+    std::stack<FavesItem*> parents;
     while (!file.eof()) {
         if (!file.getline(line)) {
             break;
@@ -116,26 +119,24 @@ void FavesModel::Load(const std::filesystem::path &path) {
         if (line.empty()) {
             continue;
         }
-        if (line == FolderRoot()->Name()) {
-            root = FolderRoot();
-            root->IsExpanded(ReadPropertyBool(file, PROPERTY_EXPAND));
-        }
-        else if (line == FileRoot()->Name()) {
-            root = FileRoot();
-            root->IsExpanded(ReadPropertyBool(file, PROPERTY_EXPAND));
-        }
-        else if (line == WebRoot()->Name()) {
-            root = WebRoot();
-            root->IsExpanded(ReadPropertyBool(file, PROPERTY_EXPAND));
-        }
-        else if (line == SessionRoot()->Name()) {
-            root = SessionRoot();
-            root->IsExpanded(ReadPropertyBool(file, PROPERTY_EXPAND));
+
+        bool matchesRoot = false;
+        for (const auto& rootItem : m_roots) {
+            if (line == rootItem->Name()) {
+                root = rootItem.get();
+                root->IsExpanded(ReadPropertyBool(file, PROPERTY_EXPAND));
+                matchesRoot = true;
+                break;
+            }
         }
 
-        const FavesItemPtr parent = parents.empty() ? root :parents.top();
+        if (matchesRoot) {
+            continue;
+        }
+
+        FavesItem* const parent = parents.empty() ? root : parents.top();
         if (!parent) {
-            break;
+            continue;
         }
         if (line == LINK_TAG) {
             auto link = std::make_unique<FavesItem>(parent, parent->Root()->Type());
@@ -149,14 +150,16 @@ void FavesModel::Load(const std::filesystem::path &path) {
             parents.push(group.get());
             parent->AddChild(std::move(group));
         } else if (line == END_TAG) {
-            parents.pop();
+            if (!parents.empty()) {
+                parents.pop();
+            }
         }
     }
 }
 
 void FavesModel::Save(const std::filesystem::path& path) const
 {
-    auto BoolFrom = [](bool value) -> std::wstring {
+    auto BoolFrom = [](bool value) -> std::wstring_view {
         return value ? L"1" : L"0";
     };
     
@@ -182,10 +185,12 @@ void FavesModel::Save(const std::filesystem::path& path) const
         throw std::runtime_error("Failed to open file for writing: " + path.string());
     }
 
-    for (const auto* root : {FolderRoot(), FileRoot(), WebRoot(), SessionRoot()}) {
-        file << root->Name() << L"\n"
-             << L"Expand=" << BoolFrom(root->IsExpanded()) << L"\n\n";
-        SaveItems(root, file);
+    for (const auto& root : m_roots) {
+        if (root) {
+            file << root->Name() << L"\n"
+                 << L"Expand=" << BoolFrom(root->IsExpanded()) << L"\n\n";
+            SaveItems(root.get(), file);
+        }
     }
 }
 
@@ -193,13 +198,13 @@ void FavesModel::Save(const std::filesystem::path& path) const
 // ----------------------------------------------------------------------------
 // FavesItem
 // ----------------------------------------------------------------------------
-FavesItem::FavesItem(const FavesItemPtr parent, FavesType type)
+FavesItem::FavesItem(FavesItem* parent, FavesType type)
     : m_parent(parent)
     , m_type(type)
 {
 }
 
-FavesItem::FavesItem(const FavesItemPtr parent, FavesType type, const std::wstring& name, const std::wstring& link)
+FavesItem::FavesItem(FavesItem* parent, FavesType type, const std::wstring& name, const std::wstring& link)
     : m_parent(parent)
     , m_type(type)
     , m_name(name)
@@ -207,7 +212,7 @@ FavesItem::FavesItem(const FavesItemPtr parent, FavesType type, const std::wstri
 {
 }
 
-FavesItem::FavesItem(const FavesItemPtr parent, const FavesItemPtr other)
+FavesItem::FavesItem(FavesItem* parent, const FavesItem* other)
     : m_parent(parent)
     , m_type(other->m_type)
     , m_name(other->m_name)
@@ -220,11 +225,7 @@ FavesItem::FavesItem(const FavesItemPtr parent, const FavesItemPtr other)
     }
 }
 
-FavesItem::~FavesItem()
-{
-}
-
-FavesItemPtr FavesItem::Root()
+FavesItem* FavesItem::Root()
 {
     if (IsRoot()) {
         return this;
@@ -232,7 +233,7 @@ FavesItemPtr FavesItem::Root()
     return m_parent->Root();
 }
 
-FavesItemPtr FavesItem::Parent() const
+FavesItem* FavesItem::Parent() const
 {
     return m_parent;
 }
@@ -275,23 +276,12 @@ void FavesItem::IsExpanded(bool isExpanded)
 bool FavesItem::IsNodeDescendant(const FavesItem* anotherNode) const
 {
     if (nullptr == anotherNode) {
-        return FALSE;
+        return false;
     }
     if (this == anotherNode) {
-        return TRUE;
+        return true;
     }
     return IsNodeDescendant(anotherNode->m_parent);
-}
-
-void FavesItem::CopyChildren(FavesItemPtr source)
-{
-    for (const auto& child : source->m_children) {
-        auto newItem = std::make_unique<FavesItem>(this, child->m_type, child->m_name, child->m_link);
-        newItem->m_data = child->m_data;
-        m_children.push_back(std::move(newItem));
-
-        CopyChildren(child.get());
-    }
 }
 
 void FavesItem::ClearChildren()
@@ -314,9 +304,11 @@ void FavesItem::SortChildren()
 
 void FavesItem::Remove()
 {
-    std::erase_if(m_parent->m_children, [this](const auto& item) {
-        return item.get() == this;
-    });
+    if (m_parent) {
+        std::erase_if(m_parent->m_children, [this](const auto& item) {
+            return item.get() == this;
+        });
+    }
 }
 
 bool FavesItem::IsRoot() const

@@ -21,7 +21,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #include <string>
 #include <vector>
-#include <shlwapi.h>
+#include <windows.h>
+#include <commctrl.h>
 
 #include "Explorer.h"
 #include "FavesModel.h"
@@ -31,21 +32,21 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 class IPluginContext;
 
-enum MenuID {
-    FM_NEWLINK = 1,
-    FM_NEWGROUP,
-    FM_ADDSESSION,
-    FM_SAVESESSION,
-    FM_COPY,
-    FM_CUT,
-    FM_PASTE,
-    FM_DELETE,
-    FM_PROPERTIES,
-    FM_OPEN,
-    FM_OPENOTHERVIEW,
-    FM_OPENNEWINSTANCE,
-    FM_GOTO_FILE_LOCATION,
-    FM_ADDTOSESSION,
+enum class MenuID : UINT {
+    NewLink = 1,
+    NewGroup,
+    AddSession,
+    SaveSession,
+    Copy,
+    Cut,
+    Paste,
+    Delete,
+    Properties,
+    Open,
+    OpenOtherView,
+    OpenNewInstance,
+    GotoFileLocation,
+    AddToSession,
 };
 
 
@@ -53,7 +54,7 @@ class FavesDialog : public DockingDlgInterface
 {
 public:
     FavesDialog();
-    ~FavesDialog();
+    ~FavesDialog() = default;
 
     void init(HINSTANCE hInst, HWND hParent, Settings *prop, IPluginContext* pluginContext);
 
@@ -72,8 +73,8 @@ public:
 
     void doDialog(bool willBeShown = true);
 
-    void AddToFavorties(BOOL isFolder, LPTSTR szLink);
-    void AddToFavorties(BOOL isFolder, std::vector<std::wstring>&& paths);
+    void AddToFavorites(bool isFolder, const std::wstring& link);
+    void AddToFavorites(bool isFolder, std::vector<std::wstring>&& paths);
     void SaveSession();
     void NotifyNewFile();
 
@@ -81,8 +82,8 @@ public:
         ::SendMessage(_hSelf, WM_SIZE, 0, 0);
     };
     void SetFont(HFONT font);
-protected:
 
+protected:
     virtual INT_PTR CALLBACK run_dlgProc(UINT message, WPARAM wParam, LPARAM lParam) override;
 
     void HandleToolBarCommand(UINT message);
@@ -93,7 +94,7 @@ protected:
     void CutItem(HTREEITEM hItem);
     void PasteItem(HTREEITEM hItem);
 
-    void AddSaveSession(HTREEITEM hItem, BOOL bSave);
+    void AddSaveSession(HTREEITEM hItem, bool bSave);
 
     void NewItem(HTREEITEM hItem);
     void EditItem(HTREEITEM hItem);
@@ -102,8 +103,11 @@ protected:
     void RefreshTree(HTREEITEM parentItem);
 
     void OpenContext(HTREEITEM hItem, POINT pt);
-    BOOL DoesLinkExist(LPTSTR link, FavesType type);
-    void OpenLink(FavesItemPtr pElem);
+    void OpenGroupContext(HTREEITEM hItem, POINT pt, FavesItem* pElem);
+    void OpenLinkContext(HTREEITEM hItem, POINT pt, FavesItem* pElem);
+
+    bool DoesLinkExist(const std::wstring& link, FavesType type);
+    void OpenLink(FavesItem* pElem);
     void UpdateLink(HTREEITEM hParentItem);
 
     void DrawSessionChildren(HTREEITEM hItem);
@@ -113,7 +117,7 @@ protected:
 
     void ExpandElementsRecursive(HTREEITEM hItem);
 
-    BOOL OpenTreeViewItem(HTREEITEM hItem);
+    bool OpenTreeViewItem(HTREEITEM hItem);
 
     /* Subclassing tree */
     LRESULT RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
@@ -122,23 +126,25 @@ protected:
     };
 
 private:
+    INT_PTR HandleCustomDraw(LPNMTVCUSTOMDRAW cd, LPNMHDR nmhdr);
+
     /* control process */
-    WNDPROC         _hDefaultTreeProc;
+    WNDPROC         _hDefaultTreeProc = nullptr;
 
     /* different imagelists */
-    HIMAGELIST      _hImageList;
-    HIMAGELIST      _hImageListSys;
+    HIMAGELIST      _hImageList = nullptr;
+    HIMAGELIST      _hImageListSys = nullptr;
 
-    BOOL            _isCut;
-    HTREEITEM       _hTreeCutCopy;
+    bool            _isCut = false;
+    HTREEITEM       _hTreeCutCopy = nullptr;
 
     ToolBar         _ToolBar;
     ReBar           _Rebar;
 
-    BOOL            _addToSession;
-    FavesItemPtr    _peOpenLink;
-    Settings*       _pSettings;
-    IPluginContext* _pluginContext;
+    bool            _addToSession = false;
+    FavesItem*      _peOpenLink = nullptr;
+    Settings*       _pSettings = nullptr;
+    IPluginContext* _pluginContext = nullptr;
 
     /* database */
     FavesModel      _model;

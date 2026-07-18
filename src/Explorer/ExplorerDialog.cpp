@@ -1190,20 +1190,15 @@ BOOL ExplorerDialog::GotoPath()
 {
     /* newDlg is exactly what I need */
     NewDlg  dlg;
-    WCHAR   szFolderName[MAX_PATH];
-    WCHAR   szComment[] = L"Go to Path";
+    std::wstring folderName = _pSettings->GetCurrentDir();
+    std::wstring comment = L"Go to Path";
     BOOL    bResult     = FALSE;
-
-    szFolderName[0] = '\0';
-
-    /* copy current path to show current position */
-    wcscpy(szFolderName, _pSettings->GetCurrentDir().c_str());
 
     dlg.init(_hInst, _hParent);
     for (;;) {
-        if (dlg.doDialog(szFolderName, szComment) == TRUE) {
+        if (dlg.doDialog(&folderName, comment) == TRUE) {
             /* test if is correct */
-            auto resolved = _viewModel->ResolveAndValidateDirectory(szFolderName);
+            auto resolved = _viewModel->ResolveAndValidateDirectory(folderName);
             if (resolved.has_value()) {
                 _viewModel->NavigateTo(*resolved);
                 bResult = TRUE;
@@ -1991,12 +1986,11 @@ std::optional<std::wstring> ExplorerDialog::handle(const PromptForNameEvent& ev)
 {
     NewDlg dlg;
     dlg.init(_hInst, _hSelf);
-    WCHAR szName[MAX_PATH]{};
-    wcsncpy_s(szName, ev.defaultName.c_str(), _TRUNCATE);
+    std::wstring name = ev.defaultName;
     for (;;) {
-        if (dlg.doDialog(szName, ev.comment.c_str()) == TRUE) {
-            if (IsValidFileName(szName)) {
-                return szName;
+        if (dlg.doDialog(&name, ev.comment) == TRUE) {
+            if (IsValidFileName(name.data())) {
+                return name;
             }
         } else {
             break;

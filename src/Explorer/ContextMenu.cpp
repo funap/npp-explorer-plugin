@@ -922,11 +922,11 @@ void ContextMenu::AddToFaves()
                 return;
             }
         }
-        favesDlg.AddToFavorties(isFolder, std::move(_strArray));
+        favesDlg.AddToFavorites(isFolder, std::move(_strArray));
     }
     else {
         bool isFolder = _entries[0]->FSEntry().IsDirectory();
-        favesDlg.AddToFavorties(isFolder, _strArray[0].data());
+        favesDlg.AddToFavorites(isFolder, _strArray[0]);
     }
 }
 

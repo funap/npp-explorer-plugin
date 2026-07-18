@@ -28,50 +28,47 @@
 #include <vector>
 #include <memory>
 #include <filesystem>
+#include <array>
 
-enum FavesType {
-    FAVES_FOLDER = 0,
-    FAVES_FILE,
-    FAVES_WEB,
-    FAVES_SESSION,
-    FAVES_TYPE_MAX,
+enum class FavesType {
+    Folder = 0,
+    File,
+    Web,
+    Session,
 };
 
 constexpr UINT FAVES_PARAM_USERIMAGE = 0x00000200;
 
 class FavesItem;
-using FavesItemPtr = FavesItem*;
 
 class FavesModel
 {
 public:
     FavesModel();
-    ~FavesModel();
+    ~FavesModel() = default;
     void Clear();
-    FavesItemPtr FolderRoot() const;
-    FavesItemPtr FileRoot() const;
-    FavesItemPtr WebRoot() const;
-    FavesItemPtr SessionRoot() const;
+    FavesItem* FolderRoot() const;
+    FavesItem* FileRoot() const;
+    FavesItem* WebRoot() const;
+    FavesItem* SessionRoot() const;
+    FavesItem* RootByType(FavesType type) const;
 
     void Load(const std::filesystem::path& path);
     void Save(const std::filesystem::path& path) const;
 private:
-    std::unique_ptr<FavesItem> m_folders;
-    std::unique_ptr<FavesItem> m_files;
-    std::unique_ptr<FavesItem> m_webs;
-    std::unique_ptr<FavesItem> m_sessions;
+    std::array<std::unique_ptr<FavesItem>, 4> m_roots;
 };
 
 class FavesItem {
 public:
     FavesItem() = delete;
-    FavesItem(const FavesItemPtr parent, FavesType type);
-    FavesItem(const FavesItemPtr parent, FavesType type, const std::wstring& name, const std::wstring& link = L"");
-    FavesItem(const FavesItemPtr parent, const FavesItemPtr other);
-    ~FavesItem();
+    FavesItem(FavesItem* parent, FavesType type);
+    FavesItem(FavesItem* parent, FavesType type, const std::wstring& name, const std::wstring& link = L"");
+    FavesItem(FavesItem* parent, const FavesItem* other);
+    ~FavesItem() = default;
 
-    FavesItemPtr        Root();
-    FavesItemPtr        Parent() const;
+    FavesItem*          Root();
+    FavesItem*          Parent() const;
     FavesType           Type() const;
     const std::wstring& Name() const;
     void                Name(const std::wstring& name);
@@ -81,7 +78,6 @@ public:
     void                IsExpanded(bool isExpanded);
 
     bool IsNodeDescendant(const FavesItem* anotherNode) const;
-    void CopyChildren(FavesItemPtr source);
     void ClearChildren();
     void SortChildren();
     void Remove();
@@ -96,7 +92,7 @@ public:
     void Data(uint32_t data);
 
 private:
-    const FavesItemPtr                      m_parent;
+    FavesItem* const                        m_parent;
     const FavesType                         m_type;
     std::wstring                            m_name;
     std::wstring                            m_link;

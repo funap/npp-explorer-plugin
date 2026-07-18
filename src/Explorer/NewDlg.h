@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 #pragma once
 
+#include <string>
 #include "../NppPlugin/DockingFeature/StaticDialog.h"
 #include "Explorer.h"
 #include "ExplorerResource.h"
@@ -27,20 +28,14 @@ class NewDlg : public StaticDialog
 {
 
 public:
-    NewDlg() : 
-        StaticDialog(),
-        _pszWndName(nullptr),
-        _pFileName(nullptr),
-        _pDesc(nullptr)
-    {
-    };
+    NewDlg() : StaticDialog() {}
 
-    void init(HINSTANCE hInst, HWND hWnd, LPCTSTR pszWndName = NULL) {
+    void init(HINSTANCE hInst, HWND hWnd, const std::wstring& wndName = L"") {
         Window::init(hInst, hWnd);
-        _pszWndName = pszWndName;
+        _wndName = wndName;
     };
 
-    INT_PTR doDialog(LPCTSTR pFileName, LPCTSTR pDesc);
+    INT_PTR doDialog(std::wstring* pFileName, const std::wstring& desc);
 
     void destroy() override {};
 
@@ -49,8 +44,8 @@ protected :
     INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
 
 private:
-    LPCTSTR _pszWndName;
-    LPCTSTR _pFileName;
-    LPCTSTR _pDesc;
+    std::wstring  _wndName;
+    std::wstring* _pFileName = nullptr;
+    std::wstring  _desc;
 
 };

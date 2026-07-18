@@ -22,10 +22,10 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "ExplorerResource.h"
 #include "../NppPlugin/Notepad_plus_msgs.h"
 
-INT_PTR NewDlg::doDialog(LPCTSTR pFileName, LPCTSTR pDesc)
+INT_PTR NewDlg::doDialog(std::wstring* pFileName, const std::wstring& desc)
 {
     _pFileName = pFileName;
-    _pDesc = pDesc;
+    _desc = desc;
     return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_NEW_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
 }
 
@@ -34,16 +34,16 @@ INT_PTR CALLBACK NewDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
 {
     switch (Message) {
     case WM_INITDIALOG: {
-        WCHAR szDesc[MAX_PATH];
-
-        if (_pszWndName != NULL) {
-            ::SetWindowText(_hSelf, _pszWndName);
+        if (!_wndName.empty()) {
+            ::SetWindowText(_hSelf, _wndName.c_str());
         }
 
-        _stprintf(szDesc, L"%ls:", _pDesc);
-        ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_NEW_DESC), szDesc);
+        std::wstring szDesc = _desc + L":";
+        ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_NEW_DESC), szDesc.c_str());
 
-        ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NEW), _pFileName);
+        if (_pFileName) {
+            ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NEW), _pFileName->c_str());
+        }
 
         goToCenter();
         SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NEW));
@@ -56,7 +56,12 @@ INT_PTR CALLBACK NewDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam)
                 return TRUE;
             case IDOK: {
                 UINT length = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXTLENGTH, 0, 0) + 1;
-                SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXT, length, (LPARAM)_pFileName);
+                std::wstring textBuf(length, L'\0');
+                SendDlgItemMessage(_hSelf, IDC_EDIT_NEW, WM_GETTEXT, length, (LPARAM)textBuf.data());
+                textBuf.resize(std::wcslen(textBuf.c_str()));
+                if (_pFileName) {
+                    *_pFileName = textBuf;
+                }
                 ::EndDialog(_hSelf, TRUE);
                 return TRUE;
             }

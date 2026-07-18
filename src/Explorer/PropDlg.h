@@ -50,10 +50,10 @@ public:
     };
     void destroy() override {};
 
-    INT_PTR doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg = LinkDlg::NONE, BOOL fileMustExist = FALSE);
-    void setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink = FALSE);
-    FavesItemPtr getSelectedGroup() const;
-    void setSelectedGroup(FavesItemPtr group);
+    INT_PTR doDialog(std::wstring* pName, std::wstring* pLink, const std::wstring& desc, LinkDlg linkDlg = LinkDlg::NONE, BOOL fileMustExist = FALSE);
+    void setRoot(FavesItem* pElem, INT iUserImagePos, BOOL bWithLink = FALSE);
+    FavesItem* getSelectedGroup() const;
+    void setSelectedGroup(FavesItem* group);
 
 protected :
     INT_PTR CALLBACK run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam) override;
@@ -61,15 +61,15 @@ protected :
     void ExpandTreeView(HTREEITEM hParentItem);
 
 private:
-    LPTSTR          _pName;
-    LPTSTR          _pLink;
-    LPTSTR          _pDesc;
-    LinkDlg         _linkDlg;
-    BOOL            _fileMustExist;
-    BOOL            _bWithLink;
-    BOOL            _seeDetails;
-    FavesItemPtr    _root;
-    INT             _iUImgPos;
-    FavesItemPtr    _selectedGroup;
+    std::wstring*   _pName = nullptr;
+    std::wstring*   _pLink = nullptr;
+    std::wstring    _desc;
+    LinkDlg         _linkDlg = LinkDlg::NONE;
+    BOOL            _fileMustExist = FALSE;
+    BOOL            _bWithLink = FALSE;
+    BOOL            _seeDetails = FALSE;
+    FavesItem*      _root = nullptr;
+    INT             _iUImgPos = 0;
+    FavesItem*      _selectedGroup = nullptr;
     TreeView        _hTreeCtrl;
 };

@@ -43,16 +43,6 @@ static int __stdcall BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM /*unused*/,
 
 PropDlg::PropDlg()
     : StaticDialog()
-    , _pName(nullptr)
-    , _pLink(nullptr)
-    , _pDesc(nullptr)
-    , _linkDlg(LinkDlg::NONE)
-    , _fileMustExist(FALSE)
-    , _bWithLink(FALSE)
-    , _seeDetails(FALSE)
-    , _root(nullptr)
-    , _iUImgPos(0)
-    , _selectedGroup(nullptr)
 {
 }
 
@@ -60,11 +50,11 @@ PropDlg::~PropDlg()
 {
 }
 
-INT_PTR PropDlg::doDialog(LPTSTR pName, LPTSTR pLink, LPTSTR pDesc, LinkDlg linkDlg, BOOL fileMustExist)
+INT_PTR PropDlg::doDialog(std::wstring* pName, std::wstring* pLink, const std::wstring& desc, LinkDlg linkDlg, BOOL fileMustExist)
 {
     _pName          = pName;
     _pLink          = pLink;
-    _pDesc          = pDesc;
+    _desc           = desc;
     _linkDlg        = linkDlg;
     _fileMustExist  = fileMustExist;
     return ::DialogBoxParam(_hInst, MAKEINTRESOURCE(IDD_PROP_DLG), _hParent,  (DLGPROC)dlgProc, (LPARAM)this);
@@ -76,23 +66,26 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
     switch (Message) {
         case WM_INITDIALOG: {
             /* set discription */
-            WCHAR szBuffer[256];
-
-            _stprintf(szBuffer, L"%ls:", _pDesc);
-            ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer);
+            std::wstring szBuffer = _desc + L":";
+            ::SetWindowText(::GetDlgItem(_hSelf, IDC_STATIC_FAVES_DESC), szBuffer.c_str());
 
             /* if name is not defined extract from link */
             if (_pName && _pLink) {
-                wcscpy(szBuffer, _pLink);
-                if ((_pName[0] == '\0') && (szBuffer[0] != '\0')) {
-                    if (szBuffer[wcslen(szBuffer) - 1] == '\\') {
-                        szBuffer[wcslen(szBuffer) - 1] = '\0';
+                if (_pName->empty() && !_pLink->empty()) {
+                    std::wstring linkVal = *_pLink;
+                    if (!linkVal.empty() && linkVal.back() == L'\\') {
+                        linkVal.pop_back();
                     }
-                    if (szBuffer[wcslen(szBuffer) - 1] == ':') {
-                        wcscpy(_pName, szBuffer);
+                    if (!linkVal.empty() && linkVal.back() == L':') {
+                        *_pName = linkVal;
                     }
                     else {
-                        wcscpy(_pName, (_tcsrchr(szBuffer, '\\') + 1));
+                        size_t pos = linkVal.find_last_of(L'\\');
+                        if (pos != std::wstring::npos) {
+                            *_pName = linkVal.substr(pos + 1);
+                        } else {
+                            *_pName = linkVal;
+                        }
                     }
                 }
             }
@@ -104,10 +97,10 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
 
             /* set name and link */
             if (_pName){
-                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NAME), _pName);
+                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_NAME), _pName->c_str());
             }
             if (_pLink) {
-                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink->c_str());
             }
 
             SetFocus(::GetDlgItem(_hSelf, IDC_EDIT_NAME));
@@ -146,7 +139,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
             }
             else {
                 /* get current icon offset */
-                UINT iIconPos = _root->Type();
+                UINT iIconPos = static_cast<UINT>(_root->Type());
 
                 /* set image list */
                 ::SendMessage(_hTreeCtrl, TVM_SETIMAGELIST, TVSIL_NORMAL, (LPARAM)GetSmallImageList(FALSE));
@@ -222,7 +215,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                         info.lpszTitle      = L"Select a folder:";
                         info.ulFlags        = BIF_RETURNONLYFSDIRS;
                         info.lpfn           = BrowseCallbackProc;
-                        info.lParam         = (LPARAM)_pLink;
+                        info.lParam         = (LPARAM)(_pLink ? _pLink->c_str() : nullptr);
 
                         // Execute the browsing dialog.
                         PIDLIST_ABSOLUTE pidl = ::SHBrowseForFolder(&info);
@@ -232,9 +225,12 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                         if (pidl) {
                             // Try to convert the pidl to a display string.
                             // Return is true if success.
-                            if (::SHGetPathFromIDList(pidl, _pLink)) {
-                                // Set edit control to the directory path.
-                                ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+                            WCHAR pathBuf[MAX_PATH]{};
+                            if (::SHGetPathFromIDList(pidl, pathBuf)) {
+                                if (_pLink) {
+                                    *_pLink = pathBuf;
+                                    ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink->c_str());
+                                }
                             }
                             pShellMalloc->Free(pidl);
                         }
@@ -243,15 +239,17 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     }
                 }
                 else {
-                    LPTSTR  pszLink = nullptr;
                     FileDlg dlg(_hInst, _hParent);
 
-                    dlg.setDefFileName(_pLink);
-                    if (_tcsstr(_pDesc, L"Session") != nullptr) {
+                    if (_pLink) {
+                        dlg.setDefFileName(const_cast<wchar_t*>(_pLink->c_str()));
+                    }
+                    if (_desc.find(L"Session") != std::wstring::npos) {
                         dlg.setExtFilter(L"Session file", L".session", nullptr);
                     }
                     dlg.setExtFilter(L"All types", L".*", nullptr);
 
+                    LPTSTR pszLink = nullptr;
                     if (_fileMustExist == TRUE) {
                         pszLink = dlg.doSaveDlg();
                     }
@@ -260,9 +258,10 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     }
 
                     if (pszLink != nullptr) {
-                        // Set edit control to the directory path.
-                        wcscpy(_pLink, pszLink);
-                        ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink);
+                        if (_pLink) {
+                            *_pLink = pszLink;
+                            ::SetWindowText(::GetDlgItem(_hSelf, IDC_EDIT_LINK), _pLink->c_str());
+                        }
                     }
                 }
                 break;
@@ -276,12 +275,21 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                     UINT lengthName = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXTLENGTH, 0, 0) + 1;
                     UINT lengthLink = (UINT)::SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXTLENGTH, 0, 0) + 1;
 
-                    SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)_pName);
-                    SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)_pLink);
+                    std::wstring nameBuf(lengthName, L'\0');
+                    std::wstring linkBuf(lengthLink, L'\0');
 
-                    if ((wcslen(_pName) != 0) && (wcslen(_pLink) != 0)) {
+                    SendDlgItemMessage(_hSelf, IDC_EDIT_NAME, WM_GETTEXT, lengthName, (LPARAM)nameBuf.data());
+                    SendDlgItemMessage(_hSelf, IDC_EDIT_LINK, WM_GETTEXT, lengthLink, (LPARAM)linkBuf.data());
+
+                    // Trim string sizes
+                    nameBuf.resize(std::wcslen(nameBuf.c_str()));
+                    linkBuf.resize(std::wcslen(linkBuf.c_str()));
+
+                    if (!nameBuf.empty() && !linkBuf.empty()) {
+                        *_pName = nameBuf;
+                        *_pLink = linkBuf;
                         auto *selectedItem = _hTreeCtrl.GetSelection();
-                        _selectedGroup = (FavesItemPtr)_hTreeCtrl.GetParam(selectedItem);
+                        _selectedGroup = reinterpret_cast<FavesItem*>(_hTreeCtrl.GetParam(selectedItem));
                         ::EndDialog(_hSelf, TRUE);
                         return TRUE;
                     }
@@ -289,7 +297,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                 }
                 else {
                     auto *selectedItem = _hTreeCtrl.GetSelection();
-                    _selectedGroup = (FavesItemPtr)_hTreeCtrl.GetParam(selectedItem);
+                    _selectedGroup = reinterpret_cast<FavesItem*>(_hTreeCtrl.GetParam(selectedItem));
                     ::EndDialog(_hSelf, TRUE);
                     return TRUE;
                 }
@@ -345,7 +353,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
                         HTREEITEM hItem = _hTreeCtrl.GetSelection();
 
                         if (hItem != nullptr) {
-                            FavesItemPtr pElem = (FavesItemPtr)_hTreeCtrl.GetParam(hItem);
+                            FavesItem* pElem = reinterpret_cast<FavesItem*>(_hTreeCtrl.GetParam(hItem));
 
                             if (pElem != nullptr) {
                                 if (pElem->IsLink()) {
@@ -378,7 +386,7 @@ INT_PTR CALLBACK PropDlg::run_dlgProc(UINT Message, WPARAM wParam, LPARAM lParam
     return FALSE;
 }
 
-void PropDlg::setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink)
+void PropDlg::setRoot(FavesItem* pElem, INT iUserImagePos, BOOL bWithLink)
 {
     _root       = pElem;
     _iUImgPos   = iUserImagePos;
@@ -388,19 +396,19 @@ void PropDlg::setRoot(FavesItemPtr pElem, INT iUserImagePos, BOOL bWithLink)
     _seeDetails = TRUE;
 }
 
-FavesItemPtr PropDlg::getSelectedGroup() const
+FavesItem* PropDlg::getSelectedGroup() const
 {
     return _selectedGroup;
 }
 
-void PropDlg::setSelectedGroup(FavesItemPtr group)
+void PropDlg::setSelectedGroup(FavesItem* group)
 {
     _selectedGroup = group;
 }
 
 void PropDlg::ExpandTreeView(HTREEITEM hParentItem)
 {
-    FavesItemPtr parent = (FavesItemPtr)_hTreeCtrl.GetParam(hParentItem);
+    FavesItem* parent = reinterpret_cast<FavesItem*>(_hTreeCtrl.GetParam(hParentItem));
     if (parent == nullptr) {
         return;
     }
