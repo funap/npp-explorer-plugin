@@ -475,7 +475,7 @@ LRESULT FavesDialog::RunTreeProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM 
         };
 
         HTREEITEM hItem = _hTreeCtrl.HitTest(&hti);
-        if ((hti.flags & TVHT_ONITEM) && OpenTreeViewItem(hItem)) {
+        if (hItem != nullptr && !(hti.flags & TVHT_ONITEMBUTTON) && OpenTreeViewItem(hItem)) {
             return TRUE;
         }
         break;
