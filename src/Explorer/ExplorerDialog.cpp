@@ -190,7 +190,7 @@ void ExplorerDialog::doDialog(bool willBeShown)
         create(&data);
         data.pszName = L"Explorer";
         data.dlgID = DOCKABLE_EXPLORER_INDEX;
-        data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB;
+        data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB | DWS_USEOWNDARKMODE;
         LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons()
                                        ? _pluginContext->IsDarkMode() ? MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE)
                                                                       : MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER)

@@ -307,7 +307,7 @@ void UpdateThemeColor()
         .primary_bg         = editorColors.hotBackground,
         .primary_border     = editorColors.hotEdge,
     };
-    auto isDarkMode = IsDarkColor(colors.body_bg);
+    auto isDarkMode = IsDarkColor(colors.secondary_bg);
     ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
     if (explorerDlg.isCreated()) {
         explorerDlg.UpdateTheme(isDarkMode);

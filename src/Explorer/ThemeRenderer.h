@@ -24,7 +24,9 @@
 #pragma once
 
 #include <windows.h>
+#include <commctrl.h>
 
+#include <functional>
 #include <memory>
 #include <set>
 #include <stdexcept>
@@ -98,9 +100,13 @@ private:
     static LRESULT CALLBACK DefaultSubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 
     LRESULT WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT TreeViewCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT HeaderCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ComboBoxProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
     BOOL    m_isDarkMode;
     ThemeColors  m_colors;
