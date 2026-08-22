@@ -53,22 +53,22 @@ void DebugPrintf(std::wformat_string<Args...> format, Args&&... args)
 
 
 ToolBarButtonUnit toolBarIcons[] = {
-    {IDM_EX_FAVORITES,      IDI_FL_FAVORITES, IDI_FL_FAVORITES, IDI_FL_FAVORITES_GRAY, IDB_TB_FAVES,       0},
-    {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-    {IDM_EX_PREV,           IDI_FL_PREV, IDI_FL_PREV, IDI_FL_PREV_GRAY, IDB_EX_PREV,        TBSTYLE_DROPDOWN},
-    {IDM_EX_NEXT,           IDI_FL_NEXT, IDI_FL_NEXT, IDI_FL_NEXT_GRAY, IDB_EX_NEXT,        TBSTYLE_DROPDOWN},
-    {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-    {IDM_EX_TOGGLE_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE, IDI_FL_WORKSPACE_GRAY, IDB_EX_WORKSPACE,  TBSTYLE_CHECK},
-    {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-    {IDM_EX_FILE_NEW,       IDI_FL_FILENEW, IDI_FL_FILENEW, IDI_FL_FILENEW_GRAY, IDB_EX_FILENEW,     0},
-    {IDM_EX_FOLDER_NEW,     IDI_FL_FOLDERNEW, IDI_FL_FOLDERNEW, IDI_FL_FOLDERNEW_GRAY, IDB_EX_FOLDERNEW,   0},
-    {IDM_EX_SEARCH_FIND,    IDI_FL_FIND, IDI_FL_FIND, IDI_FL_FIND_GRAY, IDB_EX_FIND,        0},
-    {IDM_EX_TERMINAL,       IDI_FL_TERMINAL, IDI_FL_TERMINAL, IDI_FL_TERMINAL_GRAY, IDB_EX_TERMINAL,    0},
-    {IDM_EX_GO_TO_USER,     IDI_FL_FOLDERUSER, IDI_FL_FOLDERUSER, IDI_FL_FOLDERUSER_GRAY, IDB_EX_FOLDERUSER,  0},
-    {IDM_EX_GO_TO_FOLDER,   IDI_FL_FOLDERGO, IDI_FL_FOLDERGO, IDI_FL_FOLDERGO_GRAY, IDB_EX_FOLDERGO,    0},
-    {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
-    {IDM_EX_UPDATE,         IDI_FL_UPDATE, IDI_FL_UPDATE, IDI_FL_UPDATE_GRAY, IDB_EX_UPDATE,      0},
-    {0,                     IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, 0},
+    {IDM_EX_FAVORITES,        IDI_FL_FAVORITES,   IDI_FL_FAVORITES,   IDI_FL_FAVORITES_GRAY,   IDI_FL_FAVORITES_DARK,   IDI_FL_FAVORITES_DARK,   IDI_FL_FAVORITES_DARK_GRAY,   IDB_TB_FAVES,     0},
+    {0,                       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,           IDI_SEPARATOR_ICON, 0},
+    {IDM_EX_PREV,             IDI_FL_PREV,        IDI_FL_PREV,        IDI_FL_PREV_GRAY,        IDI_FL_PREV_DARK,        IDI_FL_PREV_DARK,        IDI_FL_PREV_DARK_GRAY,        IDB_EX_PREV,      TBSTYLE_DROPDOWN},
+    {IDM_EX_NEXT,             IDI_FL_NEXT,        IDI_FL_NEXT,        IDI_FL_NEXT_GRAY,        IDI_FL_NEXT_DARK,        IDI_FL_NEXT_DARK,        IDI_FL_NEXT_DARK_GRAY,        IDB_EX_NEXT,      TBSTYLE_DROPDOWN},
+    {0,                       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,           IDI_SEPARATOR_ICON, 0},
+    {IDM_EX_TOGGLE_WORKSPACE, IDI_FL_WORKSPACE,   IDI_FL_WORKSPACE,   IDI_FL_WORKSPACE_GRAY,   IDI_FL_WORKSPACE_DARK,   IDI_FL_WORKSPACE_DARK,   IDI_FL_WORKSPACE_DARK_GRAY,   IDB_EX_WORKSPACE, TBSTYLE_CHECK},
+    {0,                       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,           IDI_SEPARATOR_ICON, 0},
+    {IDM_EX_FILE_NEW,         IDI_FL_FILENEW,     IDI_FL_FILENEW,     IDI_FL_FILENEW_GRAY,     IDI_FL_FILENEW_DARK,     IDI_FL_FILENEW_DARK,     IDI_FL_FILENEW_DARK_GRAY,     IDB_EX_FILENEW,   0},
+    {IDM_EX_FOLDER_NEW,       IDI_FL_FOLDERNEW,   IDI_FL_FOLDERNEW,   IDI_FL_FOLDERNEW_GRAY,   IDI_FL_FOLDERNEW_DARK,   IDI_FL_FOLDERNEW_DARK,   IDI_FL_FOLDERNEW_DARK_GRAY,   IDB_EX_FOLDERNEW, 0},
+    {IDM_EX_SEARCH_FIND,      IDI_FL_FIND,        IDI_FL_FIND,        IDI_FL_FIND_GRAY,        IDI_FL_FIND_DARK,        IDI_FL_FIND_DARK,        IDI_FL_FIND_DARK_GRAY,        IDB_EX_FIND,      0},
+    {IDM_EX_TERMINAL,         IDI_FL_TERMINAL,    IDI_FL_TERMINAL,    IDI_FL_TERMINAL_GRAY,    IDI_FL_TERMINAL_DARK,    IDI_FL_TERMINAL_DARK,    IDI_FL_TERMINAL_DARK_GRAY,    IDB_EX_TERMINAL,  0},
+    {IDM_EX_GO_TO_USER,       IDI_FL_FOLDERUSER,  IDI_FL_FOLDERUSER,  IDI_FL_FOLDERUSER_GRAY,  IDI_FL_FOLDERUSER_DARK,  IDI_FL_FOLDERUSER_DARK,  IDI_FL_FOLDERUSER_DARK_GRAY,  IDB_EX_FOLDERUSER, 0},
+    {IDM_EX_GO_TO_FOLDER,     IDI_FL_FOLDERGO,    IDI_FL_FOLDERGO,    IDI_FL_FOLDERGO_GRAY,    IDI_FL_FOLDERGO_DARK,    IDI_FL_FOLDERGO_DARK,    IDI_FL_FOLDERGO_DARK_GRAY,    IDB_EX_FOLDERGO,  0},
+    {0,                       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,           IDI_SEPARATOR_ICON, 0},
+    {IDM_EX_UPDATE,           IDI_FL_UPDATE,      IDI_FL_UPDATE,      IDI_FL_UPDATE_GRAY,      IDI_FL_UPDATE_DARK,      IDI_FL_UPDATE_DARK,      IDI_FL_UPDATE_DARK_GRAY,      IDB_EX_UPDATE,    0},
+    {0,                       IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,     IDI_SEPARATOR_ICON,           IDI_SEPARATOR_ICON, 0},
 };
 
 
@@ -147,11 +147,12 @@ void ExplorerDialog::init(HINSTANCE hInst, HWND hParent, Settings *prop, IPlugin
     _FileList.initProp(prop);
 }
  
-void ExplorerDialog::UpdateTheme(bool isDarkMode)
+void ExplorerDialog::UpdateTheme()
 {
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
-    _ToolBar.updateIcons(toolbarType, isDarkMode);
-    _addressBar.UpdateTheme(isDarkMode);
+    _ToolBar.updateIcons(toolbarType);
+    _addressBar.UpdateTheme();
+    ThemeRenderer::Instance().ApplyTheme(_hSelf);
     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
 }
 
@@ -191,9 +192,10 @@ void ExplorerDialog::doDialog(bool willBeShown)
         data.pszName = L"Explorer";
         data.dlgID = DOCKABLE_EXPLORER_INDEX;
         data.uMask = DWS_DF_CONT_LEFT | DWS_ADDINFO | DWS_ICONTAB | DWS_USEOWNDARKMODE;
+        bool isDark = ThemeRenderer::IsDarkControlBackground();
         LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons()
-                                       ? _pluginContext->IsDarkMode() ? MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE)
-                                                                      : MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER)
+                                       ? isDark ? MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER_DARKMODE)
+                                                : MAKEINTRESOURCE(IDI_TB_FLUENT_EXPLORER)
                                        : MAKEINTRESOURCE(IDI_EXPLORE);
         data.hIconTab = (HICON)::LoadImage(_hInst, iconResourceName, IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName = getPluginFileName();
@@ -887,9 +889,8 @@ void ExplorerDialog::InitialDialog()
     _FileList.init(_hInst, _hSelf, _hListCtrl);
 
     /* create toolbar */
-    bool isDarkMode = _pluginContext->IsDarkMode();
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
-    _ToolBar.init(_hInst, _hSelf, toolbarType, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit), isDarkMode);
+    _ToolBar.init(_hInst, _hSelf, toolbarType, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
 
     _Rebar.init(_hInst, _hSelf);
     _ToolBar.addToRebar(&_Rebar);
@@ -932,7 +933,7 @@ void ExplorerDialog::InitialDialog()
 
     _addressBar.Init(_hInst, _hSelf, _viewModel.get());
     _addressBar.SetFont(_pSettings->GetDefaultFont());
-    _addressBar.UpdateTheme(_pluginContext->IsDarkMode());
+    _addressBar.UpdateTheme();
     _addressBar.SetPath(_pSettings->GetCurrentDir());
 
     ::PostMessage(_hFilter, CB_SETEDITSEL, 0, MAKELPARAM(-1, -1));

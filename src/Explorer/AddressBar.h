@@ -44,7 +44,7 @@ public:
 
     void Init(HINSTANCE hInst, HWND parent, ExplorerViewModel* viewModel);
     void SetPath(const std::wstring& path);
-    void UpdateTheme(bool isDarkMode);
+    void UpdateTheme();
     void SetFont(HFONT font);
     void ShowEdit(bool show);
     void Resize(int x, int y, int width, int height);
@@ -60,7 +60,6 @@ private:
     ExplorerViewModel* _viewModel = nullptr;
     std::wstring _currentPath;
     HFONT _hFont = nullptr;
-    bool _isDarkMode = false;
 
     // Hover tracking
     int _hoverSliceIndex = -1;

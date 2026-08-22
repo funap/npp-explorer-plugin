@@ -35,27 +35,37 @@
 
 struct ThemeColors
 {
-    COLORREF body           = ::GetSysColor(COLOR_WINDOWTEXT);
-    COLORREF body_bg        = ::GetSysColor(COLOR_WINDOW);
-    COLORREF secondary      = ::GetSysColor(COLOR_GRAYTEXT);
-    COLORREF secondary_bg   = ::GetSysColor(COLOR_BTNFACE);
-    COLORREF border         = ::GetSysColor(COLOR_3DSHADOW);
-    COLORREF primary        = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
-    COLORREF primary_bg     = ::GetSysColor(COLOR_HIGHLIGHT);
-    COLORREF primary_border = ::GetSysColor(COLOR_ACTIVEBORDER);
-};
+    COLORREF foreground             = ::GetSysColor(COLOR_WINDOWTEXT);
+    COLORREF disabled_text          = ::GetSysColor(COLOR_GRAYTEXT);
+    COLORREF content_background     = ::GetSysColor(COLOR_WINDOW);
 
+    COLORREF control_foreground     = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+    COLORREF control_background     = ::GetSysColor(COLOR_3DFACE);
+
+    COLORREF border                 = ::GetSysColor(COLOR_3DSHADOW);
+    COLORREF primary_border         = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+    COLORREF secondary_border       = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+    COLORREF disabled_border        = ::GetSysColor(COLOR_3DLIGHT);
+
+    COLORREF hot_background         = ::GetSysColor(COLOR_HIGHLIGHT);
+    COLORREF primary_background     = ::GetSysColor(COLOR_HIGHLIGHT);
+    COLORREF secondary_background   = ::GetSysColor(COLOR_3DFACE);
+};
 
 struct Brushes
 {
-    Brush body;           // for body text
-    Brush body_bg;        // for main background
-    Brush secondary;      // for secondary text
-    Brush secondary_bg;   // for secondary background
-    Brush border;         // for borders
-    Brush primary;        // for primary/highlighted text
-    Brush primary_bg;     // for primary/highlighted background
-    Brush primary_border; // for primary element borders
+    Brush foreground;
+    Brush control_foreground;
+    Brush disabled_text;
+    Brush content_background;
+    Brush control_background;
+    Brush border;
+    Brush primary_border;
+    Brush secondary_border;
+    Brush disabled_border;
+    Brush hot_background;
+    Brush primary_background;
+    Brush secondary_background;
 };
 
 class ThemeRenderer
@@ -76,21 +86,39 @@ public:
 
     static ThemeRenderer& Instance();
 
-    void SetTheme(BOOL isDarkMode, const ThemeColors& colors);
+    static bool IsDarkColor(COLORREF rgb)
+    {
+        uint8_t r = GetRValue(rgb);
+        uint8_t g = GetGValue(rgb);
+        uint8_t b = GetBValue(rgb);
+        float brightness = (0.2126F * r + 0.7152F * g + 0.0722F * b) / 255.0F;
+        return brightness < 0.5F;
+    }
+
+    static bool IsDarkControlBackground()
+    {
+        return IsDarkColor(Instance().GetColors().control_background);
+    }
+
+    void SetTheme(const ThemeColors& colors);
 
     void Register(HWND hwnd);
     void ApplyTheme(HWND hwnd);
 
     // ブラシ取得用関数
     enum class BrushType {
-        Body,
-        BodyBg,
-        Secondary,
-        SecondaryBg,
+        Foreground,
+        HighlightText,
+        DisabledText,
+        ContentBackground,
+        ControlBackground,
         Border,
-        Primary,
-        PrimaryBg,
         PrimaryBorder,
+        SecondaryBorder,
+        DisabledBorder,
+        HotBackground,
+        PrimaryBackground,
+        SecondaryBackground,
     };
 
     HBRUSH GetBrush(BrushType type) const;
@@ -102,14 +130,19 @@ private:
     LRESULT WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT TreeViewCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT HeaderCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT HeaderProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ListViewProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT RebarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ToolBarProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+    LRESULT ToolBarCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ButtonProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT EditProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
     LRESULT ComboBoxProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-    BOOL    m_isDarkMode;
-    ThemeColors  m_colors;
+    void PaintListView(HWND hWnd, HDC hdc);
+    void DrawChevron(HDC hdc, const RECT& rect, bool isExpanded, COLORREF color);
+
+    ThemeColors m_colors;
     Brushes m_brushes;
     std::set<HWND>  m_windows;
 };

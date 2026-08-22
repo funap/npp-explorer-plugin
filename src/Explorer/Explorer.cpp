@@ -142,32 +142,11 @@ BOOL APIENTRY DllMain(HINSTANCE hInst, DWORD  reasonForCall, LPVOID /* lpReserve
         /* save settings */
         settings.Save();
 
-        /* destroy image list */
-        if (ghImgList != nullptr) {
-            ImageList_Destroy(ghImgList);
-            ghImgList = nullptr;
-        }
-
         /* Remove subclaasing */
         if (wndProcNotepad != nullptr) {
             SetWindowLongPtr(g_nppContext.GetWindow(), GWLP_WNDPROC, (LONG_PTR)wndProcNotepad);
             wndProcNotepad = nullptr;
         }
-
-
-        delete funcItem[0]._pShKey;
-        funcItem[0]._pShKey = nullptr;
-        delete funcItem[1]._pShKey;
-        funcItem[1]._pShKey = nullptr;
-        delete funcItem[2]._pShKey;
-        funcItem[2]._pShKey = nullptr;
-
-        ::DeleteObject(g_explorerIcons.hToolbarBmp);
-        ::DestroyIcon(g_explorerIcons.hToolbarIcon);
-        ::DestroyIcon(g_explorerIcons.hToolbarIconDarkMode);
-        ::DeleteObject(g_favesIcons.hToolbarBmp);
-        ::DestroyIcon(g_favesIcons.hToolbarIcon);
-        ::DestroyIcon(g_favesIcons.hToolbarIconDarkMode);
 
         ThemeRenderer::Destroy();
         break;
@@ -287,33 +266,13 @@ extern "C" __declspec(dllexport) BOOL isUnicode()
 
 void UpdateThemeColor()
 {
-    auto IsDarkColor = [](COLORREF rgb) -> bool {
-        uint8_t r = GetRValue(rgb);
-        uint8_t g = GetGValue(rgb);
-        uint8_t b = GetBValue(rgb);
-        float brightness = (0.2126F * r + 0.7152F * g + 0.0722F * b) / 255.0F;
-        return brightness < 0.5F;
-    };
-
-    auto editorColors = g_nppContext.GetColors();
-
-    ThemeColors colors{
-        .body               = editorColors.darkerText,
-        .body_bg            = editorColors.pureBackground,
-        .secondary          = g_nppContext.GetEditorDefaultForegroundColor(),
-        .secondary_bg       = g_nppContext.GetEditorDefaultBackgroundColor(),
-        .border             = editorColors.edge,
-        .primary            = editorColors.text,
-        .primary_bg         = editorColors.hotBackground,
-        .primary_border     = editorColors.hotEdge,
-    };
-    auto isDarkMode = IsDarkColor(colors.secondary_bg);
-    ThemeRenderer::Instance().SetTheme(isDarkMode, colors);
+    auto colors = g_nppContext.GetColors();
+    ThemeRenderer::Instance().SetTheme(colors);
     if (explorerDlg.isCreated()) {
-        explorerDlg.UpdateTheme(isDarkMode);
+        explorerDlg.UpdateTheme();
     }
     if (favesDlg.isCreated()) {
-        favesDlg.UpdateTheme(isDarkMode);
+        favesDlg.UpdateTheme();
     }
 }
 
@@ -414,12 +373,11 @@ void OpenOptionDlg()
         explorerDlg.redraw();
         favesDlg.redraw();
 
-        bool isDarkMode = g_nppContext.IsDarkMode();
         if (explorerDlg.isCreated()) {
-            explorerDlg.UpdateTheme(isDarkMode);
+            explorerDlg.UpdateTheme();
         }
         if (favesDlg.isCreated()) {
-            favesDlg.UpdateTheme(isDarkMode);
+            favesDlg.UpdateTheme();
         }
     }
 }

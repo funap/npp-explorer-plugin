@@ -20,6 +20,7 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <vector>
+#include "ThemeRenderer.h"
 
 const int nbMax = 45;
 #define IDI_SEPARATOR_ICON -1
@@ -107,6 +108,10 @@ struct ToolBarButtonUnit
     int _hotIcon;
     int _grayIcon;
 
+    int _darkDefaultIcon;
+    int _darkHotIcon;
+    int _darkGrayIcon;
+
     int _stdIcon;
     BYTE _uIconStyle;
 };
@@ -137,7 +142,7 @@ public :
     ToolBarIcons() : _nbCmd(0) {};
 
     void init(ToolBarButtonUnit *buttonUnitArray, int arraySize);
-    void create(HINSTANCE hInst, int iconSize, bool isDarkMode);
+    void create(HINSTANCE hInst, int iconSize);
     void destroy();
 
     HIMAGELIST getDefaultLst() const {
@@ -153,11 +158,11 @@ public :
     };
 
     unsigned int getNbCommand() const {return _nbCmd;};
-    void resizeIcon(int size, bool isDarkMode) {
-        reInit(size, isDarkMode);
+    void resizeIcon(int size) {
+        reInit(size);
     };
 
-    void reInit(int size, bool isDarkMode) {
+    void reInit(int size) {
         ImageList_RemoveAll(getDefaultLst());
         ImageList_RemoveAll(getHotLst());
         ImageList_RemoveAll(getDisableLst());
@@ -166,17 +171,13 @@ public :
         ImageList_SetIconSize(getHotLst(), size, size);
         ImageList_SetIconSize(getDisableLst(), size, size);
 
+        bool isDark = ThemeRenderer::IsDarkControlBackground();
+
         for (int i = 0 ; i < int(_tbiis.size()) ; i++) {
             if (_tbiis[i]._defaultIcon != -1) {
-                int defaultIcon = _tbiis[i]._defaultIcon;
-                int hotIcon = _tbiis[i]._hotIcon;
-                int grayIcon = _tbiis[i]._grayIcon;
-                
-                if (isDarkMode) {
-                    defaultIcon += 2;
-                    hotIcon += 2;
-                    grayIcon += 2;
-                }
+                int defaultIcon = isDark ? _tbiis[i]._darkDefaultIcon : _tbiis[i]._defaultIcon;
+                int hotIcon     = isDark ? _tbiis[i]._darkHotIcon     : _tbiis[i]._hotIcon;
+                int grayIcon    = isDark ? _tbiis[i]._darkGrayIcon    : _tbiis[i]._grayIcon;
 
                 _iconListVector[HLIST_DEFAULT].addIcon(defaultIcon);
                 _iconListVector[HLIST_HOT].addIcon(hotIcon);

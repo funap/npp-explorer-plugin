@@ -45,7 +45,6 @@ public :
     ToolBar() : 
         _pTBB(nullptr),
         _state(TB_STANDARD),
-        _isDarkMode(false),
         _nrButtons(0),
         _nrCurrentButtons(0), 
         _pRebar(nullptr),
@@ -55,7 +54,7 @@ public :
     virtual ~ToolBar(){};
 
     virtual bool init(HINSTANCE hInst, HWND hPere, toolBarStatusType type, 
-        ToolBarButtonUnit *buttonUnitArray, int arraySize, bool isDarkMode);
+        ToolBarButtonUnit *buttonUnitArray, int arraySize);
 
     virtual void destroy();
     void enable(int cmdID, bool doEnable) const {
@@ -70,10 +69,10 @@ public :
             return;
         }
 
-        _toolBarIcons.resizeIcon(16, _isDarkMode);
+        _toolBarIcons.resizeIcon(16);
         bool recreate = (_state == TB_STANDARD);
         setState(TB_SMALL);
-        reset(recreate, _isDarkMode); //recreate toolbar if std icons were used
+        reset(recreate); //recreate toolbar if std icons were used
         Window::redraw();
     };
     void enlarge() {
@@ -81,10 +80,10 @@ public :
             return;
         }
 
-        _toolBarIcons.resizeIcon(32, _isDarkMode);
+        _toolBarIcons.resizeIcon(32);
         bool recreate = (_state == TB_STANDARD);
         setState(TB_LARGE);
-        reset(recreate, _isDarkMode); //recreate toolbar if std icons were used
+        reset(recreate); //recreate toolbar if std icons were used
         Window::redraw();
     };
     void setToUglyIcons() {
@@ -93,11 +92,11 @@ public :
         }
         bool recreate = true;
         setState(TB_STANDARD);
-        reset(recreate, _isDarkMode); //must recreate toolbar if setting to internal bitmaps
+        reset(recreate); //must recreate toolbar if setting to internal bitmaps
         Window::redraw();
     }
 
-    void updateIcons(toolBarStatusType type, bool isDarkMode);
+    void updateIcons(toolBarStatusType type);
 
     bool getCheckState(int ID2Check) const {
         return bool(::SendMessage(_hSelf, TB_GETSTATE, (WPARAM)ID2Check, 0) & TBSTATE_CHECKED);
@@ -123,7 +122,6 @@ private :
     TBBUTTON *_pTBB;
     ToolBarIcons _toolBarIcons;
     toolBarStatusType _state;
-    bool _isDarkMode;
     SIZE_T _nrButtons;
     SIZE_T _nrCurrentButtons;
     ReBar * _pRebar;
@@ -140,7 +138,7 @@ private :
         ::SendMessage(_hSelf, TB_SETDISABLEDIMAGELIST, (WPARAM)0, (LPARAM)_toolBarIcons.getDisableLst());
     };
 
-    void reset(bool create = false, bool isDarkMode = false);
+    void reset(bool create = false);
     void setState(toolBarStatusType state) {
         _state = state;
     }

@@ -7,20 +7,7 @@
 #include <cstdint>
 #include <windows.h>
 
-struct EditorColors {
-    COLORREF background         = 0;
-    COLORREF softerBackground   = 0;
-    COLORREF hotBackground      = 0;
-    COLORREF pureBackground     = 0;
-    COLORREF errorBackground    = 0;
-    COLORREF text               = 0;
-    COLORREF darkerText         = 0;
-    COLORREF disabledText       = 0;
-    COLORREF linkText           = 0;
-    COLORREF edge               = 0;
-    COLORREF hotEdge            = 0;
-    COLORREF disabledEdge       = 0;
-};
+#include "ThemeRenderer.h"
 
 class IPluginContext {
 public:
@@ -33,7 +20,7 @@ public:
     virtual COLORREF GetEditorDefaultBackgroundColor() = 0;
     virtual COLORREF GetEditorCurrentLineBackgroundColor() = 0;
     virtual bool IsDarkMode() = 0;
-    virtual EditorColors GetColors() = 0;
+    virtual ThemeColors GetColors() = 0;
     virtual void SetFocusToCurrentEdit() = 0;
     virtual std::vector<std::wstring> GetSessionFiles(const std::filesystem::path& sessionFilePath) = 0;
     virtual std::filesystem::path GetCurrentDirectory() = 0;

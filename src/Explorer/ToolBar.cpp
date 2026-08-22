@@ -15,21 +15,19 @@
 //along with this program; if not, write to the Free Software
 //Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-//#include "..\..\resource.h"
 #include "ToolBar.h"
 
 const int WS_TOOLBARSTYLE = WS_CHILD | WS_VISIBLE | WS_CLIPCHILDREN | WS_CLIPSIBLINGS | TBSTYLE_TOOLTIPS |TBSTYLE_FLAT | CCS_TOP | BTNS_AUTOSIZE | CCS_NOPARENTALIGN | CCS_NORESIZE | CCS_NODIVIDER;
 
 bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type, 
-                    ToolBarButtonUnit *buttonUnitArray, int arraySize, bool isDarkMode)
+                    ToolBarButtonUnit *buttonUnitArray, int arraySize)
 {
     Window::init(hInst, hPere);
     _state = type;
-    _isDarkMode = isDarkMode;
     int iconSize = GetSystemMetrics(SM_CYSMICON);
 
     _toolBarIcons.init(buttonUnitArray, arraySize);
-    _toolBarIcons.create(_hInst, iconSize, _isDarkMode);
+    _toolBarIcons.create(_hInst, iconSize);
 
     INITCOMMONCONTROLSEX icex;
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
@@ -63,7 +61,7 @@ bool ToolBar::init( HINSTANCE hInst, HWND hPere, toolBarStatusType type,
         _pTBB[i].iString = 0;
     }
 
-    reset(true, _isDarkMode);    //load icons etc
+    reset(true);    //load icons etc
 
     return true;
 }
@@ -101,9 +99,8 @@ int ToolBar::getHeight() const
 }
 
 
-void ToolBar::reset(bool create, bool isDarkMode) 
+void ToolBar::reset(bool create) 
 {
-    _isDarkMode = isDarkMode;
     if (create && _hSelf) {
         //Store current button state information
         TBBUTTON tempBtn;
@@ -150,7 +147,7 @@ void ToolBar::reset(bool create, bool isDarkMode)
     if (_state != TB_STANDARD) {
         //If non standard icons, use custom imagelists
         int iconSize = (_state == TB_LARGE) ? 32 : GetSystemMetrics(SM_CYSMICON);
-        _toolBarIcons.reInit(iconSize, _isDarkMode);
+        _toolBarIcons.reInit(iconSize);
         setDefaultImageList();
         setHotImageList();
         setDisableImageList();
@@ -184,11 +181,10 @@ void ToolBar::reset(bool create, bool isDarkMode)
     }
 }
 
-void ToolBar::updateIcons(toolBarStatusType type, bool isDarkMode)
+void ToolBar::updateIcons(toolBarStatusType type)
 {
     _state = type;
-    _isDarkMode = isDarkMode;
-    reset(true, _isDarkMode);
+    reset(true);
     Window::redraw();
 }
 

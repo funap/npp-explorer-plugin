@@ -83,9 +83,8 @@ void AddressBar::SetPath(const std::wstring& path)
     }
 }
 
-void AddressBar::UpdateTheme(bool isDarkMode)
+void AddressBar::UpdateTheme()
 {
-    _isDarkMode = isDarkMode;
     if (_hBreadcrumbs) {
         ::InvalidateRect(_hBreadcrumbs, nullptr, TRUE);
     }
@@ -158,16 +157,14 @@ void AddressBar::RenderBreadcrumbs(HDC hdc, const RECT& clientRect)
     auto& theme = ThemeRenderer::Instance();
     ThemeColors colors = theme.GetColors();
 
-    COLORREF bgColor = colors.secondary_bg; 
-    COLORREF textColor = colors.secondary;
-    COLORREF hoverBgColor = colors.primary_bg;
-    COLORREF hoverTextColor = colors.primary;
-    COLORREF borderColor = _isDarkMode ? colors.border : ::GetSysColor(COLOR_3DSHADOW);
+    COLORREF bgColor = colors.content_background; 
+    COLORREF textColor = colors.foreground;
+    COLORREF hoverBgColor = colors.hot_background;
+    COLORREF hoverTextColor = colors.foreground;
+    COLORREF borderColor = colors.border;
 
     bool isWorkspaceMode = _viewModel->GetSettings()->IsShowWorkspaceMode();
-    COLORREF disabledTextColor = RGB((GetRValue(textColor) + GetRValue(bgColor)) / 2,
-                                     (GetGValue(textColor) + GetGValue(bgColor)) / 2,
-                                     (GetBValue(textColor) + GetBValue(bgColor)) / 2);
+    COLORREF disabledTextColor = colors.disabled_text;
 
     // Background
     HBRUSH bgBrush = ::CreateSolidBrush(bgColor);
@@ -457,21 +454,6 @@ LRESULT CALLBACK AddressBar::EditSubclassProc(HWND hWnd, UINT uMsg, WPARAM wPara
         break;
     case WM_KILLFOCUS:
         ::PostMessage(self->_hBreadcrumbs, WM_USER + 1, 0, 0);
-        break;
-    case WM_NCPAINT:
-        if (!self->_isDarkMode) {
-            HDC hdc = ::GetWindowDC(hWnd);
-            RECT rect;
-            ::GetWindowRect(hWnd, &rect);
-            ::OffsetRect(&rect, -rect.left, -rect.top);
-
-            HBRUSH borderBrush = ::CreateSolidBrush(::GetSysColor(COLOR_3DSHADOW));
-            ::FrameRect(hdc, &rect, borderBrush);
-            ::DeleteObject(borderBrush);
-
-            ::ReleaseDC(hWnd, hdc);
-            return 0;
-        }
         break;
     }
     return ::DefSubclassProc(hWnd, uMsg, wParam, lParam);

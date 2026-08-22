@@ -17,7 +17,7 @@ public:
     COLORREF GetEditorDefaultBackgroundColor() override;
     COLORREF GetEditorCurrentLineBackgroundColor() override;
     bool IsDarkMode() override;
-    EditorColors GetColors() override;
+    ThemeColors GetColors() override;
     void SetFocusToCurrentEdit() override;
     std::vector<std::wstring> GetSessionFiles(const std::filesystem::path& sessionFilePath) override;
     std::filesystem::path GetCurrentDirectory() override;

@@ -63,7 +63,7 @@ public:
         ExpandElementsRecursive(TVI_ROOT);
     };
 
-    void UpdateTheme(bool isDarkMode);
+    void UpdateTheme();
 
     void destroy() override
     {

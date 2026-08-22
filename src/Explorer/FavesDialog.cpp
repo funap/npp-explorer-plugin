@@ -43,15 +43,15 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 namespace {
 ToolBarButtonUnit toolBarIcons[] = {
-    {IDM_EX_EXPLORER,           IDI_FL_EXPLORER, IDI_FL_EXPLORER, IDI_FL_EXPLORER_GRAY, IDB_TB_EXPLORER,        0},
-    {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_NEW_FILE,      IDI_FL_LINKNEWFILE, IDI_FL_LINKNEWFILE, IDI_FL_LINKNEWFILE_GRAY, IDB_EX_LINKNEWFILE,     0},
-    {IDM_EX_LINK_NEW_FOLDER,    IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER_GRAY, IDB_EX_LINKNEWFOLDER,   0},
-    {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_NEW,           IDI_FL_LINKNEW, IDI_FL_LINKNEW, IDI_FL_LINKNEW_GRAY, IDB_EX_LINKNEW,         0},
-    {IDM_EX_LINK_DELETE,        IDI_FL_LINKDELETE, IDI_FL_LINKDELETE, IDI_FL_LINKDELETE_GRAY, IDB_EX_LINKDELETE,      0},
-    {0,                         IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON, IDI_SEPARATOR_ICON,     0},
-    {IDM_EX_LINK_EDIT,          IDI_FL_LINKEDIT, IDI_FL_LINKEDIT, IDI_FL_LINKEDIT_GRAY, IDB_EX_LINKEDIT,        0}
+    {IDM_EX_EXPLORER,        IDI_FL_EXPLORER,      IDI_FL_EXPLORER,      IDI_FL_EXPLORER_GRAY,      IDI_FL_EXPLORER_DARK,      IDI_FL_EXPLORER_DARK,      IDI_FL_EXPLORER_DARK_GRAY,      IDB_TB_EXPLORER,     0},
+    {0,                      IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,            IDI_SEPARATOR_ICON,  0},
+    {IDM_EX_LINK_NEW_FILE,   IDI_FL_LINKNEWFILE,   IDI_FL_LINKNEWFILE,   IDI_FL_LINKNEWFILE_GRAY,   IDI_FL_LINKNEWFILE_DARK,   IDI_FL_LINKNEWFILE_DARK,   IDI_FL_LINKNEWFILE_DARK_GRAY,   IDB_EX_LINKNEWFILE,  0},
+    {IDM_EX_LINK_NEW_FOLDER, IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER, IDI_FL_LINKNEWFOLDER_GRAY, IDI_FL_LINKNEWFOLDER_DARK, IDI_FL_LINKNEWFOLDER_DARK, IDI_FL_LINKNEWFOLDER_DARK_GRAY, IDB_EX_LINKNEWFOLDER,0},
+    {0,                      IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,            IDI_SEPARATOR_ICON,  0},
+    {IDM_EX_LINK_NEW,        IDI_FL_LINKNEW,       IDI_FL_LINKNEW,       IDI_FL_LINKNEW_GRAY,       IDI_FL_LINKNEW_DARK,       IDI_FL_LINKNEW_DARK,       IDI_FL_LINKNEW_DARK_GRAY,       IDB_EX_LINKNEW,      0},
+    {IDM_EX_LINK_DELETE,     IDI_FL_LINKDELETE,    IDI_FL_LINKDELETE,    IDI_FL_LINKDELETE_GRAY,    IDI_FL_LINKDELETE_DARK,    IDI_FL_LINKDELETE_DARK,    IDI_FL_LINKDELETE_DARK_GRAY,    IDB_EX_LINKDELETE,   0},
+    {0,                      IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,   IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,        IDI_SEPARATOR_ICON,            IDI_SEPARATOR_ICON,  0},
+    {IDM_EX_LINK_EDIT,       IDI_FL_LINKEDIT,      IDI_FL_LINKEDIT,      IDI_FL_LINKEDIT_GRAY,      IDI_FL_LINKEDIT_DARK,      IDI_FL_LINKEDIT_DARK,      IDI_FL_LINKEDIT_DARK_GRAY,      IDB_EX_LINKEDIT,     0}
 };
 
 constexpr wchar_t FAVES_DATA[] = L"Favorites.dat";
@@ -94,10 +94,11 @@ void FavesDialog::init(HINSTANCE hInst, HWND hParent, Settings* prop, IPluginCon
     ReadSettings();
 }
  
-void FavesDialog::UpdateTheme(bool isDarkMode)
+void FavesDialog::UpdateTheme()
 {
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
-    _ToolBar.updateIcons(toolbarType, isDarkMode);
+    _ToolBar.updateIcons(toolbarType);
+    ThemeRenderer::Instance().ApplyTheme(_hSelf);
     ::SendMessage(_hSelf, WM_SIZE, 0, 0);
 
     updateDockingDlg();
@@ -113,9 +114,10 @@ void FavesDialog::doDialog(bool willBeShown)
         data.pszName        = L"Favorites";
         data.dlgID          = DOCKABLE_FAVORTIES_INDEX;
         data.uMask          = DWS_DF_CONT_LEFT | DWS_ICONTAB | DWS_USEOWNDARKMODE;
+        bool isDark = ThemeRenderer::IsDarkControlBackground();
         LPCWSTR iconResourceName = _pSettings->IsUseFluentIcons()
-                                        ? _pluginContext->IsDarkMode()  ? MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE)
-                                                                        : MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES)
+                                        ? isDark  ? MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES_DARKMODE)
+                                                  : MAKEINTRESOURCE(IDI_TB_FLUENT_FAVES)
                                         : MAKEINTRESOURCE(IDI_HEART);
         data.hIconTab       = (HICON)::LoadImage(_hInst, iconResourceName, IMAGE_ICON, 0, 0, LR_LOADMAP3DCOLORS | LR_LOADTRANSPARENT);
         data.pszModuleName  = getPluginFileName();
@@ -511,9 +513,8 @@ void FavesDialog::InitialDialog()
     ::SendMessage(_hTreeCtrl, WM_SETFONT, (WPARAM)_pSettings->GetDefaultFont(), TRUE);
 
     /* create toolbar */
-    bool isDarkMode = _pluginContext->IsDarkMode();
     toolBarStatusType toolbarType = _pSettings->IsUseFluentIcons() ? TB_SMALL : TB_STANDARD;
-    _ToolBar.init(_hInst, _hSelf, toolbarType, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit), isDarkMode);
+    _ToolBar.init(_hInst, _hSelf, toolbarType, toolBarIcons, sizeof(toolBarIcons)/sizeof(ToolBarButtonUnit));
     _Rebar.init(_hInst, _hSelf);
     _ToolBar.addToRebar(&_Rebar);
     _Rebar.setIDVisible(REBAR_BAR_TOOLBAR, true);

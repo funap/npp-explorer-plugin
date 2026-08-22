@@ -727,14 +727,14 @@ BOOL QuickOpenDlg::onDrawItem(LPDRAWITEMSTRUCT drawItem)
 
     COLORREF backgroundMatchColor   = RGB(254, 230, 177);
     COLORREF matchColor             = RGB(0, 0, 0);
-    COLORREF backgroundColor        = theme.GetColors().secondary_bg;
-    COLORREF textColor1             = theme.GetColors().secondary;
+    COLORREF backgroundColor        = theme.GetColors().content_background;
+    COLORREF textColor1             = theme.GetColors().foreground;
     COLORREF textColor2             = RGB(128, 128, 128);
-    HBRUSH   backgroundBrush        = theme.GetBrush(ThemeRenderer::BrushType::SecondaryBg);
+    HBRUSH   backgroundBrush        = theme.GetBrush(ThemeRenderer::BrushType::ContentBackground);
     if (ODS_SELECTED == ((drawItem->itemState) & (ODS_SELECTED))) {
-        backgroundColor             = theme.GetColors().primary_bg;
-        textColor1                  = theme.GetColors().primary;
-        backgroundBrush             = theme.GetBrush(ThemeRenderer::BrushType::PrimaryBg);
+        backgroundColor             = theme.GetColors().primary_background;
+        textColor1                  = theme.GetColors().foreground;
+        backgroundBrush             = theme.GetBrush(ThemeRenderer::BrushType::PrimaryBackground);
     }
     ::FillRect(hdc, &drawItem->rcItem, backgroundBrush);
 

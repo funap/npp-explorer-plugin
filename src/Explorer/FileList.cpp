@@ -312,6 +312,8 @@ LRESULT FileList::runHeaderProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM l
         }
         break;
     }
+    case WM_ERASEBKGND:
+        return TRUE;
     case WM_DESTROY:
         ::RemoveWindowSubclass(hwnd, wndDefaultHeaderProc, HEADER_SUBCLASS_ID);
         break;

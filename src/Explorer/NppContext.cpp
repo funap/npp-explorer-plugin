@@ -80,45 +80,84 @@ bool NppContext::IsDarkMode()
     return static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_ISDARKMODEENABLED, 0, 0));
 }
 
-EditorColors NppContext::GetColors()
+ThemeColors NppContext::GetColors()
 {
+    struct NppColors {
+        COLORREF background         = 0;
+        COLORREF softerBackground   = 0;
+        COLORREF hotBackground      = 0;
+        COLORREF pureBackground     = 0;
+        COLORREF errorBackground    = 0;
+        COLORREF text               = 0;
+        COLORREF darkerText         = 0;
+        COLORREF disabledText       = 0;
+        COLORREF linkText           = 0;
+        COLORREF edge               = 0;
+        COLORREF hotEdge            = 0;
+        COLORREF disabledEdge       = 0;
+    } npp_colors;
+
+    ThemeColors colors;
+    colors.foreground             = GetEditorDefaultForegroundColor();
+    colors.content_background     = GetEditorDefaultBackgroundColor();
+
     if (IsDarkMode()) {
-        EditorColors colors;
-        auto success = static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_GETDARKMODECOLORS, sizeof(colors), reinterpret_cast<LPARAM>(&colors)));
+        auto success = static_cast<bool>(::SendMessage(_nppData._nppHandle, NPPM_GETDARKMODECOLORS, sizeof(npp_colors), reinterpret_cast<LPARAM>(&npp_colors)));
         if (!success) {
             // default dark colors;
-            return {
-                .background         = 0x202020,
-                .softerBackground   = 0x404040,
-                .hotBackground      = 0x404040,
-                .pureBackground     = 0x202020,
-                .errorBackground    = 0x0000B0,
-                .text               = 0xE0E0E0,
-                .darkerText         = 0xC0C0C0,
-                .disabledText       = 0x808080,
-                .linkText           = 0x00FFFF,
-                .edge               = 0x646464,
-                .hotEdge            = 0x9B9B9B,
-                .disabledEdge       = 0x484848,
-            };
+            npp_colors.background         = 0x202020;
+            npp_colors.softerBackground   = 0x404040;
+            npp_colors.hotBackground      = 0x404040;
+            npp_colors.pureBackground     = 0x202020;
+            npp_colors.errorBackground    = 0x0000B0;
+            npp_colors.text               = 0xE0E0E0;
+            npp_colors.darkerText         = 0xC0C0C0;
+            npp_colors.disabledText       = 0x808080;
+            npp_colors.linkText           = 0x00FFFF;
+            npp_colors.edge               = 0x646464;
+            npp_colors.hotEdge            = 0x9B9B9B;
+            npp_colors.disabledEdge       = 0x484848;
         }
-        return colors;
+
+        colors.disabled_text          = npp_colors.disabledText;
+        colors.control_foreground     = npp_colors.darkerText;
+        colors.control_background     = npp_colors.pureBackground;
+        colors.border                 = npp_colors.edge;
+        colors.primary_border         = npp_colors.hotEdge;
+        colors.secondary_border       = npp_colors.hotEdge;
+        colors.disabled_border        = npp_colors.disabledEdge;
+        colors.hot_background         = npp_colors.hotBackground;
+        colors.primary_background     = npp_colors.hotBackground;
+        colors.secondary_background   = npp_colors.hotBackground;
     }
-    // default colors;
-    return {
-        .background         = ::GetSysColor(COLOR_3DFACE),
-        .softerBackground   = ::GetSysColor(COLOR_WINDOW),
-        .hotBackground      = RGB(204, 232, 255),
-        .pureBackground     = ::GetSysColor(COLOR_3DFACE),
-        .errorBackground    = ::GetSysColor(COLOR_WINDOW),
-        .text               = ::GetSysColor(COLOR_WINDOWTEXT),
-        .darkerText         = ::GetSysColor(COLOR_WINDOWTEXT),
-        .disabledText       = ::GetSysColor(COLOR_GRAYTEXT),
-        .linkText           = ::GetSysColor(COLOR_HOTLIGHT),
-        .edge               = ::GetSysColor(COLOR_INACTIVEBORDER),
-        .hotEdge            = ::GetSysColor(COLOR_ACTIVEBORDER),
-        .disabledEdge       = ::GetSysColor(COLOR_INACTIVEBORDER),
-    };
+    else {
+        if (ThemeRenderer::IsDarkColor(colors.content_background)) {
+            colors.hot_background         = GetEditorCurrentLineBackgroundColor();
+            colors.primary_border         = GetEditorDefaultForegroundColor();
+            colors.primary_background     = GetEditorCurrentLineBackgroundColor();
+            colors.secondary_border       = GetEditorDefaultForegroundColor();
+            colors.secondary_background   = GetEditorCurrentLineBackgroundColor();
+            colors.border                 = GetEditorDefaultForegroundColor();
+            colors.control_foreground     = GetEditorDefaultForegroundColor();
+            colors.control_background     = GetEditorDefaultBackgroundColor();
+            colors.disabled_text          = ::GetSysColor(COLOR_GRAYTEXT);
+            colors.disabled_border        = ::GetSysColor(COLOR_INACTIVEBORDER);
+        }
+        else {
+            colors.hot_background         = RGB(229, 243, 255);
+            colors.primary_border         = RGB(  0,   0,   0);
+            colors.primary_background     = RGB(204, 232, 255);
+            colors.secondary_border       = RGB(148, 148, 148);
+            colors.secondary_background   = RGB(217, 217, 217);
+            colors.border                 = ::GetSysColor(COLOR_3DSHADOW);
+            colors.control_foreground     = ::GetSysColor(COLOR_WINDOWTEXT);
+            colors.control_background     = ::GetSysColor(COLOR_3DFACE);
+            colors.disabled_text          = ::GetSysColor(COLOR_GRAYTEXT);
+            colors.disabled_border        = ::GetSysColor(COLOR_INACTIVEBORDER);
+        }
+    }
+
+    return colors;
 }
 
 void NppContext::SetFocusToCurrentEdit()

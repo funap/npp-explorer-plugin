@@ -256,13 +256,13 @@ void ComboBox::DrawItem(DRAWITEMSTRUCT* lpDrawItemStruct)
     HBRUSH hBgBrush;
 
     if (lpDrawItemStruct->itemState & ODS_SELECTED) {
-        bgCol = colors.primary_bg;
-        fgCol = colors.primary;
-        hBgBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::PrimaryBg);
+        bgCol = colors.primary_background;
+        fgCol = colors.foreground;
+        hBgBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::PrimaryBackground);
     } else {
-        bgCol = colors.body_bg;
-        fgCol = colors.body;
-        hBgBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::BodyBg);
+        bgCol = colors.content_background;
+        fgCol = colors.foreground;
+        hBgBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::ContentBackground);
     }
 
     ::FillRect(lpDrawItemStruct->hDC, &lpDrawItemStruct->rcItem, hBgBrush);
@@ -288,16 +288,11 @@ void ComboBox::DrawItem(DRAWITEMSTRUCT* lpDrawItemStruct)
     BOOL isHovered = (_hotDeleteIndex == static_cast<int>(lpDrawItemStruct->itemID));
 
     if (isHovered) {
-        HBRUSH hHoverBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::SecondaryBg);
+        HBRUSH hHoverBrush = ThemeRenderer::Instance().GetBrush(ThemeRenderer::BrushType::HotBackground);
         ::FillRect(lpDrawItemStruct->hDC, &btnRect, hHoverBrush);
     }
 
-    COLORREF btnFgCol;
-    if (lpDrawItemStruct->itemState & ODS_SELECTED) {
-        btnFgCol = isHovered ? colors.primary : colors.secondary;
-    } else {
-        btnFgCol = isHovered ? colors.body : colors.secondary;
-    }
+    COLORREF btnFgCol = colors.foreground;
 
     ::SetTextColor(lpDrawItemStruct->hDC, btnFgCol);
     ::DrawText(lpDrawItemStruct->hDC, L"\u00d7", -1, &btnRect, DT_SINGLELINE | DT_CENTER | DT_VCENTER);
