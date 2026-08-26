@@ -268,6 +268,10 @@ LRESULT ThemeRenderer::TreeViewCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wPara
         HWND hTree = customDraw->nmcd.hdr.hwndFrom;
         HDC hdc = customDraw->nmcd.hdc;
         HTREEITEM hItem = reinterpret_cast<HTREEITEM>(customDraw->nmcd.dwItemSpec);
+        HFONT hTreeFont = (HFONT)::SendMessage(hTree, WM_GETFONT, 0, 0);
+        if (hTreeFont) {
+            ::SelectObject(hdc, hTreeFont);
+        }
 
         UINT itemState = TreeView_GetItemState(hTree, hItem, TVIS_DROPHILITED | TVIS_SELECTED);
         bool isDropHilited = ((customDraw->nmcd.uItemState & CDIS_DROPHILITED) != 0) ||
@@ -343,16 +347,14 @@ LRESULT ThemeRenderer::TreeViewCustomDrawProc(HWND hWnd, UINT uMsg, WPARAM wPara
             .cchTextMax = MAX_PATH,
         };
         if (TRUE == TreeView_GetItem(hTree, &tvi)) {
-            HFONT hOrigFont = (HFONT)::GetCurrentObject(hdc, OBJ_FONT);
-
             ::SetBkMode(hdc, TRANSPARENT);
             COLORREF textColor = (tvi.state & TVIS_CUT) ? m_colors.disabled_text
                                                         : m_colors.foreground;
             ::SetTextColor(hdc, textColor);
             ::DrawText(hdc, tvi.pszText, -1, &textRect, DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX);
 
-            if (hOrigFont) {
-                ::SelectObject(hdc, hOrigFont);
+            if (hTreeFont) {
+                ::SelectObject(hdc, hTreeFont);
             }
 
             if ((itemPrePaintResult & CDRF_SKIPDEFAULT) == 0) {
@@ -615,6 +617,10 @@ void ThemeRenderer::PaintListView(HWND hWnd, HDC hdc)
     for (int itemIndex = topIndex; itemIndex <= endIndex; ++itemIndex) {
         if (itemIndex < 0 || itemIndex >= totalItems) continue;
 
+        if (hFont) {
+            ::SelectObject(memDC, hFont);
+        }
+
         RECT rowRect{};
         if (!ListView_GetItemRect(hWnd, itemIndex, &rowRect, LVIR_BOUNDS)) {
             continue;
@@ -780,6 +786,10 @@ void ThemeRenderer::PaintListView(HWND hWnd, HDC hdc)
                 };
                 ::FillRect(memDC, &divRect, m_brushes.disabled_border);
             }
+        }
+
+        if (hFont) {
+            ::SelectObject(memDC, hFont);
         }
     }
 
