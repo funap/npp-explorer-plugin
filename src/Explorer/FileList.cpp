@@ -558,7 +558,7 @@ void FileList::OnCurrentDirectoryChanged(const std::wstring& path)
     _currentGeneration++;
 
     /* clear data */
-    _uMaxElementsOld = _uMaxElements;
+    _uMaxElementsOld = static_cast<SIZE_T>(-1);
     _pendingLoadDir = path;
     _pendingRedraw = TRUE;
 }
@@ -566,14 +566,15 @@ void FileList::OnCurrentDirectoryChanged(const std::wstring& path)
 void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const std::vector<std::shared_ptr<ExplorerEntry>>& entries)
 {
     auto normalizePath = [](std::wstring p) {
-        if (!p.empty() && p.back() == '\\') {
+        while (!p.empty() && (p.back() == L'\\' || p.back() == L'/')) {
             p.pop_back();
         }
         return p;
     };
-    if (_wcsicmp(normalizePath(currentDir).c_str(), normalizePath(_pendingLoadDir).c_str()) != 0) {
+    if (!_pendingLoadDir.empty() && _wcsicmp(normalizePath(currentDir).c_str(), normalizePath(_pendingLoadDir).c_str()) != 0) {
         return;
     }
+    _pendingLoadDir = currentDir;
 
     std::vector<std::shared_ptr<ExplorerEntry>> vFoldersTemp;
     std::vector<std::shared_ptr<ExplorerEntry>> vFilesTemp;
@@ -623,39 +624,42 @@ void FileList::OnDirectoryEntriesLoaded(const std::wstring& currentDir, const st
     /* update list content */
     UpdateList();
 
-    /* select first entry or the pending file */
-    if (_pendingRedraw == TRUE) {
-        bool selected = false;
-        if (!_pendingSelectFile.empty()) {
-            for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
-                if (_pendingSelectFile == _vFileList[i]->Name()) {
-                     SetFocusItem(i);
-                     selected = true;
-                     break;
-                }
+    /* select pending file or restore selection or select first entry */
+    bool selected = false;
+    if (!_pendingSelectFile.empty()) {
+        for (SIZE_T i = 0; i < _uMaxElements; i++) {
+            if (_wcsicmp(_pendingSelectFile.c_str(), _vFileList[i]->Name().c_str()) == 0) {
+                SetFocusItem(i);
+                selected = true;
+                _viewModel->UpdateSelection({ _vFileList[i]->Name() });
+                break;
             }
-            _pendingSelectFile.clear();
         }
-        if (!selected) {
-            SetFocusItem(0);
-        }
-        _pendingRedraw = FALSE;
+        _pendingSelectFile.clear();
     }
 
-    // Restore previous selection
-    auto prevSel = _viewModel->GetCurrentSelection();
-    if (!prevSel.empty()) {
-        for (UINT iItem = 0; iItem < _uMaxElements; iItem++) {
-            ListView_SetItemState(_hSelf, iItem, 0, 0xFF);
-        }
-        for (const auto& name : prevSel) {
-            for (SIZE_T i = 0; i < _uMaxElements; i++) {
-                if (_vFileList[i]->Name() == name) {
-                    ListView_SetItemState(_hSelf, i, LVIS_SELECTED | LVIS_FOCUSED, 0xFF);
+    if (!selected) {
+        // Restore previous selection
+        auto prevSel = _viewModel->GetCurrentSelection();
+        if (!prevSel.empty()) {
+            for (UINT iItem = 0; iItem < _uMaxElements; iItem++) {
+                ListView_SetItemState(_hSelf, iItem, 0, 0xFF);
+            }
+            for (const auto& name : prevSel) {
+                for (SIZE_T i = 0; i < _uMaxElements; i++) {
+                    if (_wcsicmp(_vFileList[i]->Name().c_str(), name.c_str()) == 0) {
+                        ListView_SetItemState(_hSelf, i, LVIS_SELECTED | LVIS_FOCUSED, 0xFF);
+                        SetFocusItem(i);
+                        selected = true;
+                    }
                 }
             }
         }
+        if (!selected && _pendingRedraw == TRUE) {
+            SetFocusItem(0);
+        }
     }
+    _pendingRedraw = FALSE;
 
     std::vector<IconWorkItem> workItems;
     for (UINT i = 0; i < _uMaxElements; ++i) {
@@ -682,33 +686,34 @@ void FileList::SelectFolder(LPCTSTR filePath)
     for (UINT uFolder = 0; uFolder < _uMaxFolders; uFolder++) {
         if (_wcsicmp(_vFileList[uFolder]->Name().c_str(), filePath) == 0) {
             SetFocusItem(uFolder);
+            _viewModel->UpdateSelection({ _vFileList[uFolder]->Name() });
             return;
         }
     }
+    _pendingSelectFile = filePath;
 }
 
-void FileList::SelectCurFile()
+bool FileList::SelectCurFile()
 {
     extern WCHAR g_currentFile[MAX_PATH];
 
     std::wstring fileName = std::wstring(g_currentFile);
     fileName = fileName.substr(fileName.find_last_of(L'\\') + 1);
-    SelectFile(fileName);
+    return SelectFile(fileName);
 }
 
-void FileList::SelectFile(const std::wstring &fileName)
+bool FileList::SelectFile(const std::wstring &fileName)
 {
-    if (_pendingRedraw == TRUE) {
-        _pendingSelectFile = fileName;
-        return;
-    }
-
-    for (SIZE_T i = _uMaxFolders; i < _uMaxElements; i++) {
-        if (fileName == _vFileList[i]->Name()) {
+    for (SIZE_T i = 0; i < _uMaxElements; i++) {
+        if (_wcsicmp(fileName.c_str(), _vFileList[i]->Name().c_str()) == 0) {
             SetFocusItem(i);
-            return;
+            _viewModel->UpdateSelection({ _vFileList[i]->Name() });
+            return true;
         }
     }
+
+    _pendingSelectFile = fileName;
+    return false;
 }
 
 void FileList::UpdateList()
@@ -768,6 +773,7 @@ void FileList::UpdateList()
     /* avoid flickering */
     if (_uMaxElementsOld != _uMaxElements) {
         ListView_SetItemCountEx(_hSelf, _uMaxElements, LVSICF_NOSCROLL);
+        _uMaxElementsOld = _uMaxElements;
     }
     else {
         ::RedrawWindow(_hSelf, NULL, NULL, TRUE);
@@ -993,21 +999,22 @@ void FileList::onPaste()
     LPDROPFILES hFiles = (LPDROPFILES)::GlobalLock(::GetClipboardData(CF_HDROP));
     if (hFiles == NULL) {
         ErrorMessage(::GetLastError());
+        ::CloseClipboard();
         return;
     }
+    DWORD dwEffect = DROPEFFECT_COPY;
     LPBYTE hEffect = (LPBYTE)::GlobalLock(::GetClipboardData(::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT)));
-    if (hEffect == NULL) {
-        ErrorMessage(::GetLastError());
-        return;
+    if (hEffect != NULL) {
+        if (hEffect[0] == 2) {
+            dwEffect = DROPEFFECT_MOVE;
+        }
+        else if (hEffect[0] == 5) {
+            dwEffect = DROPEFFECT_COPY;
+        }
+        ::GlobalUnlock(hEffect);
     }
-    if (hEffect[0] == 2) {
-        doPaste(_pSettings->GetCurrentDir().c_str(), hFiles, DROPEFFECT_MOVE);
-    }
-    else if (hEffect[0] == 5) {
-        doPaste(_pSettings->GetCurrentDir().c_str(), hFiles, DROPEFFECT_COPY);
-    }
+    doPaste(_pSettings->GetCurrentDir().c_str(), hFiles, dwEffect);
     ::GlobalUnlock(hFiles);
-    ::GlobalUnlock(hEffect);
     ::CloseClipboard();
 
     ::KillTimer(_hParent, EXT_UPDATEACTIVATEPATH);
@@ -1029,6 +1036,7 @@ void FileList::onDelete(bool immediate)
 
     if (!filesToDelete.empty()) {
         if (FileSystemService::DeleteFiles(_hParent, filesToDelete, immediate)) {
+            _viewModel->UpdateSelection({});
             ::KillTimer(_hParent, EXT_UPDATEACTIVATEPATH);
             ::SetTimer(_hParent, EXT_UPDATEACTIVATEPATH, 200, nullptr);
         }
@@ -1207,13 +1215,17 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
     SIZE_T bufsz = sizeof(DROPFILES) + sizeof(WCHAR);
 
     /* get buffer size */
-    for (SIZE_T i = 0; i < _uMaxElements; i++) {
+    for (SIZE_T i = 0; i < _uMaxElements && i < _vFileList.size(); i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
             if ((i == 0) && (_vFileList[i]->IsParent())) {
                 continue;
             }
             bufsz += (_vFileList[i]->Path().size() + 1) * sizeof(WCHAR);
         }
+    }
+
+    if (bufsz == sizeof(DROPFILES) + sizeof(WCHAR)) {
+        return;
     }
 
     HDROP hDrop = (HDROP)GlobalAlloc(GHND|GMEM_SHARE, bufsz);
@@ -1238,7 +1250,7 @@ void FileList::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwE
     /* add files to payload and seperate with "\0" */
     SIZE_T offset   = 0;
     LPTSTR szPath   = (LPTSTR)&lpDropFileStruct[1];
-    for (SIZE_T i = 0; i < _uMaxElements; i++) {
+    for (SIZE_T i = 0; i < _uMaxElements && i < _vFileList.size(); i++) {
         if (ListView_GetItemState(_hSelf, i, LVIS_SELECTED) == LVIS_SELECTED) {
             if ((i == 0) && (_vFileList[i]->IsParent())) {
                 continue;

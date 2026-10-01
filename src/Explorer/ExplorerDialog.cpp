@@ -497,15 +497,14 @@ INT_PTR CALLBACK ExplorerDialog::run_dlgProc(UINT Message, WPARAM wParam, LPARAM
             ::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
             {
                 HTREEITEM hItem         = _hTreeCtrl.GetSelection();
-                HTREEITEM hParentItem   = _hTreeCtrl.GetParent(hItem);
-
-                if (hParentItem != nullptr) {
-                    FetchChildren(hParentItem);
-                }
                 if (hItem != nullptr) {
+                    HTREEITEM hParentItem   = _hTreeCtrl.GetParent(hItem);
+                    if (hParentItem != nullptr) {
+                        FetchChildren(hParentItem);
+                    }
                     FetchChildren(hItem);
-                    UpdatePath();
                 }
+                UpdatePath();
             }
             return FALSE;
         }
@@ -764,8 +763,18 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
         NavigateForward();
         break;
     case IDM_EX_FILE_NEW: {
+        std::wstring targetDir;
+        if (!_pSettings->IsUseFullTree()) {
+            targetDir = _viewModel->GetCurrentDir();
+        }
+        if (targetDir.empty()) {
+            targetDir = GetPath(_hTreeCtrl.GetSelection());
+        }
+        if (targetDir.empty()) {
+            targetDir = _viewModel->GetCurrentDir();
+        }
         std::wstring errorMsg;
-        if (!_viewModel->CreateFile(GetPath(_hTreeCtrl.GetSelection()), errorMsg)) {
+        if (!_viewModel->CreateFile(targetDir, errorMsg)) {
             if (!errorMsg.empty()) {
                 ::MessageBox(_hParent, errorMsg.c_str(), L"Error", MB_OK);
             }
@@ -773,8 +782,18 @@ void ExplorerDialog::HandleToolBarCommand(WPARAM message)
         break;
     }
     case IDM_EX_FOLDER_NEW: {
+        std::wstring targetDir;
+        if (!_pSettings->IsUseFullTree()) {
+            targetDir = _viewModel->GetCurrentDir();
+        }
+        if (targetDir.empty()) {
+            targetDir = GetPath(_hTreeCtrl.GetSelection());
+        }
+        if (targetDir.empty()) {
+            targetDir = _viewModel->GetCurrentDir();
+        }
         std::wstring errorMsg;
-        if (!_viewModel->CreateFolder(GetPath(_hTreeCtrl.GetSelection()), errorMsg)) {
+        if (!_viewModel->CreateFolder(targetDir, errorMsg)) {
             if (!errorMsg.empty()) {
                 ::MessageBox(_hParent, errorMsg.c_str(), L"Error", MB_OK);
             }
@@ -1248,8 +1267,20 @@ void ExplorerDialog::GotoCurrentFile()
     else {
         std::wstring currentDir = _pluginContext->GetCurrentDirectory().wstring();
         if (!currentDir.empty()) {
-            _viewModel->NavigateTo(currentDir);
-            _FileList.SelectCurFile();
+            auto normalizePath = [](std::wstring p) {
+                while (!p.empty() && (p.back() == L'\\' || p.back() == L'/')) {
+                    p.pop_back();
+                }
+                return p;
+            };
+            if (normalizePath(currentDir) == normalizePath(_viewModel->GetCurrentDir())) {
+                if (!_FileList.SelectCurFile()) {
+                    _viewModel->Refresh();
+                }
+            } else {
+                _viewModel->NavigateTo(currentDir);
+                _FileList.SelectCurFile();
+            }
         }
     }
 }
@@ -1265,8 +1296,20 @@ void ExplorerDialog::GotoFileLocation(const std::wstring& filePath)
         std::wstring dirPath = path.parent_path().wstring();
         std::wstring fileName = path.filename().wstring();
 
-        _viewModel->NavigateTo(dirPath);
-        _FileList.SelectFile(fileName);
+        auto normalizePath = [](std::wstring p) {
+            while (!p.empty() && (p.back() == L'\\' || p.back() == L'/')) {
+                p.pop_back();
+            }
+            return p;
+        };
+
+        if (normalizePath(dirPath) == normalizePath(_viewModel->GetCurrentDir())) {
+            _FileList.SelectFile(fileName);
+        }
+        else {
+            _viewModel->NavigateTo(dirPath);
+            _FileList.SelectFile(fileName);
+        }
         SetFocusOnFile();
     }
 }
@@ -1304,6 +1347,11 @@ void ExplorerDialog::ClearFilter()
  */
 void ExplorerDialog::OnDelete(bool immediate)
 {
+    if (::GetFocus() == _FileList.getHSelf()) {
+        _FileList.onDelete(immediate);
+        return;
+    }
+
     HTREEITEM hItem = _hTreeCtrl.GetSelection();
     auto path = GetPath(hItem);
     if (path.empty()) {
@@ -1332,6 +1380,7 @@ void ExplorerDialog::OnDelete(bool immediate)
 
             _hTreeCtrl.DeleteItem(hItem);
             FetchChildren(hParentItem);
+            UpdatePath();
         } else {
             Refresh();
         }
@@ -1340,18 +1389,33 @@ void ExplorerDialog::OnDelete(bool immediate)
 
 void ExplorerDialog::OnCut()
 {
+    if (::GetFocus() == _FileList.getHSelf()) {
+        _FileList.onCut();
+        return;
+    }
+
     CIDataObject dataObj(nullptr);
     FolderExChange(nullptr, &dataObj, DROPEFFECT_MOVE);
 }
 
 void ExplorerDialog::OnCopy()
 {
+    if (::GetFocus() == _FileList.getHSelf()) {
+        _FileList.onCopy();
+        return;
+    }
+
     CIDataObject dataObj(nullptr);
     FolderExChange(nullptr, &dataObj, DROPEFFECT_COPY);
 }
 
 void ExplorerDialog::OnPaste()
 {
+    if (::GetFocus() == _FileList.getHSelf()) {
+        _FileList.onPaste();
+        return;
+    }
+
     /* Insure desired format is there, and open clipboard */
     if (!::IsClipboardFormatAvailable(CF_HDROP)) {
         return;
@@ -1364,24 +1428,25 @@ void ExplorerDialog::OnPaste()
     LPDROPFILES hFiles = (LPDROPFILES)::GlobalLock(::GetClipboardData(CF_HDROP));
     if (hFiles == nullptr) {
         ErrorMessage(::GetLastError());
+        ::CloseClipboard();
         return;
     }
+    DWORD dwEffect = DROPEFFECT_COPY;
     LPBYTE hEffect = (LPBYTE)::GlobalLock(::GetClipboardData(::RegisterClipboardFormat(CFSTR_PREFERREDDROPEFFECT)));
-    if (hEffect == nullptr) {
-        ErrorMessage(::GetLastError());
-        return;
+    if (hEffect != nullptr) {
+        if (hEffect[0] == 2) {
+            dwEffect = DROPEFFECT_MOVE;
+        } else if (hEffect[0] == 5) {
+            dwEffect = DROPEFFECT_COPY;
+        }
+        ::GlobalUnlock(hEffect);
     }
 
     /* get target */
     auto filesTo = GetPath(_hTreeCtrl.GetSelection());
 
-    if (hEffect[0] == 2) {
-        DoPaste(filesTo.c_str(), hFiles, DROPEFFECT_MOVE);
-    } else if (hEffect[0] == 5) {
-        DoPaste(filesTo.c_str(), hFiles, DROPEFFECT_COPY);
-    }
+    DoPaste(filesTo.c_str(), hFiles, dwEffect);
     ::GlobalUnlock(hFiles);
-    ::GlobalUnlock(hEffect);
     ::CloseClipboard();
 
     ::KillTimer(_hSelf, EXT_UPDATEACTIVATEPATH);
@@ -1447,7 +1512,20 @@ void ExplorerDialog::UpdatePath()
 {
     if (!_pSettings->IsUseFullTree()) {
         auto path = GetPath(_hTreeCtrl.GetSelection());
-        _viewModel->NavigateTo(path, false);
+        if (path.empty()) {
+            path = _viewModel->GetCurrentDir();
+        }
+        auto normalizePath = [](std::wstring p) {
+            while (!p.empty() && (p.back() == L'\\' || p.back() == L'/')) {
+                p.pop_back();
+            }
+            return p;
+        };
+        if (!path.empty() && _wcsicmp(normalizePath(path).c_str(), normalizePath(_viewModel->GetCurrentDir()).c_str()) == 0) {
+            _viewModel->Refresh();
+        } else {
+            _viewModel->NavigateTo(path, false);
+        }
     }
 }
 
@@ -1713,13 +1791,18 @@ void ExplorerDialog::FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UI
         ::GetCursorPos(&ht.pt);
         ::ScreenToClient(_hTreeCtrl, &ht.pt);
         hItem = _hTreeCtrl.HitTest(&ht);
-    }
-    else {
+    } else {
         hItem = _hTreeCtrl.GetSelection();
+    }
+    if (hItem == nullptr) {
+        return;
     }
 
     /* get buffer size */
     auto path = GetPath(hItem);
+    if (path.empty()) {
+        return;
+    }
     if (path.back() == L'\\') {
         path.pop_back();
     }
@@ -2182,7 +2265,11 @@ bool ExplorerDialog::TranslateShortcut(HWND hwnd, UINT message, WPARAM wParam, L
                 return true;
             }
             if (wParam == VK_DELETE && !isCtrlPressed) {
-                OnDelete(isShiftPressed);
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onDelete(isShiftPressed);
+                } else {
+                    OnDelete(isShiftPressed);
+                }
                 return true;
             }
         }
@@ -2268,16 +2355,32 @@ bool ExplorerDialog::TranslateShortcut(HWND hwnd, UINT message, WPARAM wParam, L
                 }
                 break;
             case SHORTCUT_CUT: // Ctrl+X
-                OnCut();
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onCut();
+                } else {
+                    OnCut();
+                }
                 return true;
             case SHORTCUT_COPY: // Ctrl+C
-                OnCopy();
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onCopy();
+                } else {
+                    OnCopy();
+                }
                 return true;
             case SHORTCUT_PASTE: // Ctrl+V
-                OnPaste();
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onPaste();
+                } else {
+                    OnPaste();
+                }
                 return true;
             case SHORTCUT_DELETE: // Ctrl+D
-                OnDelete(false);
+                if (hwnd == _FileList.getHSelf()) {
+                    _FileList.onDelete(false);
+                } else {
+                    OnDelete(false);
+                }
                 return true;
             case SHORTCUT_REFRESH: // Ctrl+R
                 Refresh();

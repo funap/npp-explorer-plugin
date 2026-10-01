@@ -93,12 +93,16 @@ public:
     std::vector<std::shared_ptr<ExplorerEntry>> GetSelectedEntries() const;
     void ShowContextMenu(std::optional<POINT> screenLocation = std::nullopt);
     void onSelectAll();
+    void onDelete(bool immediate = false);
+    void onCopy();
+    void onPaste();
+    void onCut();
 
     BOOL notify(WPARAM wParam, LPARAM lParam);
 
     void filterFiles(LPCTSTR currentFilter);
-    void SelectCurFile();
-    void SelectFile(const std::wstring& fileName);
+    bool SelectCurFile();
+    bool SelectFile(const std::wstring& fileName);
     void SelectFolder(LPCTSTR filePath);
 
     virtual void destroy() {};
@@ -142,10 +146,6 @@ protected:
     void onLMouseBtnDbl();
 
     void onSelectItem(WCHAR charkey);
-    void onDelete(bool immediate = false);
-    void onCopy();
-    void onPaste();
-    void onCut();
 
     void FolderExChange(CIDropSource* pdsrc, CIDataObject* pdobj, UINT dwEffect);
     bool doPaste(LPCTSTR pszTo, LPDROPFILES hData, const DWORD & dwEffect);

@@ -617,7 +617,7 @@ bool ExplorerViewModel::CreateFolder(const std::wstring& parentPath, std::wstrin
         return false;
     }
 
-    Refresh();
+    UpdateSelection({ *optFolderName });
     emit(RefreshRequestedEvent{});
 
     return true;
@@ -641,8 +641,8 @@ bool ExplorerViewModel::CreateFile(const std::wstring& parentPath, std::wstring&
         return false;
     }
 
+    UpdateSelection({ *optFileName });
     emit(OpenFileRequestedEvent{newFilePath.wstring()});
-    Refresh();
     emit(RefreshRequestedEvent{});
 
     return true;
@@ -680,6 +680,7 @@ bool ExplorerViewModel::RenameEntry(const std::wstring& oldPath, std::wstring& e
         OnParentDirectoryRenamed(oldPath, newPath.wstring());
     }
 
+    UpdateSelection({ *optNewName });
     emit(EntryRenamedEvent{oldPath, newPath.wstring(), *optNewName});
     Refresh();
 
