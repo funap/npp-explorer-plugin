@@ -81,6 +81,15 @@
     <ClCompile Include="src\Explorer\QuickOpenDialog.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
+    <ClCompile Include="src\Explorer\InPlaceLabelTip.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\ListViewLabelTip.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Explorer\TreeViewLabelTip.cpp">
+      <Filter>src\Explorer</Filter>
+    </ClCompile>
     <ClCompile Include="src\Explorer\ThemeRenderer.cpp">
       <Filter>src\Explorer</Filter>
     </ClCompile>
@@ -203,6 +212,15 @@
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\StringUtil.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\InPlaceLabelTip.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\ListViewLabelTip.h">
+      <Filter>src\Explorer</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Explorer\TreeViewLabelTip.h">
       <Filter>src\Explorer</Filter>
     </ClInclude>
     <ClInclude Include="src\Explorer\ThemeRenderer.h">

@@ -22,6 +22,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include "FileFilter.h"
 #include "FileSystemService.h"
 #include "ExplorerModel.h"
+#include "ListViewLabelTip.h"
 
 #include <windows.h>
 #include <mutex>
@@ -91,8 +92,22 @@ void FileList::init(HINSTANCE hInst, HWND hParent, HWND hParentList)
     ::SetWindowLongPtr(_hSelf, GWL_STYLE, style | LVS_REPORT | LVS_OWNERDATA | LVS_SHOWSELALWAYS | LVS_SHAREIMAGELISTS);
 
     /* enable full row select */
-    ListView_SetExtendedListViewStyle(_hSelf, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER | LVS_EX_LABELTIP);
+    ListView_SetExtendedListViewStyle(_hSelf, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
     ListView_SetCallbackMask(_hSelf, LVIS_OVERLAYMASK);
+
+    /* initialize custom label tip */
+    _labelTip = std::make_unique<ListViewLabelTip>(_hSelf);
+    _labelTip->SetFontCallback([this](int itemIndex, int subItemIndex) -> HFONT {
+        if (_pSettings && subItemIndex == 0 && itemIndex >= 0 && itemIndex < static_cast<int>(_vFileList.size())) {
+            if (itemIndex >= static_cast<int>(_uMaxFolders)) {
+                std::wstring strFilePath = _vFileList[itemIndex]->Path();
+                if (IsFileOpen(strFilePath) == TRUE) {
+                    return _pSettings->GetUnderlineFont();
+                }
+            }
+        }
+        return nullptr;
+    });
 
     /* subclass list control */
     SetWindowSubclass(_hSelf, wndDefaultListProc, LIST_SUBCLASS_ID, (DWORD_PTR)this);
@@ -148,6 +163,10 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         return TRUE;
     }
     case WM_MOUSEMOVE: {
+        if (_labelTip) {
+            _labelTip->OnMouseMove(wParam, lParam);
+        }
+
         LVHITTESTINFO hittest = {};
 
         /* get position */
@@ -163,8 +182,41 @@ LRESULT FileList::runListProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lPa
         }
         break;
     }
+    case WM_MOUSEHOVER:
+        if (_labelTip) {
+            _labelTip->OnMouseHover();
+        }
+        break;
+    case WM_MOUSELEAVE:
+        if (_labelTip) {
+            _labelTip->OnMouseLeave();
+        }
+        break;
+    case WM_LBUTTONDOWN:
+    case WM_RBUTTONDOWN:
+    case WM_MBUTTONDOWN:
+        if (_labelTip) {
+            _labelTip->Hide();
+        }
+        break;
+    case WM_VSCROLL:
+    case WM_HSCROLL:
+    case WM_MOUSEWHEEL:
+        if (_labelTip) {
+            _labelTip->OnScroll();
+        }
+        break;
+    case WM_KILLFOCUS:
+    case WM_KEYDOWN:
+    case WM_SYSKEYDOWN:
+        if (_labelTip) {
+            _labelTip->Hide();
+        }
+        break;
     case WM_DESTROY:
     {
+        _labelTip.reset();
+
         ImageList_Destroy(_hImlParent);
 
         if (_cancelToken) {
@@ -778,6 +830,21 @@ void FileList::UpdateList()
     else {
         ::RedrawWindow(_hSelf, NULL, NULL, TRUE);
     }
+
+    if (_labelTip) {
+        _labelTip->Reset();
+    }
+}
+
+void FileList::redraw()
+{
+    _hImlListSys = GetSmallImageList(_pSettings->IsUseSystemIcons());
+    ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
+    SetColumns();
+    if (_labelTip) {
+        _labelTip->Reset();
+    }
+    Window::redraw();
 }
 
 void FileList::SetColumns()

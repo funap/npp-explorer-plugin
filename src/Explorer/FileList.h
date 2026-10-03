@@ -29,12 +29,14 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #include <shlwapi.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <memory>
 #include <functional>
 #include <optional>
 #include <mutex>
 #include <atomic>
 #include <filesystem>
 
+class ListViewLabelTip;
 
 struct StaInfo {
     std::wstring                strPath;
@@ -106,12 +108,7 @@ public:
     void SelectFolder(LPCTSTR filePath);
 
     virtual void destroy() {};
-    virtual void redraw() {
-        _hImlListSys = GetSmallImageList(_pSettings->IsUseSystemIcons());
-        ListView_SetImageList(_hSelf, _hImlListSys, LVSIL_SMALL);
-        SetColumns();
-        Window::redraw();
-    };
+    virtual void redraw();
 
     void UpdateSelItems();
     void SetItems(const std::vector<std::wstring>& vStrItems);
@@ -204,4 +201,5 @@ private:    /* for thread */
     std::wstring                    _pendingLoadDir;
     BOOL                            _pendingRedraw;
     std::wstring                    _pendingSelectFile;
+    std::unique_ptr<ListViewLabelTip> _labelTip;
 };
